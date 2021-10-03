@@ -1,0 +1,10 @@
+.cache
+.DS_Store
+docs
+lib
+node_modules
+src/gen
+yarn-error.log
+.yalc
+yalc.lock
+build

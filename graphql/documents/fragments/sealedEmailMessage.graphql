@@ -1,0 +1,24 @@
+fragment SealedEmailMessage on SealedEmailMessage {
+  id
+  owner
+  owners {
+    id
+    issuer
+  }
+  emailAddressId
+  version
+  createdAtEpochMs
+  updatedAtEpochMs
+  sortDateEpochMs
+  folderId
+  direction
+  seen
+  state
+  clientRefId
+  rfc822Header {
+    algorithm
+	  keyId
+	  plainTextType
+	  base64EncodedSealedData
+  }
+}

@@ -1,0 +1,22 @@
+# import SealedAttribute from "sealedAttribute.graphql"
+
+fragment EmailAddress on EmailAddress {
+  id
+  owner
+  owners {
+    id
+    issuer
+  }
+  identityId
+  keyRingId
+  keyIds
+  version
+  createdAtEpochMs
+  updatedAtEpochMs
+  lastReceivedAtEpochMs
+  emailAddress
+  size
+  alias {
+    ...SealedAttribute
+  }
+}

@@ -1,0 +1,4 @@
+fragment Owner on Owner {
+  id
+  issuer
+}

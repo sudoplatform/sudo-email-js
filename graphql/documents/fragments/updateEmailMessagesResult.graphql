@@ -1,0 +1,5 @@
+fragment UpdateEmailMessagesResult on UpdateEmailMessagesResult {
+  status
+  successMessageIds
+  failedMessageIds
+}

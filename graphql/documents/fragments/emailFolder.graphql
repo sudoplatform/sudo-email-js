@@ -1,0 +1,16 @@
+fragment EmailFolder on EmailFolder {
+  id
+  owner
+  owners {
+    id
+    issuer
+  }
+  version
+  createdAtEpochMs
+  updatedAtEpochMs
+  emailAddressId
+  folderName
+  size
+  unseenCount
+  ttl
+}

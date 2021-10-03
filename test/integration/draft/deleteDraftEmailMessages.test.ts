@@ -1,0 +1,123 @@
+import { DefaultLogger } from '@sudoplatform/sudo-common'
+import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
+import _ from 'lodash'
+import { v4 } from 'uuid'
+import {
+  AddressNotFoundError,
+  BatchOperationResultStatus,
+  EmailAddress,
+  SudoEmailClient,
+} from '../../../src'
+import { str2ab } from '../../util/buffer'
+import { createEmailMessageRfc822String } from '../util/createEmailMessage'
+import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
+import { provisionEmailAddress } from '../util/provisionEmailAddress'
+
+describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
+  jest.setTimeout(240000)
+  const log = new DefaultLogger('SudoEmailClientIntegrationTests')
+
+  let instanceUnderTest: SudoEmailClient
+  let profilesClient: SudoProfilesClient
+  let sudo: Sudo
+  let sudoOwnershipProofToken: string
+
+  let emailAddress: EmailAddress
+  let draftId: string
+
+  beforeEach(async () => {
+    const result = await setupEmailClient(log)
+    instanceUnderTest = result.emailClient
+    profilesClient = result.profilesClient
+    sudo = result.sudo
+    sudoOwnershipProofToken = result.ownershipProofToken
+
+    emailAddress = await provisionEmailAddress(
+      sudoOwnershipProofToken,
+      instanceUnderTest,
+    )
+    const draftEmailMessageString = createEmailMessageRfc822String({
+      from: [{ emailAddress: emailAddress.emailAddress }],
+      to: [],
+      cc: [],
+      bcc: [],
+      replyTo: [],
+      body: 'test draft message',
+    })
+    draftId = await instanceUnderTest.createDraftEmailMessage({
+      rfc822Data: str2ab(draftEmailMessageString),
+      senderEmailAddressId: emailAddress.id,
+    })
+  })
+
+  afterEach(async () => {
+    await instanceUnderTest.deleteDraftEmailMessages({
+      emailAddressId: emailAddress.id,
+      ids: [draftId],
+    })
+    await teardown(
+      { emailAddresses: [emailAddress], sudos: [sudo] },
+      { emailClient: instanceUnderTest, profilesClient },
+    )
+  })
+
+  it('deletes a draft successfully', async () => {
+    await expect(
+      instanceUnderTest.deleteDraftEmailMessages({
+        emailAddressId: emailAddress.id,
+        ids: [draftId],
+      }),
+    ).resolves.toStrictEqual({ status: BatchOperationResultStatus.Success })
+  })
+  it('throws an error if delete performed against a non-existent address', async () => {
+    await expect(
+      instanceUnderTest.deleteDraftEmailMessages({
+        emailAddressId: v4(),
+        ids: [draftId],
+      }),
+    ).rejects.toThrow(AddressNotFoundError)
+  })
+  it("returns success when deleting a record that doesn't exist", async () => {
+    await expect(
+      instanceUnderTest.deleteDraftEmailMessages({
+        emailAddressId: emailAddress.id,
+        ids: ['non-existent'],
+      }),
+    ).resolves.toStrictEqual({ status: BatchOperationResultStatus.Success })
+  })
+  it('returns success when deleting a fake and real record in one operation', async () => {
+    await expect(
+      instanceUnderTest.deleteDraftEmailMessages({
+        emailAddressId: emailAddress.id,
+        ids: ['non-existent', draftId],
+      }),
+    ).resolves.toStrictEqual({ status: BatchOperationResultStatus.Success })
+  })
+  it('deletes multiple drafts in one operation successfully', async () => {
+    const draftStrings = _.range(9).map(() =>
+      createEmailMessageRfc822String({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body: 'test draft message',
+      }),
+    )
+    const draftIds = await Promise.all(
+      draftStrings.map(
+        async (ds) =>
+          await instanceUnderTest.createDraftEmailMessage({
+            senderEmailAddressId: emailAddress.id,
+            rfc822Data: str2ab(ds),
+          }),
+      ),
+    )
+    await expect(
+      instanceUnderTest.deleteDraftEmailMessages({
+        emailAddressId: emailAddress.id,
+        ids: draftIds.concat([draftId]),
+      }),
+    ).resolves.toStrictEqual({ status: BatchOperationResultStatus.Success })
+  })
+})

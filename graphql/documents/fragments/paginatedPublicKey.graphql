@@ -1,0 +1,6 @@
+fragment PaginatedPublicKey on PaginatedPublicKey {
+  items {
+    ...PublicKey
+  }
+  nextToken
+}

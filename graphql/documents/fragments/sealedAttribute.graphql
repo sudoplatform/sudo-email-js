@@ -1,0 +1,6 @@
+fragment SealedAttribute on SealedAttribute {
+  algorithm
+  keyId
+  plainTextType
+  base64EncodedSealedData
+}
