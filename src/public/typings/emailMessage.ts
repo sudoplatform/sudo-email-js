@@ -23,6 +23,9 @@ import { Owner } from '@sudoplatform/sudo-common'
  * @property {Date} sortDate Date when the email message was processed by the service.
  * @property {Date} createdAt Date when the email message was created.
  * @property {Date} updatedAt Date when the email message was last updated.
+ * @property {number} size The size of the encrypted RFC822 data stored in the backend. This value is used to
+ * calculate the total storage used by an email address or user and used to enforce email storage related
+ * entitlements.
  * @property {Date} sentAt Date when the email message was sent.
  * @property {Date} receivedAt Date when the email message was received.
  */
@@ -44,6 +47,7 @@ export interface EmailMessageProps {
   sortDate: Date
   createdAt: Date
   updatedAt: Date
+  size: number
 }
 
 export interface SealedEmailMessageProps {

@@ -1574,6 +1574,7 @@ describe('SudoEmailClient Test Suite', () => {
             bcc: EntityDataFactory.emailMessage.bcc,
             cc: EntityDataFactory.emailMessage.cc,
             sortDate: EntityDataFactory.emailMessage.sortDate,
+            size: 12345,
           },
         ],
         failed: [
@@ -1592,6 +1593,7 @@ describe('SudoEmailClient Test Suite', () => {
               state: EntityDataFactory.emailMessage.state,
               clientRefId: EntityDataFactory.emailMessage.clientRefId,
               sortDate: EntityDataFactory.emailMessage.sortDate,
+              size: 12345,
             },
             cause: new Error('dummy_error'),
           },

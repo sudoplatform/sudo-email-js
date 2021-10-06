@@ -57,6 +57,7 @@ interface ListEmailMessagesForEmailAddressIdUseCaseOutput {
     createdAt: Date
     updatedAt: Date
     status: { type: 'Completed' } | { type: 'Failed'; cause: Error }
+    size: number
   }>
   nextToken?: string
 }

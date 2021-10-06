@@ -36,6 +36,7 @@ export class EmailMessageAPITransformer {
       sortDate: entity.sortDate,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+      size: entity.size,
     }
   }
 }

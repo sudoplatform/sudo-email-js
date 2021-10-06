@@ -107,6 +107,7 @@ export class GraphQLDataFactory {
       base64EncodedSealedData: 'rfc822Header',
     },
     sortDateEpochMs: 1.0,
+    size: 12345,
   }
 
   static readonly emailMessageConnection: EmailMessageConnection = {

@@ -88,10 +88,12 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           expect(outbound).toHaveLength(1)
           expect(outbound[0].from).toEqual(messageDetails.from)
           expect(outbound[0].to).toEqual(messageDetails.to)
+          expect(outbound[0].size).toBeGreaterThan(0)
 
           expect(inbound).toHaveLength(1)
           expect(inbound[0].from).toEqual([simAddress])
           expect(inbound[0].to).toEqual(messageDetails.from)
+          expect(inbound[0].size).toBeGreaterThan(0)
         },
         6000,
         1000,

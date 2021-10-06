@@ -469,6 +469,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       bcc: [],
       replyTo: [],
       status: { type: 'Completed' },
+      size: sealedEmailMessage.size,
     }
 
     const status = await this.deviceKeyWorker.keyExists(

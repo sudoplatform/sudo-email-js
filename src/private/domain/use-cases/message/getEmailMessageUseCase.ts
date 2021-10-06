@@ -37,6 +37,7 @@ interface GetEmailMessageUseCaseOutput {
   createdAt: Date
   updatedAt: Date
   status: { type: 'Completed' } | { type: 'Failed'; cause: Error }
+  size: number
 }
 
 /**

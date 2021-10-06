@@ -17,8 +17,9 @@ fragment SealedEmailMessage on SealedEmailMessage {
   clientRefId
   rfc822Header {
     algorithm
-	  keyId
-	  plainTextType
-	  base64EncodedSealedData
+    keyId
+    plainTextType
+    base64EncodedSealedData
   }
+  size
 }

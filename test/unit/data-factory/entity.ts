@@ -89,6 +89,7 @@ export class EntityDataFactory {
     subject: 'testSubject',
     status: { type: 'Completed' },
     sortDate: new Date(1.0),
+    size: 12345,
   }
 
   static readonly sealedEmailMessage: SealedEmailMessageEntity = {
@@ -104,6 +105,7 @@ export class EntityDataFactory {
     clientRefId: 'testClientRefId',
     rfc822Header: 'rfc822Header',
     sortDate: new Date(1.0),
+    size: 12345,
   }
 
   static readonly publicKey: PublicKeyEntity = {

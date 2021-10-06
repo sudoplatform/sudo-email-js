@@ -24,6 +24,7 @@ export class SealedEmailMessageEntityTransformer {
       sortDate: new Date(data.sortDateEpochMs),
       createdAt: new Date(data.createdAtEpochMs),
       updatedAt: new Date(data.updatedAtEpochMs),
+      size: data.size,
     }
   }
 }

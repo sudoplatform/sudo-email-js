@@ -54,4 +54,5 @@ export interface EmailMessageEntity {
   createdAt: Date
   updatedAt: Date
   status: EmailMessageEntityStatus
+  size: number
 }

@@ -38,4 +38,5 @@ export interface SealedEmailMessageEntity {
   sortDate: Date
   createdAt: Date
   updatedAt: Date
+  size: number
 }

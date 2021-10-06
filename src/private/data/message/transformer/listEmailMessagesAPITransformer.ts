@@ -40,6 +40,7 @@ export class ListEmailMessagesAPITransformer {
         sortDate: entity.sortDate,
         createdAt: entity.createdAt,
         updatedAt: entity.updatedAt,
+        size: entity.size,
       }))
     const failed = entities
       .filter((entity) => entity.status.type === 'Failed')
@@ -58,6 +59,7 @@ export class ListEmailMessagesAPITransformer {
           sortDate: entity.sortDate,
           createdAt: entity.createdAt,
           updatedAt: entity.updatedAt,
+          size: entity.size,
         },
         cause:
           entity.status.type === 'Failed' ? entity.status.cause : new Error(),
