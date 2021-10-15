@@ -108,8 +108,6 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
     if (!symmKey) {
       return undefined
     }
-    // Zero out our copy
-    new Uint8Array(symmKey).fill(0)
     return keyId
   }
 
