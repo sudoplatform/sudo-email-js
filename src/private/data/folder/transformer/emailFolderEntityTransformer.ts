@@ -14,7 +14,7 @@ export class EmailFolderEntityTransformer {
       folderName: data.folderName,
       size: data.size,
       unseenCount: data.unseenCount,
-      ttl: data.ttl,
+      ttl: data.ttl ?? undefined,
       version: data.version,
       createdAt: new Date(data.createdAtEpochMs),
       updatedAt: new Date(data.updatedAtEpochMs),

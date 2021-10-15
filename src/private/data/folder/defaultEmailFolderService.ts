@@ -36,7 +36,7 @@ export class DefaultEmailFolderService implements EmailFolderService {
     }
     return {
       folders,
-      nextToken: result.nextToken,
+      nextToken: result.nextToken ?? undefined,
     }
   }
 }

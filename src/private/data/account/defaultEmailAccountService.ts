@@ -142,7 +142,7 @@ export class DefaultEmailAccountService implements EmailAccountService {
     }
     return {
       emailAccounts,
-      nextToken: result.nextToken,
+      nextToken: result.nextToken ?? undefined,
     }
   }
 
@@ -172,7 +172,7 @@ export class DefaultEmailAccountService implements EmailAccountService {
     }
     return {
       emailAccounts,
-      nextToken: result.nextToken,
+      nextToken: result.nextToken ?? undefined,
     }
   }
 

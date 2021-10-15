@@ -243,8 +243,8 @@ export class DefaultEmailMessageService implements EmailMessageService {
     })
     return {
       status: result.status,
-      successIds: result.successMessageIds,
-      failureIds: result.failedMessageIds,
+      successIds: result.successMessageIds ?? undefined,
+      failureIds: result.failedMessageIds ?? undefined,
     }
   }
 
@@ -364,7 +364,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     )
     return {
       emailMessages: unsealedEmailMessages,
-      nextToken: response.nextToken,
+      nextToken: response.nextToken ?? undefined,
     }
   }
 
@@ -415,7 +415,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     )
     return {
       emailMessages: unsealedEmailMessages,
-      nextToken: response.nextToken,
+      nextToken: response.nextToken ?? undefined,
     }
   }
 

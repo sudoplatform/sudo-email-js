@@ -18,7 +18,7 @@ export class SealedEmailMessageEntityTransformer {
       direction: directionTransformer.fromGraphQLtoAPI(data.direction),
       seen: data.seen,
       state: stateTransformer.fromGraphQLtoAPI(data.state),
-      clientRefId: data.clientRefId,
+      clientRefId: data.clientRefId ?? undefined,
       rfc822Header: data.rfc822Header.base64EncodedSealedData,
       version: data.version,
       sortDate: new Date(data.sortDateEpochMs),

@@ -103,9 +103,9 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
     log.debug('emailMessageIds', { emailMessagesIds })
     expect(emailMessagesIds.length).toEqual(2)
 
-    const deprovisionedEmailAddress =
-      await instanceUnderTest.deprovisionEmailAddress(emailAddress.id)
-    expect(deprovisionedEmailAddress).toStrictEqual(emailAddress)
+    await expect(
+      instanceUnderTest.deprovisionEmailAddress(emailAddress.id),
+    ).resolves.toBeDefined()
 
     for (const emailMessageId of emailMessagesIds) {
       await waitForExpect(

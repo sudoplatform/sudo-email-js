@@ -3,7 +3,6 @@ import {
   DefaultLogger,
   KeyNotFoundError,
   ListOperationResultStatus,
-  SudoCryptoProvider,
 } from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import _ from 'lodash'
@@ -21,7 +20,6 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
 
   let instanceUnderTest: SudoEmailClient
   let profilesClient: SudoProfilesClient
-  let cryptoProvider: SudoCryptoProvider
   let sudo1: Sudo
   let sudo1OwnershipProofToken: string
   let sudo2: Sudo
@@ -31,7 +29,6 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
     const result = await setupEmailClient(log)
     instanceUnderTest = result.emailClient
     profilesClient = result.profilesClient
-    cryptoProvider = result.cryptoProvider
     sudo1 = result.sudo
     sudo1OwnershipProofToken = result.ownershipProofToken
 
@@ -92,10 +89,9 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
           cachePolicy: CachePolicy.RemoteOnly,
           filter: { id: { eq: emailAddress.id } },
         }),
-      ).resolves.toStrictEqual({
+      ).resolves.toEqual({
         status: 'Success',
         items: [emailAddress],
-        nextToken: null,
       })
     })
 
@@ -115,7 +111,6 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
       ).resolves.toEqual({
         status: 'Success',
         items: expect.arrayContaining([emailAddress1, emailAddress2]),
-        nextToken: null,
       })
     })
 
@@ -125,13 +120,13 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
           cachePolicy: CachePolicy.RemoteOnly,
           filter: { id: { eq: v4() } },
         }),
-      ).resolves.toStrictEqual({
+      ).resolves.toEqual({
         status: 'Success',
         items: [],
-        nextToken: null,
       })
     })
   })
+
   describe('listEmailAddressesForSudoId', () => {
     it('lists expected output', async () => {
       await expect(
@@ -139,22 +134,21 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
           sudoId: sudo1.id ?? '',
           cachePolicy: CachePolicy.RemoteOnly,
         }),
-      ).resolves.toStrictEqual({
+      ).resolves.toEqual({
         status: 'Success',
         items: expect.arrayContaining(emailAddresses.slice(0, 3)),
-        nextToken: null,
       })
       await expect(
         instanceUnderTest.listEmailAddressesForSudoId({
           sudoId: sudo2.id ?? '',
           cachePolicy: CachePolicy.RemoteOnly,
         }),
-      ).resolves.toStrictEqual({
+      ).resolves.toEqual({
         status: 'Success',
         items: expect.arrayContaining(emailAddresses.slice(3, 10)),
-        nextToken: null,
       })
     })
+
     it('lists email addresses for filter', async () => {
       await expect(
         instanceUnderTest.listEmailAddressesForSudoId({
@@ -162,12 +156,12 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
           cachePolicy: CachePolicy.RemoteOnly,
           filter: { emailAddress: { eq: emailAddresses[0].emailAddress } },
         }),
-      ).resolves.toStrictEqual({
+      ).resolves.toEqual({
         status: 'Success',
         items: [emailAddresses[0]],
-        nextToken: null,
       })
     })
+
     it('lists email addresses with or filter', async () => {
       await expect(
         instanceUnderTest.listEmailAddressesForSudoId({
@@ -180,24 +174,24 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
             ],
           },
         }),
-      ).resolves.toStrictEqual({
+      ).resolves.toEqual({
         status: 'Success',
         items: expect.arrayContaining([emailAddresses[0], emailAddresses[1]]),
-        nextToken: null,
       })
     })
+
     it('returns empty list of email addresses when non-existent sudo id used', async () => {
       await expect(
         instanceUnderTest.listEmailAddressesForSudoId({
           sudoId: v4(),
           cachePolicy: CachePolicy.RemoteOnly,
         }),
-      ).resolves.toStrictEqual({
+      ).resolves.toEqual({
         status: 'Success',
         items: [],
-        nextToken: null,
       })
     })
+
     it('returns partial result for missing alias key', async () => {
       await instanceUnderTest.reset()
       const result = await instanceUnderTest.listEmailAddressesForSudoId({

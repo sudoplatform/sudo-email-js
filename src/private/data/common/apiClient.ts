@@ -365,9 +365,10 @@ export class ApiClient {
         this.log.debug('appSync query failed with error', { error })
         throw this.graphqlErrorTransformer.toClientError(error)
       } else {
-        throw new UnknownGraphQLError(err)
+        throw new UnknownGraphQLError(err as AppSyncError)
       }
     }
+
     const error = result.errors?.[0]
     if (error) {
       this.log.debug('error received', { error })

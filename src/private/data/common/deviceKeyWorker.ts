@@ -1,5 +1,6 @@
 import {
   DecodeError,
+  DefaultLogger,
   EncryptionAlgorithm,
   SudoKeyManager,
 } from '@sudoplatform/sudo-common'
@@ -57,6 +58,8 @@ export interface DeviceKeyWorker {
 }
 
 export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
+  private log = new DefaultLogger(this.constructor.name)
+
   readonly Defaults = {
     Algorithm: 'RSAEncryptionOAEPAESCBC',
   }
@@ -258,12 +261,16 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
         options,
       )
     } catch (err) {
-      throw new DecodeError('Could not unseal sealed payload')
+      const message = 'Could not unseal sealed payload'
+      this.log.error(message, { err })
+      throw new DecodeError(message)
     }
     try {
       return new TextDecoder('utf-8', { fatal: true }).decode(unsealedBuffer)
     } catch (err) {
-      throw new DecodeError('Could not decode unsealed payload as UTF-8')
+      const message = 'Could not decode unsealed payload as UTF-8'
+      this.log.error(message, { err })
+      throw new DecodeError(message)
     }
   }
 
@@ -289,7 +296,9 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
         encryptedCipherKeyB64,
       )
     } catch (err) {
-      throw new DecodeError('Could not decrypt AES key from sealed string')
+      const message = 'Could not decrypt AES key from sealed string'
+      this.log.error(message, { err })
+      throw new DecodeError(message)
     }
     if (!cipherKey) {
       throw new DecodeError('Could not extract AES key from sealed string')
@@ -302,7 +311,9 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
         { algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding },
       )
     } catch (err) {
-      throw new DecodeError('Could not unseal sealed payload')
+      const message = 'Could not unseal sealed payload'
+      this.log.error(message, { err })
+      throw new DecodeError(message)
     } finally {
       // zero out our copy of the cipher key
       new Uint8Array(cipherKey).fill(0)
@@ -310,6 +321,8 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
     try {
       return new TextDecoder('utf-8', { fatal: true }).decode(unsealedBuffer)
     } catch (err) {
+      const message = 'Could not decode unsealed payload as UTF-8'
+      this.log.error(message, { err })
       throw new DecodeError('Could not decode unsealed payload as UTF-8')
     }
   }

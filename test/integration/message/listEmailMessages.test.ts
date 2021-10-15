@@ -95,10 +95,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           expect(inbound[0].to).toEqual(messageDetails.from)
           expect(inbound[0].size).toBeGreaterThan(0)
         },
-        6000,
+        10000,
         1000,
       )
     })
+
     it('returns results for or filter', async () => {
       await waitForExpect(
         async () => {
@@ -128,10 +129,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           expect(inbound[0].from).toEqual([simAddress])
           expect(inbound[0].to).toEqual(messageDetails.from)
         },
-        5000,
+        10000,
         1000,
       )
     })
+
     it('returns results for and filter', async () => {
       await expect(
         instanceUnderTest.listEmailMessagesForEmailAddressId({
@@ -144,12 +146,12 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             ],
           },
         }),
-      ).resolves.toStrictEqual({
+      ).resolves.toEqual({
         status: 'Success',
         items: [],
-        nextToken: null,
       })
     })
+
     it('returns results for not filter', async () => {
       await waitForExpect(
         async () => {
@@ -168,10 +170,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           expect(messages.items[0].from).toEqual(messageDetails.from)
           expect(messages.items[0].to).toEqual(messageDetails.to)
         },
-        5000,
+        10000,
         1000,
       )
     })
+
     it('lists expected email messages respecting limit', async () => {
       await waitForExpect(
         async () => {
@@ -186,10 +189,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           }
           expect(messages.items).toHaveLength(1)
         },
-        5000,
+        10000,
         1000,
       )
     })
+
     it('lists expected email messages respecting date range', async () => {
       const messageString = createEmailMessageRfc822String(messageDetails)
       await instanceUnderTest.sendEmailMessage({
@@ -220,10 +224,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }
           })
         },
-        5000,
+        10000,
         1000,
       )
     })
+
     it('returns empty list for out of range date', async () => {
       const messageString = createEmailMessageRfc822String(messageDetails)
       await instanceUnderTest.sendEmailMessage({
@@ -246,10 +251,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           }
           expect(messages.items).toHaveLength(0)
         },
-        5000,
+        10000,
         1000,
       )
     })
+
     it('lists expected email messages in ascending order', async () => {
       const messageString = createEmailMessageRfc822String(messageDetails)
       await instanceUnderTest.sendEmailMessage({
@@ -281,10 +287,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }
           })
         },
-        5000,
+        10000,
         1000,
       )
     })
+
     it('lists expected email messages in descending order', async () => {
       const messageString = createEmailMessageRfc822String(messageDetails)
       await instanceUnderTest.sendEmailMessage({
@@ -311,22 +318,23 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }
           })
         },
-        5000,
+        10000,
         1000,
       )
     })
+
     it('returns empty list for no criteria matches', async () => {
       await expect(
         instanceUnderTest.listEmailMessagesForEmailAddressId({
           emailAddressId: v4(),
           cachePolicy: CachePolicy.RemoteOnly,
         }),
-      ).resolves.toStrictEqual({
+      ).resolves.toEqual({
         status: 'Success',
         items: [],
-        nextToken: null,
       })
     })
+
     it('should return partial result', async () => {
       await waitForExpect(
         async () => {
@@ -353,7 +361,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           expect(outbound[0].cause).toBeInstanceOf(KeyNotFoundError)
           expect(inbound[0].cause).toBeInstanceOf(KeyNotFoundError)
         },
-        6000,
+        10000,
         1000,
       )
     })
@@ -383,22 +391,23 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           expect(messages.items[0].from).toEqual([simAddress])
           expect(messages.items[0].to).toEqual(messageDetails.from)
         },
-        5000,
+        10000,
         1000,
       )
     })
+
     it('returns empty list for no criteria matches', async () => {
       await expect(
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: v4(),
           cachePolicy: CachePolicy.RemoteOnly,
         }),
-      ).resolves.toStrictEqual({
+      ).resolves.toEqual({
         status: 'Success',
         items: [],
-        nextToken: null,
       })
     })
+
     it('returns empty list when folder contains no messages', async () => {
       const trashFolder = await getFolderByName({
         emailClient: instanceUnderTest,
@@ -410,12 +419,12 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           folderId: trashFolder?.id ?? '',
           cachePolicy: CachePolicy.RemoteOnly,
         }),
-      ).resolves.toStrictEqual({
+      ).resolves.toEqual({
         status: 'Success',
         items: [],
-        nextToken: null,
       })
     })
+
     it('lists expected email messages respecting date range', async () => {
       const messageString = createEmailMessageRfc822String(messageDetails)
       await instanceUnderTest.sendEmailMessage({
@@ -451,10 +460,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }
           })
         },
-        5000,
+        10000,
         1000,
       )
     })
+
     it('returns empty list for out of range date', async () => {
       const messageString = createEmailMessageRfc822String(messageDetails)
       await instanceUnderTest.sendEmailMessage({
@@ -482,10 +492,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           }
           expect(messages.items).toHaveLength(0)
         },
-        5000,
+        10000,
         1000,
       )
     })
+
     it('lists expected email messages in ascending order', async () => {
       const messageString = createEmailMessageRfc822String(messageDetails)
       await instanceUnderTest.sendEmailMessage({
@@ -522,10 +533,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }
           })
         },
-        5000,
+        10000,
         1000,
       )
     })
+
     it('lists expected email messages in descending order', async () => {
       const messageString = createEmailMessageRfc822String(messageDetails)
       await instanceUnderTest.sendEmailMessage({
@@ -557,7 +569,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }
           })
         },
-        5000,
+        10000,
         1000,
       )
     })
