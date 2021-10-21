@@ -1,11 +1,11 @@
 import { DefaultLogger } from '@sudoplatform/sudo-common'
 import { S3UploadError } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
+import { IdentityServiceConfig } from '@sudoplatform/sudo-user/lib/sdk'
 import { AWSError } from 'aws-sdk'
 import S3 from 'aws-sdk/clients/s3'
 import { CognitoIdentityCredentials } from 'aws-sdk/lib/core'
 import _ from 'lodash'
-import { IdentityServiceConfig } from './config'
 
 interface GetAWSS3Input {
   bucket: string

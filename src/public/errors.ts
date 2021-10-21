@@ -73,3 +73,9 @@ export class MessageNotFoundError extends EmailError {
     super(msg)
   }
 }
+
+export class EmailServiceConfigNotFoundError extends EmailError {
+  constructor(msg?: string) {
+    super(msg)
+  }
+}

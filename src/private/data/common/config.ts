@@ -1,28 +1,8 @@
 import { DefaultConfigurationManager } from '@sudoplatform/sudo-common'
 import * as t from 'io-ts'
+import { EmailServiceConfigNotFoundError } from '../../../public/errors'
 
-const IdentityServiceConfigCodec = t.strict({
-  region: t.string,
-  poolId: t.string,
-  clientId: t.string,
-  identityPoolId: t.string,
-  apiUrl: t.string,
-  apiKey: t.string,
-  transientBucket: t.string,
-  registrationMethods: t.array(t.string),
-  bucket: t.string,
-})
-
-export type IdentityServiceConfig = t.TypeOf<typeof IdentityServiceConfigCodec>
-
-export const getIdentityServiceConfig = (): IdentityServiceConfig => {
-  return DefaultConfigurationManager.getInstance().bindConfigSet<IdentityServiceConfig>(
-    IdentityServiceConfigCodec,
-    'identityService',
-  )
-}
-
-const EmailServiceConfigCodec = t.strict({
+const EmailServiceConfigCodec = t.type({
   apiUrl: t.string,
   region: t.string,
   bucket: t.string,
@@ -32,6 +12,10 @@ const EmailServiceConfigCodec = t.strict({
 export type EmailServiceConfig = t.TypeOf<typeof EmailServiceConfigCodec>
 
 export const getEmailServiceConfig = (): EmailServiceConfig => {
+  if (!DefaultConfigurationManager.getInstance().getConfigSet('emService')) {
+    throw new EmailServiceConfigNotFoundError()
+  }
+
   return DefaultConfigurationManager.getInstance().bindConfigSet<EmailServiceConfig>(
     EmailServiceConfigCodec,
     'emService',

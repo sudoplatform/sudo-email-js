@@ -1,5 +1,6 @@
 import {
   DecodeError,
+  KeyNotFoundError,
   PublicKeyFormat,
   SudoKeyManager,
 } from '@sudoplatform/sudo-common'
@@ -147,9 +148,9 @@ describe('DeviceKeyWorker Test Suite', () => {
   })
   describe('unsealString', () => {
     describe('keyType == KeyPair', () => {
-      it('throws InternalError if currentPublicKey returns undefined', async () => {
+      it('throws KeyNotFoundError if currentPublicKey returns undefined', async () => {
         const keyId = v4()
-        when(mockKeyManager.getPublicKey(anything())).thenResolve(undefined)
+        when(mockKeyManager.getPrivateKey(anything())).thenResolve(undefined)
         await expect(
           instanceUnderTest.unsealString({
             encrypted: '',
@@ -157,7 +158,7 @@ describe('DeviceKeyWorker Test Suite', () => {
             keyId,
           }),
         ).rejects.toStrictEqual(
-          new InternalError(`Key pair id not found: ${keyId}`),
+          new KeyNotFoundError(`Key pair id not found: ${keyId}`),
         )
       })
 

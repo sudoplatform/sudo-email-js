@@ -16,7 +16,11 @@ export class EmailAccountEntityTransformer {
       version: data.version,
       createdAt: new Date(data.createdAtEpochMs),
       updatedAt: new Date(data.updatedAtEpochMs),
-      lastReceivedAt: new Date(data.lastReceivedAtEpochMs),
+      lastReceivedAt:
+        data.lastReceivedAtEpochMs === undefined ||
+        data.lastReceivedAtEpochMs === null
+          ? undefined
+          : new Date(data.lastReceivedAtEpochMs),
       status: { type: 'Completed' },
     }
   }

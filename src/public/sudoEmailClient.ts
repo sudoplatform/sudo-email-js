@@ -8,6 +8,11 @@ import {
 } from '@sudoplatform/sudo-common'
 import { SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
+import {
+  Config,
+  getIdentityServiceConfig,
+  IdentityServiceConfig,
+} from '@sudoplatform/sudo-user/lib/sdk'
 import { WebSudoCryptoProvider } from '@sudoplatform/sudo-web-crypto-provider'
 import { CognitoIdentityCredentials } from 'aws-sdk/lib/core'
 import { DefaultEmailAccountService } from '../private/data/account/defaultEmailAccountService'
@@ -19,8 +24,6 @@ import { ApiClient } from '../private/data/common/apiClient'
 import {
   EmailServiceConfig,
   getEmailServiceConfig,
-  getIdentityServiceConfig,
-  IdentityServiceConfig,
 } from '../private/data/common/config'
 import { DefaultDeviceKeyWorker } from '../private/data/common/deviceKeyWorker'
 import { PrivateSudoEmailClientOptions } from '../private/data/common/privateSudoEmailClientOptions'
@@ -601,7 +604,7 @@ export type SudoEmailClientOptions = {
   /** Sudo Profiles client to use. No default */
   sudoProfilesClient: SudoProfilesClient
 
-  /** webSudoCryptoProvider to use. Default is to create a WebSudoCryptoProvider */
+  /** SudoCryptoProvider to use. Default is to create a WebSudoCryptoProvider */
   sudoCryptoProvider?: SudoCryptoProvider
 
   /** SudoKeyManager to use. Default is to create a DefaultSudoKeyManager */
@@ -630,10 +633,15 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
         'SudoEmailClient',
         'com.sudoplatform.appservicename',
       )
+
+    const config: Config = getIdentityServiceConfig()
+
     this.identityServiceConfig =
-      privateOptions.identityServiceConfig ?? getIdentityServiceConfig()
+      privateOptions.identityServiceConfig ?? config.identityService
+
     this.emailServiceConfig =
       privateOptions.emailServiceConfig ?? getEmailServiceConfig()
+
     this.keyManager =
       opts.sudoKeyManager ?? new DefaultSudoKeyManager(this.sudoCryptoProvider)
     // Generate services

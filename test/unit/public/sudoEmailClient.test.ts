@@ -1,11 +1,12 @@
 import {
   CachePolicy,
-  DefaultSudoKeyManager,
+  DefaultConfigurationManager,
   SudoCryptoProvider,
   SudoKeyManager,
 } from '@sudoplatform/sudo-common'
 import { SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
+import * as userSdk from '@sudoplatform/sudo-user/lib/sdk'
 import { WebSudoCryptoProvider } from '@sudoplatform/sudo-web-crypto-provider'
 import {
   anything,
@@ -25,8 +26,7 @@ import {
 import { UpdateEmailMessagesStatus } from '../../../src/gen/graphqlTypes'
 import { DefaultEmailAccountService } from '../../../src/private/data/account/defaultEmailAccountService'
 import { ApiClient } from '../../../src/private/data/common/apiClient'
-import * as commonConfig from '../../../src/private/data/common/config'
-import { IdentityServiceConfig } from '../../../src/private/data/common/config'
+import { EmailServiceConfig } from '../../../src/private/data/common/config'
 import { DefaultDeviceKeyWorker } from '../../../src/private/data/common/deviceKeyWorker'
 import { PrivateSudoEmailClientOptions } from '../../../src/private/data/common/privateSudoEmailClientOptions'
 import { DefaultEmailFolderService } from '../../../src/private/data/folder/defaultEmailFolderService'
@@ -81,13 +81,9 @@ jest.mock('@sudoplatform/sudo-web-crypto-provider')
 const JestMockWebSudoCryptoProvider = WebSudoCryptoProvider as jest.MockedClass<
   typeof WebSudoCryptoProvider
 >
-jest.mock('../../../src/private/data/common/config')
-const JestMockCommonConfig = commonConfig as jest.Mocked<typeof commonConfig>
+jest.mock('@sudoplatform/sudo-user/lib/sdk')
+const JestMockUserConfig = userSdk as jest.Mocked<typeof userSdk>
 
-jest.mock('@sudoplatform/sudo-common')
-const JestMockSudoKeyManager = DefaultSudoKeyManager as jest.MockedClass<
-  typeof DefaultSudoKeyManager
->
 jest.mock('../../../src/private/data/common/deviceKeyWorker')
 const JestMockDeviceKeyWorker = DefaultDeviceKeyWorker as jest.MockedClass<
   typeof DefaultDeviceKeyWorker
@@ -287,7 +283,7 @@ describe('SudoEmailClient Test Suite', () => {
 
   let instanceUnderTest: SudoEmailClient
 
-  const mockIdentityServiceConfig: IdentityServiceConfig = {
+  const mockIdentityServiceConfig: userSdk.IdentityServiceConfig = {
     region: 'region',
     poolId: 'poolId',
     clientId: 'clientId',
@@ -296,6 +292,13 @@ describe('SudoEmailClient Test Suite', () => {
     apiUrl: 'apiUrl',
     transientBucket: 'transientBucket',
     registrationMethods: [],
+    bucket: 'bucket',
+  }
+
+  const mockEmailServiceConfig: EmailServiceConfig = {
+    region: 'region',
+    apiUrl: 'apiUrl',
+    transientBucket: 'transientBucket',
     bucket: 'bucket',
   }
 
@@ -336,9 +339,8 @@ describe('SudoEmailClient Test Suite', () => {
     JestMockDefaultEmailMessageService.mockClear()
     JestMockApiClient.mockClear()
     JestMockWebSudoCryptoProvider.mockClear()
-    JestMockSudoKeyManager.mockClear()
     JestMockDeviceKeyWorker.mockClear()
-    JestMockCommonConfig.getIdentityServiceConfig.mockClear()
+    JestMockUserConfig.getIdentityServiceConfig.mockClear()
 
     JestMockProvisionEmailAccountUseCase.mockClear()
     JestMockDeprovisionEmailAccountUseCase.mockClear()
@@ -372,9 +374,9 @@ describe('SudoEmailClient Test Suite', () => {
       instance(mockEmailMessageService),
     )
     JestMockApiClient.mockImplementation(() => instance(mockApiClient))
-    JestMockCommonConfig.getIdentityServiceConfig.mockImplementation(
-      () => mockIdentityServiceConfig,
-    )
+    JestMockUserConfig.getIdentityServiceConfig.mockImplementation(() => ({
+      identityService: mockIdentityServiceConfig,
+    }))
 
     JestMockProvisionEmailAccountUseCase.mockImplementation(() =>
       instance(mockProvisionEmailAccountUseCase),
@@ -450,7 +452,9 @@ describe('SudoEmailClient Test Suite', () => {
       sudoKeyManager: instance(mockSudoKeyManager),
       apiClient: instance(mockApiClient),
       identityServiceConfig: mockIdentityServiceConfig,
+      emailServiceConfig: mockEmailServiceConfig,
     }
+
     instanceUnderTest = new DefaultSudoEmailClient(options)
   })
 
@@ -459,6 +463,13 @@ describe('SudoEmailClient Test Suite', () => {
       resetMocks()
     })
     it('constructs itself correctly', () => {
+      DefaultConfigurationManager.getInstance().setConfig(
+        JSON.stringify({
+          identityService: mockIdentityServiceConfig,
+          emService: mockEmailServiceConfig,
+        }),
+      )
+
       new DefaultSudoEmailClient({
         sudoUserClient: instance(mockSudoUserClient),
         sudoProfilesClient: instance(mockSudoProfilesClient),
@@ -469,9 +480,9 @@ describe('SudoEmailClient Test Suite', () => {
         'SudoEmailClient',
         'com.sudoplatform.appservicename',
       )
-      expect(
-        JestMockCommonConfig.getIdentityServiceConfig,
-      ).toHaveBeenCalledTimes(1)
+      expect(JestMockUserConfig.getIdentityServiceConfig).toHaveBeenCalledTimes(
+        1,
+      )
       expect(JestMockDefaultEmailAccountService).toHaveBeenCalledTimes(1)
       expect(JestMockDefaultEmailFolderService).toHaveBeenCalledTimes(1)
       expect(JestMockDefaultEmailMessageService).toHaveBeenCalledTimes(1)

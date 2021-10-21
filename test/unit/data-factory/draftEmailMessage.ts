@@ -1,5 +1,5 @@
+import { IdentityServiceConfig } from '@sudoplatform/sudo-user/lib/sdk'
 import _ from 'lodash'
-import { IdentityServiceConfig } from '../../../src/private/data/common/config'
 import { S3ClientDownloadOutput } from '../../../src/private/data/common/s3Client'
 
 export class DraftEmailMessageDataFactory {

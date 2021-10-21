@@ -2,6 +2,7 @@ import {
   DecodeError,
   DefaultLogger,
   EncryptionAlgorithm,
+  KeyNotFoundError,
   SudoKeyManager,
 } from '@sudoplatform/sudo-common'
 import * as uuid from 'uuid'
@@ -284,8 +285,8 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
     )
     const encryptedCipherKeyB64 = decodeEncrypted.slice(0, RSA_KEY_SIZE)
     const encryptedData = decodeEncrypted.slice(RSA_KEY_SIZE)
-    if ((await this.keyManager.getPublicKey(keyPairId)) === undefined) {
-      throw new InternalError(`Key pair id not found: ${keyPairId}`)
+    if ((await this.keyManager.getPrivateKey(keyPairId)) === undefined) {
+      throw new KeyNotFoundError(`Key pair id not found: ${keyPairId}`)
     }
     let cipherKey: ArrayBuffer | undefined
     try {

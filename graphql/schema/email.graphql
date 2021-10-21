@@ -254,7 +254,7 @@ type EmailAddress {
   version: Int!
   createdAtEpochMs: Float!
   updatedAtEpochMs: Float!
-  lastReceivedAtEpochMs: Float!
+  lastReceivedAtEpochMs: Float
   emailAddress: String!
   size: Float!
   alias: SealedAttribute

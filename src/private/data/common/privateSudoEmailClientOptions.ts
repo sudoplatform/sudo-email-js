@@ -1,6 +1,7 @@
+import { IdentityServiceConfig } from '@sudoplatform/sudo-user/lib/core/sdk-config'
 import { SudoEmailClientOptions } from '../../../public/sudoEmailClient'
 import { ApiClient } from './apiClient'
-import { EmailServiceConfig, IdentityServiceConfig } from './config'
+import { EmailServiceConfig } from './config'
 
 /**
  * Private DefaultSudoEmailClient for describing private options

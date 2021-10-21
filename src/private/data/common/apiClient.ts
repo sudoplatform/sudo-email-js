@@ -1,10 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   ApiClientManager,
   DefaultApiClientManager,
 } from '@sudoplatform/sudo-api-client'
 import {
-  AppSyncError,
   DefaultLogger,
   FatalError,
   UnknownGraphQLError,
@@ -357,7 +355,7 @@ export class ApiClient {
         fetchPolicy: fetchPolicy,
         query: query,
       })
-    } catch (err: any) {
+    } catch (err) {
       const clientError = err as ApolloError
       this.log.debug('error received', { calleeName, clientError })
       const error = clientError.graphQLErrors?.[0]
@@ -365,7 +363,7 @@ export class ApiClient {
         this.log.debug('appSync query failed with error', { error })
         throw this.graphqlErrorTransformer.toClientError(error)
       } else {
-        throw new UnknownGraphQLError(err as AppSyncError)
+        throw new UnknownGraphQLError(err)
       }
     }
 
@@ -404,7 +402,7 @@ export class ApiClient {
         this.log.debug('appSync mutation failed with error', { error })
         throw this.graphqlErrorTransformer.toClientError(error)
       } else {
-        throw new UnknownGraphQLError(err as AppSyncError)
+        throw new UnknownGraphQLError(err)
       }
     }
     const error = result.errors?.[0]
