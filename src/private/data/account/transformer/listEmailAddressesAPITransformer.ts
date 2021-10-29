@@ -21,6 +21,7 @@ export class ListEmailAddressesAPITransformer {
         updatedAt: entity.updatedAt,
         lastReceivedAt: entity.lastReceivedAt,
         ...(entity.emailAddress.alias && { alias: entity.emailAddress.alias }),
+        folders: entity.folders,
       }))
     const failed = entities
       .filter((entity) => entity.status.type === 'Failed')
@@ -36,6 +37,7 @@ export class ListEmailAddressesAPITransformer {
           createdAt: entity.createdAt,
           updatedAt: entity.updatedAt,
           lastReceivedAt: entity.lastReceivedAt,
+          folders: entity.folders,
         },
         cause:
           entity.status.type === 'Failed' ? entity.status.cause : new Error(),

@@ -1,4 +1,5 @@
 import { OwnerEntity } from '../common/ownerEntity'
+import { EmailFolderEntity } from '../folder/emailFolderEntity'
 import { EmailAddressEntity } from './emailAddressEntity'
 
 export type EmailAccountEntityStatus =
@@ -35,4 +36,5 @@ export interface EmailAccountEntity {
   updatedAt: Date
   lastReceivedAt: Date | undefined
   status: EmailAccountEntityStatus
+  folders: EmailFolderEntity[]
 }

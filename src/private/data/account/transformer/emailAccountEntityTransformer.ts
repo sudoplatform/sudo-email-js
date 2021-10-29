@@ -1,10 +1,12 @@
 import { EmailAddress } from '../../../../gen/graphqlTypes'
 import { EmailAccountEntity } from '../../../domain/entities/account/emailAccountEntity'
+import { EmailFolderEntityTransformer } from '../../folder/transformer/emailFolderEntityTransformer'
 import { EmailAddressEntityTransformer } from './emailAddressEntityTransformer'
 
 export class EmailAccountEntityTransformer {
   transformGraphQL(data: EmailAddress): EmailAccountEntity {
     const emailAddressTransformer = new EmailAddressEntityTransformer()
+    const emailFolderTransformer = new EmailFolderEntityTransformer()
     return {
       id: data.id,
       owner: data.owner,
@@ -22,6 +24,9 @@ export class EmailAccountEntityTransformer {
           ? undefined
           : new Date(data.lastReceivedAtEpochMs),
       status: { type: 'Completed' },
+      folders: data.folders.map((folder) =>
+        emailFolderTransformer.transformGraphQL(folder),
+      ),
     }
   }
 }

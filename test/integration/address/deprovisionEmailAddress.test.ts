@@ -75,7 +75,10 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
 
     const deprovisionedEmailAddress =
       await instanceUnderTest.deprovisionEmailAddress(emailAddress.id)
-    expect(deprovisionedEmailAddress).toStrictEqual(emailAddress)
+    expect(deprovisionedEmailAddress).toStrictEqual({
+      ...emailAddress,
+      folders: [],
+    })
 
     const remainKeys = await cryptoProvider.exportKeys()
     expect(remainKeys).not.toContain(toBeDeletedKeys)

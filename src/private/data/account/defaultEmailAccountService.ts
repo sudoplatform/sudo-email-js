@@ -104,7 +104,10 @@ export class DefaultEmailAccountService implements EmailAccountService {
     for (const keyId of result.keyIds) {
       await this.deviceKeyWorker.removeKey(keyId, KeyType.KeyPair)
     }
-    return this.emailAccountTransformer.transformGraphQL(result)
+    return this.emailAccountTransformer.transformGraphQL({
+      ...result,
+      folders: [],
+    })
   }
 
   async get(

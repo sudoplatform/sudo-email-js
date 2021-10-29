@@ -71,6 +71,10 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
     expect(emailAddress.owners[0].issuer).toStrictEqual(sudoIssuer)
     expect(emailAddress.alias).toBeDefined()
     expect(emailAddress.alias).toStrictEqual(emailAddressAlias)
+    expect(emailAddress.folders).toHaveLength(4)
+    expect(emailAddress.folders.map((f) => f.folderName)).toEqual(
+      expect.arrayContaining(['INBOX', 'SENT', 'OUTBOX', 'TRASH']),
+    )
   })
 
   it('throws an error when provisioning with an invalid local part', async () => {
@@ -96,7 +100,7 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
     )
     const deprovisionedAddress =
       await instanceUnderTest.deprovisionEmailAddress(emailAddress.id)
-    expect(deprovisionedAddress).toStrictEqual(emailAddress)
+    expect(deprovisionedAddress).toStrictEqual({ ...emailAddress, folders: [] })
     await expect(
       instanceUnderTest.provisionEmailAddress({
         emailAddress: emailAddress.emailAddress,

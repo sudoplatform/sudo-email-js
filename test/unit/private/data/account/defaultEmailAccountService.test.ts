@@ -160,15 +160,16 @@ describe('DefaultEmailAccountService Test Suite', () => {
   describe('delete', () => {
     it('calls appSync correctly', async () => {
       when(mockAppSync.deprovisionEmailAddress(anything())).thenResolve(
-        GraphQLDataFactory.emailAddress,
+        GraphQLDataFactory.emailAddressWithoutFolders,
       )
       const input: DeleteEmailAccountInput = {
         emailAddressId: EntityDataFactory.emailAccount.id,
       }
       const deprovisionedEmailAccount = await instanceUnderTest.delete(input)
-      expect(deprovisionedEmailAccount).toStrictEqual(
-        EntityDataFactory.emailAccount,
-      )
+      expect(deprovisionedEmailAccount).toStrictEqual({
+        ...EntityDataFactory.emailAccount,
+        folders: [],
+      })
       const [inputArgs] = capture(mockAppSync.deprovisionEmailAddress).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         emailAddressId: EntityDataFactory.emailAccount.id,

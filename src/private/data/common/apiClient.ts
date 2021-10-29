@@ -34,6 +34,7 @@ import {
   EmailAddress,
   EmailAddressConnection,
   EmailAddressFilterInput,
+  EmailAddressWithoutFoldersFragment,
   EmailFolderConnection,
   EmailFolderFilterInput,
   EmailMessageConnection,
@@ -104,7 +105,7 @@ export class ApiClient {
 
   public async deprovisionEmailAddress(
     input: DeprovisionEmailAddressInput,
-  ): Promise<EmailAddress> {
+  ): Promise<EmailAddressWithoutFoldersFragment> {
     const data = await this.performMutation<DeprovisionEmailAddressMutation>({
       mutation: DeprovisionEmailAddressDocument,
       variables: { input },

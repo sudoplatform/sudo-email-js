@@ -10,7 +10,7 @@ mutation ProvisionEmailAddress($input: ProvisionEmailAddressInput!) {
 
 mutation DeprovisionEmailAddress($input: DeprovisionEmailAddressInput!) {
   deprovisionEmailAddress(input: $input) {
-    ...EmailAddress
+    ...EmailAddressWithoutFolders
   }
 }
 

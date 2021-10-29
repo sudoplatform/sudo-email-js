@@ -14,6 +14,7 @@ export class EmailAddressAPITransformer {
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
       lastReceivedAt: entity.lastReceivedAt,
+      folders: entity.folders.map((folder) => ({ ...folder })),
     }
     if (entity.emailAddress.alias) {
       transformed.alias = entity.emailAddress.alias

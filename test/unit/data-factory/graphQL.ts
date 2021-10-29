@@ -2,6 +2,7 @@ import {
   AvailableAddresses,
   EmailAddress,
   EmailAddressConnection,
+  EmailAddressWithoutFoldersFragment,
   EmailFolder,
   EmailFolderConnection,
   EmailMessageConnection,
@@ -35,15 +36,31 @@ export class GraphQLDataFactory {
     issuer: 'testIssuer',
   }
 
-  static readonly emailAddress: EmailAddress = {
+  static readonly emailFolder: EmailFolder = {
     ...GraphQLDataFactory.commonProps,
     owners: [GraphQLDataFactory.owner],
-    identityId: 'testIdentityId',
-    keyRingId: 'testKeyRingId',
-    keyIds: [],
-    emailAddress: 'testie@unittest.org',
-    lastReceivedAtEpochMs: 3.0,
-    size: 0,
+    emailAddressId: 'testEmailAddressId',
+    folderName: 'testName',
+    size: 1,
+    unseenCount: 1,
+    ttl: undefined,
+  }
+
+  static readonly emailAddressWithoutFolders: EmailAddressWithoutFoldersFragment =
+    {
+      ...GraphQLDataFactory.commonProps,
+      owners: [GraphQLDataFactory.owner],
+      identityId: 'testIdentityId',
+      keyRingId: 'testKeyRingId',
+      keyIds: [],
+      emailAddress: 'testie@unittest.org',
+      lastReceivedAtEpochMs: 3.0,
+      size: 0,
+    }
+
+  static readonly emailAddress: EmailAddress = {
+    ...GraphQLDataFactory.emailAddressWithoutFolders,
+    folders: [GraphQLDataFactory.emailFolder],
   }
 
   static readonly emailAddressAlias: SealedAttribute = {
@@ -74,16 +91,6 @@ export class GraphQLDataFactory {
 
   static readonly supportedEmailDomains: SupportedDomains = {
     domains: ['testDomain'],
-  }
-
-  static readonly emailFolder: EmailFolder = {
-    ...GraphQLDataFactory.commonProps,
-    owners: [GraphQLDataFactory.owner],
-    emailAddressId: 'testEmailAddressId',
-    folderName: 'testName',
-    size: 1,
-    unseenCount: 1,
-    ttl: undefined,
   }
 
   static readonly emailFolderConnection: EmailFolderConnection = {

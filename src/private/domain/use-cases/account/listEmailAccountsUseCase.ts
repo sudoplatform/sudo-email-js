@@ -1,6 +1,7 @@
 import { CachePolicy, DefaultLogger } from '@sudoplatform/sudo-common'
 import { EmailAddressFilter } from '../../../../public/typings/filter'
 import { EmailAccountService } from '../../entities/account/emailAccountService'
+import { FolderUseCaseOutput } from '../shared/folder'
 
 /**
  * Input for `ListEmailAccountsUseCase` use case.
@@ -39,6 +40,7 @@ interface ListEmailAccountsUseCaseOutput {
     updatedAt: Date
     lastReceivedAt: Date | undefined
     status: { type: 'Completed' } | { type: 'Failed'; cause: Error }
+    folders: Array<FolderUseCaseOutput>
   }>
   nextToken?: string
 }

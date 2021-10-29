@@ -34,6 +34,16 @@ export class EntityDataFactory {
     alias: 'Some Alias',
   }
 
+  static readonly emailFolder: EmailFolderEntity = {
+    ...EntityDataFactory.commonProps,
+    owners: [EntityDataFactory.owner],
+    emailAddressId: 'testEmailAddressId',
+    folderName: 'testName',
+    size: 1,
+    unseenCount: 1,
+    ttl: undefined,
+  }
+
   static readonly emailAccount: EmailAccountEntity = {
     ...EntityDataFactory.commonProps,
     owners: [EntityDataFactory.owner],
@@ -43,6 +53,7 @@ export class EntityDataFactory {
     size: 0,
     lastReceivedAt: new Date(3.0),
     status: { type: 'Completed' },
+    folders: [EntityDataFactory.emailFolder],
   }
 
   static readonly emailAccountWithEmailAddressAlias: EmailAccountEntity = {
@@ -54,20 +65,11 @@ export class EntityDataFactory {
     size: 0,
     lastReceivedAt: new Date(3.0),
     status: { type: 'Completed' },
+    folders: [EntityDataFactory.emailFolder],
   }
 
   static readonly emailDomain: EmailDomainEntity = {
     domain: 'testDomain',
-  }
-
-  static readonly emailFolder: EmailFolderEntity = {
-    ...EntityDataFactory.commonProps,
-    owners: [EntityDataFactory.owner],
-    emailAddressId: 'testEmailAddressId',
-    folderName: 'testName',
-    size: 1,
-    unseenCount: 1,
-    ttl: undefined,
   }
 
   static readonly emailMessage: EmailMessageEntity = {

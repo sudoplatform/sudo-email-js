@@ -21,15 +21,6 @@ export class APIDataFactory {
     issuer: 'testIssuer',
   }
 
-  static readonly emailAddress: EmailAddress = {
-    ...APIDataFactory.commonProps,
-    lastReceivedAt: new Date(3.0),
-    owners: [APIDataFactory.owner],
-    identityId: 'testIdentityId',
-    emailAddress: 'testie@unittest.org',
-    size: 0,
-  }
-
   static readonly emailFolder: EmailFolder = {
     ...APIDataFactory.commonProps,
     owners: [APIDataFactory.owner],
@@ -38,6 +29,16 @@ export class APIDataFactory {
     size: 1,
     unseenCount: 1,
     ttl: undefined,
+  }
+
+  static readonly emailAddress: EmailAddress = {
+    ...APIDataFactory.commonProps,
+    lastReceivedAt: new Date(3.0),
+    owners: [APIDataFactory.owner],
+    identityId: 'testIdentityId',
+    emailAddress: 'testie@unittest.org',
+    size: 0,
+    folders: [{ ...APIDataFactory.emailFolder }],
   }
 
   static readonly emailFolderListOutput: ListOutput<EmailFolder> = {

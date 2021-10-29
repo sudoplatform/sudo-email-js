@@ -1,6 +1,6 @@
 # import SealedAttribute from "sealedAttribute.graphql"
 
-fragment EmailAddress on EmailAddress {
+fragment EmailAddressWithoutFolders on EmailAddress {
   id
   owner
   owners {
@@ -18,5 +18,12 @@ fragment EmailAddress on EmailAddress {
   size
   alias {
     ...SealedAttribute
+  }
+}
+
+fragment EmailAddress on EmailAddress {
+  ...EmailAddressWithoutFolders
+  folders {
+    ...EmailFolder
   }
 }

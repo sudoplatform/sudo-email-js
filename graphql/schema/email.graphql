@@ -258,6 +258,7 @@ type EmailAddress {
   emailAddress: String!
   size: Float!
   alias: SealedAttribute
+  folders: [EmailFolder!]!
 }
 
 type EmailFolder {

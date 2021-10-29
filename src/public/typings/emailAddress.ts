@@ -1,4 +1,5 @@
 import { Owner } from '@sudoplatform/sudo-common'
+import { EmailFolder } from './emailFolder'
 
 /**
  * The Sudo Platform SDK representation of an email address provisioned by the email service.
@@ -30,6 +31,7 @@ export interface EmailAddressProps {
   createdAt: Date
   updatedAt: Date
   lastReceivedAt: Date | undefined
+  folders: EmailFolder[]
 }
 export interface SealedEmailAddressProps {
   alias?: string
