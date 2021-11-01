@@ -8,6 +8,7 @@ import {
   DefaultSudoEntitlementsClient,
   SudoEntitlementsClient,
 } from '@sudoplatform/sudo-entitlements'
+import { DefaultSudoEntitlementsAdminClient } from '@sudoplatform/sudo-entitlements-admin'
 import {
   DefaultSudoProfilesClient,
   FetchOption,
@@ -44,9 +45,16 @@ export const sudoIssuer = 'sudoplatform.sudoservice'
 const configFile = 'config/sudoplatformconfig.json'
 const registerKeyFile = 'config/register_key.private'
 const registerKeyIdFile = 'config/register_key.id'
-
 const registerKey = fs.readFileSync(registerKeyFile).toString()
 const registerKeyId = fs.readFileSync(registerKeyIdFile).toString().trim()
+
+const adminApiKeyFile = 'config/admin_api_key.secret'
+let adminApiKey: string | undefined
+if (fs.existsSync(adminApiKeyFile)) {
+  adminApiKey = fs.readFileSync(adminApiKeyFile).toString().trim()
+} else {
+  adminApiKey = process.env.ADMIN_API_KEY?.trim()
+}
 
 const testAuthenticationProvider = new TESTAuthenticationProvider(
   'email-js-test',
@@ -69,6 +77,10 @@ export const setupEmailClient = async (
   log: DefaultLogger,
 ): Promise<SetupEmailClientOutput> => {
   try {
+    if (!adminApiKey) {
+      throw new Error('ADMIN_API_KEY must be set')
+    }
+
     DefaultConfigurationManager.getInstance().setConfig(
       fs.readFileSync(configFile).toString(),
     )
@@ -81,10 +93,13 @@ export const setupEmailClient = async (
     await userClient.signInWithKey()
     const apiClientManager =
       DefaultApiClientManager.getInstance().setAuthClient(userClient)
-    const apiClient = new ApiClient(apiClientManager)
     const entitlementsClient = new DefaultSudoEntitlementsClient(userClient)
+    const entitlementsAdminClient = new DefaultSudoEntitlementsAdminClient(
+      adminApiKey,
+    )
     await new EntitlementsBuilder()
       .setEntitlementsClient(entitlementsClient)
+      .setEntitlementsAdminClient(entitlementsAdminClient)
       .setLogger(log)
       .apply()
     const profilesClient = new DefaultSudoProfilesClient({
@@ -102,6 +117,7 @@ export const setupEmailClient = async (
       'SudoEmailClient',
       'com.sudoplatform.appservicename',
     )
+    const apiClient = new ApiClient(apiClientManager)
     const options: PrivateSudoEmailClientOptions = {
       sudoUserClient: userClient,
       sudoProfilesClient: profilesClient,

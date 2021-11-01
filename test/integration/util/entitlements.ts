@@ -1,9 +1,18 @@
 import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { SudoEntitlementsClient } from '@sudoplatform/sudo-entitlements'
+import {
+  Entitlement,
+  SudoEntitlementsAdminClient,
+} from '@sudoplatform/sudo-entitlements-admin'
 import waitForExpect from 'wait-for-expect'
+
+export const sudoMaxPerUser = 'sudoplatform.sudo.max'
 
 export const emailStorageMaxPerEmailAddressEntitlement =
   'sudoplatform.email.emailStorageMaxPerEmailAddress'
+
+export const emailStorageMaxPerUserEntitlement =
+  'sudoplatform.email.emailStorageMaxPerUser'
 
 export const emailAddressMaxPerSudoEntitlement =
   'sudoplatform.email.emailAddressMaxPerSudo'
@@ -19,12 +28,67 @@ export const emailMessageReceiveUserEntitledEntitlement =
 
 export class EntitlementsBuilder {
   private entitlementsClient?: SudoEntitlementsClient
+  private entitlementsAdminClient?: SudoEntitlementsAdminClient
+  private entitlements: Entitlement[] = [
+    {
+      name: sudoMaxPerUser,
+      value: 3,
+    },
+    {
+      name: emailAddressUserEntitledEntitlement,
+      description: 'Test User Entitlement',
+      value: 1,
+    },
+    {
+      name: emailAddressMaxPerSudoEntitlement,
+      description: 'Test Max Addresses Entitlement',
+      value: 3,
+    },
+    {
+      name: emailStorageMaxPerEmailAddressEntitlement,
+      description: 'Test Max Storage Per Email Address Entitlement',
+      value: 500000,
+    },
+    {
+      name: emailStorageMaxPerUserEntitlement,
+      description: 'Test Max Storage Per User Entitlement',
+      value: 500000,
+    },
+    {
+      name: emailMessageSendUserEntitledEntitlement,
+      description: 'Test Email Message Send User Entitlement',
+      value: 1,
+    },
+    {
+      name: emailMessageReceiveUserEntitledEntitlement,
+      description: 'Test Email Message Receive User Entitlement',
+      value: 1,
+    },
+  ]
+
   private log: Logger = new DefaultLogger(this.constructor.name)
 
   setEntitlementsClient(
     entitlementsClient: SudoEntitlementsClient,
   ): EntitlementsBuilder {
     this.entitlementsClient = entitlementsClient
+    return this
+  }
+
+  setEntitlementsAdminClient(
+    entitlementsAdminClient: SudoEntitlementsAdminClient,
+  ): EntitlementsBuilder {
+    this.entitlementsAdminClient = entitlementsAdminClient
+    return this
+  }
+
+  setEntitlement(entitlement: Entitlement): EntitlementsBuilder {
+    const existing = this.entitlements.find((e) => e.name === entitlement.name)
+    if (existing) {
+      existing.value = entitlement.value
+    } else {
+      this.entitlements.push(entitlement)
+    }
     return this
   }
 
@@ -37,12 +101,44 @@ export class EntitlementsBuilder {
     if (!this.entitlementsClient) {
       throw 'Entitlements client not set'
     }
-    const redeemedEntitlements =
-      await this.entitlementsClient.redeemEntitlements()
-    this.log?.debug('redeemed entitlements', { redeemedEntitlements })
-    this.log?.debug('redeemed entitlements details', {
+    if (!this.entitlementsAdminClient) {
+      throw 'Entitlements admin client not set'
+    }
+
+    this.log.info('Retrieving users external ID')
+    const externalId = await this.entitlementsClient
+      .getExternalId()
+      .catch((err) => {
+        this.log.error('Cannot retrieve external ID', { err })
+        throw err
+      })
+
+    this.log.info('Applying entitlements')
+    const appliedEntitlements = await this.entitlementsAdminClient
+      .applyEntitlementsToUser(externalId, this.entitlements)
+      .catch((err) => {
+        this.log.error('Cannot apply entitlements', { err })
+        throw err
+      })
+
+    this.log.debug('applied entitlements to user', {
+      externalId,
+      entitlements: appliedEntitlements,
+    })
+
+    this.log.info('Redeeming entitlements')
+    const redeemedEntitlements = await this.entitlementsClient
+      .redeemEntitlements()
+      .catch((err) => {
+        this.log.error('Cannot redeem entitlements', { err })
+        throw err
+      })
+
+    this.log.debug('redeemed entitlements', { redeemedEntitlements })
+    this.log.debug('redeemed entitlements details', {
       redeemedDetails: redeemedEntitlements.entitlements,
     })
+
     await waitForExpect(
       async () => {
         const emailEntitlements =

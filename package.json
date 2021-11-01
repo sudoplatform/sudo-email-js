@@ -69,6 +69,7 @@
     "@sudoplatform/sudo-common": "^5.10.1",
     "@sudoplatform/sudo-common-internal": "^1.0.0",
     "@sudoplatform/sudo-entitlements": "^10.0.2",
+    "@sudoplatform/sudo-entitlements-admin": "^8.1.0",
     "@sudoplatform/sudo-profiles": "^11.0.0",
     "@sudoplatform/sudo-user": "^9.1.1",
     "@sudoplatform/sudo-web-crypto-provider": "^2.1.0",

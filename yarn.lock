@@ -2310,6 +2310,23 @@
     fflate "^0.7.1"
     graphql "^15.6.1"
 
+"@sudoplatform/sudo-entitlements-admin@^8.1.0":
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/@sudoplatform/sudo-entitlements-admin/-/sudo-entitlements-admin-8.1.0.tgz#0896becf773f633a4ff1b4801c466bd8b6a2b7de"
+  integrity sha512-mxE/ciJchtK0RkZX4Yzd+MGScH1l4IMbOhROgUQbDM3oPIiNxy4sUahKZx/VKrTJr/ojIPLuFs53idaAIu6RiQ==
+  dependencies:
+    "@graphql-typed-document-node/core" "^3.1.0"
+    apollo-cache-inmemory "^1.6.6"
+    aws-appsync "4.0.3"
+    aws-appsync-auth-link "2.0.5"
+    fp-ts "^2.11.5"
+    graphql "^15.6.1"
+    io-ts "^2.2.16"
+    monocle-ts "^2.3.11"
+    newtype-ts "^0.3.4"
+    redux "^4.0.5"
+    uuid "^8.3.2"
+
 "@sudoplatform/sudo-entitlements@^10.0.2":
   version "10.0.2"
   resolved "https://registry.yarnpkg.com/@sudoplatform/sudo-entitlements/-/sudo-entitlements-10.0.2.tgz#51c259bd7fdbabcf620104e9e4ab50c836dd4d6d"
@@ -2999,6 +3016,15 @@ auto-bind@~4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/auto-bind/-/auto-bind-4.0.0.tgz#e3589fc6c2da8f7ca43ba9f84fa52a744fc997fb"
   integrity sha512-Hdw8qdNiqdJ8LqT0iK0sVzkFbzg6fhnQqqfWhBDxcHZvU75+B+ayzTy8x+k5Ix0Y92XOhOUlx74ps+bA6BeYMQ==
+
+aws-appsync-auth-link@2.0.5:
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/aws-appsync-auth-link/-/aws-appsync-auth-link-2.0.5.tgz#e368786dcac0c8eb99309ca68fb7920b6146dab8"
+  integrity sha512-CTxoVjxtX6Oip1QZ/v97dpTOp2anFddIZcs96ZJurGS94jIz3YzTGHC1YanGaptUrTKCfrG3PL67+SG45IKTYA==
+  dependencies:
+    apollo-link "1.2.5"
+    aws-sdk "^2.814.0"
+    debug "2.6.9"
 
 aws-appsync-auth-link@^2.0.3, aws-appsync-auth-link@^2.0.6:
   version "2.0.6"
@@ -6867,6 +6893,13 @@ redux@^3.7.2:
     lodash-es "^4.2.1"
     loose-envify "^1.1.0"
     symbol-observable "^1.0.3"
+
+redux@^4.0.5:
+  version "4.1.2"
+  resolved "https://registry.yarnpkg.com/redux/-/redux-4.1.2.tgz#140f35426d99bb4729af760afcf79eaaac407104"
+  integrity sha512-SH8PglcebESbd/shgf6mii6EIoRM0zrQyjcuQ+ojmfxjTtE0z9Y8pa62iA/OJ58qjP6j27uyW4kUF4jl/jd6sw==
+  dependencies:
+    "@babel/runtime" "^7.9.2"
 
 redux@^4.1.1:
   version "4.1.1"
