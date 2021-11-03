@@ -5,6 +5,7 @@ import { v4 } from 'uuid'
 import {
   AddressNotFoundError,
   BatchOperationResultStatus,
+  DraftEmailMessageMetadata,
   EmailAddress,
   SudoEmailClient,
 } from '../../../src'
@@ -23,7 +24,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
   let sudoOwnershipProofToken: string
 
   let emailAddress: EmailAddress
-  let draftId: string
+  let draftMetadata: DraftEmailMessageMetadata
 
   beforeEach(async () => {
     const result = await setupEmailClient(log)
@@ -44,7 +45,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
       replyTo: [],
       body: 'test draft message',
     })
-    draftId = await instanceUnderTest.createDraftEmailMessage({
+    draftMetadata = await instanceUnderTest.createDraftEmailMessage({
       rfc822Data: str2ab(draftEmailMessageString),
       senderEmailAddressId: emailAddress.id,
     })
@@ -53,7 +54,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
   afterEach(async () => {
     await instanceUnderTest.deleteDraftEmailMessages({
       emailAddressId: emailAddress.id,
-      ids: [draftId],
+      ids: [draftMetadata.id],
     })
     await teardown(
       { emailAddresses: [emailAddress], sudos: [sudo] },
@@ -65,7 +66,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
     await expect(
       instanceUnderTest.deleteDraftEmailMessages({
         emailAddressId: emailAddress.id,
-        ids: [draftId],
+        ids: [draftMetadata.id],
       }),
     ).resolves.toStrictEqual({ status: BatchOperationResultStatus.Success })
   })
@@ -73,7 +74,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
     await expect(
       instanceUnderTest.deleteDraftEmailMessages({
         emailAddressId: v4(),
-        ids: [draftId],
+        ids: [draftMetadata.id],
       }),
     ).rejects.toThrow(AddressNotFoundError)
   })
@@ -89,10 +90,11 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
     await expect(
       instanceUnderTest.deleteDraftEmailMessages({
         emailAddressId: emailAddress.id,
-        ids: ['non-existent', draftId],
+        ids: ['non-existent', draftMetadata.id],
       }),
     ).resolves.toStrictEqual({ status: BatchOperationResultStatus.Success })
   })
+
   it('deletes multiple drafts in one operation successfully', async () => {
     const draftStrings = _.range(9).map(() =>
       createEmailMessageRfc822String({
@@ -104,7 +106,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
         body: 'test draft message',
       }),
     )
-    const draftIds = await Promise.all(
+    const draftMetadata = await Promise.all(
       draftStrings.map(
         async (ds) =>
           await instanceUnderTest.createDraftEmailMessage({
@@ -116,7 +118,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
     await expect(
       instanceUnderTest.deleteDraftEmailMessages({
         emailAddressId: emailAddress.id,
-        ids: draftIds.concat([draftId]),
+        ids: draftMetadata.map((m) => m.id),
       }),
     ).resolves.toStrictEqual({ status: BatchOperationResultStatus.Success })
   })

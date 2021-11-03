@@ -44,7 +44,7 @@ import { ProvisionEmailAccountUseCase } from '../private/domain/use-cases/accoun
 import { UpdateEmailAccountMetadataUseCase } from '../private/domain/use-cases/account/updateEmailAccountMetadataUseCase'
 import { DeleteDraftEmailMessagesUseCase } from '../private/domain/use-cases/draft/deleteDraftEmailMessagesUseCase'
 import { GetDraftEmailMessageUseCase } from '../private/domain/use-cases/draft/getDraftEmailMessageUseCase'
-import { ListDraftEmailMessagesUseCase } from '../private/domain/use-cases/draft/listDraftEmailMessagesUseCase'
+import { ListDraftEmailMessageMetadataUseCase } from '../private/domain/use-cases/draft/listDraftEmailMessageMetadataUseCase'
 import { SaveDraftEmailMessageUseCase } from '../private/domain/use-cases/draft/saveDraftEmailMessageUseCase'
 import { UpdateDraftEmailMessageUseCase } from '../private/domain/use-cases/draft/updateDraftEmailMessageUseCase'
 import { ListEmailFoldersForEmailAddressIdUseCase } from '../private/domain/use-cases/folder/listEmailFoldersForEmailAddressIdUseCase'
@@ -58,6 +58,7 @@ import { UpdateEmailMessagesUseCase } from '../private/domain/use-cases/message/
 import { BatchOperationResult, BatchOperationResultStatus } from './typings'
 import { DateRange } from './typings/dateRange'
 import { DraftEmailMessage } from './typings/draftEmailMessage'
+import { DraftEmailMessageMetadata } from './typings/draftEmailMessageMetadata'
 import { EmailAddress } from './typings/emailAddress'
 import { EmailFolder } from './typings/emailFolder'
 import { EmailMessage } from './typings/emailMessage'
@@ -425,22 +426,26 @@ export interface SudoEmailClient {
    * Create a draft email message in RFC 6854 (supersedes RFC 822)(https://tools.ietf.org/html/rfc6854) format.
    *
    * @param {CreateDraftEmailMessageInput} input Parameters used to create a draft email message.
-   * @returns {string} The identifier of the saved draft email message.
+   * @returns {DraftEmailMessageMetadata} The metadata of the saved draft email message.
    *
    * @throws {@link AddressNotFoundError}
    */
-  createDraftEmailMessage(input: CreateDraftEmailMessageInput): Promise<string>
+  createDraftEmailMessage(
+    input: CreateDraftEmailMessageInput,
+  ): Promise<DraftEmailMessageMetadata>
 
   /**
    * Update a draft email message in RFC 6854 (supersedes RFC 822)(https://tools.ietf.org/html/rfc6854) format.
    *
    * @param {UpdateDraftEmailMessageInput} input Parameters used to update a draft email message.
-   * @returns {string} The identifier of the updated draft email message.
+   * @returns {DraftEmailMessageMetadata} The metadata of the updated draft email message.
    *
    * @throws {@link AddressNotFoundError}
    * @throws {@link MessageNotFoundError}
    */
-  updateDraftEmailMessage(input: UpdateDraftEmailMessageInput): Promise<string>
+  updateDraftEmailMessage(
+    input: UpdateDraftEmailMessageInput,
+  ): Promise<DraftEmailMessageMetadata>
 
   /**
    * Delete the draft email messages identified by the list of ids.
@@ -482,6 +487,17 @@ export interface SudoEmailClient {
    *  can be found.
    */
   listDraftEmailMessageIds(emailAddressId: string): Promise<string[]>
+
+  /**
+   * Get the list of draft email message metadata for the specified email address.
+   *
+   * @param {string} emailAddressId The identifier of the email address associated with the draft email messages.
+   * @returns {DraftEmailMessageMetadata[]} An array of draft email message metadata or an empty array if no matching draft email messages
+   *  can be found.
+   */
+  listDraftEmailMessageMetadata(
+    emailAddressId: string,
+  ): Promise<DraftEmailMessageMetadata[]>
 
   /**
    * Send an email message using RFC 6854 (supersedes RFC 822)(https://tools.ietf.org/html/rfc6854) data.
@@ -896,7 +912,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async createDraftEmailMessage({
     rfc822Data,
     senderEmailAddressId,
-  }: CreateDraftEmailMessageInput): Promise<string> {
+  }: CreateDraftEmailMessageInput): Promise<DraftEmailMessageMetadata> {
     this.log.debug(this.createDraftEmailMessage.name, {
       rfc822Data,
       senderEmailAddressId,
@@ -912,7 +928,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     id,
     rfc822Data,
     senderEmailAddressId,
-  }: UpdateDraftEmailMessageInput): Promise<string> {
+  }: UpdateDraftEmailMessageInput): Promise<DraftEmailMessageMetadata> {
     this.log.debug(this.updateDraftEmailMessage.name, {
       id,
       rfc822Data,
@@ -964,9 +980,25 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     emailAddressId: string,
   ): Promise<string[]> {
     this.log.debug(this.listDraftEmailMessageIds.name, { emailAddressId })
-    const useCase = new ListDraftEmailMessagesUseCase(this.emailMessageService)
-    const { ids } = await useCase.execute({ emailAddressId })
-    return ids
+    const useCase = new ListDraftEmailMessageMetadataUseCase(
+      this.emailMessageService,
+    )
+    const { metadata } = await useCase.execute({ emailAddressId })
+
+    return metadata.map((m) => m.id)
+  }
+
+  public async listDraftEmailMessageMetadata(
+    emailAddressId: string,
+  ): Promise<DraftEmailMessageMetadata[]> {
+    this.log.debug(this.listDraftEmailMessageMetadata.name, { emailAddressId })
+
+    const useCase = new ListDraftEmailMessageMetadataUseCase(
+      this.emailMessageService,
+    )
+    const { metadata } = await useCase.execute({ emailAddressId })
+
+    return metadata
   }
 
   public async getEmailMessage({

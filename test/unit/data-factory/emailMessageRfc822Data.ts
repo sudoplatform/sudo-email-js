@@ -4,6 +4,7 @@ import { S3ClientDownloadOutput } from '../../../src/private/data/common/s3Clien
 
 export class EmailMessageRfc822DataFactory {
   static readonly s3ClientDownloadOutput: S3ClientDownloadOutput = {
+    lastModified: new Date(),
     body: 'downloadedRfc822Data',
     metadata: { 'key-id': 'testKeyId', algorithm: 'testAlgorithm' },
   }

@@ -9,7 +9,10 @@ import {
 } from 'ts-mockito'
 import { v4 } from 'uuid'
 import { EmailMessageService } from '../../../../../../src/private/domain/entities/message/emailMessageService'
-import { GetDraftEmailMessageUseCase } from '../../../../../../src/private/domain/use-cases/draft/getDraftEmailMessageUseCase'
+import {
+  GetDraftEmailMessageUseCase,
+  GetDraftEmailMessageUseCaseOutput,
+} from '../../../../../../src/private/domain/use-cases/draft/getDraftEmailMessageUseCase'
 import { str2ab } from '../../../../../util/buffer'
 
 describe('GetDraftEmailMessageUseCase Test Suite', () => {
@@ -21,8 +24,12 @@ describe('GetDraftEmailMessageUseCase Test Suite', () => {
     instanceUnderTest = new GetDraftEmailMessageUseCase(
       instance(mockEmailMessageService),
     )
-    when(mockEmailMessageService.getDraft(anything())).thenResolve(
-      str2ab('test'),
+    when(mockEmailMessageService.getDraft(anything())).thenCall((id) =>
+      Promise.resolve({
+        id,
+        rfc822Data: str2ab('test'),
+        updatedAt: new Date(),
+      }),
     )
   })
 
@@ -46,11 +53,19 @@ describe('GetDraftEmailMessageUseCase Test Suite', () => {
     const id = v4()
     const emailAddressId = v4()
     const rfc822Data = str2ab(v4())
-    when(mockEmailMessageService.getDraft(anything())).thenResolve(rfc822Data)
+    const updatedAt = new Date()
+
+    when(mockEmailMessageService.getDraft(anything())).thenResolve({
+      id,
+      updatedAt,
+      rfc822Data,
+    })
+
     await expect(
       instanceUnderTest.execute({ id, emailAddressId }),
-    ).resolves.toStrictEqual({
+    ).resolves.toEqual<GetDraftEmailMessageUseCaseOutput>({
       id,
+      updatedAt,
       rfc822Data,
     })
   })

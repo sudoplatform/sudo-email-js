@@ -33,7 +33,10 @@ describe('SaveDraftEmailMessageUseCase Test Suite', () => {
     when(mockEmailAccountService.get(anything())).thenResolve(
       EntityDataFactory.emailAccount,
     )
-    when(mockEmailMessageService.saveDraft(anything())).thenResolve('')
+    when(mockEmailMessageService.saveDraft(anything())).thenResolve({
+      id: '',
+      updatedAt: new Date(),
+    })
   })
 
   it('calls EmailMessageService.saveDraft with inputs', async () => {
@@ -50,20 +53,28 @@ describe('SaveDraftEmailMessageUseCase Test Suite', () => {
 
   it('returns the expected output id', async () => {
     const id = v4()
+    const updatedAt = new Date()
     const rfc822Data = str2ab(v4())
-    when(mockEmailMessageService.saveDraft(anything())).thenResolve(id)
+    when(mockEmailMessageService.saveDraft(anything())).thenResolve({
+      id,
+      updatedAt,
+    })
     await expect(
       instanceUnderTest.execute({ senderEmailAddressId: id, rfc822Data }),
-    ).resolves.toStrictEqual(id)
+    ).resolves.toStrictEqual({ id, updatedAt })
   })
 
   it('throws AddressNotFound for non-existent email address input', async () => {
     const id = v4()
+    const updatedAt = new Date()
     const rfc822Data = str2ab(v4())
     when(mockEmailAccountService.get(anything())).thenThrow(
       new AddressNotFoundError(),
     )
-    when(mockEmailMessageService.saveDraft(anything())).thenResolve(id)
+    when(mockEmailMessageService.saveDraft(anything())).thenResolve({
+      id,
+      updatedAt,
+    })
     await expect(
       instanceUnderTest.execute({ senderEmailAddressId: id, rfc822Data }),
     ).rejects.toThrow(new AddressNotFoundError())

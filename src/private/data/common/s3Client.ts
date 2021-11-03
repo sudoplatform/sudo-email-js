@@ -20,6 +20,11 @@ interface S3ClientUploadInput {
   metadata?: Record<string, string>
 }
 
+export interface S3ClientUploadOutput {
+  key: string
+  lastModified: Date
+}
+
 interface S3ClientDownloadInput {
   bucket: string
   region: string
@@ -27,8 +32,14 @@ interface S3ClientDownloadInput {
 }
 // exported for testing
 export interface S3ClientDownloadOutput {
+  lastModified: Date
   body: string
   metadata?: Record<string, string>
+}
+
+export interface S3ClientListOutput {
+  key: string
+  lastModified: Date
 }
 
 interface S3ClientDeleteInput {
@@ -116,7 +127,7 @@ export class S3Client {
     key,
     body,
     metadata,
-  }: S3ClientUploadInput): Promise<string> {
+  }: S3ClientUploadInput): Promise<S3ClientUploadOutput> {
     this.log.debug('S3 upload', { bucket, region, key, body, metadata })
     const awsS3 = await this.getAWSS3({ bucket, region })
     const managedUpload = new S3.ManagedUpload({
@@ -128,14 +139,38 @@ export class S3Client {
         Metadata: metadata,
       },
     })
+
     managedUpload.on('httpUploadProgress', (progress) => {
       this.log.debug('httpUploadProgress', { progress })
     })
     try {
       const response = await managedUpload.promise()
       this.log.debug('Upload response', { response })
-      return response.Key
-    } catch (err: unknown) {
+      const key = response.Key
+      let lastModified: Date | undefined
+      try {
+        const head = await awsS3
+          .headObject({ Bucket: bucket, Key: response.Key })
+          .promise()
+        if (!head.LastModified) {
+          const message = 'No last modified timestamp in head response'
+          this.log.error(message, {
+            head,
+          })
+          throw new S3UploadError(message)
+        }
+        lastModified = head.LastModified
+      } catch (err) {
+        const error = err as Error
+        this.log.error('Unable to get HEAD of just created object', { error })
+        throw new S3UploadError(error.message)
+      }
+
+      return {
+        key,
+        lastModified,
+      }
+    } catch (err) {
       const error = err as Error
       if (error.message) {
         throw new S3UploadError(error.message)
@@ -155,6 +190,14 @@ export class S3Client {
       const response = await awsS3
         .getObject({ Bucket: bucket, Key: key })
         .promise()
+      if (!response.LastModified) {
+        throw new S3DownloadError({
+          msg: 'No last modified timestamp in response',
+          key,
+        })
+      }
+      const lastModified = response.LastModified
+
       let body: string
       if (!response.Body) {
         throw new S3DownloadError({ msg: 'Did not find file to download', key })
@@ -166,12 +209,15 @@ export class S3Client {
       } else {
         throw new S3DownloadError({ msg: 'Object type is not supported', key })
       }
-      if (response.Metadata) {
-        return { body, metadata: response.Metadata }
-      } else {
-        return { body }
+
+      const result: S3ClientDownloadOutput = {
+        lastModified,
+        body,
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (response.Metadata) {
+        result.metadata = response.Metadata
+      }
+      return result
     } catch (err: unknown) {
       const error = err as Error & { code?: string | number }
       if (typeof error.code === 'string') {
@@ -194,7 +240,11 @@ export class S3Client {
     }
   }
 
-  async list({ bucket, region, prefix }: S3ClientListInput): Promise<string[]> {
+  async list({
+    bucket,
+    region,
+    prefix,
+  }: S3ClientListInput): Promise<S3ClientListOutput[]> {
     const awsS3 = await this.getAWSS3({ bucket, region })
     const result = await awsS3
       .listObjectsV2({
@@ -203,7 +253,27 @@ export class S3Client {
       })
       .promise()
 
-    return _(result.Contents).flatMap().flatMap<string>('Key').value()
+    return _(result.Contents)
+      .flatMap()
+      .filter((value) => {
+        if (value.Key && value.LastModified && value.Size !== undefined)
+          return true
+        this.log.error('listed S3 item has missing Key or LastModified', {
+          bucket,
+          prefix,
+          value,
+        })
+        return false
+      })
+      .map((value) => ({
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        key: value.Key!,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        lastModified: value.LastModified!,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        size: value.Size!,
+      }))
+      .value()
   }
 
   async delete({ bucket, region, key }: S3ClientDeleteInput): Promise<string> {

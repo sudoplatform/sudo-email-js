@@ -2,6 +2,8 @@ import { CachePolicy } from '@sudoplatform/sudo-common'
 import { DateRange } from '../../../../public/typings/dateRange'
 import { EmailMessageFilter } from '../../../../public/typings/filter'
 import { SortOrder } from '../../../../public/typings/sortOrder'
+import { DraftEmailMessageEntity } from './draftEmailMessageEntity'
+import { DraftEmailMessageMetadataEntity } from './draftEmailMessageMetadataEntity'
 import { EmailMessageEntity } from './emailMessageEntity'
 import { UpdateEmailMessagesStatus } from './updateEmailMessagesStatus'
 
@@ -37,7 +39,7 @@ export interface GetDraftInput {
  * @interface ListDraftsInput
  * @property {string} emailAddressId Identifier of the email address associated with the draft email messages.
  */
-export interface ListDraftsInput {
+export interface ListDraftsMetadataInput {
   emailAddressId: string
 }
 
@@ -212,7 +214,7 @@ export interface EmailMessageService {
    * @param {SaveDraftInput} input Parameters used to save a draft email message.
    * @returns {string} Identifier of the draft email message that was saved.
    */
-  saveDraft(input: SaveDraftInput): Promise<string>
+  saveDraft(input: SaveDraftInput): Promise<DraftEmailMessageMetadataEntity>
 
   /**
    * Delete a single draft email message.
@@ -228,15 +230,17 @@ export interface EmailMessageService {
    * @param {GetDraftInput} input Parameters used to get a draft email message.
    * @returns {ArrayBuffer | undefined} The draft email message, or undefined if not found.
    */
-  getDraft(input: GetDraftInput): Promise<ArrayBuffer | undefined>
+  getDraft(input: GetDraftInput): Promise<DraftEmailMessageEntity | undefined>
 
   /**
    * List draft email message identifiers.
    *
-   * @param {ListDraftsInput} input Parameters used to list draft email messages.
+   * @param {ListDraftsMetadataInput} input Parameters used to list draft email messages.
    * @returns {string[]} A list of draft email message identifiers. Can be empty if no draft messages found.
    */
-  listDrafts(input: ListDraftsInput): Promise<string[]>
+  listDraftsMetadata(
+    input: ListDraftsMetadataInput,
+  ): Promise<DraftEmailMessageMetadataEntity[]>
 
   /**
    * Send an email message.

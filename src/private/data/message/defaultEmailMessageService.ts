@@ -11,6 +11,8 @@ import { PathReporter } from 'io-ts/PathReporter'
 import * as uuid from 'uuid'
 import { InternalError } from '../../..'
 import { DateRangeInput } from '../../../gen/graphqlTypes'
+import { DraftEmailMessageEntity } from '../../domain/entities/message/draftEmailMessageEntity'
+import { DraftEmailMessageMetadataEntity } from '../../domain/entities/message/draftEmailMessageMetadataEntity'
 import { EmailMessageEntity } from '../../domain/entities/message/emailMessageEntity'
 import {
   DeleteDraftInput,
@@ -20,7 +22,7 @@ import {
   GetDraftInput,
   GetEmailMessageInput,
   GetEmailMessageRfc822DataInput,
-  ListDraftsInput,
+  ListDraftsMetadataInput,
   ListEmailMessagesForEmailAddressIdInput,
   ListEmailMessagesForEmailAddressIdOutput,
   ListEmailMessagesForEmailFolderIdInput,
@@ -90,7 +92,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     rfc822Data,
     senderEmailAddressId,
     id,
-  }: SaveDraftInput): Promise<string> {
+  }: SaveDraftInput): Promise<DraftEmailMessageMetadataEntity> {
     let keyId = await this.deviceKeyWorker.getCurrentSymmetricKeyId()
     if (!keyId) {
       keyId = await this.deviceKeyWorker.generateCurrentSymmetricKey()
@@ -113,14 +115,18 @@ export class DefaultEmailMessageService implements EmailMessageService {
         this.Defaults.SymmetricKeyEncryptionAlgorithm,
     }
     this.log.debug(this.saveDraft.name, { metadata })
-    await this.s3Client.upload({
+    const draft = await this.s3Client.upload({
       bucket: this.emailServiceConfig.bucket,
       region: this.emailServiceConfig.region,
       key,
       body: sealed,
       metadata,
     })
-    return draftId
+
+    return {
+      id: draftId,
+      updatedAt: draft.lastModified,
+    }
   }
 
   async deleteDraft({ id, emailAddressId }: DeleteDraftInput): Promise<string> {
@@ -144,18 +150,21 @@ export class DefaultEmailMessageService implements EmailMessageService {
   async getDraft({
     id,
     emailAddressId,
-  }: GetDraftInput): Promise<ArrayBuffer | undefined> {
+  }: GetDraftInput): Promise<DraftEmailMessageEntity | undefined> {
     const keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
     const key = `${keyPrefix}/draft/${id}`
     let sealedString: string
     let keyId: string | undefined
     let algorithm: string | undefined
+    let updatedAt: Date
+
     try {
       const result = await this.s3Client.download({
         bucket: this.emailServiceConfig.bucket,
         region: this.emailServiceConfig.region,
         key,
       })
+      updatedAt = result.lastModified
       sealedString = result.body
       // Metadata are stored as lower case, so snake case is used.
       keyId = result.metadata?.[this.Defaults.Metadata.KeyIdName]
@@ -182,10 +191,16 @@ export class DefaultEmailMessageService implements EmailMessageService {
       keyId,
       encrypted: sealedString,
     })
-    return new TextEncoder().encode(unsealedData)
+    return {
+      id: id,
+      updatedAt,
+      rfc822Data: new TextEncoder().encode(unsealedData),
+    }
   }
 
-  async listDrafts({ emailAddressId }: ListDraftsInput): Promise<string[]> {
+  async listDraftsMetadata({
+    emailAddressId,
+  }: ListDraftsMetadataInput): Promise<DraftEmailMessageMetadataEntity[]> {
     const keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
     const draftPrefix = `${keyPrefix}/draft/`
     const result = await this.s3Client.list({
@@ -193,7 +208,10 @@ export class DefaultEmailMessageService implements EmailMessageService {
       region: this.emailServiceConfig.region,
       prefix: draftPrefix,
     })
-    return result.map((r) => r.replace(draftPrefix, ''))
+    return result.map((r) => ({
+      id: r.key.replace(draftPrefix, ''),
+      updatedAt: r.lastModified,
+    }))
   }
 
   async sendMessage({

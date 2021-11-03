@@ -17,6 +17,11 @@ interface UpdateDraftEmailMessageUseCaseInput {
   senderEmailAddressId: string
 }
 
+interface UpdateDraftEmailMessageUseCaseOutput {
+  id: string
+  updatedAt: Date
+}
+
 /**
  * Application business logic for updating a draft email message.
  */
@@ -32,7 +37,7 @@ export class UpdateDraftEmailMessageUseCase {
     id,
     rfc822Data,
     senderEmailAddressId,
-  }: UpdateDraftEmailMessageUseCaseInput): Promise<string> {
+  }: UpdateDraftEmailMessageUseCaseInput): Promise<UpdateDraftEmailMessageUseCaseOutput> {
     this.log.debug(this.constructor.name, {
       id,
       rfc822Data,
@@ -52,11 +57,12 @@ export class UpdateDraftEmailMessageUseCase {
     if (!draft) {
       throw new MessageNotFoundError()
     }
-    const draftId = await this.emailMessageService.saveDraft({
+    const metadata = await this.emailMessageService.saveDraft({
       rfc822Data,
       senderEmailAddressId,
       id,
     })
-    return draftId
+
+    return metadata
   }
 }

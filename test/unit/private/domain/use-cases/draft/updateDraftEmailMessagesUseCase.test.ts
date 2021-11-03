@@ -29,10 +29,18 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
     when(mockEmailAccountService.get(anything())).thenResolve(
       EntityDataFactory.emailAccount,
     )
-    when(mockEmailMessageService.getDraft(anything())).thenResolve(
-      str2ab('test'),
+    when(mockEmailMessageService.getDraft(anything())).thenCall((id) =>
+      Promise.resolve({
+        id,
+        updatedAt: new Date(),
+        rfc822Data: str2ab('test'),
+      }),
     )
-    when(mockEmailMessageService.saveDraft(anything())).thenResolve('')
+
+    when(mockEmailMessageService.saveDraft(anything())).thenResolve({
+      id: '',
+      updatedAt: new Date(),
+    })
   })
 
   describe('execute', () => {
@@ -40,12 +48,24 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
       const id = v4()
       const rfc822Data = str2ab(v4())
       const senderEmailAddressId = v4()
-      when(mockEmailMessageService.getDraft(anything())).thenResolve(rfc822Data)
-      when(mockEmailMessageService.saveDraft(anything())).thenResolve(id)
+      const updatedAt = new Date()
+
+      when(mockEmailMessageService.getDraft(anything())).thenResolve({
+        id,
+        updatedAt: new Date(),
+        rfc822Data,
+      })
+
+      when(mockEmailMessageService.saveDraft(anything())).thenResolve({
+        id,
+        updatedAt,
+      })
+
       await expect(
         instanceUnderTest.execute({ id, senderEmailAddressId, rfc822Data }),
-      ).resolves.toStrictEqual(id)
+      ).resolves.toStrictEqual({ id, updatedAt })
     })
+
     it('throws AddressNotFound error for non-existent email address input', async () => {
       const id = v4()
       const rfc822Data = str2ab(v4())
@@ -58,6 +78,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
       ).rejects.toThrow(new AddressNotFoundError())
       verify(mockEmailAccountService.get(anything())).once()
     })
+
     it('throws MessageNotFound error for non-existent draft email message input', async () => {
       const id = v4()
       const rfc822Data = str2ab(v4())

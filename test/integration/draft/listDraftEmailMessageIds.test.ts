@@ -42,19 +42,21 @@ describe('SudoEmailClient listDraftEmailMessageIds Test Suite', () => {
         }),
       )
       .map((s) => encoder.encode(s))
+
     draftData = await Promise.all(
       draftDataArrays.map(async (d) => {
-        const id = await instanceUnderTest.createDraftEmailMessage({
+        const metadata = await instanceUnderTest.createDraftEmailMessage({
           senderEmailAddressId: emailAddress.id,
           rfc822Data: d,
         })
-        return { id, rfc822Data: d }
+        return { ...metadata, rfc822Data: d }
       }),
     )
   })
 
   afterEach(async () => {
     const draftIds = draftData.map(({ id }) => id)
+
     await instanceUnderTest.deleteDraftEmailMessages({
       ids: draftIds,
       emailAddressId: emailAddress.id,
@@ -71,5 +73,20 @@ describe('SudoEmailClient listDraftEmailMessageIds Test Suite', () => {
     await expect(
       instanceUnderTest.listDraftEmailMessageIds(emailAddress.id),
     ).resolves.toStrictEqual(expect.arrayContaining(draftIds))
+  })
+
+  it('lists multiple draft metadata across an email address', async () => {
+    const metadata = await instanceUnderTest.listDraftEmailMessageMetadata(
+      emailAddress.id,
+    )
+
+    metadata.forEach((m) => {
+      expect(draftData).toContainEqual({
+        ...m,
+        id: m.id,
+        updatedAt: m.updatedAt,
+        rfc822Data: expect.anything(),
+      })
+    })
   })
 })

@@ -3,11 +3,13 @@ import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { v4 } from 'uuid'
 import {
   AddressNotFoundError,
+  DraftEmailMessageMetadata,
   EmailAddress,
   MessageNotFoundError,
   SudoEmailClient,
 } from '../../../src'
 import { str2ab } from '../../util/buffer'
+import { delay } from '../../util/delay'
 import { createEmailMessageRfc822String } from '../util/createEmailMessage'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
@@ -22,7 +24,7 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
   let sudoOwnershipProofToken: string
 
   let emailAddress: EmailAddress
-  let draftIds: string[] = []
+  let draftMetadata: DraftEmailMessageMetadata[] = []
 
   beforeEach(async () => {
     const result = await setupEmailClient(log)
@@ -38,11 +40,12 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
   })
 
   afterEach(async () => {
+    const draftIds = draftMetadata.map((m) => m.id)
     await instanceUnderTest.deleteDraftEmailMessages({
       ids: draftIds,
       emailAddressId: emailAddress.id,
     })
-    draftIds = []
+    draftMetadata = []
     await teardown(
       { emailAddresses: [emailAddress], sudos: [sudo] },
       { emailClient: instanceUnderTest, profilesClient },
@@ -58,11 +61,14 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
       replyTo: [],
       body: 'Hello, World',
     })
-    const draftId = await instanceUnderTest.createDraftEmailMessage({
+    const metadata = await instanceUnderTest.createDraftEmailMessage({
       rfc822Data: str2ab(draftString),
       senderEmailAddressId: emailAddress.id,
     })
-    draftIds.push(draftId)
+
+    await delay(1000)
+
+    draftMetadata.push(metadata)
     const updatedDraftString = createEmailMessageRfc822String({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [],
@@ -71,21 +77,27 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
       replyTo: [],
       body: 'Goodbye, World',
     })
-    const updatedDraftId = await instanceUnderTest.updateDraftEmailMessage({
-      id: draftId,
+    const updatedMetadata = await instanceUnderTest.updateDraftEmailMessage({
+      id: metadata.id,
       rfc822Data: str2ab(updatedDraftString),
       senderEmailAddressId: emailAddress.id,
     })
+    expect(updatedMetadata.id).toEqual(metadata.id)
+    expect(updatedMetadata.updatedAt.getTime()).toBeGreaterThan(
+      metadata.updatedAt.getTime(),
+    )
+
     await expect(
       instanceUnderTest.getDraftEmailMessage({
-        id: updatedDraftId,
+        id: metadata.id,
         emailAddressId: emailAddress.id,
       }),
     ).resolves.toStrictEqual({
-      id: updatedDraftId,
+      ...updatedMetadata,
       rfc822Data: new TextEncoder().encode(updatedDraftString),
     })
   })
+
   it('throws an error if a non-existent draft message id is given', async () => {
     const draftString = createEmailMessageRfc822String({
       from: [{ emailAddress: emailAddress.emailAddress }],
@@ -112,11 +124,12 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
       replyTo: [],
       body: 'Hello, World',
     })
-    const draftId = await instanceUnderTest.createDraftEmailMessage({
+    const metadata = await instanceUnderTest.createDraftEmailMessage({
       rfc822Data: str2ab(draftString),
       senderEmailAddressId: emailAddress.id,
     })
-    draftIds.push(draftId)
+    draftMetadata.push(metadata)
+
     const updatedDraftString = createEmailMessageRfc822String({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [],
@@ -127,7 +140,7 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
     })
     await expect(
       instanceUnderTest.updateDraftEmailMessage({
-        id: draftId,
+        id: metadata.id,
         rfc822Data: str2ab(updatedDraftString),
         senderEmailAddressId: v4(),
       }),

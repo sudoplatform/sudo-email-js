@@ -24,11 +24,14 @@ import {
 } from '../../../../../src/private/data/common/deviceKeyWorker'
 import {
   S3Client,
+  S3ClientListOutput,
   S3DeleteError,
   S3DownloadError,
   S3Error,
 } from '../../../../../src/private/data/common/s3Client'
 import { DefaultEmailMessageService } from '../../../../../src/private/data/message/defaultEmailMessageService'
+import { DraftEmailMessageEntity } from '../../../../../src/private/domain/entities/message/draftEmailMessageEntity'
+import { DraftEmailMessageMetadataEntity } from '../../../../../src/private/domain/entities/message/draftEmailMessageMetadataEntity'
 import { EmailMessageServiceDeleteDraftError } from '../../../../../src/private/domain/entities/message/emailMessageService'
 import { SortOrder } from '../../../../../src/public/typings/sortOrder'
 import { ab2str, str2ab } from '../../../../util/buffer'
@@ -77,7 +80,10 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
   describe('sendMessage', () => {
     beforeEach(() => {
-      when(mockS3Client.upload(anything())).thenResolve(v4())
+      when(mockS3Client.upload(anything())).thenResolve({
+        key: v4(),
+        lastModified: new Date(),
+      })
     })
 
     it('calls s3 upload', async () => {
@@ -503,7 +509,10 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
   describe('saveDraft', () => {
     it('generates a current symmetric key if one does not exist', async () => {
-      when(mockS3Client.upload(anything())).thenResolve('')
+      when(mockS3Client.upload(anything())).thenResolve({
+        key: '',
+        lastModified: new Date(),
+      })
       when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve(
         undefined,
       )
@@ -536,7 +545,10 @@ describe('DefaultEmailMessageService Test Suite', () => {
     })
 
     it('calls the deviceKeyWorker to seal the input rfc with current key', async () => {
-      when(mockS3Client.upload(anything())).thenResolve('')
+      when(mockS3Client.upload(anything())).thenResolve({
+        key: '',
+        lastModified: new Date(),
+      })
       const rfc822Data = str2ab(v4())
       const senderEmailAddressId = v4()
       await instanceUnderTest.saveDraft({
@@ -553,7 +565,10 @@ describe('DefaultEmailMessageService Test Suite', () => {
     })
 
     it('uses the non-transient bucket to upload to s3', async () => {
-      when(mockS3Client.upload(anything())).thenResolve('')
+      when(mockS3Client.upload(anything())).thenResolve({
+        key: '',
+        lastModified: new Date(),
+      })
       const rfc822Data = str2ab(v4())
       const senderEmailAddressId = v4()
       await instanceUnderTest.saveDraft({
@@ -593,7 +608,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
       )
       await expect(
         instanceUnderTest.getDraft(DraftEmailMessageDataFactory.getDraftInput),
-      ).resolves.toStrictEqual(new TextEncoder().encode(unsealedDraft))
+      ).resolves.toEqual<DraftEmailMessageEntity>({
+        id: DraftEmailMessageDataFactory.getDraftInput.id,
+        updatedAt:
+          DraftEmailMessageDataFactory.s3ClientDownloadOutput.lastModified,
+        rfc822Data: new TextEncoder().encode(unsealedDraft),
+      })
     })
 
     it('returns undefined if s3 download throws NoSuchKey', async () => {
@@ -624,6 +644,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
     it('throws error if no s3 keyId in metadata', async () => {
       when(mockS3Client.download(anything())).thenResolve({
+        lastModified: new Date(),
         body: DraftEmailMessageDataFactory.s3ClientDownloadOutput.body,
       })
       await expect(
@@ -635,6 +656,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
     it('throws error if no algorithm in metadta', async () => {
       when(mockS3Client.download(anything())).thenResolve({
+        lastModified: new Date(),
         body: DraftEmailMessageDataFactory.s3ClientDownloadOutput.body,
         metadata: { 'key-id': 'testKeyId' },
       })
@@ -648,11 +670,22 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
   describe('listDrafts', () => {
     it('lists drafts successfully', async () => {
-      const drafts = ['draft1', 'draft2', 'draft3']
+      const drafts: S3ClientListOutput[] = [
+        { key: 'draft1', lastModified: new Date(1) },
+        { key: 'draft2', lastModified: new Date(2) },
+        { key: 'draft3', lastModified: new Date(3) },
+      ]
       when(mockS3Client.list(anything())).thenResolve(drafts)
       await expect(
-        instanceUnderTest.listDrafts({ emailAddressId: 'emailAddressId' }),
-      ).resolves.toStrictEqual(drafts)
+        instanceUnderTest.listDraftsMetadata({
+          emailAddressId: 'emailAddressId',
+        }),
+      ).resolves.toEqual<DraftEmailMessageMetadataEntity[]>(
+        drafts.map((s3) => ({
+          id: s3.key,
+          updatedAt: s3.lastModified,
+        })),
+      )
     })
 
     it('removes key prefix correctly', async () => {
@@ -664,12 +697,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
         3,
       )
       when(mockS3Client.list(anything())).thenResolve(drafts)
-      const listOfDrafts = await instanceUnderTest.listDrafts({
+      const listOfDrafts = await instanceUnderTest.listDraftsMetadata({
         emailAddressId: 'emailAddressId',
       })
 
       listOfDrafts.forEach((draft, i) => {
-        expect(draft).toStrictEqual(`${draftEmailMessage}${i}`)
+        expect(draft.id).toStrictEqual(`${draftEmailMessage}${i}`)
       })
     })
   })

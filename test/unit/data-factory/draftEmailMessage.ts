@@ -1,9 +1,13 @@
 import { IdentityServiceConfig } from '@sudoplatform/sudo-user/lib/sdk'
 import _ from 'lodash'
-import { S3ClientDownloadOutput } from '../../../src/private/data/common/s3Client'
+import {
+  S3ClientDownloadOutput,
+  S3ClientListOutput,
+} from '../../../src/private/data/common/s3Client'
 
 export class DraftEmailMessageDataFactory {
   static readonly s3ClientDownloadOutput: S3ClientDownloadOutput = {
+    lastModified: new Date(),
     body: 'downloadedDraft',
     metadata: { 'key-id': 'testKeyId', algorithm: 'testAlgorithm' },
   }
@@ -30,10 +34,12 @@ export class DraftEmailMessageDataFactory {
     emailAddressId: string,
     draftEmailMessage: string,
     numberOfDrafts: number,
-  ): string[] {
+  ): S3ClientListOutput[] {
+    const now = Date.now()
     const prefix = `${identityId}/email/${emailAddressId}/draft`
-    return _.range(numberOfDrafts).map(
-      (i) => `${prefix}/${draftEmailMessage}${i}`,
-    )
+    return _.range(numberOfDrafts).map((i) => ({
+      key: `${prefix}/${draftEmailMessage}${i}`,
+      lastModified: new Date(now + i),
+    }))
   }
 }

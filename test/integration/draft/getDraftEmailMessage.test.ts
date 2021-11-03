@@ -3,6 +3,7 @@ import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { v4 } from 'uuid'
 import {
   AddressNotFoundError,
+  DraftEmailMessageMetadata,
   EmailAddress,
   SudoEmailClient,
 } from '../../../src'
@@ -25,7 +26,7 @@ describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
 
   let emailAddress: EmailAddress
   let draftContents: Uint8Array
-  let draftId: string
+  let draftMetadata: DraftEmailMessageMetadata
 
   beforeEach(async () => {
     const result = await setupEmailClient(log)
@@ -47,7 +48,7 @@ describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
       body: 'test draft message',
     })
     draftContents = new TextEncoder().encode(draftEmailMessageString)
-    draftId = await instanceUnderTest.createDraftEmailMessage({
+    draftMetadata = await instanceUnderTest.createDraftEmailMessage({
       rfc822Data: draftContents,
       senderEmailAddressId: emailAddress.id,
     })
@@ -56,7 +57,7 @@ describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
   afterEach(async () => {
     await instanceUnderTest
       .deleteDraftEmailMessages({
-        ids: [draftId],
+        ids: [draftMetadata.id],
         emailAddressId: emailAddress.id,
       })
       .catch((err) => {
@@ -72,13 +73,17 @@ describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
   })
 
   it('returns successful draft', async () => {
-    await expect(
-      instanceUnderTest.getDraftEmailMessage({
-        id: draftId,
-        emailAddressId: emailAddress.id,
-      }),
-    ).resolves.toStrictEqual({ id: draftId, rfc822Data: draftContents })
+    const draft = await instanceUnderTest.getDraftEmailMessage({
+      id: draftMetadata.id,
+      emailAddressId: emailAddress.id,
+    })
+
+    expect(draft).toEqual({
+      ...draftMetadata,
+      rfc822Data: draftContents,
+    })
   })
+
   it('returns undefined if message id cannot be found', async () => {
     await expect(
       instanceUnderTest.getDraftEmailMessage({
@@ -87,10 +92,11 @@ describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
       }),
     ).resolves.toBeUndefined()
   })
+
   it('returns undefined if email address id cannot be found', async () => {
     await expect(
       instanceUnderTest.getDraftEmailMessage({
-        id: draftId,
+        id: draftMetadata.id,
         emailAddressId: v4(),
       }),
     ).resolves.toBeUndefined()

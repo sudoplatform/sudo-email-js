@@ -15,6 +15,10 @@ interface SaveDraftEmailMessageUseCaseInput {
   senderEmailAddressId: string
 }
 
+interface SaveDraftEmailMessageUseCaseOutput {
+  id: string
+  updatedAt: Date
+}
 /**
  * Application business logic for saving a draft email message.
  */
@@ -29,7 +33,7 @@ export class SaveDraftEmailMessageUseCase {
   async execute({
     rfc822Data,
     senderEmailAddressId,
-  }: SaveDraftEmailMessageUseCaseInput): Promise<string> {
+  }: SaveDraftEmailMessageUseCaseInput): Promise<SaveDraftEmailMessageUseCaseOutput> {
     this.log.debug(this.constructor.name, { rfc822Data, senderEmailAddressId })
     const account = await this.emailAccountService.get({
       id: senderEmailAddressId,
@@ -38,10 +42,10 @@ export class SaveDraftEmailMessageUseCase {
     if (!account) {
       throw new AddressNotFoundError()
     }
-    const id = await this.emailMessageService.saveDraft({
+    const metadata = await this.emailMessageService.saveDraft({
       rfc822Data,
       senderEmailAddressId,
     })
-    return id
+    return metadata
   }
 }
