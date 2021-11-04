@@ -14,6 +14,7 @@ import {
   IdentityServiceConfig,
 } from '@sudoplatform/sudo-user/lib/sdk'
 import { WebSudoCryptoProvider } from '@sudoplatform/sudo-web-crypto-provider'
+import { Mutex } from 'async-mutex'
 import { CognitoIdentityCredentials } from 'aws-sdk/lib/core'
 import { DefaultEmailAccountService } from '../private/data/account/defaultEmailAccountService'
 import { EmailAddressAPITransformer } from '../private/data/account/transformer/emailAddressAPITransformer'
@@ -638,6 +639,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   private readonly identityServiceConfig: IdentityServiceConfig
   private readonly emailServiceConfig: EmailServiceConfig
   private readonly log = new DefaultLogger(this.constructor.name)
+  private readonly mutex = new Mutex()
 
   public constructor(opts: SudoEmailClientOptions) {
     const privateOptions = opts as PrivateSudoEmailClientOptions
@@ -680,25 +682,31 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async provisionEmailAddress(
     input: ProvisionEmailAddressInput,
   ): Promise<EmailAddress> {
-    const useCase = new ProvisionEmailAccountUseCase(this.emailAccountService)
-    const entityTransformer = new EmailAddressEntityTransformer()
-    const emailAddressEntity = entityTransformer.transform(
-      input.emailAddress,
-      input.alias,
-    )
-    const result = await useCase.execute({
-      emailAddressEntity,
-      ownershipProofToken: input.ownershipProofToken,
+    return await this.mutex.runExclusive(async () => {
+      const useCase = new ProvisionEmailAccountUseCase(this.emailAccountService)
+      const entityTransformer = new EmailAddressEntityTransformer()
+      const emailAddressEntity = entityTransformer.transform(
+        input.emailAddress,
+        input.alias,
+      )
+      const result = await useCase.execute({
+        emailAddressEntity,
+        ownershipProofToken: input.ownershipProofToken,
+      })
+      const apiTransformer = new EmailAddressAPITransformer()
+      return apiTransformer.transformEntity(result)
     })
-    const apiTransformer = new EmailAddressAPITransformer()
-    return apiTransformer.transformEntity(result)
   }
 
   public async deprovisionEmailAddress(id: string): Promise<EmailAddress> {
-    const useCase = new DeprovisionEmailAccountUseCase(this.emailAccountService)
-    const result = await useCase.execute(id)
-    const transformer = new EmailAddressAPITransformer()
-    return transformer.transformEntity(result)
+    return await this.mutex.runExclusive(async () => {
+      const useCase = new DeprovisionEmailAccountUseCase(
+        this.emailAccountService,
+      )
+      const result = await useCase.execute(id)
+      const transformer = new EmailAddressAPITransformer()
+      return transformer.transformEntity(result)
+    })
   }
 
   public async updateEmailAddressMetadata({
@@ -817,17 +825,19 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     id,
     cachePolicy,
   }: GetEmailAddressInput): Promise<EmailAddress | undefined> {
-    this.log.debug(this.getEmailAddress.name, {
-      id,
-      cachePolicy,
+    return await this.mutex.runExclusive(async () => {
+      this.log.debug(this.getEmailAddress.name, {
+        id,
+        cachePolicy,
+      })
+      const useCase = new GetEmailAccountUseCase(this.emailAccountService)
+      const result = await useCase.execute({
+        id,
+        cachePolicy,
+      })
+      const transformer = new EmailAddressAPITransformer()
+      return result ? transformer.transformEntity(result) : undefined
     })
-    const useCase = new GetEmailAccountUseCase(this.emailAccountService)
-    const result = await useCase.execute({
-      id,
-      cachePolicy,
-    })
-    const transformer = new EmailAddressAPITransformer()
-    return result ? transformer.transformEntity(result) : undefined
   }
 
   public async listEmailAddresses({
@@ -836,24 +846,25 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     nextToken,
     filter,
   }: ListEmailAddressesInput): Promise<ListEmailAddressesResult> {
-    this.log.debug(this.listEmailAddresses.name, {
-      limit,
-      nextToken,
-      cachePolicy,
-      filter,
-    })
-    const useCase = new ListEmailAccountsUseCase(this.emailAccountService)
-    const { emailAccounts, nextToken: resultNextToken } = await useCase.execute(
-      {
+    return await this.mutex.runExclusive(async () => {
+      this.log.debug(this.listEmailAddresses.name, {
         limit,
         nextToken,
         cachePolicy,
         filter,
-      },
-    )
-    const transformer = new ListEmailAddressesAPITransformer()
-    const result = transformer.transform(emailAccounts, resultNextToken)
-    return result
+      })
+      const useCase = new ListEmailAccountsUseCase(this.emailAccountService)
+      const { emailAccounts, nextToken: resultNextToken } =
+        await useCase.execute({
+          limit,
+          nextToken,
+          cachePolicy,
+          filter,
+        })
+      const transformer = new ListEmailAddressesAPITransformer()
+      const result = transformer.transform(emailAccounts, resultNextToken)
+      return result
+    })
   }
 
   public async listEmailAddressesForSudoId({
@@ -863,22 +874,23 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     nextToken,
     filter,
   }: ListEmailAddressesForSudoIdInput): Promise<ListEmailAddressesResult> {
-    this.log.debug(this.listEmailAddressesForSudoId.name, {
-      sudoId,
-      cachePolicy,
-      limit,
-      nextToken,
-      filter,
+    return await this.mutex.runExclusive(async () => {
+      this.log.debug(this.listEmailAddressesForSudoId.name, {
+        sudoId,
+        cachePolicy,
+        limit,
+        nextToken,
+        filter,
+      })
+      const useCase = new ListEmailAccountsForSudoIdUseCase(
+        this.emailAccountService,
+      )
+      const { emailAccounts, nextToken: resultNextToken } =
+        await useCase.execute({ sudoId, cachePolicy, filter, limit, nextToken })
+      const transformer = new ListEmailAddressesAPITransformer()
+      const result = transformer.transform(emailAccounts, resultNextToken)
+      return result
     })
-    const useCase = new ListEmailAccountsForSudoIdUseCase(
-      this.emailAccountService,
-    )
-    const { emailAccounts, nextToken: resultNextToken } = await useCase.execute(
-      { sudoId, cachePolicy, filter, limit, nextToken },
-    )
-    const transformer = new ListEmailAddressesAPITransformer()
-    const result = transformer.transform(emailAccounts, resultNextToken)
-    return result
   }
 
   public async listEmailFoldersForEmailAddressId({
