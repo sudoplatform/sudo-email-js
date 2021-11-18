@@ -1,5 +1,6 @@
 import { CachePolicy, DefaultLogger } from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
+import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { EmailAddress, SudoEmailClient } from '../../../src'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
@@ -12,6 +13,7 @@ describe('SudoEmailClient UpdateEmailAddressMetadata Test Suite', () => {
 
   let instanceUnderTest: SudoEmailClient
   let profilesClient: SudoProfilesClient
+  let userClient: SudoUserClient
   let sudo: Sudo
   let sudoOwnershipProofToken: string
 
@@ -19,6 +21,7 @@ describe('SudoEmailClient UpdateEmailAddressMetadata Test Suite', () => {
     const result = await setupEmailClient(log)
     instanceUnderTest = result.emailClient
     profilesClient = result.profilesClient
+    userClient = result.userClient
     sudo = result.sudo
     sudoOwnershipProofToken = result.ownershipProofToken
 
@@ -31,7 +34,7 @@ describe('SudoEmailClient UpdateEmailAddressMetadata Test Suite', () => {
   afterAll(async () => {
     await teardown(
       { emailAddresses: [emailAddress], sudos: [sudo] },
-      { emailClient: instanceUnderTest, profilesClient },
+      { emailClient: instanceUnderTest, profilesClient, userClient },
     )
   })
 

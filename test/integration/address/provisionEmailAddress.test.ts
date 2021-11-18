@@ -50,7 +50,7 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
   afterEach(async () => {
     await teardown(
       { emailAddresses, sudos: [sudo] },
-      { emailClient: instanceUnderTest, profilesClient },
+      { emailClient: instanceUnderTest, profilesClient, userClient },
     )
     emailAddresses = []
   })

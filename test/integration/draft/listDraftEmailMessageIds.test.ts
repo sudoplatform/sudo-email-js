@@ -1,5 +1,6 @@
 import { DefaultLogger } from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
+import { SudoUserClient } from '@sudoplatform/sudo-user'
 import _ from 'lodash'
 import { DraftEmailMessage, EmailAddress, SudoEmailClient } from '../../../src'
 import { createEmailMessageRfc822String } from '../util/createEmailMessage'
@@ -12,6 +13,7 @@ describe('SudoEmailClient listDraftEmailMessageIds Test Suite', () => {
 
   let instanceUnderTest: SudoEmailClient
   let profilesClient: SudoProfilesClient
+  let userClient: SudoUserClient
   let sudo: Sudo
   let sudoOwnershipProofToken: string
 
@@ -22,6 +24,7 @@ describe('SudoEmailClient listDraftEmailMessageIds Test Suite', () => {
     const result = await setupEmailClient(log)
     instanceUnderTest = result.emailClient
     profilesClient = result.profilesClient
+    userClient = result.userClient
     sudo = result.sudo
     sudoOwnershipProofToken = result.ownershipProofToken
 
@@ -64,7 +67,7 @@ describe('SudoEmailClient listDraftEmailMessageIds Test Suite', () => {
     draftData = []
     await teardown(
       { emailAddresses: [emailAddress], sudos: [sudo] },
-      { emailClient: instanceUnderTest, profilesClient },
+      { emailClient: instanceUnderTest, profilesClient, userClient },
     )
   })
 

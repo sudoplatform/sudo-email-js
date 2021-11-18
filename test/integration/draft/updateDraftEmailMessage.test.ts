@@ -1,5 +1,6 @@
 import { DefaultLogger } from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
+import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { v4 } from 'uuid'
 import {
   AddressNotFoundError,
@@ -20,6 +21,7 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
 
   let instanceUnderTest: SudoEmailClient
   let profilesClient: SudoProfilesClient
+  let userClient: SudoUserClient
   let sudo: Sudo
   let sudoOwnershipProofToken: string
 
@@ -30,6 +32,7 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
     const result = await setupEmailClient(log)
     instanceUnderTest = result.emailClient
     profilesClient = result.profilesClient
+    userClient = result.userClient
     sudo = result.sudo
     sudoOwnershipProofToken = result.ownershipProofToken
 
@@ -48,7 +51,7 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
     draftMetadata = []
     await teardown(
       { emailAddresses: [emailAddress], sudos: [sudo] },
-      { emailClient: instanceUnderTest, profilesClient },
+      { emailClient: instanceUnderTest, profilesClient, userClient },
     )
   })
 

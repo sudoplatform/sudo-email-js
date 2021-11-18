@@ -1,5 +1,6 @@
 import { DefaultLogger } from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
+import { SudoUserClient } from '@sudoplatform/sudo-user'
 import _ from 'lodash'
 import { v4 } from 'uuid'
 import {
@@ -10,6 +11,7 @@ import {
   SudoEmailClient,
 } from '../../../src'
 import { str2ab } from '../../util/buffer'
+import { delay } from '../../util/delay'
 import { createEmailMessageRfc822String } from '../util/createEmailMessage'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
@@ -20,6 +22,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
 
   let instanceUnderTest: SudoEmailClient
   let profilesClient: SudoProfilesClient
+  let userClient: SudoUserClient
   let sudo: Sudo
   let sudoOwnershipProofToken: string
 
@@ -30,6 +33,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
     const result = await setupEmailClient(log)
     instanceUnderTest = result.emailClient
     profilesClient = result.profilesClient
+    userClient = result.userClient
     sudo = result.sudo
     sudoOwnershipProofToken = result.ownershipProofToken
 
@@ -58,8 +62,9 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
     })
     await teardown(
       { emailAddresses: [emailAddress], sudos: [sudo] },
-      { emailClient: instanceUnderTest, profilesClient },
+      { emailClient: instanceUnderTest, profilesClient, userClient },
     )
+    await delay(1000)
   })
 
   it('deletes a draft successfully', async () => {

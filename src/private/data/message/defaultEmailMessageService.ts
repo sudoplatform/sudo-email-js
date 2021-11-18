@@ -440,10 +440,14 @@ export class DefaultEmailMessageService implements EmailMessageService {
   private async constructS3KeyForEmailAddressId(
     emailAddressId: string,
   ): Promise<string> {
+    const idToken = await this.userClient.getIdToken()
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const identityId = await this.userClient.getUserClaim(
       this.Defaults.IdentityIdClaimName,
     )
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    this.log.debug('ID info', { idToken, identityId })
+
     if (typeof identityId !== 'string' || !identityId.length) {
       throw new InternalError('Unable to find identity id')
     }

@@ -10,9 +10,12 @@ export const provisionEmailAddress = async (
   const localPart = options?.localPart ?? generateSafeLocalPart()
   let address = options?.address
   if (!address) {
-    const [domain] = await emailClient.getSupportedEmailDomains(
-      CachePolicy.RemoteOnly,
-    )
+    const [domain] = await emailClient
+      .getSupportedEmailDomains(CachePolicy.RemoteOnly)
+      .catch((err) => {
+        console.log('Error getting supported email domains', { err })
+        throw err
+      })
     address = `${localPart}@${domain}`
   }
   return await emailClient.provisionEmailAddress({

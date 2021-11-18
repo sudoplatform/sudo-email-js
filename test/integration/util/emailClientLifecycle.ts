@@ -2,7 +2,9 @@ import { DefaultApiClientManager } from '@sudoplatform/sudo-api-client'
 import {
   DefaultConfigurationManager,
   DefaultLogger,
+  DefaultSudoKeyManager,
   SudoCryptoProvider,
+  SudoKeyManager,
 } from '@sudoplatform/sudo-common'
 import {
   DefaultSudoEntitlementsClient,
@@ -63,14 +65,23 @@ const testAuthenticationProvider = new TESTAuthenticationProvider(
   { 'custom:entitlementsSet': 'email-integration-test' },
 )
 
-interface SetupEmailClientOutput {
+export interface SetupEmailClientOutput {
   sudo: Sudo
   ownershipProofToken: string
   emailClient: SudoEmailClient
   userClient: SudoUserClient
   entitlementsClient: SudoEntitlementsClient
   profilesClient: SudoProfilesClient
-  cryptoProvider: SudoCryptoProvider
+  keyManagers: {
+    user: SudoKeyManager
+    profiles: SudoKeyManager
+    email: SudoKeyManager
+  }
+  cryptoProviders: {
+    user: SudoCryptoProvider
+    profiles: SudoCryptoProvider
+    email: SudoCryptoProvider
+  }
 }
 
 export const setupEmailClient = async (
@@ -81,16 +92,47 @@ export const setupEmailClient = async (
       throw new Error('ADMIN_API_KEY must be set')
     }
 
+    const userCryptoProvider = new WebSudoCryptoProvider(
+      'SudoUserClient',
+      'com.sudoplatform.appservicename',
+    )
+    const userKeyManager = new DefaultSudoKeyManager(userCryptoProvider)
+
+    const profilesCryptoProvider = new WebSudoCryptoProvider(
+      'SudoProfileClient',
+      'com.sudoplatform.appservicename',
+    )
+    const profilesKeyManager = new DefaultSudoKeyManager(profilesCryptoProvider)
+
+    const emailCryptoProvider = new WebSudoCryptoProvider(
+      'SudoEmailClient',
+      'com.sudoplatform.appservicename',
+    )
+    const emailKeyManager = new DefaultSudoKeyManager(emailCryptoProvider)
+
     DefaultConfigurationManager.getInstance().setConfig(
       fs.readFileSync(configFile).toString(),
     )
-    const userClient = new DefaultSudoUserClient({ logger: log })
-    const username = await userClient.registerWithAuthenticationProvider(
-      testAuthenticationProvider,
-      `email-JS-SDK-${v4()}`,
-    )
+    const userClient = new DefaultSudoUserClient({
+      logger: log,
+      sudoKeyManager: userKeyManager,
+    })
+
+    const username = await userClient
+      .registerWithAuthenticationProvider(
+        testAuthenticationProvider,
+        `email-JS-SDK-${v4()}`,
+      )
+      .catch((err) => {
+        console.log('Error regisering user', { err })
+        throw err
+      })
     log.debug('username', { username })
-    await userClient.signInWithKey()
+    await userClient.signInWithKey().catch((err) => {
+      console.log('Error signing in', { err })
+      throw err
+    })
+
     const apiClientManager =
       DefaultApiClientManager.getInstance().setAuthClient(userClient)
     const entitlementsClient = new DefaultSudoEntitlementsClient(userClient)
@@ -102,30 +144,43 @@ export const setupEmailClient = async (
       .setEntitlementsAdminClient(entitlementsAdminClient)
       .setLogger(log)
       .apply()
+      .catch((err) => {
+        console.log('Error applying entitlements', { err })
+        throw err
+      })
     const profilesClient = new DefaultSudoProfilesClient({
       sudoUserClient: userClient,
+      keyManager: profilesKeyManager,
     })
-    await profilesClient.pushSymmetricKey(
-      'emailIntegrationTest',
-      '01234567890123456789',
-    )
+    await profilesClient
+      .pushSymmetricKey('emailIntegrationTest', '01234567890123456789')
+      .catch((err) => {
+        console.log('Error pushing Sudo symmetric key', { err })
+        throw err
+      })
+
     const { sudo, ownershipProofToken } = await createSudo(
       'emailIntegrationTest',
       profilesClient,
-    )
-    const cryptoProvider = new WebSudoCryptoProvider(
-      'SudoEmailClient',
-      'com.sudoplatform.appservicename',
-    )
+    ).catch((err) => {
+      console.log('Error creating Sudo', { err })
+      throw err
+    })
+
     const apiClient = new ApiClient(apiClientManager)
     const options: PrivateSudoEmailClientOptions = {
       sudoUserClient: userClient,
       sudoProfilesClient: profilesClient,
-      sudoCryptoProvider: cryptoProvider,
+      sudoCryptoProvider: emailCryptoProvider,
       apiClient,
+      sudoKeyManager: emailKeyManager,
     }
     const emailClient = new DefaultSudoEmailClient(options)
-    await emailClient.reset()
+    await emailClient.reset().catch((err) => {
+      console.log('Error resetting email client', { err })
+      throw err
+    })
+
     return {
       ownershipProofToken,
       emailClient,
@@ -133,38 +188,59 @@ export const setupEmailClient = async (
       entitlementsClient,
       profilesClient,
       sudo,
-      cryptoProvider,
+      keyManagers: {
+        user: userKeyManager,
+        profiles: profilesKeyManager,
+        email: emailKeyManager,
+      },
+      cryptoProviders: {
+        user: userCryptoProvider,
+        profiles: profilesCryptoProvider,
+        email: emailCryptoProvider,
+      },
     }
   } catch (err) {
     log.error(`${setupEmailClient.name} FAILED`)
+    console.log(`${setupEmailClient.name} FAILED`)
     throw err
   }
 }
 
 export const teardown = async (
   props: { emailAddresses: EmailAddress[]; sudos: Sudo[] },
-  clients: { emailClient: SudoEmailClient; profilesClient: SudoProfilesClient },
+  clients: {
+    emailClient: SudoEmailClient
+    profilesClient: SudoProfilesClient
+    userClient: SudoUserClient
+  },
 ): Promise<void> => {
+  const subject = await clients.userClient?.getSubject()
   await Promise.all(
-    props.emailAddresses.map(
-      async (a) =>
-        await clients.emailClient.deprovisionEmailAddress(a.id).catch((err) => {
-          if (err instanceof AddressNotFoundError) {
-            return
-          }
-          throw err
-        }),
-    ),
+    props.emailAddresses
+      .filter((a) => !!a)
+      .map(
+        async (a) =>
+          await clients.emailClient
+            .deprovisionEmailAddress(a.id)
+            .catch((err) => {
+              if (err instanceof AddressNotFoundError) {
+                return
+              }
+              console.log(
+                `Error deleting ${subject} Email Address ${a.id}: ${err.message}`,
+              )
+            }),
+      ),
   )
   // This needs to be done due to a bug in profiles client to hydrate cache.
   await clients.profilesClient?.listSudos(FetchOption.RemoteOnly)
   await Promise.all(
-    props.sudos.map((s) =>
-      clients.profilesClient
-        ?.deleteSudo(s)
-        ?.catch((err) =>
-          console.log(`Error deleting Sudo ${s.id}: ${err.message}`),
-        ),
-    ),
+    props.sudos
+      .filter((s) => !!s)
+      .map((s) =>
+        clients.profilesClient?.deleteSudo(s)?.catch((err) => {
+          console.log(`Error deleting ${subject} Sudo ${s.id}: ${err.message}`)
+        }),
+      ),
   )
 }

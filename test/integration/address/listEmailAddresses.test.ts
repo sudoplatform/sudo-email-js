@@ -5,6 +5,7 @@ import {
   ListOperationResultStatus,
 } from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
+import { SudoUserClient } from '@sudoplatform/sudo-user'
 import _ from 'lodash'
 import { v4 } from 'uuid'
 import { EmailAddress, SudoEmailClient } from '../../../src'
@@ -20,6 +21,7 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
 
   let instanceUnderTest: SudoEmailClient
   let profilesClient: SudoProfilesClient
+  let userClient: SudoUserClient
   let sudo1: Sudo
   let sudo1OwnershipProofToken: string
   let sudo2: Sudo
@@ -29,6 +31,7 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
     const result = await setupEmailClient(log)
     instanceUnderTest = result.emailClient
     profilesClient = result.profilesClient
+    userClient = result.userClient
     sudo1 = result.sudo
     sudo1OwnershipProofToken = result.ownershipProofToken
 
@@ -62,7 +65,7 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
   afterEach(async () => {
     await teardown(
       { emailAddresses, sudos: [sudo1, sudo2] },
-      { emailClient: instanceUnderTest, profilesClient },
+      { emailClient: instanceUnderTest, profilesClient, userClient },
     )
     emailAddresses = []
   })

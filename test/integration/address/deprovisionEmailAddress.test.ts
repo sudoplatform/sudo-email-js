@@ -4,6 +4,7 @@ import {
   SudoCryptoProvider,
 } from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
+import { SudoUserClient } from '@sudoplatform/sudo-user'
 import waitForExpect from 'wait-for-expect'
 import {
   AddressNotFoundError,
@@ -21,15 +22,17 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
 
   let instanceUnderTest: SudoEmailClient
   let profilesClient: SudoProfilesClient
+  let userClient: SudoUserClient
   let sudo: Sudo
   let ownershipProofToken: string
   let cryptoProvider: SudoCryptoProvider
 
   beforeEach(async () => {
     const result = await setupEmailClient(log)
-    cryptoProvider = result.cryptoProvider
+    cryptoProvider = result.cryptoProviders.email
     instanceUnderTest = result.emailClient
     profilesClient = result.profilesClient
+    userClient = result.userClient
     sudo = result.sudo
     ownershipProofToken = result.ownershipProofToken
   })
@@ -37,7 +40,7 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
   afterEach(async () => {
     await teardown(
       { emailAddresses: [], sudos: [sudo] },
-      { emailClient: instanceUnderTest, profilesClient },
+      { emailClient: instanceUnderTest, profilesClient, userClient },
     )
   })
 
