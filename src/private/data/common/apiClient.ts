@@ -3,8 +3,11 @@ import {
   DefaultApiClientManager,
 } from '@sudoplatform/sudo-api-client'
 import {
+  AppSyncNetworkError,
   DefaultLogger,
   FatalError,
+  isAppSyncNetworkError,
+  mapNetworkErrorToClientError,
   UnknownGraphQLError,
 } from '@sudoplatform/sudo-common'
 import { NormalizedCacheObject } from 'apollo-cache-inmemory'
@@ -357,6 +360,10 @@ export class ApiClient {
         query: query,
       })
     } catch (err) {
+      if (isAppSyncNetworkError(err as Error)) {
+        throw mapNetworkErrorToClientError(err as AppSyncNetworkError)
+      }
+
       const clientError = err as ApolloError
       this.log.debug('error received', { calleeName, clientError })
       const error = clientError.graphQLErrors?.[0]
@@ -396,6 +403,10 @@ export class ApiClient {
         variables: variables,
       })
     } catch (err) {
+      if (isAppSyncNetworkError(err as Error)) {
+        throw mapNetworkErrorToClientError(err as AppSyncNetworkError)
+      }
+
       const clientError = err as ApolloError
       this.log.debug('error received', { calleeName, clientError })
       const error = clientError.graphQLErrors?.[0]

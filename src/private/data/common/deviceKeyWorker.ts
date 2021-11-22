@@ -113,14 +113,11 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
   }
 
   async keyExists(id: string, type: KeyType): Promise<boolean> {
-    let key: ArrayBuffer | undefined
     switch (type) {
       case KeyType.SymmetricKey:
-        key = await this.keyManager.getSymmetricKey(id)
-        return key !== undefined
+        return await this.keyManager.doesSymmetricKeyExists(id)
       case KeyType.KeyPair:
-        key = await this.keyManager.getPrivateKey(id)
-        return key !== undefined
+        return await this.keyManager.doesPrivateKeyExists(id)
     }
   }
 

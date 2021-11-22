@@ -1,4 +1,9 @@
-import { CachePolicy, DefaultLogger } from '@sudoplatform/sudo-common'
+import {
+  CachePolicy,
+  DefaultLogger,
+  NotAuthorizedError,
+  SudoKeyManager,
+} from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import _ from 'lodash'
@@ -19,6 +24,7 @@ describe('SudoEmailClient checkEmailAddressAvailability Test Suite', () => {
   let instanceUnderTest: SudoEmailClient
   let profilesClient: SudoProfilesClient
   let userClient: SudoUserClient
+  let userClientKeyManager: SudoKeyManager
   let sudo: Sudo
   let sudoOwnershipProofToken: string
 
@@ -31,6 +37,7 @@ describe('SudoEmailClient checkEmailAddressAvailability Test Suite', () => {
     instanceUnderTest = result.emailClient
     profilesClient = result.profilesClient
     userClient = result.userClient
+    userClientKeyManager = result.keyManagers.user
     sudo = result.sudo
     sudoOwnershipProofToken = result.ownershipProofToken
 
@@ -63,6 +70,25 @@ describe('SudoEmailClient checkEmailAddressAvailability Test Suite', () => {
         ]),
       )
     })
+  })
+  it('Checks that the email address is available with invalid auth token', async () => {
+    const idToken = await userClientKeyManager.getPassword('idToken')
+    if (!idToken) {
+      fail('ID token not found.')
+    }
+    await userClientKeyManager.deletePassword('idToken')
+    await userClientKeyManager.addPassword(
+      new TextEncoder().encode(' ').buffer,
+      'idToken',
+    )
+    const localParts = ['local-test-1', 'local-test-2']
+    await expect(
+      instanceUnderTest.checkEmailAddressAvailability({
+        localParts: new Set(localParts),
+        domains: new Set(supportedDomains),
+      }),
+    ).rejects.toThrow(NotAuthorizedError)
+    await userClientKeyManager.addPassword(idToken, 'idToken')
   })
   it('allows local parts with periods', async () => {
     const localParts = ['local.part']
