@@ -1,21 +1,14 @@
-import {
-  DeleteObjectCommand,
-  GetObjectCommand,
-  HeadObjectCommand,
-  ListObjectsCommand,
-  S3Client as AWSS3Client,
-} from '@aws-sdk/client-s3'
-import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers'
-import { Progress, Upload } from '@aws-sdk/lib-storage'
-import { SdkError } from '@aws-sdk/types'
 import { DefaultLogger } from '@sudoplatform/sudo-common'
 import { S3UploadError } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { IdentityServiceConfig } from '@sudoplatform/sudo-user/lib/sdk'
+import { AWSError } from 'aws-sdk'
+import S3 from 'aws-sdk/clients/s3'
+import { CognitoIdentityCredentials } from 'aws-sdk/lib/core'
 import _ from 'lodash'
-import { Readable } from 'stream'
 
 interface GetAWSS3Input {
+  bucket: string
   region: string
 }
 
@@ -108,21 +101,22 @@ export class S3Client {
     this.providerName = `cognito-idp.${this.identityServiceConfig.region}.amazonaws.com/${this.identityServiceConfig.poolId}`
   }
 
-  private async getAWSS3({ region }: GetAWSS3Input): Promise<AWSS3Client> {
+  private async getAWSS3({ bucket, region }: GetAWSS3Input): Promise<S3> {
     const authToken = await this.userClient.getLatestAuthToken()
-    const credentials = fromCognitoIdentityPool({
-      identityPoolId: this.identityServiceConfig.identityPoolId,
-      logins: {
-        [this.providerName]: authToken,
+    const credentials = new CognitoIdentityCredentials(
+      {
+        IdentityPoolId: this.identityServiceConfig.identityPoolId,
+        Logins: {
+          [this.providerName]: authToken,
+        },
       },
-      clientConfig: {
-        region: region,
-      },
-    })
-
-    const awsS3 = new AWSS3Client({
+      { region },
+    )
+    await credentials.getPromise()
+    const awsS3 = new S3({
       region,
       credentials,
+      params: { bucket: bucket },
     })
     return awsS3
   }
@@ -135,32 +129,29 @@ export class S3Client {
     metadata,
   }: S3ClientUploadInput): Promise<S3ClientUploadOutput> {
     this.log.debug('S3 upload', { bucket, region, key, body, metadata })
-    const awsS3: AWSS3Client = await this.getAWSS3({ region })
+    const awsS3 = await this.getAWSS3({ bucket, region })
+    const managedUpload = new S3.ManagedUpload({
+      service: awsS3,
+      params: {
+        Bucket: bucket,
+        Key: key,
+        Body: body,
+        Metadata: metadata,
+      },
+    })
+
+    managedUpload.on('httpUploadProgress', (progress) => {
+      this.log.debug('httpUploadProgress', { progress })
+    })
     try {
-      const managedUpload = new Upload({
-        client: awsS3,
-        params: {
-          Bucket: bucket,
-          Key: key,
-          Body: body,
-          Metadata: metadata,
-        },
-      })
-      managedUpload.on('httpUploadProgress', (progress: Progress) => {
-        this.log.debug('httpUploadProgress', { progress })
-      })
-
-      const response = await managedUpload.done()
-
+      const response = await managedUpload.promise()
       this.log.debug('Upload response', { response })
+      const key = response.Key
       let lastModified: Date | undefined
       try {
-        const head = await awsS3.send(
-          new HeadObjectCommand({
-            Bucket: bucket,
-            Key: key,
-          }),
-        )
+        const head = await awsS3
+          .headObject({ Bucket: bucket, Key: response.Key })
+          .promise()
         if (!head.LastModified) {
           const message = 'No last modified timestamp in head response'
           this.log.error(message, {
@@ -196,38 +187,29 @@ export class S3Client {
   }: S3ClientDownloadInput): Promise<S3ClientDownloadOutput> {
     this.log.debug('S3 download', { bucket, key })
     try {
-      const awsS3 = await this.getAWSS3({ region })
-      const response = await awsS3.send(
-        new GetObjectCommand({
-          Bucket: bucket,
-          Key: key,
-        }),
-      )
-      // This is an AWS function found in docs when getting object with new GetObjectCommand
-      // and converting it from a ReadableStream to a string
-      // See here: https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/s3-example-creating-buckets.html
-      async function streamToString(stream: Readable): Promise<string> {
-        return await new Promise((resolve, reject) => {
-          const chunks: Uint8Array[] = []
-          stream.on('data', (chunk: Buffer) => chunks.push(chunk))
-          stream.on('error', reject)
-          stream.on('end', () =>
-            resolve(Buffer.concat(chunks).toString('utf-8')),
-          )
-        })
-      }
+      const awsS3 = await this.getAWSS3({ bucket, region })
+      const response = await awsS3
+        .getObject({ Bucket: bucket, Key: key })
+        .promise()
       if (!response.LastModified) {
         throw new S3DownloadError({
           msg: 'No last modified timestamp in response',
           key,
         })
       }
+      const lastModified = response.LastModified
 
+      let body: string
       if (!response.Body) {
         throw new S3DownloadError({ msg: 'Did not find file to download', key })
       }
-      const lastModified = response.LastModified
-      const body = await streamToString(response.Body as Readable)
+      if (typeof response.Body === 'string') {
+        body = response.Body
+      } else if (ArrayBuffer.isView(response.Body)) {
+        body = new TextDecoder().decode(response.Body)
+      } else {
+        throw new S3DownloadError({ msg: 'Object type is not supported', key })
+      }
 
       const result: S3ClientDownloadOutput = {
         lastModified,
@@ -238,10 +220,10 @@ export class S3Client {
       }
       return result
     } catch (err: unknown) {
-      const error = err as SdkError
-      if (typeof error.name === 'string') {
-        this.log.error(`${error.name}: ${error.message}`)
-        if (error.name === 'NoSuchKey') {
+      const error = err as Error & { code?: string | number }
+      if (typeof error.code === 'string') {
+        this.log.error(`${error.code}: ${error.message}`)
+        if (error.code === 'NoSuchKey') {
           throw new S3DownloadError({
             msg: error.message,
             code: S3Error.NoSuchKey,
@@ -264,13 +246,13 @@ export class S3Client {
     region,
     prefix,
   }: S3ClientListInput): Promise<S3ClientListOutput[]> {
-    const awsS3 = await this.getAWSS3({ region })
-    const result = await awsS3.send(
-      new ListObjectsCommand({
+    const awsS3 = await this.getAWSS3({ bucket, region })
+    const result = await awsS3
+      .listObjectsV2({
         Bucket: bucket,
         Prefix: prefix,
-      }),
-    )
+      })
+      .promise()
 
     return _(result.Contents)
       .flatMap()
@@ -297,12 +279,12 @@ export class S3Client {
 
   async delete({ bucket, region, key }: S3ClientDeleteInput): Promise<string> {
     try {
-      const awsS3 = await this.getAWSS3({ region })
-      await awsS3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }))
+      const awsS3 = await this.getAWSS3({ bucket, region })
+      await awsS3.deleteObject({ Bucket: bucket, Key: key }).promise()
       return key
     } catch (err: unknown) {
-      const error = err as SdkError
-      this.log.error(`${error.name}: ${error.message}`)
+      const error = err as AWSError
+      this.log.error(`${error.code}: ${error.message}`)
       throw new S3DeleteError({ key: key })
     }
   }

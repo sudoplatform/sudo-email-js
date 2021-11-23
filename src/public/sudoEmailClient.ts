@@ -15,6 +15,7 @@ import {
 } from '@sudoplatform/sudo-user/lib/sdk'
 import { WebSudoCryptoProvider } from '@sudoplatform/sudo-web-crypto-provider'
 import { Mutex } from 'async-mutex'
+import { CognitoIdentityCredentials } from 'aws-sdk/lib/core'
 import { DefaultEmailAccountService } from '../private/data/account/defaultEmailAccountService'
 import { EmailAddressAPITransformer } from '../private/data/account/transformer/emailAddressAPITransformer'
 import { EmailAddressEntityTransformer } from '../private/data/account/transformer/emailAddressEntityTransformer'
@@ -1111,5 +1112,20 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
 
   public async reset(): Promise<void> {
     await this.keyManager.removeAllKeys()
+
+    // Clear cached ID used by S3 client.
+    const authToken = await this.userClient.getLatestAuthToken()
+    const credentials = new CognitoIdentityCredentials(
+      {
+        IdentityPoolId: this.identityServiceConfig.identityPoolId,
+        Logins: {
+          [`cognito-idp.${this.identityServiceConfig.region}.amazonaws.com/${this.identityServiceConfig.poolId}`]:
+            authToken,
+        },
+      },
+      { region: this.emailServiceConfig.region },
+    )
+
+    credentials.clearCachedId()
   }
 }
