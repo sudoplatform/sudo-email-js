@@ -1,7 +1,3 @@
-import {
-  PublicKeyEntity,
-  PublicKeyEntityFormat,
-} from '@sudoplatform/sudo-common-internal'
 import { EmailAccountEntity } from '../../../src/private/domain/entities/account/emailAccountEntity'
 import { EmailAddressEntity } from '../../../src/private/domain/entities/account/emailAddressEntity'
 import { EmailDomainEntity } from '../../../src/private/domain/entities/account/emailDomainEntity'
@@ -108,13 +104,6 @@ export class EntityDataFactory {
     rfc822Header: 'rfc822Header',
     sortDate: new Date(1.0),
     size: 12345,
-  }
-
-  static readonly publicKey: PublicKeyEntity = {
-    keyId: 'testKeyId',
-    keyData: 'testPublicKey',
-    keyRingId: 'testKeyRingId',
-    keyFormat: PublicKeyEntityFormat.RSAPublicKey,
   }
 
   static readonly uuidV4Regex = new RegExp(

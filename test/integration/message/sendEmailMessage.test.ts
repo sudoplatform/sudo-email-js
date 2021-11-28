@@ -106,10 +106,29 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     ).rejects.toThrow(UnauthorizedAddressError)
   })
 
-  it('throws an error if rfc822 data is garbage', async () => {
+  it('throws an InvalidEmailContentsError if rfc822 data is garbage', async () => {
     await expect(
       instanceUnderTest.sendEmailMessage({
         rfc822Data: str2ab(v4()),
+        senderEmailAddressId: emailAddress.id,
+      }),
+    ).rejects.toThrow(InvalidEmailContentsError)
+  })
+
+  it('throws an InvalidEmailContentsError if rfc822 data has no To recipients', async () => {
+    const badDraft = {
+      from: [{ emailAddress: emailAddress.emailAddress }],
+      to: [],
+      cc: [],
+      bcc: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
+      replyTo: [],
+      body: 'Hello, World',
+    }
+    const badDraftString = createEmailMessageRfc822String(badDraft)
+
+    await expect(
+      instanceUnderTest.sendEmailMessage({
+        rfc822Data: str2ab(badDraftString),
         senderEmailAddressId: emailAddress.id,
       }),
     ).rejects.toThrow(InvalidEmailContentsError)
