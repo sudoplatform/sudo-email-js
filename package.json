@@ -30,7 +30,7 @@
   ],
   "peerDependencies": {
     "@sudoplatform/sudo-api-client": "^9.0.1",
-    "@sudoplatform/sudo-common": "^6.0.0",
+    "@sudoplatform/sudo-common": "^6.0.2",
     "@sudoplatform/sudo-profiles": "^12.0.0",
     "@sudoplatform/sudo-user": "^10.0.0"
   },
@@ -69,7 +69,7 @@
     "@graphql-codegen/typescript-operations": "^2.2.1",
     "@graphql-typed-document-node/apollo-client-2": "^1.0.0",
     "@sudoplatform/sudo-api-client": "^9.0.1",
-    "@sudoplatform/sudo-common": "^6.0.0",
+    "@sudoplatform/sudo-common": "^6.0.2",
     "@sudoplatform/sudo-entitlements": "^11.0.0",
     "@sudoplatform/sudo-entitlements-admin": "^9.0.0",
     "@sudoplatform/sudo-profiles": "^12.0.0",

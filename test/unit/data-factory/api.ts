@@ -1,4 +1,5 @@
 import { ListOutput, Owner } from '@sudoplatform/sudo-common'
+import { ConfigurationData } from '../../../src/public/typings/configurationData'
 import { EmailAddress } from '../../../src/public/typings/emailAddress'
 import { EmailFolder } from '../../../src/public/typings/emailFolder'
 import {
@@ -19,6 +20,13 @@ export class APIDataFactory {
   static readonly owner: Owner = {
     id: 'testId',
     issuer: 'testIssuer',
+  }
+
+  static readonly configurationData: ConfigurationData = {
+    deleteEmailMessagesLimit: 100,
+    updateEmailMessagesLimit: 100,
+    emailMessageMaxInboundMessageSize: 10485760,
+    emailMessageMaxOutboundMessageSize: 10485760,
   }
 
   static readonly emailFolder: EmailFolder = {

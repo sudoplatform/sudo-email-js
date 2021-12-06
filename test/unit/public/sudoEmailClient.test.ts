@@ -31,6 +31,7 @@ import { ApiClient } from '../../../src/private/data/common/apiClient'
 import { EmailServiceConfig } from '../../../src/private/data/common/config'
 import { DefaultDeviceKeyWorker } from '../../../src/private/data/common/deviceKeyWorker'
 import { PrivateSudoEmailClientOptions } from '../../../src/private/data/common/privateSudoEmailClientOptions'
+import { DefaultConfigurationDataService } from '../../../src/private/data/configuration/defaultConfigurationDataService'
 import { DefaultEmailFolderService } from '../../../src/private/data/folder/defaultEmailFolderService'
 import { DefaultEmailMessageService } from '../../../src/private/data/message/defaultEmailMessageService'
 import { CheckEmailAddressAvailabilityUseCase } from '../../../src/private/domain/use-cases/account/checkEmailAddressAvailabilityUseCase'
@@ -41,6 +42,7 @@ import { ListEmailAccountsForSudoIdUseCase } from '../../../src/private/domain/u
 import { ListEmailAccountsUseCase } from '../../../src/private/domain/use-cases/account/listEmailAccountsUseCase'
 import { ProvisionEmailAccountUseCase } from '../../../src/private/domain/use-cases/account/provisionEmailAccountUseCase'
 import { UpdateEmailAccountMetadataUseCase } from '../../../src/private/domain/use-cases/account/updateEmailAccountMetadataUseCase'
+import { GetConfigurationDataUseCase } from '../../../src/private/domain/use-cases/configuration/getConfigurationDataUseCase'
 import { DeleteDraftEmailMessagesUseCase } from '../../../src/private/domain/use-cases/draft/deleteDraftEmailMessagesUseCase'
 import { GetDraftEmailMessageUseCase } from '../../../src/private/domain/use-cases/draft/getDraftEmailMessageUseCase'
 import { ListDraftEmailMessageMetadataUseCase } from '../../../src/private/domain/use-cases/draft/listDraftEmailMessageMetadataUseCase'
@@ -61,6 +63,13 @@ import { EntityDataFactory } from '../data-factory/entity'
 
 // Constructor mocks
 
+jest.mock(
+  '../../../src/private/data/configuration/defaultConfigurationDataService',
+)
+const JestMockDefaultConfigurationDataService =
+  DefaultConfigurationDataService as jest.MockedClass<
+    typeof DefaultConfigurationDataService
+  >
 jest.mock('../../../src/private/data/account/defaultEmailAccountService')
 const JestMockDefaultEmailAccountService =
   DefaultEmailAccountService as jest.MockedClass<
@@ -92,6 +101,13 @@ const JestMockDeviceKeyWorker = DefaultDeviceKeyWorker as jest.MockedClass<
 >
 
 // Use case Mocks
+jest.mock(
+  '../../../src/private/domain/use-cases/configuration/getConfigurationDataUseCase',
+)
+const JestMockGetConfigurationDataUseCase =
+  GetConfigurationDataUseCase as jest.MockedClass<
+    typeof GetConfigurationDataUseCase
+  >
 jest.mock(
   '../../../src/private/domain/use-cases/account/provisionEmailAccountUseCase',
 )
@@ -247,8 +263,10 @@ describe('SudoEmailClient Test Suite', () => {
   const mockEmailAccountService = mock<DefaultEmailAccountService>()
   const mockEmailFolderService = mock<DefaultEmailFolderService>()
   const mockEmailMessageService = mock<DefaultEmailMessageService>()
+  const mockConfigurationDataService = mock<DefaultConfigurationDataService>()
 
   // Use case Mocks
+  const mockGetConfigurationDataUseCase = mock<GetConfigurationDataUseCase>()
   const mockProvisionEmailAccountUseCase = mock<ProvisionEmailAccountUseCase>()
   const mockDeprovisionEmailAccountUseCase =
     mock<DeprovisionEmailAccountUseCase>()
@@ -313,6 +331,7 @@ describe('SudoEmailClient Test Suite', () => {
     reset(mockEmailAccountService)
     reset(mockEmailFolderService)
     reset(mockEmailMessageService)
+    reset(mockConfigurationDataService)
 
     reset(mockProvisionEmailAccountUseCase)
     reset(mockDeprovisionEmailAccountUseCase)
@@ -335,15 +354,18 @@ describe('SudoEmailClient Test Suite', () => {
     reset(mockListEmailMessagesForEmailAddressIdUseCase)
     reset(mockListEmailMessagesForEmailFolderIdUseCase)
     reset(mockGetEmailMessageRfc822DataUseCase)
+    reset(mockGetConfigurationDataUseCase)
 
     JestMockDefaultEmailAccountService.mockClear()
     JestMockDefaultEmailFolderService.mockClear()
     JestMockDefaultEmailMessageService.mockClear()
+    JestMockDefaultConfigurationDataService.mockClear()
     JestMockApiClient.mockClear()
     JestMockWebSudoCryptoProvider.mockClear()
     JestMockDeviceKeyWorker.mockClear()
     JestMockUserConfig.getIdentityServiceConfig.mockClear()
 
+    JestMockGetConfigurationDataUseCase.mockClear()
     JestMockProvisionEmailAccountUseCase.mockClear()
     JestMockDeprovisionEmailAccountUseCase.mockClear()
     JestMockUpdateEmailAccountMetadataUseCase.mockClear()
@@ -366,6 +388,9 @@ describe('SudoEmailClient Test Suite', () => {
     JestMockListEmailMessagesForEmailFolderIdUseCase.mockClear()
     JestMockGetEmailMessageRfc822DataUseCase.mockClear()
 
+    JestMockDefaultConfigurationDataService.mockImplementation(() =>
+      instance(mockConfigurationDataService),
+    )
     JestMockDefaultEmailAccountService.mockImplementation(() =>
       instance(mockEmailAccountService),
     )
@@ -379,7 +404,9 @@ describe('SudoEmailClient Test Suite', () => {
     JestMockUserConfig.getIdentityServiceConfig.mockImplementation(() => ({
       identityService: mockIdentityServiceConfig,
     }))
-
+    JestMockGetConfigurationDataUseCase.mockImplementation(() =>
+      instance(mockGetConfigurationDataUseCase),
+    )
     JestMockProvisionEmailAccountUseCase.mockImplementation(() =>
       instance(mockProvisionEmailAccountUseCase),
     )
@@ -1761,6 +1788,26 @@ describe('SudoEmailClient Test Suite', () => {
         successValues: successIds,
         failureValues: failureIds,
       })
+    })
+  })
+  describe('getConfigurationData', () => {
+    beforeEach(() => {
+      when(mockGetConfigurationDataUseCase.execute()).thenResolve(
+        EntityDataFactory.configurationData,
+      )
+    })
+    it('generates use case', async () => {
+      await instanceUnderTest.getConfigurationData()
+      expect(JestMockGetConfigurationDataUseCase).toHaveBeenCalledTimes(1)
+    })
+    it('calls use case as expected', async () => {
+      await instanceUnderTest.getConfigurationData()
+      verify(mockGetConfigurationDataUseCase.execute()).once()
+    })
+    it('returns expected result', async () => {
+      await expect(instanceUnderTest.getConfigurationData()).resolves.toEqual(
+        APIDataFactory.configurationData,
+      )
     })
   })
 })

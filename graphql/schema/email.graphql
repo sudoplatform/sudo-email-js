@@ -239,6 +239,13 @@ input SealedAttributeInput {
   base64EncodedSealedData: String!
 }
 
+type ConfigurationData {
+  deleteEmailMessagesLimit: Int!
+  updateEmailMessagesLimit: Int!
+  emailMessageMaxInboundMessageSize: Int!
+  emailMessageMaxOutboundMessageSize: Int!
+}
+
 type Owner {
   id: String!
   issuer: String!
@@ -324,6 +331,8 @@ type EmailMessageConnection {
 }
 
 type Query {
+  getConfigurationData: ConfigurationData!
+
   getEmailDomains: SupportedDomains!
 
   checkEmailAddressAvailability(

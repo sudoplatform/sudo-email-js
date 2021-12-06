@@ -24,6 +24,7 @@ import {
   CheckEmailAddressAvailabilityDocument,
   CheckEmailAddressAvailabilityInput,
   CheckEmailAddressAvailabilityQuery,
+  ConfigurationData,
   CreatePublicKeyForEmailDocument,
   CreatePublicKeyForEmailMutation,
   CreatePublicKeyInput,
@@ -42,6 +43,8 @@ import {
   EmailFolderFilterInput,
   EmailMessageConnection,
   EmailMessageFilterInput,
+  GetConfigurationDataDocument,
+  GetConfigurationDataQuery,
   GetEmailAddressDocument,
   GetEmailAddressQuery,
   GetEmailDomainsDocument,
@@ -151,6 +154,15 @@ export class ApiClient {
       calleeName: this.checkEmailAddressAvailability.name,
     })
     return data.checkEmailAddressAvailability
+  }
+
+  public async getConfigurationData(): Promise<ConfigurationData> {
+    const data = await this.performQuery<GetConfigurationDataQuery>({
+      query: GetConfigurationDataDocument,
+      variables: {},
+      calleeName: this.getConfigurationData.name,
+    })
+    return data.getConfigurationData
   }
 
   public async getEmailAddress(

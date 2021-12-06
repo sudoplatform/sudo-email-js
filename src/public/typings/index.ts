@@ -1,4 +1,5 @@
 export * from './batchOperationResult'
+export * from './configurationData'
 export * from './dateRange'
 export * from './draftEmailMessage'
 export * from './draftEmailMessageMetadata'

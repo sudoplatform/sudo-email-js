@@ -29,6 +29,8 @@ import {
 import { DefaultDeviceKeyWorker } from '../private/data/common/deviceKeyWorker'
 import { PrivateSudoEmailClientOptions } from '../private/data/common/privateSudoEmailClientOptions'
 import { S3Client } from '../private/data/common/s3Client'
+import { DefaultConfigurationDataService } from '../private/data/configuration/defaultConfigurationDataService'
+import { ConfigurationDataAPITransformer } from '../private/data/configuration/transformer/configurationDataAPITransformer'
 import { DefaultEmailFolderService } from '../private/data/folder/defaultEmailFolderService'
 import { DefaultEmailMessageService } from '../private/data/message/defaultEmailMessageService'
 import { EmailMessageAPITransformer } from '../private/data/message/transformer/emailMessageAPITransformer'
@@ -43,6 +45,7 @@ import { ListEmailAccountsForSudoIdUseCase } from '../private/domain/use-cases/a
 import { ListEmailAccountsUseCase } from '../private/domain/use-cases/account/listEmailAccountsUseCase'
 import { ProvisionEmailAccountUseCase } from '../private/domain/use-cases/account/provisionEmailAccountUseCase'
 import { UpdateEmailAccountMetadataUseCase } from '../private/domain/use-cases/account/updateEmailAccountMetadataUseCase'
+import { GetConfigurationDataUseCase } from '../private/domain/use-cases/configuration/getConfigurationDataUseCase'
 import { DeleteDraftEmailMessagesUseCase } from '../private/domain/use-cases/draft/deleteDraftEmailMessagesUseCase'
 import { GetDraftEmailMessageUseCase } from '../private/domain/use-cases/draft/getDraftEmailMessageUseCase'
 import { ListDraftEmailMessageMetadataUseCase } from '../private/domain/use-cases/draft/listDraftEmailMessageMetadataUseCase'
@@ -57,6 +60,7 @@ import { ListEmailMessagesForEmailFolderIdUseCase } from '../private/domain/use-
 import { SendEmailMessageUseCase } from '../private/domain/use-cases/message/sendEmailMessageUseCase'
 import { UpdateEmailMessagesUseCase } from '../private/domain/use-cases/message/updateEmailMessagesUseCase'
 import { BatchOperationResult, BatchOperationResultStatus } from './typings'
+import { ConfigurationData } from './typings/configurationData'
 import { DateRange } from './typings/dateRange'
 import { DraftEmailMessage } from './typings/draftEmailMessage'
 import { DraftEmailMessageMetadata } from './typings/draftEmailMessageMetadata'
@@ -591,7 +595,6 @@ export interface SudoEmailClient {
    *
    * @param {ListEmailMessagesForEmailAddressIdInput} input Parameters used to retrieve a list of email messages for an emailAddressId.
    * @returns {ListEmailMessagesResult} List operation result.
-   *  can be found.
    */
   listEmailMessagesForEmailAddressId(
     input: ListEmailMessagesForEmailAddressIdInput,
@@ -602,11 +605,17 @@ export interface SudoEmailClient {
    *
    * @param {ListEmailMessagesForEmailFolderIdInput} input Parameters used to retrieve a list of email messages for a folderId.
    * @returns {ListEmailMessagesResult} List operation result.
-   *  can be found.
    */
   listEmailMessagesForEmailFolderId(
     input: ListEmailMessagesForEmailFolderIdInput,
   ): Promise<ListEmailMessagesResult>
+
+  /**
+   * Get the configuration data for the email service.
+   *
+   * @returns {ConfigurationData} The configuration data for the email service.
+   */
+  getConfigurationData(): Promise<ConfigurationData>
 
   /**
    * Removes any cached data maintained by this client.
@@ -631,6 +640,7 @@ export type SudoEmailClientOptions = {
 export class DefaultSudoEmailClient implements SudoEmailClient {
   private readonly apiClient: ApiClient
   private readonly userClient: SudoUserClient
+  private readonly configurationDataService: DefaultConfigurationDataService
   private readonly emailAccountService: DefaultEmailAccountService
   private readonly emailFolderService: DefaultEmailFolderService
   private readonly emailMessageService: DefaultEmailMessageService
@@ -665,6 +675,9 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     // Generate services
     const deviceKeyWorker = new DefaultDeviceKeyWorker(this.keyManager)
     const s3Client = new S3Client(this.userClient, this.identityServiceConfig)
+    this.configurationDataService = new DefaultConfigurationDataService(
+      this.apiClient,
+    )
     this.emailAccountService = new DefaultEmailAccountService(
       this.apiClient,
       deviceKeyWorker,
@@ -677,6 +690,16 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       deviceKeyWorker,
       this.emailServiceConfig,
     )
+  }
+
+  public async getConfigurationData(): Promise<ConfigurationData> {
+    const useCase = new GetConfigurationDataUseCase(
+      this.configurationDataService,
+    )
+    const result = await useCase.execute()
+
+    const apiTransformer = new ConfigurationDataAPITransformer()
+    return apiTransformer.transformEntity(result)
   }
 
   public async provisionEmailAddress(

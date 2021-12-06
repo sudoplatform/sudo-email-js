@@ -30,7 +30,7 @@ export type ListEmailAddressesResult = ListOperationResult<
  *   email messages that could not be unsealed successfully and
  *   the error indicating why unsealing failed. An email messages
  *   may fail to unseal if the client version is not up to date
- *   or the required cryptogrpahic key is missing from the client
+ *   or the required cryptographic key is missing from the client
  *   device.
  * - On failure, contains an error object indicating why the list
  *   operation failed.

@@ -1,5 +1,6 @@
 import {
   AvailableAddresses,
+  ConfigurationData,
   EmailAddress,
   EmailAddressConnection,
   EmailAddressWithoutFoldersFragment,
@@ -34,6 +35,13 @@ export class GraphQLDataFactory {
   static readonly owner: Owner = {
     id: 'testId',
     issuer: 'testIssuer',
+  }
+
+  static readonly configurationData: ConfigurationData = {
+    deleteEmailMessagesLimit: 100,
+    updateEmailMessagesLimit: 100,
+    emailMessageMaxInboundMessageSize: 10485760,
+    emailMessageMaxOutboundMessageSize: 10485760,
   }
 
   static readonly emailFolder: EmailFolder = {

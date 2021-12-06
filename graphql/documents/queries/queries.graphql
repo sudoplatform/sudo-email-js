@@ -1,3 +1,9 @@
+query GetConfigurationData {
+  getConfigurationData {
+    ...ConfigurationData
+  }
+}
+
 query GetEmailDomains {
   getEmailDomains {
     domains

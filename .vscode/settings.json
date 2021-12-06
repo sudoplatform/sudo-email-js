@@ -1,4 +1,9 @@
 {
   "typescript.tsdk": "node_modules/typescript/lib",
-  "eslint.validate": ["typescript"],
+  "eslint.validate": [
+    "typescript"
+  ],
+  "cSpell.words": [
+    "sudos"
+  ],
 }

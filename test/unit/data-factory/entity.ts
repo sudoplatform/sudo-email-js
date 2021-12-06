@@ -2,6 +2,7 @@ import { EmailAccountEntity } from '../../../src/private/domain/entities/account
 import { EmailAddressEntity } from '../../../src/private/domain/entities/account/emailAddressEntity'
 import { EmailDomainEntity } from '../../../src/private/domain/entities/account/emailDomainEntity'
 import { OwnerEntity } from '../../../src/private/domain/entities/common/ownerEntity'
+import { ConfigurationDataEntity } from '../../../src/private/domain/entities/configuration/configurationDataEntity'
 import { EmailFolderEntity } from '../../../src/private/domain/entities/folder/emailFolderEntity'
 import { EmailMessageEntity } from '../../../src/private/domain/entities/message/emailMessageEntity'
 import { SealedEmailMessageEntity } from '../../../src/private/domain/entities/message/sealedEmailMessageEntity'
@@ -19,6 +20,13 @@ export class EntityDataFactory {
   static readonly owner: OwnerEntity = {
     id: 'testId',
     issuer: 'testIssuer',
+  }
+
+  static readonly configurationData: ConfigurationDataEntity = {
+    deleteEmailMessagesLimit: 100,
+    updateEmailMessagesLimit: 100,
+    emailMessageMaxInboundMessageSize: 10485760,
+    emailMessageMaxOutboundMessageSize: 10485760,
   }
 
   static readonly emailAddress: EmailAddressEntity = {
