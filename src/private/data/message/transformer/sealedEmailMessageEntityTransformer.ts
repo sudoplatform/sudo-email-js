@@ -15,6 +15,7 @@ export class SealedEmailMessageEntityTransformer {
       keyId: data.rfc822Header.keyId,
       algorithm: data.rfc822Header.algorithm,
       folderId: data.folderId,
+      previousFolderId: data.previousFolderId ?? undefined,
       direction: directionTransformer.fromGraphQLtoAPI(data.direction),
       seen: data.seen,
       state: stateTransformer.fromGraphQLtoAPI(data.state),

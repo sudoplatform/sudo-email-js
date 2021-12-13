@@ -12,6 +12,7 @@ import { OwnerEntity } from '../common/ownerEntity'
  * @property {string} keyId Unique identifier of the associated decryption/encryption key.
  * @property {string} algorithm Algorithm used to decrypt/encrypt this entity.
  * @property {string} folderId Unique identifier of the email folder which the message resource is assigned to.
+ * @property {string} previousFolderId Unique identifier of the previous email folder which the message resource was assigned to, if any.
  * @property {Direction} direction Direction of the email message.
  * @property {boolean} seen True if the user has previously seen the email message.
  * @property {State} state Current state of the email message.
@@ -29,6 +30,7 @@ export interface SealedEmailMessageEntity {
   keyId: string
   algorithm: string
   folderId: string
+  previousFolderId?: string
   direction: Direction
   seen: boolean
   state: State

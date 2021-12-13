@@ -10,6 +10,7 @@ import { Owner } from '@sudoplatform/sudo-common'
  * @property {string} emailAddressId Identifier of the email address that is associated with the
  *   email message - which address sent/received this message.
  * @property {string} folderId Unique identifier of the email folder which the message is assigned to.
+ * @property {string} previousFolderId Unique identifier of the previous email folder which the message resource was assigned to, if any.
  * @property {boolean} seen True if the user has previously seen the email message.
  * @property {Direction} direction Direction of the email message.
  * @property {State} state Current state of the email message.
@@ -40,6 +41,7 @@ export interface EmailMessageProps {
   owners: Owner[]
   emailAddressId: string
   folderId: string
+  previousFolderId?: string
   seen: boolean
   direction: Direction
   state: State

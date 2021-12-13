@@ -59,6 +59,7 @@ export class APIDataFactory {
     owners: [APIDataFactory.owner],
     emailAddressId: 'testEmailAddressId',
     folderId: 'testFolderId',
+    previousFolderId: 'testPreviousFolderId',
     seen: false,
     direction: Direction.Outbound,
     state: State.Sent,

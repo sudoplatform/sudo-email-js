@@ -111,6 +111,7 @@ export class GraphQLDataFactory {
     owners: [GraphQLDataFactory.owner],
     emailAddressId: 'testEmailAddressId',
     folderId: 'testFolderId',
+    previousFolderId: 'testPreviousFolderId',
     direction: EmailMessageDirection.Outbound,
     seen: false,
     state: EmailMessageState.Sent,

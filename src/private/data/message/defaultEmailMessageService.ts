@@ -477,6 +477,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       keyId: sealedEmailMessage.keyId,
       algorithm: sealedEmailMessage.algorithm,
       folderId: sealedEmailMessage.folderId,
+      previousFolderId: sealedEmailMessage.previousFolderId,
       seen: sealedEmailMessage.seen,
       direction: sealedEmailMessage.direction,
       state: sealedEmailMessage.state,

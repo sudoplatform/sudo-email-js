@@ -292,6 +292,7 @@ type SealedEmailMessage {
   updatedAtEpochMs: Float!
   sortDateEpochMs: Float!
   folderId: ID!
+  previousFolderId: ID
   direction: EmailMessageDirection!
   seen: Boolean!
   state: EmailMessageState!

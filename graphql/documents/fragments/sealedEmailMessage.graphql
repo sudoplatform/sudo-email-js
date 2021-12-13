@@ -11,6 +11,7 @@ fragment SealedEmailMessage on SealedEmailMessage {
   updatedAtEpochMs
   sortDateEpochMs
   folderId
+  previousFolderId
   direction
   seen
   state

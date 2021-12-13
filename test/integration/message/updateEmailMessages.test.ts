@@ -159,6 +159,9 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
       emailAddressId: emailAddress.id,
       folderName: 'TRASH',
     })
+    const sentFolder = emailAddress.folders.find((f) => f.folderName === 'SENT')
+    expect(sentFolder).toBeDefined()
+    expect(trashFolder).toBeDefined()
     await waitForExpect(async () => {
       await expect(
         instanceUnderTest.updateEmailMessages({
@@ -181,6 +184,51 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
     )
     expect(outbound[0].folderId).toEqual(trashFolder?.id)
     expect(outbound[1].folderId).toEqual(trashFolder?.id)
+    // Test previousFolderId
+    expect(outbound[0].previousFolderId).toEqual(sentFolder?.id)
+    expect(outbound[1].previousFolderId).toEqual(sentFolder?.id)
+  })
+
+  test('previousFolderId does not change when message is moved to same folder', async () => {
+    const messageString = createEmailMessageRfc822String({
+      from: [{ emailAddress: emailAddress.emailAddress }],
+      to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
+      cc: [],
+      bcc: [],
+      replyTo: [],
+      body: `Hello, World`,
+    })
+    const id = await instanceUnderTest.sendEmailMessage({
+      rfc822Data: str2ab(messageString),
+      senderEmailAddressId: emailAddress.id,
+    })
+    const sentFolder = emailAddress.folders.find((f) => f.folderName === 'SENT')
+    expect(sentFolder).toBeDefined()
+
+    await waitForExpect(async () => {
+      await expect(
+        instanceUnderTest.updateEmailMessages({
+          ids: [id],
+          values: { folderId: sentFolder?.id ?? '' },
+        }),
+      ).resolves.toMatchObject({ status: BatchOperationResultStatus.Success })
+    })
+
+    await waitForExpect(async () => {
+      const messages =
+        await instanceUnderTest.listEmailMessagesForEmailAddressId({
+          emailAddressId: emailAddress.id,
+          cachePolicy: CachePolicy.RemoteOnly,
+        })
+      if (messages.status !== ListOperationResultStatus.Success) {
+        fail(`Expect result not returned: ${messages}`)
+      }
+      const outbound = messages.items.filter(
+        (message) => message.direction === Direction.Outbound,
+      )
+      // Test previousFolderId hasn't changed
+      expect(outbound[0].previousFolderId).toEqual(undefined)
+    })
   })
 
   test('update non-existent email messages should return failed status', async () => {

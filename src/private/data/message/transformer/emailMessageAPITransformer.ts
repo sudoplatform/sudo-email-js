@@ -23,6 +23,7 @@ export class EmailMessageAPITransformer {
       owners: entity.owners.map(({ id, issuer }) => ({ id, issuer })),
       emailAddressId: entity.emailAddressId,
       folderId: entity.folderId,
+      previousFolderId: entity.previousFolderId,
       seen: entity.seen,
       direction: entity.direction,
       state: entity.state,

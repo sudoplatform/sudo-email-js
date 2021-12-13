@@ -42,6 +42,7 @@ interface ListEmailMessagesForEmailFolderIdUseCaseOutput {
     keyId: string
     algorithm: string
     folderId: string
+    previousFolderId?: string
     seen: boolean
     direction: Direction
     state: State
