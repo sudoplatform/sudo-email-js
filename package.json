@@ -12,7 +12,7 @@
     "lint:eslint": "eslint \"{bin,test,src}/**/*.{js,ts,tsx}\"",
     "lint:prettier": "prettier -l \"{bin,test,src}/**/*.{js,json,jsx,ts,tsx}\"",
     "codegen": "graphql-codegen -c codegen.yml",
-    "verify": "yarn audit && yarn lint",
+    "verify": "yarn audit-with-suppressions && yarn lint",
     "unit-test": "jest --verbose test/unit",
     "integration-test": "jest --verbose test/integration",
     "clean": "rm -rf lib docs",
@@ -51,7 +51,7 @@
   "resolutions": {
     "apollo-cache-inmemory": "^1.6.6",
     "apollo-link": "^1.2.14",
-    "node-fetch": "^2.6.6",
+    "node-fetch": "^2.6.7",
     "ansi-regex": "^5.0.1"
   },
   "devDependencies": {
@@ -100,5 +100,9 @@
     "uuid": "^8.3.2",
     "wait-for-expect": "^3.0.2",
     "websocket": "^1.0.34"
+  },
+  "auditSuppressions": {
+    "1006883": 1643581525,
+    "1006884": 1643581536
   }
 }
