@@ -15,7 +15,7 @@ import { FolderUseCaseOutput } from '../shared/folder'
  */
 interface ListEmailAccountsForSudoIdUseCaseInput {
   sudoId: string
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
   filter?: EmailAddressFilter | undefined
   limit?: number | undefined
   nextToken?: string | undefined

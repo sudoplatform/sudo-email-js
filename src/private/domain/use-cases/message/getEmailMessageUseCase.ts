@@ -12,7 +12,7 @@ import { EmailMessageService } from '../../entities/message/emailMessageService'
  */
 interface GetEmailMessageUseCaseInput {
   id: string
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
 }
 interface GetEmailMessageUseCaseOutput {
   id: string

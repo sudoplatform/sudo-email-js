@@ -476,7 +476,6 @@ describe('SudoEmailClient Test Suite', () => {
     resetMocks()
     const options: PrivateSudoEmailClientOptions = {
       sudoUserClient: instance(mockSudoUserClient),
-      sudoProfilesClient: instance(mockSudoProfilesClient),
       sudoCryptoProvider: instance(mockSudoCryptoProvider),
       sudoKeyManager: instance(mockSudoKeyManager),
       apiClient: instance(mockApiClient),
@@ -501,7 +500,6 @@ describe('SudoEmailClient Test Suite', () => {
 
       new DefaultSudoEmailClient({
         sudoUserClient: instance(mockSudoUserClient),
-        sudoProfilesClient: instance(mockSudoProfilesClient),
       })
       expect(JestMockApiClient).toHaveBeenCalledTimes(1)
       expect(JestMockWebSudoCryptoProvider).toHaveBeenCalledTimes(1)

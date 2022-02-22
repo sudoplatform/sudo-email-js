@@ -19,7 +19,7 @@ import { EmailMessageService } from '../../entities/message/emailMessageService'
  */
 interface ListEmailMessagesForEmailAddressIdUseCaseInput {
   emailAddressId: string
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
   dateRange?: DateRange | undefined
   filter?: EmailMessageFilter | undefined
   limit?: number | undefined

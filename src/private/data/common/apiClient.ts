@@ -134,7 +134,7 @@ export class ApiClient {
   }
 
   public async getSupportedEmailDomains(
-    fetchPolicy: FetchPolicy,
+    fetchPolicy: FetchPolicy = 'network-only',
   ): Promise<SupportedDomains> {
     const data = await this.performQuery<GetEmailDomainsQuery>({
       query: GetEmailDomainsDocument,
@@ -167,7 +167,7 @@ export class ApiClient {
 
   public async getEmailAddress(
     id: string,
-    fetchPolicy: FetchPolicy,
+    fetchPolicy: FetchPolicy = 'network-only',
   ): Promise<EmailAddress | undefined> {
     const data = await this.performQuery<GetEmailAddressQuery>({
       query: GetEmailAddressDocument,
@@ -179,7 +179,7 @@ export class ApiClient {
   }
 
   public async listEmailAddresses(
-    fetchPolicy: FetchPolicy,
+    fetchPolicy: FetchPolicy = 'network-only',
     filter?: EmailAddressFilterInput,
     limit?: number,
     nextToken?: string,
@@ -195,7 +195,7 @@ export class ApiClient {
 
   public async listEmailAddressesForSudoId(
     sudoId: string,
-    fetchPolicy: FetchPolicy,
+    fetchPolicy: FetchPolicy = 'network-only',
     filter?: EmailAddressFilterInput,
     limit?: number,
     nextToken?: string,
@@ -211,7 +211,7 @@ export class ApiClient {
 
   public async listEmailFoldersForEmailAddressId(
     emailAddressId: string,
-    fetchPolicy: FetchPolicy,
+    fetchPolicy: FetchPolicy = 'network-only',
     filter?: EmailFolderFilterInput,
     limit?: number,
     nextToken?: string,
@@ -259,7 +259,7 @@ export class ApiClient {
 
   public async getEmailMessage(
     id: string,
-    fetchPolicy: FetchPolicy,
+    fetchPolicy: FetchPolicy = 'network-only',
   ): Promise<SealedEmailMessage | undefined> {
     const data = await this.performQuery<GetEmailMessageQuery>({
       query: GetEmailMessageDocument,
@@ -272,7 +272,7 @@ export class ApiClient {
 
   public async listEmailMessagesForEmailAddressId(
     emailAddressId: string,
-    fetchPolicy: FetchPolicy,
+    fetchPolicy: FetchPolicy = 'network-only',
     dateRange?: DateRangeInput,
     filter?: EmailMessageFilterInput,
     limit?: number,
@@ -300,7 +300,7 @@ export class ApiClient {
 
   public async listEmailMessagesForEmailFolderId(
     folderId: string,
-    fetchPolicy: FetchPolicy,
+    fetchPolicy: FetchPolicy = 'network-only',
     dateRange?: DateRangeInput,
     filter?: EmailMessageFilterInput,
     limit?: number,
@@ -332,7 +332,7 @@ export class ApiClient {
 
   public async getKeyRing(
     keyRingId: string,
-    fetchPolicy: FetchPolicy,
+    fetchPolicy: FetchPolicy = 'network-only',
     limit?: number,
     nextToken?: string,
   ): Promise<PaginatedPublicKey | undefined> {
@@ -347,7 +347,7 @@ export class ApiClient {
 
   public async getPublicKey(
     keyId: string,
-    fetchPolicy: FetchPolicy,
+    fetchPolicy: FetchPolicy = 'network-only',
   ): Promise<PublicKey | undefined> {
     const data = await this.performQuery<GetPublicKeyForEmailQuery>({
       query: GetPublicKeyForEmailDocument,
@@ -368,7 +368,7 @@ export class ApiClient {
     try {
       result = await this.client.query<Q>({
         variables: variables,
-        fetchPolicy: fetchPolicy,
+        fetchPolicy,
         query: query,
       })
     } catch (err) {

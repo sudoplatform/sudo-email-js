@@ -4,7 +4,6 @@ import {
   DefaultSudoKeyArchive,
   DefaultSudoKeyManager,
 } from '@sudoplatform/sudo-common'
-import { DefaultSudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { DefaultSudoUserClient } from '@sudoplatform/sudo-user'
 import { WebSudoCryptoProvider } from '@sudoplatform/sudo-web-crypto-provider'
 import { DefaultSudoEmailClient } from '../../../src'
@@ -112,14 +111,8 @@ describe('SDK Tests', () => {
       sudoKeyManager: userKeyManager,
     })
     DefaultApiClientManager.getInstance().setAuthClient(userClient)
-    const profilesClient = new DefaultSudoProfilesClient({
-      sudoUserClient: userClient,
-      keyManager: profilesKeyManager,
-      logger,
-    })
     const iut = new DefaultSudoEmailClient({
       sudoUserClient: userClient,
-      sudoProfilesClient: profilesClient,
       sudoCryptoProvider: emailCryptoProvider,
       sudoKeyManager: emailKeyManager,
     })

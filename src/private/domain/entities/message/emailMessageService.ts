@@ -123,7 +123,7 @@ export interface GetEmailMessageRfc822DataInput {
  */
 export interface GetEmailMessageInput {
   id: string
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
 }
 
 /**
@@ -140,7 +140,7 @@ export interface GetEmailMessageInput {
  */
 export interface ListEmailMessagesForEmailAddressIdInput {
   emailAddressId: string
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
   dateRange?: DateRange
   filter?: EmailMessageFilter
   limit?: number
@@ -174,7 +174,7 @@ export interface ListEmailMessagesForEmailAddressIdOutput {
  */
 export interface ListEmailMessagesForEmailFolderIdInput {
   folderId: string
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
   dateRange?: DateRange
   filter?: EmailMessageFilter
   limit?: number

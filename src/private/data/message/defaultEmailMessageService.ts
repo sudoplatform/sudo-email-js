@@ -1,5 +1,4 @@
 import {
-  CachePolicy,
   DecodeError,
   DefaultLogger,
   KeyNotFoundError,
@@ -275,14 +274,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     id,
     emailAddressId,
   }: GetEmailMessageRfc822DataInput): Promise<ArrayBuffer | undefined> {
-    const fetchPolicyTransformer = new FetchPolicyTransformer()
-    const fetchPolicy = fetchPolicyTransformer.transformCachePolicy(
-      CachePolicy.RemoteOnly,
-    )
-    const sealedEmailMessage = await this.appSync.getEmailMessage(
-      id,
-      fetchPolicy,
-    )
+    const sealedEmailMessage = await this.appSync.getEmailMessage(id)
     if (!sealedEmailMessage) {
       return undefined
     }
@@ -319,10 +311,9 @@ export class DefaultEmailMessageService implements EmailMessageService {
   async getMessage(
     input: GetEmailMessageInput,
   ): Promise<EmailMessageEntity | undefined> {
-    const fetchPolicyTransformer = new FetchPolicyTransformer()
-    const fetchPolicy = fetchPolicyTransformer.transformCachePolicy(
-      input.cachePolicy,
-    )
+    const fetchPolicy = input.cachePolicy
+      ? FetchPolicyTransformer.transformCachePolicy(input.cachePolicy)
+      : undefined
     const result = await this.appSync.getEmailMessage(input.id, fetchPolicy)
     if (!result) {
       return undefined
@@ -344,8 +335,9 @@ export class DefaultEmailMessageService implements EmailMessageService {
     sortOrder,
     nextToken,
   }: ListEmailMessagesForEmailAddressIdInput): Promise<ListEmailMessagesForEmailAddressIdOutput> {
-    const fetchPolicyTransformer = new FetchPolicyTransformer()
-    const fetchPolicy = fetchPolicyTransformer.transformCachePolicy(cachePolicy)
+    const fetchPolicy = cachePolicy
+      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
+      : undefined
     const sortOrderTransformer = new SortOrderTransformer()
     const sortOrderInput = sortOrder
       ? sortOrderTransformer.fromAPItoGraphQL(sortOrder)
@@ -395,8 +387,9 @@ export class DefaultEmailMessageService implements EmailMessageService {
     sortOrder,
     nextToken,
   }: ListEmailMessagesForEmailFolderIdInput): Promise<ListEmailMessagesForEmailFolderIdOutput> {
-    const fetchPolicyTransformer = new FetchPolicyTransformer()
-    const fetchPolicy = fetchPolicyTransformer.transformCachePolicy(cachePolicy)
+    const fetchPolicy = cachePolicy
+      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
+      : undefined
     const sortOrderTransformer = new SortOrderTransformer()
     const sortOrderInput = sortOrder
       ? sortOrderTransformer.fromAPItoGraphQL(sortOrder)

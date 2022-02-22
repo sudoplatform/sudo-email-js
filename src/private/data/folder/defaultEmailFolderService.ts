@@ -18,8 +18,9 @@ export class DefaultEmailFolderService implements EmailFolderService {
     limit,
     nextToken,
   }: ListEmailFoldersForEmailAddressIdInput): Promise<ListEmailFoldersForEmailAddressIdOutput> {
-    const fetchPolicyTransformer = new FetchPolicyTransformer()
-    const fetchPolicy = fetchPolicyTransformer.transformCachePolicy(cachePolicy)
+    const fetchPolicy = cachePolicy
+      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
+      : undefined
     const result = await this.appSync.listEmailFoldersForEmailAddressId(
       emailAddressId,
       fetchPolicy,

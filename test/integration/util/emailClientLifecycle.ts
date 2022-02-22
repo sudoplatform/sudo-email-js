@@ -170,7 +170,6 @@ export const setupEmailClient = async (
     const apiClient = new ApiClient(apiClientManager)
     const options: PrivateSudoEmailClientOptions = {
       sudoUserClient: userClient,
-      sudoProfilesClient: profilesClient,
       sudoCryptoProvider: emailCryptoProvider,
       apiClient,
       sudoKeyManager: emailKeyManager,

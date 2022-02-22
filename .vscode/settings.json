@@ -1,9 +1,5 @@
 {
   "typescript.tsdk": "node_modules/typescript/lib",
-  "eslint.validate": [
-    "typescript"
-  ],
-  "cSpell.words": [
-    "sudos"
-  ],
+  "eslint.validate": ["typescript"],
+  "cSpell.words": ["mutex", "sudos"]
 }

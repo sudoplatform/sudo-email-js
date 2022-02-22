@@ -15,7 +15,7 @@ import { FolderUseCaseOutput } from '../shared/folder'
  */
 interface ListEmailFoldersForEmailAddressIdUseCaseInput {
   emailAddressId: string
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
   filter?: EmailFolderFilter | undefined
   limit?: number | undefined
   nextToken?: string | undefined

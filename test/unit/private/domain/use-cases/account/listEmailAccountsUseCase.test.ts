@@ -10,7 +10,6 @@ import {
 } from 'ts-mockito'
 import { EmailAccountService } from '../../../../../../src/private/domain/entities/account/emailAccountService'
 import { ListEmailAccountsUseCase } from '../../../../../../src/private/domain/use-cases/account/listEmailAccountsUseCase'
-import { EmailAddressFilter } from '../../../../../../src/public/typings/filter'
 import { EntityDataFactory } from '../../../../data-factory/entity'
 
 describe('ListEmailAccountsUseCase Test Suite', () => {
@@ -32,14 +31,17 @@ describe('ListEmailAccountsUseCase Test Suite', () => {
       })
       const result = await instanceUnderTest.execute({
         cachePolicy: CachePolicy.CacheOnly,
+        filter: { emailAddress: { eq: 'test@example.com' } },
+        limit: 100,
+        nextToken: 'nextToken',
       })
       verify(mockEmailAccountService.list(anything())).once()
       const [inputArgs] = capture(mockEmailAccountService.list).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         cachePolicy: CachePolicy.CacheOnly,
-        filter: undefined,
-        limit: undefined,
-        nextToken: undefined,
+        filter: { emailAddress: { eq: 'test@example.com' } },
+        limit: 100,
+        nextToken: 'nextToken',
       })
       expect(result).toStrictEqual({
         emailAccounts: [EntityDataFactory.emailAccount],
@@ -47,23 +49,22 @@ describe('ListEmailAccountsUseCase Test Suite', () => {
     })
 
     it('completes successfully with filter', async () => {
-      const filter: EmailAddressFilter = {
-        emailAddress: { beginsWith: 'testie' },
-      }
       when(mockEmailAccountService.list(anything())).thenResolve({
         emailAccounts: [EntityDataFactory.emailAccount],
       })
       const result = await instanceUnderTest.execute({
         cachePolicy: CachePolicy.CacheOnly,
-        filter,
+        filter: { emailAddress: { beginsWith: 'testie' } },
+        limit: 100,
+        nextToken: 'nextToken',
       })
       verify(mockEmailAccountService.list(anything())).once()
       const [inputArgs] = capture(mockEmailAccountService.list).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         cachePolicy: CachePolicy.CacheOnly,
-        filter: filter,
-        limit: undefined,
-        nextToken: undefined,
+        filter: { emailAddress: { beginsWith: 'testie' } },
+        limit: 100,
+        nextToken: 'nextToken',
       })
       expect(result).toStrictEqual({
         emailAccounts: [EntityDataFactory.emailAccount],
@@ -76,14 +77,17 @@ describe('ListEmailAccountsUseCase Test Suite', () => {
       })
       const result = await instanceUnderTest.execute({
         cachePolicy: CachePolicy.CacheOnly,
+        filter: { emailAddress: { eq: 'test@example.com' } },
+        limit: 100,
+        nextToken: 'nextToken',
       })
       verify(mockEmailAccountService.list(anything())).once()
       const [inputArgs] = capture(mockEmailAccountService.list).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         cachePolicy: CachePolicy.CacheOnly,
-        filter: undefined,
-        limit: undefined,
-        nextToken: undefined,
+        filter: { emailAddress: { eq: 'test@example.com' } },
+        limit: 100,
+        nextToken: 'nextToken',
       })
       expect(result).toStrictEqual({
         emailAccounts: [EntityDataFactory.emailAccount],

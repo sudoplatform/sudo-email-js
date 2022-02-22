@@ -11,7 +11,7 @@ import { FolderUseCaseOutput } from '../shared/folder'
  */
 interface GetEmailAccountUseCaseInput {
   id: string
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
 }
 
 interface GetEmailAccountUseCaseOutput {

@@ -14,7 +14,7 @@ import { EmailFolderEntity } from './emailFolderEntity'
  */
 export interface ListEmailFoldersForEmailAddressIdInput {
   emailAddressId: string
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
   filter?: EmailFolderFilter
   limit?: number
   nextToken?: string

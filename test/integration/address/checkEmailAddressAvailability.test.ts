@@ -35,7 +35,6 @@ describe('SudoEmailClient checkEmailAddressAvailability Test Suite', () => {
   beforeEach(async () => {
     const result = await setupEmailClient(log)
     instanceUnderTest = result.emailClient
-    profilesClient = result.profilesClient
     userClient = result.userClient
     userClientKeyManager = result.keyManagers.user
     sudo = result.sudo

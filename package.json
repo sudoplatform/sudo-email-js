@@ -31,7 +31,6 @@
   "peerDependencies": {
     "@sudoplatform/sudo-api-client": "^9.0.1",
     "@sudoplatform/sudo-common": "^6.0.2",
-    "@sudoplatform/sudo-profiles": "^12.0.0",
     "@sudoplatform/sudo-user": "^10.0.0"
   },
   "dependencies": {
@@ -95,7 +94,7 @@
     "subscriptions-transport-ws": "^0.11.0",
     "ts-jest": "^27.0.7",
     "ts-mockito": "^2.6.1",
-    "typedoc": "^0.22.10",
+    "typedoc": "^0.22.11",
     "typescript": "^4.5.2",
     "uuid": "^8.3.2",
     "wait-for-expect": "^3.0.2",

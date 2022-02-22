@@ -6,7 +6,6 @@ import {
   SudoCryptoProvider,
   SudoKeyManager,
 } from '@sudoplatform/sudo-common'
-import { SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import {
   Config,
@@ -96,22 +95,23 @@ interface Pagination {
  *
  * @interface GetEmailAddressInput
  * @property {string} id The identifier of the email address to be retrieved.
- * @property {CachePolicy} cachePolicy Determines how the email address will be fetched.
+ * @property {CachePolicy} cachePolicy Determines how the email address will be fetched. Default usage is `remoteOnly`.
  */
 export interface GetEmailAddressInput {
   id: string
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
 }
 
 /**
  * Input for `SudoEmailClient.listEmailAddresses`.
  *
  * @interface ListEmailAddressesInput
- * @property {CachePolicy} cachePolicy Determines how the email addresses will be fetched.
+ * @property {CachePolicy} cachePolicy Determines how the email addresses will be fetched. Default usage is
+ *   `remoteOnly`.
  * @property {EmailAddressFilter} filter Only email addresses that match this filter will be returned.
  */
 export interface ListEmailAddressesInput extends Pagination {
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
   filter?: EmailAddressFilter
 }
 
@@ -120,12 +120,13 @@ export interface ListEmailAddressesInput extends Pagination {
  *
  * @interface ListEmailAddressesForSudoIdInput
  * @property {string} sudoId The identifier of the Sudo that owns the email address.
- * @property {CachePolicy} cachePolicy Determines how the email addresses will be fetched.
+ * @property {CachePolicy} cachePolicy Determines how the email addresses will be fetched. Default usage is
+ *   `remoteOnly`.
  * @property {EmailAddressFilter} filter Only email addresses that match this filter will be returned.
  */
 export interface ListEmailAddressesForSudoIdInput extends Pagination {
   sudoId: string
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
   filter?: EmailAddressFilter
 }
 
@@ -134,12 +135,12 @@ export interface ListEmailAddressesForSudoIdInput extends Pagination {
  *
  * @interface ListEmailFoldersForEmailAddressIdInput
  * @property {string} emailAddressId The identifier of the email address associated with the email folders.
- * @property {CachePolicy} cachePolicy Determines how the email folders will be fetched.
+ * @property {CachePolicy} cachePolicy Determines how the email folders will be fetched. Default usage is `remoteOnly`.
  * @property {EmailFolderFilter} filter Only email folders that match this filter will be returned.
  */
 export interface ListEmailFoldersForEmailAddressIdInput extends Pagination {
   emailAddressId: string
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
   filter?: EmailFolderFilter
 }
 
@@ -189,11 +190,11 @@ export interface CheckEmailAddressAvailabilityInput {
  *
  * @interface GetEmailMessageInput
  * @property {string} id The identifier of the email message to be retrieved.
- * @property {CachePolicy} cachePolicy Determines how the email message will be fetched.
+ * @property {CachePolicy} cachePolicy Determines how the email message will be fetched. Default usage is `remoteOnly`.
  */
 export interface GetEmailMessageInput {
   id: string
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
 }
 
 /**
@@ -201,14 +202,14 @@ export interface GetEmailMessageInput {
  *
  * @interface ListEmailMessagesForEmailAddressIdInput
  * @property {string} emailAddressId The identifier of the email address associated with the email message.
- * @property {CachePolicy} cachePolicy Determines how the email messages will be fetched.
+ * @property {CachePolicy} cachePolicy Determines how the email messages will be fetched. Default usage is `remoteOnly`.
  * @property {DateRange} dateRange Email messages created within the date range inclusive will be fetched.
  * @property {EmailMessageFilter} filter Only email messages that match this filter will be returned.
  * @property {SortOrder} sortOrder The direction in which the email messages are sorted. Defaults to descending.
  */
 export interface ListEmailMessagesForEmailAddressIdInput extends Pagination {
   emailAddressId: string
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
   dateRange?: DateRange
   filter?: EmailMessageFilter
   sortOrder?: SortOrder
@@ -219,14 +220,14 @@ export interface ListEmailMessagesForEmailAddressIdInput extends Pagination {
  *
  * @interface ListEmailMessagesForEmailFolderIdInput
  * @property {string} folderId The identifier of the email folder that contains the email message.
- * @property {CachePolicy} cachePolicy Determines how the email messages will be fetched.
+ * @property {CachePolicy} cachePolicy Determines how the email messages will be fetched. Default usage is `remoteOnly`.
  * @property {DateRange} dateRange Email messages created within the date range inclusive will be fetched.
  * @property {EmailMessageFilter} filter Only email messages that match this filter will be returned.
  * @property {SortOrder} sortOrder The direction in which the email messages are sorted. Defaults to descending.
  */
 export interface ListEmailMessagesForEmailFolderIdInput extends Pagination {
   folderId: string
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
   dateRange?: DateRange
   filter?: EmailMessageFilter
   sortOrder?: SortOrder
@@ -366,10 +367,11 @@ export interface SudoEmailClient {
   /**
    * Get a list of supported email domains.
    *
-   * @param {CachePolicy} cachePolicy Determines how the supported email domains will be fetched.
+   * @param {CachePolicy} cachePolicy Determines how the supported email domains will be fetched. Default usage is
+   *   `remoteOnly`.
    * @returns {string[]} A list of supported domains.
    */
-  getSupportedEmailDomains(cachePolicy: CachePolicy): Promise<string[]>
+  getSupportedEmailDomains(cachePolicy?: CachePolicy): Promise<string[]>
 
   /**
    * Check if an email address is available to be provisioned within a domain.
@@ -403,7 +405,7 @@ export interface SudoEmailClient {
    * @returns {ListEmailAddressesResult} List operation result.
    */
   listEmailAddresses(
-    input: ListEmailAddressesInput,
+    input?: ListEmailAddressesInput,
   ): Promise<ListEmailAddressesResult>
 
   /**
@@ -582,7 +584,7 @@ export interface SudoEmailClient {
   /**
    * Get the RFC 6854 (supersedes RFC 822) data of the email message.
    *
-   * @param {GetEmailMessageRfc822DataInput} input Paramaters used to retrieve the data of the email message.
+   * @param {GetEmailMessageRfc822DataInput} input Parameters used to retrieve the data of the email message.
    * @returns {EmailMessageRfc822Data | undefined} The data associated with the email message or
    *  undefined if the email message cannot be found.
    */
@@ -626,9 +628,6 @@ export interface SudoEmailClient {
 export type SudoEmailClientOptions = {
   /** Sudo User client to use. No default */
   sudoUserClient: SudoUserClient
-
-  /** Sudo Profiles client to use. No default */
-  sudoProfilesClient: SudoProfilesClient
 
   /** SudoCryptoProvider to use. Default is to create a WebSudoCryptoProvider */
   sudoCryptoProvider?: SudoCryptoProvider
@@ -863,27 +862,14 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     })
   }
 
-  public async listEmailAddresses({
-    cachePolicy,
-    limit,
-    nextToken,
-    filter,
-  }: ListEmailAddressesInput): Promise<ListEmailAddressesResult> {
+  public async listEmailAddresses(
+    input?: ListEmailAddressesInput,
+  ): Promise<ListEmailAddressesResult> {
     return await this.mutex.runExclusive(async () => {
-      this.log.debug(this.listEmailAddresses.name, {
-        limit,
-        nextToken,
-        cachePolicy,
-        filter,
-      })
+      this.log.debug(this.listEmailAddresses.name, { input })
       const useCase = new ListEmailAccountsUseCase(this.emailAccountService)
       const { emailAccounts, nextToken: resultNextToken } =
-        await useCase.execute({
-          limit,
-          nextToken,
-          cachePolicy,
-          filter,
-        })
+        await useCase.execute(input)
       const transformer = new ListEmailAddressesAPITransformer()
       const result = transformer.transform(emailAccounts, resultNextToken)
       return result

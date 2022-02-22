@@ -113,10 +113,9 @@ export class DefaultEmailAccountService implements EmailAccountService {
   async get(
     input: GetEmailAccountInput,
   ): Promise<EmailAccountEntity | undefined> {
-    const fetchPolicyTransformer = new FetchPolicyTransformer()
-    const fetchPolicy = fetchPolicyTransformer.transformCachePolicy(
-      input.cachePolicy,
-    )
+    const fetchPolicy = input.cachePolicy
+      ? FetchPolicyTransformer.transformCachePolicy(input.cachePolicy)
+      : undefined
     const result = await this.appSync.getEmailAddress(input.id, fetchPolicy)
     return result ? await this.mapEmailAddress(result) : undefined
   }
@@ -127,8 +126,9 @@ export class DefaultEmailAccountService implements EmailAccountService {
     limit,
     nextToken,
   }: ListEmailAccountsInput): Promise<ListEmailAccountsOutput> {
-    const fetchPolicyTransformer = new FetchPolicyTransformer()
-    const fetchPolicy = fetchPolicyTransformer.transformCachePolicy(cachePolicy)
+    const fetchPolicy = cachePolicy
+      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
+      : undefined
     const result = await this.appSync.listEmailAddresses(
       fetchPolicy,
       filter,
@@ -156,8 +156,9 @@ export class DefaultEmailAccountService implements EmailAccountService {
     limit,
     nextToken,
   }: ListEmailAccountsForSudoIdInput): Promise<ListEmailAccountsOutput> {
-    const fetchPolicyTransformer = new FetchPolicyTransformer()
-    const fetchPolicy = fetchPolicyTransformer.transformCachePolicy(cachePolicy)
+    const fetchPolicy = cachePolicy
+      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
+      : undefined
     const result = await this.appSync.listEmailAddressesForSudoId(
       sudoId,
       fetchPolicy,
@@ -198,9 +199,9 @@ export class DefaultEmailAccountService implements EmailAccountService {
   async getSupportedEmailDomains({
     cachePolicy,
   }: GetSupportedEmailDomainsInput): Promise<EmailDomainEntity[]> {
-    const fetchPolicy = new FetchPolicyTransformer().transformCachePolicy(
-      cachePolicy,
-    )
+    const fetchPolicy = cachePolicy
+      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
+      : undefined
     const result = await this.appSync.getSupportedEmailDomains(fetchPolicy)
     const transformer = new EmailDomainEntityTransformer()
     return result.domains.map((domain) => transformer.transformGraphQL(domain))

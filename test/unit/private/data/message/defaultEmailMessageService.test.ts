@@ -749,7 +749,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       when(mockS3Client.download(anything())).thenResolve(
         EmailMessageRfc822DataFactory.s3ClientDownloadOutput,
       )
-      when(mockAppSync.getEmailMessage(anything(), anything())).thenResolve(
+      when(mockAppSync.getEmailMessage(anything())).thenResolve(
         GraphQLDataFactory.sealedEmailMessage,
       )
       const unsealedDraft = 'unsealedDraft'
@@ -776,8 +776,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
       expect(idArg).toStrictEqual(
         EmailMessageRfc822DataFactory.getRfc822DataInput.id,
       )
-      expect(fetchPolicyArg).toStrictEqual('network-only')
-      verify(mockAppSync.getEmailMessage(anything(), anything())).once()
+      expect(fetchPolicyArg).toBeUndefined()
+      verify(mockAppSync.getEmailMessage(anything())).once()
     })
 
     it('returns undefined if s3 download throws NoSuchKey', async () => {
@@ -788,7 +788,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           code: S3Error.NoSuchKey,
         }),
       )
-      when(mockAppSync.getEmailMessage(anything(), anything())).thenResolve(
+      when(mockAppSync.getEmailMessage(anything())).thenResolve(
         GraphQLDataFactory.sealedEmailMessage,
       )
 
@@ -812,8 +812,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
       expect(idArg).toStrictEqual(
         EmailMessageRfc822DataFactory.getRfc822DataInput.id,
       )
-      expect(fetchPolicyArg).toStrictEqual('network-only')
-      verify(mockAppSync.getEmailMessage(anything(), anything())).once()
+      expect(fetchPolicyArg).toBeUndefined()
+      verify(mockAppSync.getEmailMessage(anything())).once()
     })
 
     it('throws error if s3 download throws error other than NoSuchKey', async () => {
@@ -824,7 +824,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           code: S3Error.NoSuchKey + 1,
         }),
       )
-      when(mockAppSync.getEmailMessage(anything(), anything())).thenResolve(
+      when(mockAppSync.getEmailMessage(anything())).thenResolve(
         GraphQLDataFactory.sealedEmailMessage,
       )
 
@@ -848,8 +848,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
       expect(idArg).toStrictEqual(
         EmailMessageRfc822DataFactory.getRfc822DataInput.id,
       )
-      expect(fetchPolicyArg).toStrictEqual('network-only')
-      verify(mockAppSync.getEmailMessage(anything(), anything())).once()
+      expect(fetchPolicyArg).toBeUndefined()
+      verify(mockAppSync.getEmailMessage(anything())).once()
     })
 
     it('returns undefined if there is no message with supplied id', async () => {
@@ -873,8 +873,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
       expect(idArg).toStrictEqual(
         EmailMessageRfc822DataFactory.getRfc822DataInput.id,
       )
-      expect(fetchPolicyArg).toStrictEqual('network-only')
-      verify(mockAppSync.getEmailMessage(anything(), anything())).once()
+      expect(fetchPolicyArg).toBeUndefined()
+      verify(mockAppSync.getEmailMessage(anything())).once()
     })
   })
 

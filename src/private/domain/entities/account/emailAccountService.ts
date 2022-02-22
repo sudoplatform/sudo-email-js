@@ -50,7 +50,7 @@ export interface UpdateEmailAccountMetadataInput {
  */
 export interface GetEmailAccountInput {
   id: string
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
 }
 
 /**
@@ -64,7 +64,7 @@ export interface GetEmailAccountInput {
  * This allows for pagination.
  */
 export interface ListEmailAccountsInput {
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
   filter?: EmailAddressFilter
   limit?: number
   nextToken?: string
@@ -83,7 +83,7 @@ export interface ListEmailAccountsInput {
  */
 export interface ListEmailAccountsForSudoIdInput {
   sudoId: string
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
   filter?: EmailAddressFilter
   limit?: number
   nextToken?: string
@@ -120,7 +120,7 @@ export interface CheckEmailAddressAvailabilityInput {
  * @property {CachePolicy} cachePolicy Cache policy determines the strategy for accessing the supported email domains.
  */
 export interface GetSupportedEmailDomainsInput {
-  cachePolicy: CachePolicy
+  cachePolicy?: CachePolicy
 }
 
 /**
@@ -167,7 +167,7 @@ export interface EmailAccountService {
    * @param {ListEmailAccountsInput} input Parameters used to list email accounts.
    * @returns {ListEmailAccountsOutput} The list of any email accounts. Can be empty if no accounts found.
    */
-  list(input: ListEmailAccountsInput): Promise<ListEmailAccountsOutput>
+  list(input?: ListEmailAccountsInput): Promise<ListEmailAccountsOutput>
 
   /**
    * List email accounts associated with the sudo owner.
