@@ -1,10 +1,10 @@
 import { instance, mock, reset, verify, when } from 'ts-mockito'
-import { ConfigurationDataService } from '../../../../../../src/private/domain/entities/configuration/configurationDataService'
+import { EmailConfigurationDataService } from '../../../../../../src/private/domain/entities/configuration/configurationDataService'
 import { GetConfigurationDataUseCase } from '../../../../../../src/private/domain/use-cases/configuration/getConfigurationDataUseCase'
 import { EntityDataFactory } from '../../../../data-factory/entity'
 
 describe('GetConfigurationDataUseCase', () => {
-  const mockConfigurationDataService = mock<ConfigurationDataService>()
+  const mockConfigurationDataService = mock<EmailConfigurationDataService>()
 
   let instanceUnderTest: GetConfigurationDataUseCase
 

@@ -1,6 +1,6 @@
-query GetConfigurationData {
-  getConfigurationData {
-    ...ConfigurationData
+query GetEmailConfig {
+  getEmailConfig {
+    ...EmailConfigurationData
   }
 }
 

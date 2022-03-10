@@ -7,7 +7,7 @@
  * @property {number} emailMessageMaxInboundMessageSize The maximum allowed size of an inbound email message.
  * @property {number} emailMessageMaxOutboundMessageSize TThe maximum allowed size of an outbound email message.
  */
-export interface ConfigurationDataEntity {
+export interface EmailConfigurationDataEntity {
   deleteEmailMessagesLimit: number
   updateEmailMessagesLimit: number
   emailMessageMaxInboundMessageSize: number

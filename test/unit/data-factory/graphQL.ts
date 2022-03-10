@@ -1,9 +1,9 @@
 import {
   AvailableAddresses,
-  ConfigurationData,
   EmailAddress,
   EmailAddressConnection,
   EmailAddressWithoutFoldersFragment,
+  EmailConfigurationData,
   EmailFolder,
   EmailFolderConnection,
   EmailMessageConnection,
@@ -37,7 +37,7 @@ export class GraphQLDataFactory {
     issuer: 'testIssuer',
   }
 
-  static readonly configurationData: ConfigurationData = {
+  static readonly configurationData: EmailConfigurationData = {
     deleteEmailMessagesLimit: 100,
     updateEmailMessagesLimit: 100,
     emailMessageMaxInboundMessageSize: 10485760,

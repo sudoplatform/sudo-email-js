@@ -1,15 +1,15 @@
-import { ConfigurationDataEntity } from '../../domain/entities/configuration/configurationDataEntity'
-import { ConfigurationDataService } from '../../domain/entities/configuration/configurationDataService'
+import { EmailConfigurationDataService } from '../../domain/entities/configuration/configurationDataService'
+import { EmailConfigurationDataEntity } from '../../domain/entities/configuration/emailConfigurationDataEntity'
 import { ApiClient } from '../common/apiClient'
 import { ConfigurationDataAPITransformer } from './transformer/configurationDataAPITransformer'
 
 export class DefaultConfigurationDataService
-  implements ConfigurationDataService
+  implements EmailConfigurationDataService
 {
   constructor(private readonly appSync: ApiClient) {}
 
-  async getConfigurationData(): Promise<ConfigurationDataEntity> {
-    const result = await this.appSync.getConfigurationData()
+  async getConfigurationData(): Promise<EmailConfigurationDataEntity> {
+    const result = await this.appSync.getEmailConfig()
     const transformer = new ConfigurationDataAPITransformer()
     return transformer.transformGraphQL(result)
   }

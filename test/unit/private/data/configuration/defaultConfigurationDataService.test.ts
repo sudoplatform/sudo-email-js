@@ -17,11 +17,11 @@ describe('DefaultConfigurationDataService Test Suite', () => {
 
   describe('getConfigurationData', () => {
     it('calls appsync correctly', async () => {
-      when(mockAppSync.getConfigurationData()).thenResolve(
+      when(mockAppSync.getEmailConfig()).thenResolve(
         GraphQLDataFactory.configurationData,
       )
       const result = await instanceUnderTest.getConfigurationData()
-      verify(mockAppSync.getConfigurationData()).once()
+      verify(mockAppSync.getEmailConfig()).once()
       expect(result).toEqual(EntityDataFactory.configurationData)
     })
   })

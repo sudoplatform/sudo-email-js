@@ -1,9 +1,11 @@
-import { ConfigurationData } from '../../../../gen/graphqlTypes'
-import { ConfigurationDataEntity } from '../../../domain/entities/configuration/configurationDataEntity'
+import { EmailConfigurationData } from '../../../../gen/graphqlTypes'
+import { EmailConfigurationDataEntity } from '../../../domain/entities/configuration/emailConfigurationDataEntity'
 
 export class ConfigurationDataAPITransformer {
-  transformEntity(entity: ConfigurationDataEntity): ConfigurationData {
-    const transformed: ConfigurationData = {
+  transformEntity(
+    entity: EmailConfigurationDataEntity,
+  ): EmailConfigurationData {
+    const transformed: EmailConfigurationData = {
       deleteEmailMessagesLimit: entity.deleteEmailMessagesLimit,
       updateEmailMessagesLimit: entity.updateEmailMessagesLimit,
       emailMessageMaxInboundMessageSize:
@@ -15,7 +17,7 @@ export class ConfigurationDataAPITransformer {
     return transformed
   }
 
-  transformGraphQL(data: ConfigurationData): ConfigurationDataEntity {
+  transformGraphQL(data: EmailConfigurationData): EmailConfigurationDataEntity {
     return {
       deleteEmailMessagesLimit: data.deleteEmailMessagesLimit,
       updateEmailMessagesLimit: data.updateEmailMessagesLimit,

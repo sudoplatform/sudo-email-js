@@ -239,7 +239,7 @@ input SealedAttributeInput {
   base64EncodedSealedData: String!
 }
 
-type ConfigurationData {
+type EmailConfigurationData {
   deleteEmailMessagesLimit: Int!
   updateEmailMessagesLimit: Int!
   emailMessageMaxInboundMessageSize: Int!
@@ -332,7 +332,7 @@ type EmailMessageConnection {
 }
 
 type Query {
-  getConfigurationData: ConfigurationData!
+  getEmailConfig: EmailConfigurationData!
 
   getEmailDomains: SupportedDomains!
 

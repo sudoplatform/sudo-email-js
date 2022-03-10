@@ -1,4 +1,4 @@
-fragment ConfigurationData on ConfigurationData {
+fragment EmailConfigurationData on EmailConfigurationData {
   deleteEmailMessagesLimit
   updateEmailMessagesLimit
   emailMessageMaxInboundMessageSize
