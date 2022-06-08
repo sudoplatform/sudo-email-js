@@ -1,5 +1,10 @@
 {
   "typescript.tsdk": "node_modules/typescript/lib",
   "eslint.validate": ["typescript"],
-  "cSpell.words": ["mutex", "sudos"]
+  "cSpell.words": [
+    "mutex",
+    "sudoplatformconfig",
+    "sudos",
+    "yalc"
+  ]
 }

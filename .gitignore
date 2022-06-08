@@ -3,8 +3,8 @@
 docs
 lib
 node_modules
-src/gen
 yarn-error.log
 .yalc
 yalc.lock
 build
+package.json.old

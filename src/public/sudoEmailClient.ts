@@ -177,8 +177,14 @@ export interface UpdateEmailAddressMetadataInput {
  * Input for `SudoEmailClient.checkEmailAddressAvailability`.
  *
  * @interface CheckEmailAddressAvailabilityInput
- * @property {Set<string>} localParts The local parts of the email address to check.
- * @property {Set<string>} domains The domains of the email address to check. If left undefined, will use default recognized by the service.
+ * @property {Set<string>} localParts The local parts of the email address to check. Local parts require the following
+ *   criteria:
+ *     - At least one local part is required.
+ *     - A maximum of 5 local parts per API request.
+ *     - Local parts must not exceed 64 characters.
+ *     - Local parts must match the following pattern: `^[a-zA-Z0-9](\.?[-_a-zA-Z0-9])*$`
+ * @property {Set<string>} domains The domains of the email address to check. If left undefined, will use default
+ *   recognized by the service.
  */
 export interface CheckEmailAddressAvailabilityInput {
   localParts: Set<string>
@@ -290,6 +296,15 @@ export interface GetDraftEmailMessageInput {
  *
  * @interface SendEmailMessageInput
  * @property {ArrayBuffer} rfc822Data Email message data formatted under the RFC 6854.
+ *   Some further rules (beyond RFC 6854) must also be applied to the data:
+ *     - At least one recipient must exist (to, cc, bcc).
+ *     - For all email addresses:
+ *       - Total length (including both local part and domain) must not exceed 256 characters.
+ *       - Local part must not exceed more than 64 characters.
+ *       - Input domain parts (domain separated by `.`) must not exceed 63 characters.
+ *       - Address must match standard email address pattern:
+ *         `^[a-zA-Z0-9](\.?[-_a-zA-Z0-9])*@[a-zA-Z0-9](-*\.?[a-zA-Z0-9])*\.[a-zA-Z](-?[a-zA-Z0-9])+$`.
+ *
  * @property {string} senderEmailAddressId The identifier of the email address used to send the email. The identifier
  *  must match the identifier of the email address of the `from` field in the RFC 6854 data.
  */
@@ -302,7 +317,8 @@ export interface SendEmailMessageInput {
  * Input for `SudoEmailClient.updateEmailMessages`.
  *
  * @interface UpdateEmailMessagesInput
- * @property {string[]} ids A list of one or more identifiers of the email messages to be updated.
+ * @property {string[]} ids A list of one or more identifiers of the email messages to be updated. There is a limit of
+ *   100 email message ids per API request. Exceeding this will cause an error to be thrown.
  * @property values The new value(s) to set for each listed email message.
  */
 export interface UpdateEmailMessagesInput {
@@ -326,7 +342,15 @@ export interface SudoEmailClient {
   /**
    * Provision an email address.
    *
-   * @param {ProvisionEmailAddressInput} input Parameters used to provision an email address.
+   * @param {ProvisionEmailAddressInput} input Parameters used to provision an email address. Email addresses must meet
+   * the following criteria:
+   *   - Total length (including both local part and domain) must not exceed 256 characters.
+   *   - Local part must not exceed more than 64 characters.
+   *   - Input domain parts (domain separated by `.`) must not exceed 63 characters.
+   *   - Address must match standard email address pattern:
+   *     `^[a-zA-Z0-9](\.?[-_a-zA-Z0-9])*@[a-zA-Z0-9](-*\.?[a-zA-Z0-9])*\.[a-zA-Z](-?[a-zA-Z0-9])+$`.
+   *   - Domain must be a registered domain retrieved from {@link SudoEmailClient.getSupportedEmailDomains}.
+   *
    * @returns {EmailAddress} The provisioned email address.
    *
    * @throws {@link NotRegisteredError}
@@ -358,6 +382,7 @@ export interface SudoEmailClient {
    * @param {UpdateEmailAddressMetadataInput} input Parameters used to update the metadata of an email address.
    * @returns {string} The id of the updated email address.
    *
+   * @throws {@link NotRegisteredError}
    * @throws {@link ServiceError}
    */
   updateEmailAddressMetadata(
@@ -370,6 +395,8 @@ export interface SudoEmailClient {
    * @param {CachePolicy} cachePolicy Determines how the supported email domains will be fetched. Default usage is
    *   `remoteOnly`.
    * @returns {string[]} A list of supported domains.
+
+   * @throws {@link DomainNotSetupError}
    */
   getSupportedEmailDomains(cachePolicy?: CachePolicy): Promise<string[]>
 
@@ -514,7 +541,8 @@ export interface SudoEmailClient {
    *
    * @throws {@link NotRegisteredError}
    * @throws {@link NotAuthorizedError}
-   * @throws {@link UnauthorizedAddressError()}
+   * @throws {@link UnauthorizedAddressError}
+   * @throws {@link LimitExceededError}
    * @throws {@link InvalidEmailContentsError}
    * @throws {@link InsufficientEntitlementsError}
    */
@@ -545,7 +573,9 @@ export interface SudoEmailClient {
    *
    * Email messages can only be deleted in batches of 100. Anything greater will throw a {@link LimitExceededError}.
    *
-   * @param {string[]} ids A list of one or more identifiers of the email messages to be deleted.
+   * @param {string[]} ids A list of one or more identifiers of the email messages to be deleted. There is a limit of
+   *   100 email message ids per API request. Exceeding this will cause an error to be thrown.
+   *
    * @returns The status of the delete:
    *    Success - All email messages succeeded to delete.
    *    Partial - Only a partial amount of messages succeeded to delete. Includes a list of the
@@ -553,6 +583,7 @@ export interface SudoEmailClient {
    *    Failure - All email messages failed to delete.
    *
    * @throws {@link NotRegisteredError}
+   * @throws {@link InvalidArgumentError}
    * @throws {@link LimitExceededError}
    * @throws {@link ServiceError}
    */
@@ -566,6 +597,7 @@ export interface SudoEmailClient {
    * email message could not be deleted.
    *
    * @throws {@link NotRegisteredError}
+   * @throws {@link LimitExceededError}
    * @throws {@link ServiceError}
    */
   deleteEmailMessage(id: string): Promise<string | undefined>

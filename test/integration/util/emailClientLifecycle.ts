@@ -39,8 +39,10 @@ import { createSudo } from './createSudo'
 // [START] - Polyfills
 global.fetch = require('node-fetch')
 require('isomorphic-fetch')
-global.crypto = require('isomorphic-webcrypto')
 // [END] - Polyfills
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+global.crypto = require('crypto').webcrypto
 
 export const sudoIssuer = 'sudoplatform.sudoservice'
 
