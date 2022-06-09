@@ -58,6 +58,7 @@ describe('SudoEmailClient DeleteEmailMessage Test Suite', () => {
       bcc: [],
       replyTo: [],
       body: 'Hello, World',
+      attachments: [],
     })
     const messageId = await instanceUnderTest.sendEmailMessage({
       rfc822Data: str2ab(messageString),

@@ -49,6 +49,7 @@ describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
       bcc: [],
       replyTo: [],
       body: 'test draft message',
+      attachments: [],
     })
     draftContents = new TextEncoder().encode(draftEmailMessageString)
     draftMetadata = await instanceUnderTest.createDraftEmailMessage({

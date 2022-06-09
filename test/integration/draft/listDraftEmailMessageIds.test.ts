@@ -42,6 +42,7 @@ describe('SudoEmailClient listDraftEmailMessageIds Test Suite', () => {
           bcc: [],
           replyTo: [],
           body: 'test draft message',
+          attachments: [],
         }),
       )
       .map((s) => encoder.encode(s))

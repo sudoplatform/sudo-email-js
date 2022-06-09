@@ -70,6 +70,7 @@ export class APIDataFactory {
     cc: [],
     replyTo: [],
     subject: 'testSubject',
+    hasAttachments: false,
     sortDate: new Date(1.0),
     size: 12345,
   }

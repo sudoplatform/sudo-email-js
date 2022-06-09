@@ -26,18 +26,24 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
   let sudo1OwnershipProofToken: string
   let sudo2: Sudo
   let sudo2OwnershipProofToken: string
+  let sudosToDelete: Sudo[]
+  let beforeEachComplete = false
 
   beforeEach(async () => {
+    sudosToDelete = []
     const result = await setupEmailClient(log)
     instanceUnderTest = result.emailClient
     profilesClient = result.profilesClient
     userClient = result.userClient
     sudo1 = result.sudo
+    sudosToDelete.push(sudo1)
+
     sudo1OwnershipProofToken = result.ownershipProofToken
 
     // Get another sudo
     const sudo2Result = await createSudo('New Sudo', profilesClient)
     sudo2 = sudo2Result.sudo
+    sudosToDelete.push(sudo2)
     sudo2OwnershipProofToken = sudo2Result.ownershipProofToken
 
     const sudo1EmailAddresses = await Promise.all(
@@ -60,18 +66,27 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
       ),
     )
     emailAddresses = sudo1EmailAddresses.concat(sudo2EmailAddresses)
+    beforeEachComplete = true
   })
 
   afterEach(async () => {
+    beforeEachComplete = false
     await teardown(
-      { emailAddresses, sudos: [sudo1, sudo2] },
+      { emailAddresses, sudos: sudosToDelete },
       { emailClient: instanceUnderTest, profilesClient, userClient },
     )
     emailAddresses = []
+    sudosToDelete = []
   })
+
+  function expectSetupComplete(): void {
+    expect({ beforeEachComplete }).toEqual({ beforeEachComplete: true })
+  }
 
   describe('listEmailAddresses', () => {
     it('returns email addresses', async () => {
+      expectSetupComplete()
+
       const result = await instanceUnderTest.listEmailAddresses({
         cachePolicy: CachePolicy.RemoteOnly,
       })
@@ -86,6 +101,8 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
     })
 
     it('returns specific email on id filter', async () => {
+      expectSetupComplete()
+
       const emailAddress = emailAddresses[0]
       await expect(
         instanceUnderTest.listEmailAddresses({
@@ -99,6 +116,8 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
     })
 
     it('returns results for or filter', async () => {
+      expectSetupComplete()
+
       const emailAddress1 = emailAddresses[0]
       const emailAddress2 = emailAddresses[1]
       await expect(
@@ -118,6 +137,8 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
     })
 
     it('returns no results when filter does not match any criteria', async () => {
+      expectSetupComplete()
+
       await expect(
         instanceUnderTest.listEmailAddresses({
           cachePolicy: CachePolicy.RemoteOnly,
@@ -132,6 +153,8 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
 
   describe('listEmailAddressesForSudoId', () => {
     it('lists expected output', async () => {
+      expectSetupComplete()
+
       await expect(
         instanceUnderTest.listEmailAddressesForSudoId({
           sudoId: sudo1.id ?? '',
@@ -153,6 +176,8 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
     })
 
     it('lists email addresses for filter', async () => {
+      expectSetupComplete()
+
       await expect(
         instanceUnderTest.listEmailAddressesForSudoId({
           sudoId: sudo1.id ?? '',
@@ -166,6 +191,8 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
     })
 
     it('lists email addresses with or filter', async () => {
+      expectSetupComplete()
+
       await expect(
         instanceUnderTest.listEmailAddressesForSudoId({
           sudoId: sudo1.id ?? '',
@@ -184,6 +211,8 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
     })
 
     it('returns empty list of email addresses when non-existent sudo id used', async () => {
+      expectSetupComplete()
+
       await expect(
         instanceUnderTest.listEmailAddressesForSudoId({
           sudoId: v4(),
@@ -196,6 +225,8 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
     })
 
     it('returns partial result for missing alias key', async () => {
+      expectSetupComplete()
+
       await instanceUnderTest.reset()
       const result = await instanceUnderTest.listEmailAddressesForSudoId({
         sudoId: sudo1.id ?? '',
@@ -219,6 +250,8 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
     })
 
     it('returns partial result for missing message key', async () => {
+      expectSetupComplete()
+
       await instanceUnderTest.reset()
       const result = await instanceUnderTest.listEmailAddressesForSudoId({
         sudoId: sudo2.id ?? '',

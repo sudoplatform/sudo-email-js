@@ -39,7 +39,9 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   let emailAddress: EmailAddress
   let inboxFolder: EmailFolder
   let draft: EmailMessageDetails
+  let draftWithAttachments: EmailMessageDetails
   let draftString: string
+  let draftWithAttachmentsString: string
 
   beforeEach(async () => {
     const result = await setupEmailClient(log)
@@ -68,8 +70,28 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       bcc: [],
       replyTo: [],
       body: 'Hello, World',
+      attachments: [],
     }
     draftString = createEmailMessageRfc822String(draft)
+    draftWithAttachments = {
+      ...draft,
+      attachments: [
+        {
+          contentType: 'application/pdf',
+          contentTransferEncoding: 'base64',
+          fileName: 'attachment-1.pdf',
+          content: Buffer.from('Content of attachment 1').toString('base64'),
+        },
+        {
+          contentType: 'image/jpeg',
+          contentTransferEncoding: 'base64',
+          fileName: 'attachment-2.jpeg',
+          content: Buffer.from('Content of attachment 2').toString('base64'),
+        },
+      ],
+    }
+    draftWithAttachmentsString =
+      createEmailMessageRfc822String(draftWithAttachments)
   })
 
   afterEach(async () => {
@@ -99,7 +121,11 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       expect(sent).toBeDefined()
     })
 
-    expect(sent).toMatchObject({ id: sentId, ..._.omit(draft, 'body') })
+    expect(sent).toMatchObject({
+      ..._.omit(draft, 'body', 'attachments'),
+      id: sentId,
+      hasAttachments: false,
+    })
 
     const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
       id: sentId,
@@ -108,6 +134,41 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
     expect(new TextDecoder().decode(sentRFC822Data?.rfc822Data)).toEqual(
       draftString,
+    )
+  })
+
+  it('returns expected output with attachments', async () => {
+    const sentId = await instanceUnderTest.sendEmailMessage({
+      rfc822Data: str2ab(draftWithAttachmentsString),
+      senderEmailAddressId: emailAddress.id,
+    })
+
+    expect(sentId).toMatch(
+      /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
+    )
+
+    let sent
+    await waitForExpect(async () => {
+      sent = await instanceUnderTest.getEmailMessage({
+        id: sentId,
+        cachePolicy: CachePolicy.RemoteOnly,
+      })
+      expect(sent).toBeDefined()
+    })
+
+    expect(sent).toMatchObject({
+      ..._.omit(draft, 'body', 'attachments'),
+      id: sentId,
+      hasAttachments: true,
+    })
+
+    const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
+      id: sentId,
+      emailAddressId: emailAddress.id,
+    })
+
+    expect(new TextDecoder().decode(sentRFC822Data?.rfc822Data)).toEqual(
+      draftWithAttachmentsString,
     )
   })
 
@@ -136,7 +197,10 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       expect(sent).toBeDefined()
     })
 
-    expect(sent).toMatchObject({ id: sentId, ..._.omit(ccDraft, 'body') })
+    expect(sent).toMatchObject({
+      ..._.omit(ccDraft, 'body', 'attachments'),
+      id: sentId,
+    })
 
     const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
       id: sentId,
@@ -188,7 +252,10 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       expect(sent).toBeDefined()
     })
 
-    expect(sent).toMatchObject({ id: sentId, ..._.omit(bccDraft, 'body') })
+    expect(sent).toMatchObject({
+      ..._.omit(bccDraft, 'body', 'attachments'),
+      id: sentId,
+    })
 
     const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
       id: sentId,
@@ -241,6 +308,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       bcc: [],
       replyTo: [],
       body: 'Hello, World',
+      attachments: [],
     }
     const badDraftString = createEmailMessageRfc822String(badDraft)
 

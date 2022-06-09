@@ -51,6 +51,7 @@ export interface EmailMessageEntity {
   bcc: EmailAddressEntity[]
   replyTo: EmailAddressEntity[]
   subject?: string
+  hasAttachments: boolean
   version: number
   sortDate: Date
   createdAt: Date

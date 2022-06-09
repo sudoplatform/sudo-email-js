@@ -42,8 +42,12 @@ import { GraphQLDataFactory } from '../../../data-factory/graphQL'
 
 const identityServiceConfig = DraftEmailMessageDataFactory.identityServiceConfig
 
-const unsealedHeaderDetailsString =
+const unsealedHeaderDetailsHasAttachmentsUnsetString =
   '{"bcc":[],"to":[{"emailAddress":"testie@unittest.org"}],"from":[{"emailAddress":"testie@unittest.org"}],"cc":[],"replyTo":[],"subject":"testSubject"}'
+const unsealedHeaderDetailsHasAttachmentsTrueString =
+  '{"bcc":[],"to":[{"emailAddress":"testie@unittest.org"}],"from":[{"emailAddress":"testie@unittest.org"}],"cc":[],"replyTo":[],"subject":"testSubject","hasAttachments":true}'
+const unsealedHeaderDetailsString =
+  '{"bcc":[],"to":[{"emailAddress":"testie@unittest.org"}],"from":[{"emailAddress":"testie@unittest.org"}],"cc":[],"replyTo":[],"subject":"testSubject","hasAttachments":false}'
 
 describe('DefaultEmailMessageService Test Suite', () => {
   const mockAppSync = mock<ApiClient>()
@@ -211,6 +215,34 @@ describe('DefaultEmailMessageService Test Suite', () => {
       expect(result).toEqual(EntityDataFactory.emailMessage)
     })
 
+    it.each`
+      json                                              | name       | expected
+      ${unsealedHeaderDetailsHasAttachmentsTrueString}  | ${'true'}  | ${true}
+      ${unsealedHeaderDetailsString}                    | ${'false'} | ${false}
+      ${unsealedHeaderDetailsHasAttachmentsUnsetString} | ${'unset'} | ${false}
+    `(
+      'unseals correctly when hasAttachments is $name',
+      async ({ json, expected }) => {
+        when(mockAppSync.getEmailMessage(anything(), anything())).thenResolve(
+          GraphQLDataFactory.sealedEmailMessage,
+        )
+        when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(json)
+        const id = v4()
+        const result = await instanceUnderTest.getMessage({
+          id,
+          cachePolicy: CachePolicy.CacheOnly,
+        })
+        verify(mockAppSync.getEmailMessage(anything(), anything())).once()
+        const [idArg, policyArg] = capture(mockAppSync.getEmailMessage).first()
+        expect(idArg).toStrictEqual<typeof idArg>(id)
+        expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+        expect(result).toEqual({
+          ...EntityDataFactory.emailMessage,
+          hasAttachments: expected,
+        })
+      },
+    )
+
     it('calls appsync correctly with undefined result', async () => {
       when(mockAppSync.getEmailMessage(anything(), anything())).thenResolve(
         undefined,
@@ -294,6 +326,59 @@ describe('DefaultEmailMessageService Test Suite', () => {
         nextToken: undefined,
       })
     })
+
+    it.each`
+      json                                              | name       | expected
+      ${unsealedHeaderDetailsHasAttachmentsTrueString}  | ${'true'}  | ${true}
+      ${unsealedHeaderDetailsString}                    | ${'false'} | ${false}
+      ${unsealedHeaderDetailsHasAttachmentsUnsetString} | ${'unset'} | ${false}
+    `(
+      'unseals correctly when hasAttachments is $name',
+      async ({ json, expected }) => {
+        when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(json)
+        when(
+          mockAppSync.listEmailMessagesForEmailAddressId(
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+          ),
+        ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+        const emailAddressId = v4()
+        const result = await instanceUnderTest.listMessagesForEmailAddressId({
+          emailAddressId,
+          cachePolicy: CachePolicy.CacheOnly,
+        })
+        verify(
+          mockAppSync.listEmailMessagesForEmailAddressId(
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+          ),
+        ).once()
+        const [inputArg, policyArg] = capture(
+          mockAppSync.listEmailMessagesForEmailAddressId,
+        ).first()
+        expect(inputArg).toStrictEqual<typeof inputArg>(emailAddressId)
+        expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+        expect(result).toStrictEqual({
+          emailMessages: [
+            {
+              ...EntityDataFactory.emailMessage,
+              hasAttachments: expected,
+            },
+          ],
+          nextToken: undefined,
+        })
+      },
+    )
 
     it.each`
       cachePolicy               | test
@@ -423,6 +508,59 @@ describe('DefaultEmailMessageService Test Suite', () => {
         nextToken: undefined,
       })
     })
+
+    it.each`
+      json                                              | name       | expected
+      ${unsealedHeaderDetailsHasAttachmentsTrueString}  | ${'true'}  | ${true}
+      ${unsealedHeaderDetailsString}                    | ${'false'} | ${false}
+      ${unsealedHeaderDetailsHasAttachmentsUnsetString} | ${'unset'} | ${false}
+    `(
+      'unseals correctly when hasAttachments is $name',
+      async ({ json, expected }) => {
+        when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(json)
+        when(
+          mockAppSync.listEmailMessagesForEmailFolderId(
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+          ),
+        ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+        const folderId = v4()
+        const result = await instanceUnderTest.listMessagesForEmailFolderId({
+          folderId,
+          cachePolicy: CachePolicy.CacheOnly,
+        })
+        verify(
+          mockAppSync.listEmailMessagesForEmailFolderId(
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+          ),
+        ).once()
+        const [inputArg, policyArg] = capture(
+          mockAppSync.listEmailMessagesForEmailFolderId,
+        ).first()
+        expect(inputArg).toStrictEqual<typeof inputArg>(folderId)
+        expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+        expect(result).toStrictEqual({
+          emailMessages: [
+            {
+              ...EntityDataFactory.emailMessage,
+              hasAttachments: expected,
+            },
+          ],
+          nextToken: undefined,
+        })
+      },
+    )
 
     it.each`
       cachePolicy               | test
@@ -654,7 +792,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       )
     })
 
-    it('throws error if no algorithm in metadta', async () => {
+    it('throws error if no algorithm in metadata', async () => {
       when(mockS3Client.download(anything())).thenResolve({
         lastModified: new Date(),
         body: DraftEmailMessageDataFactory.s3ClientDownloadOutput.body,
@@ -916,6 +1054,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         cc: [],
         bcc: [],
         replyTo: [],
+        hasAttachments: false,
         status: {
           type: 'Failed',
           cause: new SyntaxError('Unexpected token ] in JSON at position 1'),
@@ -949,6 +1088,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         cc: [],
         bcc: [],
         replyTo: [],
+        hasAttachments: false,
         status: {
           type: 'Failed',
           cause: new DecodeError(
@@ -981,6 +1121,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         cc: [],
         bcc: [],
         replyTo: [],
+        hasAttachments: false,
         status: {
           type: 'Failed',
           cause: new KeyNotFoundError(),

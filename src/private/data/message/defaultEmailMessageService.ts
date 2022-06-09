@@ -43,6 +43,7 @@ import {
 } from '../common/s3Client'
 import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransformer'
 import { SortOrderTransformer } from '../common/transformer/sortOrderTransformer'
+import { withDefault } from '../common/withDefault'
 import { EmailMessageFilterTransformer } from './transformer/emailMessageFilterTransformer'
 import { SealedEmailMessageEntityTransformer } from './transformer/sealedEmailMessageEntityTransformer'
 
@@ -58,6 +59,13 @@ const EmailHeaderDetailsCodec = t.intersection(
       cc: t.array(EmailAddressEntityCodec),
       bcc: t.array(EmailAddressEntityCodec),
       replyTo: t.array(EmailAddressEntityCodec),
+
+      // Messages processed prior to support for hasAttachments
+      // will not have this property in their sealed data so we
+      // need to allow for this possibility. We do this simply
+      // by defaulting to false and not exposing the possibility
+      // of this being undefined outside the SDK.
+      hasAttachments: withDefault(t.boolean, false),
     }),
     t.partial({
       subject: t.string,
@@ -484,6 +492,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       cc: [],
       bcc: [],
       replyTo: [],
+      hasAttachments: false,
       status: { type: 'Completed' },
       size: sealedEmailMessage.size,
     }

@@ -105,8 +105,8 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
     if (!keyId.length) {
       return undefined
     }
-    const symmKey = await this.keyManager.getSymmetricKey(keyId)
-    if (!symmKey) {
+    const symmetricKey = await this.keyManager.getSymmetricKey(keyId)
+    if (!symmetricKey) {
       return undefined
     }
     return keyId

@@ -54,10 +54,11 @@ describe('getEmailMessageRfc822Data test suite', () => {
       replyTo: [],
       subject: 'Testing rfc822Data',
       body,
+      attachments: [],
     })
   }
 
-  function watiForRfc822Data(emailMessageId: string): Promise<any> {
+  function waitForRfc822Data(emailMessageId: string): Promise<any> {
     return waitForExpect(
       () =>
         expect(
@@ -90,7 +91,7 @@ describe('getEmailMessageRfc822Data test suite', () => {
     expect(emailMessageIds.length).toEqual(emailBodies.length)
 
     for (let index = 0; index < emailMessageIds.length; ++index) {
-      await watiForRfc822Data(emailMessageIds[index])
+      await waitForRfc822Data(emailMessageIds[index])
       const rfc822Data = await instanceUnderTest.getEmailMessageRfc822Data({
         id: emailMessageIds[index],
         emailAddressId: emailAddress.id,
@@ -129,7 +130,7 @@ describe('getEmailMessageRfc822Data test suite', () => {
     expect(emailMessageId).toMatch(
       /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
     )
-    await watiForRfc822Data(emailMessageId)
+    await waitForRfc822Data(emailMessageId)
     await expect(
       instanceUnderTest.getEmailMessageRfc822Data({
         id: emailMessageId,

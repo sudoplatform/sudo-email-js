@@ -94,6 +94,7 @@ export class EntityDataFactory {
     cc: [],
     replyTo: [],
     subject: 'testSubject',
+    hasAttachments: false,
     status: { type: 'Completed' },
     sortDate: new Date(1.0),
     size: 12345,

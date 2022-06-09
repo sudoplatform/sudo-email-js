@@ -33,6 +33,7 @@ export class EmailMessageAPITransformer {
       bcc: entity.bcc.map(transformEntityEmailAddressEntity),
       replyTo: entity.replyTo.map(transformEntityEmailAddressEntity),
       subject: entity.subject,
+      hasAttachments: entity.hasAttachments,
       version: entity.version,
       sortDate: entity.sortDate,
       createdAt: entity.createdAt,

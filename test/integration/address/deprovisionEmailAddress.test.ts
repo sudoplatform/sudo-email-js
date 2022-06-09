@@ -55,6 +55,7 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
       bcc: [],
       replyTo: [],
       body,
+      attachments: [],
     })
     return await instanceUnderTest.sendEmailMessage({
       rfc822Data: str2ab(draftString),

@@ -53,6 +53,7 @@ interface ListEmailMessagesForEmailFolderIdUseCaseOutput {
     bcc: Array<{ emailAddress: string; displayName?: string }>
     replyTo: Array<{ emailAddress: string; displayName?: string }>
     subject?: string
+    hasAttachments: boolean
     version: number
     sortDate: Date
     createdAt: Date

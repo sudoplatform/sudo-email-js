@@ -48,6 +48,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
       bcc: [],
       replyTo: [],
       body: 'test draft message',
+      attachments: [],
     })
     draftMetadata = await instanceUnderTest.createDraftEmailMessage({
       rfc822Data: str2ab(draftEmailMessageString),
@@ -109,6 +110,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
         bcc: [],
         replyTo: [],
         body: 'test draft message',
+        attachments: [],
       }),
     )
     const draftMetadata = await Promise.all(

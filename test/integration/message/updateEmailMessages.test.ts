@@ -62,6 +62,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
       replyTo: [],
       subject: 'Important Subject',
       body: 'Hello, World',
+      attachments: [],
     })
     const messageId = await instanceUnderTest.sendEmailMessage({
       rfc822Data: str2ab(messageString),
@@ -99,6 +100,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
         bcc: [],
         replyTo: [],
         body: `Hello, World ${i}`,
+        attachments: [],
       }),
     )
     const ids = await Promise.all(
@@ -143,6 +145,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
         bcc: [],
         replyTo: [],
         body: `Hello, World ${i}`,
+        attachments: [],
       }),
     )
     const ids = await Promise.all(
@@ -197,6 +200,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
       bcc: [],
       replyTo: [],
       body: `Hello, World`,
+      attachments: [],
     })
     const id = await instanceUnderTest.sendEmailMessage({
       rfc822Data: str2ab(messageString),
@@ -258,6 +262,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
       replyTo: [],
       subject: 'Important Subject',
       body: 'Hello, World',
+      attachments: [],
     })
     const messageId = await instanceUnderTest.sendEmailMessage({
       rfc822Data: str2ab(messageString),

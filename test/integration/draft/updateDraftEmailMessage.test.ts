@@ -63,6 +63,7 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
       bcc: [],
       replyTo: [],
       body: 'Hello, World',
+      attachments: [],
     })
     const metadata = await instanceUnderTest.createDraftEmailMessage({
       rfc822Data: str2ab(draftString),
@@ -79,6 +80,7 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
       bcc: [],
       replyTo: [],
       body: 'Goodbye, World',
+      attachments: [],
     })
     const updatedMetadata = await instanceUnderTest.updateDraftEmailMessage({
       id: metadata.id,
@@ -109,6 +111,7 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
       bcc: [],
       replyTo: [],
       body: 'Hello, World',
+      attachments: [],
     })
     await expect(
       instanceUnderTest.updateDraftEmailMessage({
@@ -126,6 +129,7 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
       bcc: [],
       replyTo: [],
       body: 'Hello, World',
+      attachments: [],
     })
     const metadata = await instanceUnderTest.createDraftEmailMessage({
       rfc822Data: str2ab(draftString),
@@ -140,6 +144,7 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
       bcc: [],
       replyTo: [],
       body: 'Goodbye, World',
+      attachments: [],
     })
     await expect(
       instanceUnderTest.updateDraftEmailMessage({

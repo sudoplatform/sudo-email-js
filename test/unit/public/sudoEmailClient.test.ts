@@ -699,7 +699,7 @@ describe('SudoEmailClient Test Suite', () => {
         }),
       ).resolves.toEqual({ status: BatchOperationResultStatus.Failure })
     })
-    it('returns partial success when use case returnss partial update status', async () => {
+    it('returns partial success when use case returns partial update status', async () => {
       const duplicateInputArray = ['id1', 'id1', 'id2', 'id3', 'id2']
       when(mockUpdateEmailMessagesUseCase.execute(anything())).thenResolve({
         status: UpdateEmailMessagesStatus.Partial,
@@ -1700,6 +1700,7 @@ describe('SudoEmailClient Test Suite', () => {
             from: EntityDataFactory.emailMessage.from,
             to: EntityDataFactory.emailMessage.to,
             subject: EntityDataFactory.emailMessage.subject,
+            hasAttachments: EntityDataFactory.emailMessage.hasAttachments,
             replyTo: EntityDataFactory.emailMessage.replyTo,
             bcc: EntityDataFactory.emailMessage.bcc,
             cc: EntityDataFactory.emailMessage.cc,

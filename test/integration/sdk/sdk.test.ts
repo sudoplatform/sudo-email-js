@@ -21,7 +21,7 @@ describe('SDK Tests', () => {
     // a draft with each one thus owned by each separate user.
     //
     // We then create a 3rd instance. Import the keys of the 1st
-    // user, access the 1st user's draft. Reset the emtil client,
+    // user, access the 1st user's draft. Reset the email client,
     // import the keys of the 2nd user, access the 2nd user's draft.
 
     const emailClient1 = await setupEmailClient(new DefaultLogger('User 1'))
@@ -36,6 +36,7 @@ describe('SDK Tests', () => {
       bcc: [],
       replyTo: [],
       body: 'Message 1',
+      attachments: [],
     })
 
     const draft1RFC822Data = str2ab(draftString1)
@@ -65,6 +66,7 @@ describe('SDK Tests', () => {
       bcc: [],
       replyTo: [],
       body: 'Message 2',
+      attachments: [],
     })
 
     const draft2RFC822Data = str2ab(draftString2)
@@ -133,7 +135,7 @@ describe('SDK Tests', () => {
       emailAddressId: emailAddress1.id,
     })
     if (!retrievedDraft1?.rfc822Data) {
-      fail('rerievedDraft1?.rfc822Data undefined')
+      fail('retrievedDraft1?.rfc822Data undefined')
     }
     expect(new Uint8Array(retrievedDraft1.rfc822Data)).toEqual(
       new Uint8Array(draft1RFC822Data),

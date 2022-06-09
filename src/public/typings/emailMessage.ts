@@ -21,6 +21,8 @@ import { Owner } from '@sudoplatform/sudo-common'
  * @property {EmailMessageAddress[]} bcc List of blind carbon copy recipients of the email message.
  * @property {EmailMessageAddress[]} replyTo List of recipients that a reply to this email message will be sent to.
  * @property {string} subject Subject header of the email message.
+ * @property {boolean} hasAttachments
+ *   Whether or not message has attachments. Will be false if message was sent prior to this property being added
  * @property {Date} sortDate Date when the email message was processed by the service.
  * @property {Date} createdAt Date when the email message was created.
  * @property {Date} updatedAt Date when the email message was last updated.
@@ -61,6 +63,7 @@ export interface SealedEmailMessageProps {
   subject?: string
   sentAt?: Date
   receivedAt?: Date
+  hasAttachments: boolean
 }
 
 export enum Direction {
