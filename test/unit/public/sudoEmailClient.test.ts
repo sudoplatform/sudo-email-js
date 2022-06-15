@@ -858,7 +858,6 @@ describe('SudoEmailClient Test Suite', () => {
         cachePolicy,
         limit,
         nextToken,
-        filter: undefined,
       })
     })
 
@@ -955,7 +954,6 @@ describe('SudoEmailClient Test Suite', () => {
         cachePolicy,
         limit,
         nextToken,
-        filter: undefined,
       })
     })
     it('returns empty list if use case result is empty list', async () => {
@@ -1013,13 +1011,11 @@ describe('SudoEmailClient Test Suite', () => {
     it('calls use case as expected', async () => {
       const emailAddressId = v4()
       const cachePolicy = CachePolicy.CacheOnly
-      const filter = undefined
       const limit = 100
       const nextToken = v4()
       await instanceUnderTest.listEmailFoldersForEmailAddressId({
         emailAddressId,
         cachePolicy,
-        filter,
         limit,
         nextToken,
       })
@@ -1032,7 +1028,6 @@ describe('SudoEmailClient Test Suite', () => {
       expect(actualArgs).toEqual<typeof actualArgs>({
         emailAddressId,
         cachePolicy,
-        filter,
         limit,
         nextToken,
       })
@@ -1545,7 +1540,6 @@ describe('SudoEmailClient Test Suite', () => {
         limit,
         sortOrder,
         nextToken,
-        filter: undefined,
       })
     })
     it('returns empty list if use case result is empty list', async () => {
@@ -1630,7 +1624,6 @@ describe('SudoEmailClient Test Suite', () => {
         limit,
         sortOrder,
         nextToken,
-        filter: undefined,
       })
     })
     it('returns empty list if use case result is empty list', async () => {

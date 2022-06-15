@@ -122,7 +122,6 @@ export class DefaultEmailAccountService implements EmailAccountService {
 
   async list({
     cachePolicy,
-    filter,
     limit,
     nextToken,
   }: ListEmailAccountsInput): Promise<ListEmailAccountsOutput> {
@@ -131,7 +130,6 @@ export class DefaultEmailAccountService implements EmailAccountService {
       : undefined
     const result = await this.appSync.listEmailAddresses(
       fetchPolicy,
-      filter,
       limit,
       nextToken,
     )
@@ -152,7 +150,6 @@ export class DefaultEmailAccountService implements EmailAccountService {
   async listForSudoId({
     sudoId,
     cachePolicy,
-    filter,
     limit,
     nextToken,
   }: ListEmailAccountsForSudoIdInput): Promise<ListEmailAccountsOutput> {
@@ -162,7 +159,6 @@ export class DefaultEmailAccountService implements EmailAccountService {
     const result = await this.appSync.listEmailAddressesForSudoId(
       sudoId,
       fetchPolicy,
-      filter,
       limit,
       nextToken,
     )

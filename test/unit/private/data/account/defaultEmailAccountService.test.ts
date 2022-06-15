@@ -262,23 +262,13 @@ describe('DefaultEmailAccountService Test Suite', () => {
   describe('list', () => {
     it('calls appsync correctly', async () => {
       when(
-        mockAppSync.listEmailAddresses(
-          anything(),
-          anything(),
-          anything(),
-          anything(),
-        ),
+        mockAppSync.listEmailAddresses(anything(), anything(), anything()),
       ).thenResolve(GraphQLDataFactory.emailAddressConnection)
       const result = await instanceUnderTest.list({
         cachePolicy: CachePolicy.CacheOnly,
       })
       verify(
-        mockAppSync.listEmailAddresses(
-          anything(),
-          anything(),
-          anything(),
-          anything(),
-        ),
+        mockAppSync.listEmailAddresses(anything(), anything(), anything()),
       ).once()
       const [policyArg] = capture(mockAppSync.listEmailAddresses).first()
       expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
@@ -290,12 +280,7 @@ describe('DefaultEmailAccountService Test Suite', () => {
 
     it('calls unseal when alias found', async () => {
       when(
-        mockAppSync.listEmailAddresses(
-          anything(),
-          anything(),
-          anything(),
-          anything(),
-        ),
+        mockAppSync.listEmailAddresses(anything(), anything(), anything()),
       ).thenResolve(GraphQLDataFactory.emailAddressWithAliasConnection)
       when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
         true,
@@ -311,12 +296,7 @@ describe('DefaultEmailAccountService Test Suite', () => {
       })
 
       verify(
-        mockAppSync.listEmailAddresses(
-          anything(),
-          anything(),
-          anything(),
-          anything(),
-        ),
+        mockAppSync.listEmailAddresses(anything(), anything(), anything()),
       ).once()
       verify(mockDeviceKeyWorker.unsealString(anything())).times(
         numberOfEmailAddresses,
@@ -331,12 +311,7 @@ describe('DefaultEmailAccountService Test Suite', () => {
 
     it('returns partial result with KeyNotFoundError when alias key missing', async () => {
       when(
-        mockAppSync.listEmailAddresses(
-          anything(),
-          anything(),
-          anything(),
-          anything(),
-        ),
+        mockAppSync.listEmailAddresses(anything(), anything(), anything()),
       ).thenResolve({
         items: [
           GraphQLDataFactory.emailAddressWithAlias,
@@ -366,12 +341,7 @@ describe('DefaultEmailAccountService Test Suite', () => {
       })
 
       verify(
-        mockAppSync.listEmailAddresses(
-          anything(),
-          anything(),
-          anything(),
-          anything(),
-        ),
+        mockAppSync.listEmailAddresses(anything(), anything(), anything()),
       ).once()
       expect(result).toStrictEqual({
         emailAccounts: [
@@ -393,12 +363,7 @@ describe('DefaultEmailAccountService Test Suite', () => {
 
     it('returns partial result with KeyNotFoundError when message key missing', async () => {
       when(
-        mockAppSync.listEmailAddresses(
-          anything(),
-          anything(),
-          anything(),
-          anything(),
-        ),
+        mockAppSync.listEmailAddresses(anything(), anything(), anything()),
       ).thenResolve({
         items: [
           GraphQLDataFactory.emailAddressWithAlias,
@@ -424,12 +389,7 @@ describe('DefaultEmailAccountService Test Suite', () => {
       })
 
       verify(
-        mockAppSync.listEmailAddresses(
-          anything(),
-          anything(),
-          anything(),
-          anything(),
-        ),
+        mockAppSync.listEmailAddresses(anything(), anything(), anything()),
       ).once()
       expect(result).toStrictEqual({
         emailAccounts: [
@@ -457,12 +417,7 @@ describe('DefaultEmailAccountService Test Suite', () => {
       'returns transformed result when calling $test',
       async ({ cachePolicy }) => {
         when(
-          mockAppSync.listEmailAddresses(
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-          ),
+          mockAppSync.listEmailAddresses(anything(), anything(), anything()),
         ).thenResolve(GraphQLDataFactory.emailAddressConnection)
         await expect(
           instanceUnderTest.list({
@@ -473,12 +428,7 @@ describe('DefaultEmailAccountService Test Suite', () => {
           nextToken: undefined,
         })
         verify(
-          mockAppSync.listEmailAddresses(
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-          ),
+          mockAppSync.listEmailAddresses(anything(), anything(), anything()),
         ).once()
       },
     )
@@ -492,7 +442,6 @@ describe('DefaultEmailAccountService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailAddressConnection)
       const sudoId = v4()
@@ -502,7 +451,6 @@ describe('DefaultEmailAccountService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailAddressesForSudoId(
-          anything(),
           anything(),
           anything(),
           anything(),
@@ -527,7 +475,6 @@ describe('DefaultEmailAccountService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailAddressWithAliasConnection)
       when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
@@ -544,7 +491,6 @@ describe('DefaultEmailAccountService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailAddressesForSudoId(
-          anything(),
           anything(),
           anything(),
           anything(),
@@ -576,7 +522,6 @@ describe('DefaultEmailAccountService Test Suite', () => {
             anything(),
             anything(),
             anything(),
-            anything(),
           ),
         ).thenResolve(GraphQLDataFactory.emailAddressConnection)
         const sudoId = v4()
@@ -591,7 +536,6 @@ describe('DefaultEmailAccountService Test Suite', () => {
         })
         verify(
           mockAppSync.listEmailAddressesForSudoId(
-            anything(),
             anything(),
             anything(),
             anything(),

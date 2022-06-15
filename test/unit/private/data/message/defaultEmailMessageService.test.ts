@@ -297,7 +297,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const emailAddressId = v4()
@@ -307,7 +306,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessagesForEmailAddressId(
-          anything(),
           anything(),
           anything(),
           anything(),
@@ -344,7 +342,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
-            anything(),
           ),
         ).thenResolve(GraphQLDataFactory.emailMessageConnection)
         const emailAddressId = v4()
@@ -354,7 +351,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
         })
         verify(
           mockAppSync.listEmailMessagesForEmailAddressId(
-            anything(),
             anything(),
             anything(),
             anything(),
@@ -395,7 +391,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
-            anything(),
           ),
         ).thenResolve(GraphQLDataFactory.emailMessageConnection)
         const emailAddressId = v4()
@@ -416,7 +411,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
-            anything(),
           ),
         ).once()
       },
@@ -429,7 +423,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
     `('returns transformed result ordered $test', async ({ sortOrder }) => {
       when(
         mockAppSync.listEmailMessagesForEmailAddressId(
-          anything(),
           anything(),
           anything(),
           anything(),
@@ -457,7 +450,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).once()
     })
@@ -479,7 +471,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const folderId = v4()
@@ -489,7 +480,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessagesForEmailFolderId(
-          anything(),
           anything(),
           anything(),
           anything(),
@@ -526,7 +516,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
-            anything(),
           ),
         ).thenResolve(GraphQLDataFactory.emailMessageConnection)
         const folderId = v4()
@@ -536,7 +525,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
         })
         verify(
           mockAppSync.listEmailMessagesForEmailFolderId(
-            anything(),
             anything(),
             anything(),
             anything(),
@@ -577,7 +565,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
-            anything(),
           ),
         ).thenResolve(GraphQLDataFactory.emailMessageConnection)
         const folderId = v4()
@@ -592,7 +579,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
         })
         verify(
           mockAppSync.listEmailMessagesForEmailFolderId(
-            anything(),
             anything(),
             anything(),
             anything(),
@@ -617,7 +603,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const folderId = v4()
@@ -633,7 +618,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessagesForEmailFolderId(
-          anything(),
           anything(),
           anything(),
           anything(),

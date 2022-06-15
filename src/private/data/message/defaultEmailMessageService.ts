@@ -44,7 +44,6 @@ import {
 import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransformer'
 import { SortOrderTransformer } from '../common/transformer/sortOrderTransformer'
 import { withDefault } from '../common/withDefault'
-import { EmailMessageFilterTransformer } from './transformer/emailMessageFilterTransformer'
 import { SealedEmailMessageEntityTransformer } from './transformer/sealedEmailMessageEntityTransformer'
 
 const EmailAddressEntityCodec = t.intersection(
@@ -338,7 +337,6 @@ export class DefaultEmailMessageService implements EmailMessageService {
     emailAddressId,
     cachePolicy,
     dateRange,
-    filter,
     limit,
     sortOrder,
     nextToken,
@@ -350,8 +348,6 @@ export class DefaultEmailMessageService implements EmailMessageService {
     const sortOrderInput = sortOrder
       ? sortOrderTransformer.fromAPItoGraphQL(sortOrder)
       : undefined
-    const filterTransformer = new EmailMessageFilterTransformer()
-    const inputFilter = filterTransformer.transformAPI(filter)
     let inputDateRange: DateRangeInput | undefined = undefined
     inputDateRange = dateRange
       ? (inputDateRange = {
@@ -363,7 +359,6 @@ export class DefaultEmailMessageService implements EmailMessageService {
       emailAddressId,
       fetchPolicy,
       inputDateRange,
-      inputFilter,
       limit,
       sortOrderInput,
       nextToken,
@@ -390,7 +385,6 @@ export class DefaultEmailMessageService implements EmailMessageService {
     folderId,
     cachePolicy,
     dateRange,
-    filter,
     limit,
     sortOrder,
     nextToken,
@@ -402,8 +396,6 @@ export class DefaultEmailMessageService implements EmailMessageService {
     const sortOrderInput = sortOrder
       ? sortOrderTransformer.fromAPItoGraphQL(sortOrder)
       : undefined
-    const filterTransformer = new EmailMessageFilterTransformer()
-    const inputFilter = filterTransformer.transformAPI(filter)
     let inputDateRange: DateRangeInput | undefined = undefined
     inputDateRange = dateRange
       ? (inputDateRange = {
@@ -415,7 +407,6 @@ export class DefaultEmailMessageService implements EmailMessageService {
       folderId,
       fetchPolicy,
       inputDateRange,
-      inputFilter,
       limit,
       sortOrderInput,
       nextToken,

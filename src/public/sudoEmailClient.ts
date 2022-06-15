@@ -68,11 +68,6 @@ import { EmailFolder } from './typings/emailFolder'
 import { EmailMessage } from './typings/emailMessage'
 import { EmailMessageRfc822Data } from './typings/emailMessageRfc822Data'
 import {
-  EmailAddressFilter,
-  EmailFolderFilter,
-  EmailMessageFilter,
-} from './typings/filter'
-import {
   ListEmailAddressesResult,
   ListEmailMessagesResult,
 } from './typings/listOperationResult'
@@ -108,11 +103,9 @@ export interface GetEmailAddressInput {
  * @interface ListEmailAddressesInput
  * @property {CachePolicy} cachePolicy Determines how the email addresses will be fetched. Default usage is
  *   `remoteOnly`.
- * @property {EmailAddressFilter} filter Only email addresses that match this filter will be returned.
  */
 export interface ListEmailAddressesInput extends Pagination {
   cachePolicy?: CachePolicy
-  filter?: EmailAddressFilter
 }
 
 /**
@@ -122,12 +115,10 @@ export interface ListEmailAddressesInput extends Pagination {
  * @property {string} sudoId The identifier of the Sudo that owns the email address.
  * @property {CachePolicy} cachePolicy Determines how the email addresses will be fetched. Default usage is
  *   `remoteOnly`.
- * @property {EmailAddressFilter} filter Only email addresses that match this filter will be returned.
  */
 export interface ListEmailAddressesForSudoIdInput extends Pagination {
   sudoId: string
   cachePolicy?: CachePolicy
-  filter?: EmailAddressFilter
 }
 
 /**
@@ -136,12 +127,10 @@ export interface ListEmailAddressesForSudoIdInput extends Pagination {
  * @interface ListEmailFoldersForEmailAddressIdInput
  * @property {string} emailAddressId The identifier of the email address associated with the email folders.
  * @property {CachePolicy} cachePolicy Determines how the email folders will be fetched. Default usage is `remoteOnly`.
- * @property {EmailFolderFilter} filter Only email folders that match this filter will be returned.
  */
 export interface ListEmailFoldersForEmailAddressIdInput extends Pagination {
   emailAddressId: string
   cachePolicy?: CachePolicy
-  filter?: EmailFolderFilter
 }
 
 /**
@@ -210,14 +199,12 @@ export interface GetEmailMessageInput {
  * @property {string} emailAddressId The identifier of the email address associated with the email message.
  * @property {CachePolicy} cachePolicy Determines how the email messages will be fetched. Default usage is `remoteOnly`.
  * @property {DateRange} dateRange Email messages created within the date range inclusive will be fetched.
- * @property {EmailMessageFilter} filter Only email messages that match this filter will be returned.
  * @property {SortOrder} sortOrder The direction in which the email messages are sorted. Defaults to descending.
  */
 export interface ListEmailMessagesForEmailAddressIdInput extends Pagination {
   emailAddressId: string
   cachePolicy?: CachePolicy
   dateRange?: DateRange
-  filter?: EmailMessageFilter
   sortOrder?: SortOrder
 }
 
@@ -228,14 +215,12 @@ export interface ListEmailMessagesForEmailAddressIdInput extends Pagination {
  * @property {string} folderId The identifier of the email folder that contains the email message.
  * @property {CachePolicy} cachePolicy Determines how the email messages will be fetched. Default usage is `remoteOnly`.
  * @property {DateRange} dateRange Email messages created within the date range inclusive will be fetched.
- * @property {EmailMessageFilter} filter Only email messages that match this filter will be returned.
  * @property {SortOrder} sortOrder The direction in which the email messages are sorted. Defaults to descending.
  */
 export interface ListEmailMessagesForEmailFolderIdInput extends Pagination {
   folderId: string
   cachePolicy?: CachePolicy
   dateRange?: DateRange
-  filter?: EmailMessageFilter
   sortOrder?: SortOrder
 }
 
@@ -913,7 +898,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     cachePolicy,
     limit,
     nextToken,
-    filter,
   }: ListEmailAddressesForSudoIdInput): Promise<ListEmailAddressesResult> {
     return await this.mutex.runExclusive(async () => {
       this.log.debug(this.listEmailAddressesForSudoId.name, {
@@ -921,13 +905,12 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
         cachePolicy,
         limit,
         nextToken,
-        filter,
       })
       const useCase = new ListEmailAccountsForSudoIdUseCase(
         this.emailAccountService,
       )
       const { emailAccounts, nextToken: resultNextToken } =
-        await useCase.execute({ sudoId, cachePolicy, filter, limit, nextToken })
+        await useCase.execute({ sudoId, cachePolicy, limit, nextToken })
       const transformer = new ListEmailAddressesAPITransformer()
       const result = transformer.transform(emailAccounts, resultNextToken)
       return result
@@ -937,7 +920,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async listEmailFoldersForEmailAddressId({
     emailAddressId,
     cachePolicy,
-    filter,
     limit,
     nextToken,
   }: ListEmailFoldersForEmailAddressIdInput): Promise<ListOutput<EmailFolder>> {
@@ -946,7 +928,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       cachePolicy,
       limit,
       nextToken,
-      filter,
     })
     const useCase = new ListEmailFoldersForEmailAddressIdUseCase(
       this.emailFolderService,
@@ -955,7 +936,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       await useCase.execute({
         emailAddressId,
         cachePolicy,
-        filter,
         limit,
         nextToken,
       })
@@ -1089,7 +1069,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     emailAddressId,
     dateRange,
     cachePolicy,
-    filter,
     limit,
     sortOrder,
     nextToken,
@@ -1098,7 +1077,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       emailAddressId,
       dateRange,
       cachePolicy,
-      filter,
       limit,
       sortOrder,
       nextToken,
@@ -1111,7 +1089,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
         emailAddressId,
         dateRange,
         cachePolicy,
-        filter,
         limit,
         sortOrder,
         nextToken,
@@ -1126,7 +1103,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     folderId,
     dateRange,
     cachePolicy,
-    filter,
     limit,
     sortOrder,
     nextToken,
@@ -1135,7 +1111,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       folderId,
       dateRange,
       cachePolicy,
-      filter,
       limit,
       sortOrder,
       nextToken,
@@ -1144,7 +1119,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       this.emailMessageService,
     )
     const { emailMessages, nextToken: resultNextToken } = await useCase.execute(
-      { folderId, dateRange, cachePolicy, filter, limit, sortOrder, nextToken },
+      { folderId, dateRange, cachePolicy, limit, sortOrder, nextToken },
     )
     const transformer = new ListEmailMessagesAPITransformer()
     const result = transformer.transform(emailMessages, resultNextToken)

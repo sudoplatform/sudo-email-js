@@ -99,56 +99,6 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
         fail(`Unexpected result: ${result}`)
       }
     })
-
-    it('returns specific email on id filter', async () => {
-      expectSetupComplete()
-
-      const emailAddress = emailAddresses[0]
-      await expect(
-        instanceUnderTest.listEmailAddresses({
-          cachePolicy: CachePolicy.RemoteOnly,
-          filter: { id: { eq: emailAddress.id } },
-        }),
-      ).resolves.toEqual({
-        status: 'Success',
-        items: [emailAddress],
-      })
-    })
-
-    it('returns results for or filter', async () => {
-      expectSetupComplete()
-
-      const emailAddress1 = emailAddresses[0]
-      const emailAddress2 = emailAddresses[1]
-      await expect(
-        instanceUnderTest.listEmailAddresses({
-          cachePolicy: CachePolicy.RemoteOnly,
-          filter: {
-            or: [
-              { id: { eq: emailAddress1.id } },
-              { id: { eq: emailAddress2.id } },
-            ],
-          },
-        }),
-      ).resolves.toEqual({
-        status: 'Success',
-        items: expect.arrayContaining([emailAddress1, emailAddress2]),
-      })
-    })
-
-    it('returns no results when filter does not match any criteria', async () => {
-      expectSetupComplete()
-
-      await expect(
-        instanceUnderTest.listEmailAddresses({
-          cachePolicy: CachePolicy.RemoteOnly,
-          filter: { id: { eq: v4() } },
-        }),
-      ).resolves.toEqual({
-        status: 'Success',
-        items: [],
-      })
-    })
   })
 
   describe('listEmailAddressesForSudoId', () => {
@@ -172,41 +122,6 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
       ).resolves.toEqual({
         status: 'Success',
         items: expect.arrayContaining(emailAddresses.slice(3, 10)),
-      })
-    })
-
-    it('lists email addresses for filter', async () => {
-      expectSetupComplete()
-
-      await expect(
-        instanceUnderTest.listEmailAddressesForSudoId({
-          sudoId: sudo1.id ?? '',
-          cachePolicy: CachePolicy.RemoteOnly,
-          filter: { emailAddress: { eq: emailAddresses[0].emailAddress } },
-        }),
-      ).resolves.toEqual({
-        status: 'Success',
-        items: [emailAddresses[0]],
-      })
-    })
-
-    it('lists email addresses with or filter', async () => {
-      expectSetupComplete()
-
-      await expect(
-        instanceUnderTest.listEmailAddressesForSudoId({
-          sudoId: sudo1.id ?? '',
-          cachePolicy: CachePolicy.RemoteOnly,
-          filter: {
-            or: [
-              { id: { eq: emailAddresses[0].id } },
-              { id: { eq: emailAddresses[1].id } },
-            ],
-          },
-        }),
-      ).resolves.toEqual({
-        status: 'Success',
-        items: expect.arrayContaining([emailAddresses[0], emailAddresses[1]]),
       })
     })
 

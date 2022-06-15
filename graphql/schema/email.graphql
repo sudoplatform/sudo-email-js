@@ -67,21 +67,18 @@ input CheckEmailAddressAvailabilityInput {
 }
 
 input ListEmailAddressesInput {
-  filter: EmailAddressFilterInput
   limit: Int
   nextToken: String
 }
 
 input ListEmailAddressesForSudoIdInput {
   sudoId: ID!
-  filter: EmailAddressFilterInput
   limit: Int
   nextToken: String
 }
 
 input ListEmailFoldersForEmailAddressIdInput {
   emailAddressId: ID!
-  filter: EmailFolderFilterInput
   limit: Int
   nextToken: String
 }
@@ -89,7 +86,6 @@ input ListEmailFoldersForEmailAddressIdInput {
 input ListEmailMessagesForEmailAddressIdInput {
   emailAddressId: ID!
   dateRange: DateRangeInput
-  filter: EmailMessageFilterInput
   limit: Int
   sortOrder: SortOrder
   nextToken: String
@@ -98,7 +94,6 @@ input ListEmailMessagesForEmailAddressIdInput {
 input ListEmailMessagesForEmailFolderIdInput {
   folderId: ID!
   dateRange: DateRangeInput
-  filter: EmailMessageFilterInput
   limit: Int
   sortOrder: SortOrder
   nextToken: String
@@ -146,90 +141,6 @@ input S3EmailObjectInput {
   key: String!
   bucket: String!
   region: String!
-}
-
-input EmailAddressFilterInput {
-  id: IDFilterInput
-  identityId: IDFilterInput
-  keyRingId: IDFilterInput
-  emailAddress: StringFilterInput
-  and: [EmailAddressFilterInput]
-  or: [EmailAddressFilterInput]
-  not: EmailAddressFilterInput
-}
-
-input EmailFolderFilterInput {
-  id: IDFilterInput
-  folderName: StringFilterInput
-  size: FloatFilterInput
-  unseenCount: IntFilterInput
-  and: [EmailFolderFilterInput]
-  or: [EmailFolderFilterInput]
-  not: EmailFolderFilterInput
-}
-
-input EmailMessageFilterInput {
-  id: IDFilterInput
-  messageId: IDFilterInput
-  algorithm: StringFilterInput
-  keyId: IDFilterInput
-  folderId: IDFilterInput
-  direction: EmailMessageDirectionFilterInput
-  seen: BooleanFilterInput
-  clientRefId: IDFilterInput
-  state: EmailMessageStateFilterInput
-  and: [EmailMessageFilterInput]
-  or: [EmailMessageFilterInput]
-  not: EmailMessageFilterInput
-}
-
-input EmailMessageStateFilterInput {
-  ne: EmailMessageState
-  eq: EmailMessageState
-  in: [EmailMessageState]
-  notIn: [EmailMessageState]
-}
-
-input EmailMessageDirectionFilterInput {
-  eq: EmailMessageDirection
-  ne: EmailMessageDirection
-}
-
-input StringFilterInput {
-  ne: String
-  eq: String
-  beginsWith: String
-}
-
-input IDFilterInput {
-  ne: ID
-  eq: ID
-  beginsWith: ID
-}
-
-input IntFilterInput {
-  ne: Int
-  eq: Int
-  le: Int
-  lt: Int
-  ge: Int
-  gt: Int
-  between: [Int]
-}
-
-input FloatFilterInput {
-  ne: Float
-  eq: Float
-  le: Float
-  lt: Float
-  ge: Float
-  gt: Float
-  between: [Float]
-}
-
-input BooleanFilterInput {
-  ne: Boolean
-  eq: Boolean
 }
 
 input SealedAttributeInput {

@@ -36,13 +36,10 @@ import {
   DeprovisionEmailAddressMutation,
   EmailAddress,
   EmailAddressConnection,
-  EmailAddressFilterInput,
   EmailAddressWithoutFoldersFragment,
   EmailConfigurationData,
   EmailFolderConnection,
-  EmailFolderFilterInput,
   EmailMessageConnection,
-  EmailMessageFilterInput,
   GetEmailAddressDocument,
   GetEmailAddressQuery,
   GetEmailConfigDocument,
@@ -180,13 +177,12 @@ export class ApiClient {
 
   public async listEmailAddresses(
     fetchPolicy: FetchPolicy = 'network-only',
-    filter?: EmailAddressFilterInput,
     limit?: number,
     nextToken?: string,
   ): Promise<EmailAddressConnection> {
     const data = await this.performQuery<ListEmailAddressesQuery>({
       query: ListEmailAddressesDocument,
-      variables: { input: { filter, limit, nextToken } },
+      variables: { input: { limit, nextToken } },
       fetchPolicy,
       calleeName: this.listEmailAddresses.name,
     })
@@ -196,13 +192,12 @@ export class ApiClient {
   public async listEmailAddressesForSudoId(
     sudoId: string,
     fetchPolicy: FetchPolicy = 'network-only',
-    filter?: EmailAddressFilterInput,
     limit?: number,
     nextToken?: string,
   ): Promise<EmailAddressConnection> {
     const data = await this.performQuery<ListEmailAddressesForSudoIdQuery>({
       query: ListEmailAddressesForSudoIdDocument,
-      variables: { input: { sudoId, filter, limit, nextToken } },
+      variables: { input: { sudoId, limit, nextToken } },
       fetchPolicy,
       calleeName: this.listEmailAddressesForSudoId.name,
     })
@@ -212,14 +207,13 @@ export class ApiClient {
   public async listEmailFoldersForEmailAddressId(
     emailAddressId: string,
     fetchPolicy: FetchPolicy = 'network-only',
-    filter?: EmailFolderFilterInput,
     limit?: number,
     nextToken?: string,
   ): Promise<EmailFolderConnection> {
     const data =
       await this.performQuery<ListEmailFoldersForEmailAddressIdQuery>({
         query: ListEmailFoldersForEmailAddressIdDocument,
-        variables: { input: { emailAddressId, filter, limit, nextToken } },
+        variables: { input: { emailAddressId, limit, nextToken } },
         fetchPolicy,
         calleeName: this.listEmailFoldersForEmailAddressId.name,
       })
@@ -274,7 +268,6 @@ export class ApiClient {
     emailAddressId: string,
     fetchPolicy: FetchPolicy = 'network-only',
     dateRange?: DateRangeInput,
-    filter?: EmailMessageFilterInput,
     limit?: number,
     sortOrder?: SortOrder,
     nextToken?: string,
@@ -286,7 +279,6 @@ export class ApiClient {
           input: {
             emailAddressId,
             dateRange,
-            filter,
             limit,
             sortOrder,
             nextToken,
@@ -302,7 +294,6 @@ export class ApiClient {
     folderId: string,
     fetchPolicy: FetchPolicy = 'network-only',
     dateRange?: DateRangeInput,
-    filter?: EmailMessageFilterInput,
     limit?: number,
     sortOrder?: SortOrder,
     nextToken?: string,
@@ -311,7 +302,7 @@ export class ApiClient {
       await this.performQuery<ListEmailMessagesForEmailFolderIdQuery>({
         query: ListEmailMessagesForEmailFolderIdDocument,
         variables: {
-          input: { folderId, dateRange, filter, limit, sortOrder, nextToken },
+          input: { folderId, dateRange, limit, sortOrder, nextToken },
         },
         fetchPolicy,
         calleeName: this.listEmailMessagesForEmailFolderId.name,

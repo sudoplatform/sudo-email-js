@@ -12,7 +12,6 @@ import { v4 } from 'uuid'
 import { EmailMessageService } from '../../../../../../src/private/domain/entities/message/emailMessageService'
 import { ListEmailMessagesForEmailFolderIdUseCase } from '../../../../../../src/private/domain/use-cases/message/listEmailMessagesForEmailFolderIdUseCase'
 import { DateRange } from '../../../../../../src/public/typings/dateRange'
-import { EmailMessageFilter } from '../../../../../../src/public/typings/filter'
 import { SortOrder } from '../../../../../../src/public/typings/sortOrder'
 import { EntityDataFactory } from '../../../../data-factory/entity'
 
@@ -50,42 +49,6 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
         folderId,
         cachePolicy: CachePolicy.CacheOnly,
         dateRange: undefined,
-        filter: undefined,
-        limit: undefined,
-        sortOrder: undefined,
-        nextToken: undefined,
-      })
-      expect(result).toStrictEqual({
-        emailMessages: [EntityDataFactory.emailMessage],
-      })
-    })
-
-    it('completes successfully with filter', async () => {
-      const folderId = v4()
-      const filter: EmailMessageFilter = {
-        seen: { eq: false },
-      }
-      when(
-        mockEmailMessageService.listMessagesForEmailFolderId(anything()),
-      ).thenResolve({
-        emailMessages: [EntityDataFactory.emailMessage],
-      })
-      const result = await instanceUnderTest.execute({
-        folderId,
-        cachePolicy: CachePolicy.CacheOnly,
-        filter,
-      })
-      verify(
-        mockEmailMessageService.listMessagesForEmailFolderId(anything()),
-      ).once()
-      const [inputArgs] = capture(
-        mockEmailMessageService.listMessagesForEmailFolderId,
-      ).first()
-      expect(inputArgs).toStrictEqual<typeof inputArgs>({
-        folderId,
-        cachePolicy: CachePolicy.CacheOnly,
-        dateRange: undefined,
-        filter: filter,
         limit: undefined,
         sortOrder: undefined,
         nextToken: undefined,
@@ -122,7 +85,6 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
         folderId,
         cachePolicy: CachePolicy.CacheOnly,
         dateRange,
-        filter: undefined,
         limit: undefined,
         sortOrder: SortOrder.Desc,
         nextToken: undefined,
@@ -153,7 +115,6 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
         folderId,
         cachePolicy: CachePolicy.CacheOnly,
         dateRange: undefined,
-        filter: undefined,
         limit: undefined,
         sortOrder: undefined,
         nextToken: undefined,

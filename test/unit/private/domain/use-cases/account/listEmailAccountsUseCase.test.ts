@@ -31,7 +31,6 @@ describe('ListEmailAccountsUseCase Test Suite', () => {
       })
       const result = await instanceUnderTest.execute({
         cachePolicy: CachePolicy.CacheOnly,
-        filter: { emailAddress: { eq: 'test@example.com' } },
         limit: 100,
         nextToken: 'nextToken',
       })
@@ -39,30 +38,6 @@ describe('ListEmailAccountsUseCase Test Suite', () => {
       const [inputArgs] = capture(mockEmailAccountService.list).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         cachePolicy: CachePolicy.CacheOnly,
-        filter: { emailAddress: { eq: 'test@example.com' } },
-        limit: 100,
-        nextToken: 'nextToken',
-      })
-      expect(result).toStrictEqual({
-        emailAccounts: [EntityDataFactory.emailAccount],
-      })
-    })
-
-    it('completes successfully with filter', async () => {
-      when(mockEmailAccountService.list(anything())).thenResolve({
-        emailAccounts: [EntityDataFactory.emailAccount],
-      })
-      const result = await instanceUnderTest.execute({
-        cachePolicy: CachePolicy.CacheOnly,
-        filter: { emailAddress: { beginsWith: 'testie' } },
-        limit: 100,
-        nextToken: 'nextToken',
-      })
-      verify(mockEmailAccountService.list(anything())).once()
-      const [inputArgs] = capture(mockEmailAccountService.list).first()
-      expect(inputArgs).toStrictEqual<typeof inputArgs>({
-        cachePolicy: CachePolicy.CacheOnly,
-        filter: { emailAddress: { beginsWith: 'testie' } },
         limit: 100,
         nextToken: 'nextToken',
       })
@@ -77,7 +52,6 @@ describe('ListEmailAccountsUseCase Test Suite', () => {
       })
       const result = await instanceUnderTest.execute({
         cachePolicy: CachePolicy.CacheOnly,
-        filter: { emailAddress: { eq: 'test@example.com' } },
         limit: 100,
         nextToken: 'nextToken',
       })
@@ -85,7 +59,6 @@ describe('ListEmailAccountsUseCase Test Suite', () => {
       const [inputArgs] = capture(mockEmailAccountService.list).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         cachePolicy: CachePolicy.CacheOnly,
-        filter: { emailAddress: { eq: 'test@example.com' } },
         limit: 100,
         nextToken: 'nextToken',
       })

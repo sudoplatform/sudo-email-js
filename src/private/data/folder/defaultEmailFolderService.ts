@@ -14,7 +14,6 @@ export class DefaultEmailFolderService implements EmailFolderService {
   async listEmailFoldersForEmailAddressId({
     emailAddressId,
     cachePolicy,
-    filter,
     limit,
     nextToken,
   }: ListEmailFoldersForEmailAddressIdInput): Promise<ListEmailFoldersForEmailAddressIdOutput> {
@@ -24,7 +23,6 @@ export class DefaultEmailFolderService implements EmailFolderService {
     const result = await this.appSync.listEmailFoldersForEmailAddressId(
       emailAddressId,
       fetchPolicy,
-      filter,
       limit,
       nextToken,
     )

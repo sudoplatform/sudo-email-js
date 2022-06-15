@@ -8,7 +8,7 @@ import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { v4 } from 'uuid'
 import waitForExpect from 'wait-for-expect'
-import { Direction, EmailAddress, State, SudoEmailClient } from '../../../src'
+import { Direction, EmailAddress, SudoEmailClient } from '../../../src'
 import { DateRange } from '../../../src/public/typings/dateRange'
 import { SortOrder } from '../../../src/public/typings/sortOrder'
 import { str2ab } from '../../util/buffer'
@@ -100,83 +100,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           expect(inbound[0].to).toEqual(messageDetails.from)
           expect(inbound[0].hasAttachments).toEqual(false)
           expect(inbound[0].size).toBeGreaterThan(0)
-        },
-        10000,
-        1000,
-      )
-    })
-
-    it('returns results for or filter', async () => {
-      await waitForExpect(
-        async () => {
-          const messages =
-            await instanceUnderTest.listEmailMessagesForEmailAddressId({
-              emailAddressId: emailAddress.id,
-              cachePolicy: CachePolicy.RemoteOnly,
-              filter: {
-                or: [
-                  { state: { eq: State.Sent } },
-                  { direction: { eq: Direction.Inbound } },
-                ],
-              },
-            })
-          if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
-          }
-          expect(messages.items).toHaveLength(2)
-          const inbound = messages.items.filter(
-            (message) => message.direction === Direction.Inbound,
-          )
-          const outbound = messages.items.filter(
-            (message) => message.direction === Direction.Outbound,
-          )
-          expect(outbound[0].from).toEqual(messageDetails.from)
-          expect(outbound[0].to).toEqual(messageDetails.to)
-          expect(outbound[0].hasAttachments).toEqual(false)
-          expect(inbound[0].from).toEqual([simAddress])
-          expect(inbound[0].to).toEqual(messageDetails.from)
-          expect(inbound[0].hasAttachments).toEqual(false)
-        },
-        10000,
-        1000,
-      )
-    })
-
-    it('returns results for and filter', async () => {
-      await expect(
-        instanceUnderTest.listEmailMessagesForEmailAddressId({
-          emailAddressId: emailAddress.id,
-          cachePolicy: CachePolicy.RemoteOnly,
-          filter: {
-            and: [
-              { state: { eq: State.Sent } },
-              { direction: { eq: Direction.Inbound } },
-            ],
-          },
-        }),
-      ).resolves.toEqual({
-        status: 'Success',
-        items: [],
-      })
-    })
-
-    it('returns results for not filter', async () => {
-      await waitForExpect(
-        async () => {
-          const messages =
-            await instanceUnderTest.listEmailMessagesForEmailAddressId({
-              emailAddressId: emailAddress.id,
-              cachePolicy: CachePolicy.RemoteOnly,
-              filter: {
-                not: { state: { eq: State.Received } },
-              },
-            })
-          if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
-          }
-          expect(messages.items).toHaveLength(1)
-          expect(messages.items[0].from).toEqual(messageDetails.from)
-          expect(messages.items[0].to).toEqual(messageDetails.to)
         },
         10000,
         1000,

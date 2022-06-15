@@ -35,11 +35,6 @@ export type AvailableAddresses = {
   addresses: Array<Scalars['String']>
 }
 
-export type BooleanFilterInput = {
-  eq?: InputMaybe<Scalars['Boolean']>
-  ne?: InputMaybe<Scalars['Boolean']>
-}
-
 export type CheckEmailAddressAvailabilityInput = {
   domains?: InputMaybe<Array<Scalars['String']>>
   localParts: Array<Scalars['String']>
@@ -94,16 +89,6 @@ export type EmailAddressConnection = {
   nextToken?: Maybe<Scalars['String']>
 }
 
-export type EmailAddressFilterInput = {
-  and?: InputMaybe<Array<InputMaybe<EmailAddressFilterInput>>>
-  emailAddress?: InputMaybe<StringFilterInput>
-  id?: InputMaybe<IdFilterInput>
-  identityId?: InputMaybe<IdFilterInput>
-  keyRingId?: InputMaybe<IdFilterInput>
-  not?: InputMaybe<EmailAddressFilterInput>
-  or?: InputMaybe<Array<InputMaybe<EmailAddressFilterInput>>>
-}
-
 export type EmailAddressMetadataUpdateValuesInput = {
   alias?: InputMaybe<SealedAttributeInput>
 }
@@ -137,16 +122,6 @@ export type EmailFolderConnection = {
   nextToken?: Maybe<Scalars['String']>
 }
 
-export type EmailFolderFilterInput = {
-  and?: InputMaybe<Array<InputMaybe<EmailFolderFilterInput>>>
-  folderName?: InputMaybe<StringFilterInput>
-  id?: InputMaybe<IdFilterInput>
-  not?: InputMaybe<EmailFolderFilterInput>
-  or?: InputMaybe<Array<InputMaybe<EmailFolderFilterInput>>>
-  size?: InputMaybe<FloatFilterInput>
-  unseenCount?: InputMaybe<IntFilterInput>
-}
-
 export type EmailMessageConnection = {
   __typename?: 'EmailMessageConnection'
   items: Array<SealedEmailMessage>
@@ -158,26 +133,6 @@ export enum EmailMessageDirection {
   Outbound = 'OUTBOUND',
 }
 
-export type EmailMessageDirectionFilterInput = {
-  eq?: InputMaybe<EmailMessageDirection>
-  ne?: InputMaybe<EmailMessageDirection>
-}
-
-export type EmailMessageFilterInput = {
-  algorithm?: InputMaybe<StringFilterInput>
-  and?: InputMaybe<Array<InputMaybe<EmailMessageFilterInput>>>
-  clientRefId?: InputMaybe<IdFilterInput>
-  direction?: InputMaybe<EmailMessageDirectionFilterInput>
-  folderId?: InputMaybe<IdFilterInput>
-  id?: InputMaybe<IdFilterInput>
-  keyId?: InputMaybe<IdFilterInput>
-  messageId?: InputMaybe<IdFilterInput>
-  not?: InputMaybe<EmailMessageFilterInput>
-  or?: InputMaybe<Array<InputMaybe<EmailMessageFilterInput>>>
-  seen?: InputMaybe<BooleanFilterInput>
-  state?: InputMaybe<EmailMessageStateFilterInput>
-}
-
 export enum EmailMessageState {
   Delivered = 'DELIVERED',
   Failed = 'FAILED',
@@ -187,42 +142,9 @@ export enum EmailMessageState {
   Undelivered = 'UNDELIVERED',
 }
 
-export type EmailMessageStateFilterInput = {
-  eq?: InputMaybe<EmailMessageState>
-  in?: InputMaybe<Array<InputMaybe<EmailMessageState>>>
-  ne?: InputMaybe<EmailMessageState>
-  notIn?: InputMaybe<Array<InputMaybe<EmailMessageState>>>
-}
-
 export type EmailMessageUpdateValuesInput = {
   folderId?: InputMaybe<Scalars['ID']>
   seen?: InputMaybe<Scalars['Boolean']>
-}
-
-export type FloatFilterInput = {
-  between?: InputMaybe<Array<InputMaybe<Scalars['Float']>>>
-  eq?: InputMaybe<Scalars['Float']>
-  ge?: InputMaybe<Scalars['Float']>
-  gt?: InputMaybe<Scalars['Float']>
-  le?: InputMaybe<Scalars['Float']>
-  lt?: InputMaybe<Scalars['Float']>
-  ne?: InputMaybe<Scalars['Float']>
-}
-
-export type IdFilterInput = {
-  beginsWith?: InputMaybe<Scalars['ID']>
-  eq?: InputMaybe<Scalars['ID']>
-  ne?: InputMaybe<Scalars['ID']>
-}
-
-export type IntFilterInput = {
-  between?: InputMaybe<Array<InputMaybe<Scalars['Int']>>>
-  eq?: InputMaybe<Scalars['Int']>
-  ge?: InputMaybe<Scalars['Int']>
-  gt?: InputMaybe<Scalars['Int']>
-  le?: InputMaybe<Scalars['Int']>
-  lt?: InputMaybe<Scalars['Int']>
-  ne?: InputMaybe<Scalars['Int']>
 }
 
 export enum KeyFormat {
@@ -231,21 +153,18 @@ export enum KeyFormat {
 }
 
 export type ListEmailAddressesForSudoIdInput = {
-  filter?: InputMaybe<EmailAddressFilterInput>
   limit?: InputMaybe<Scalars['Int']>
   nextToken?: InputMaybe<Scalars['String']>
   sudoId: Scalars['ID']
 }
 
 export type ListEmailAddressesInput = {
-  filter?: InputMaybe<EmailAddressFilterInput>
   limit?: InputMaybe<Scalars['Int']>
   nextToken?: InputMaybe<Scalars['String']>
 }
 
 export type ListEmailFoldersForEmailAddressIdInput = {
   emailAddressId: Scalars['ID']
-  filter?: InputMaybe<EmailFolderFilterInput>
   limit?: InputMaybe<Scalars['Int']>
   nextToken?: InputMaybe<Scalars['String']>
 }
@@ -253,7 +172,6 @@ export type ListEmailFoldersForEmailAddressIdInput = {
 export type ListEmailMessagesForEmailAddressIdInput = {
   dateRange?: InputMaybe<DateRangeInput>
   emailAddressId: Scalars['ID']
-  filter?: InputMaybe<EmailMessageFilterInput>
   limit?: InputMaybe<Scalars['Int']>
   nextToken?: InputMaybe<Scalars['String']>
   sortOrder?: InputMaybe<SortOrder>
@@ -261,7 +179,6 @@ export type ListEmailMessagesForEmailAddressIdInput = {
 
 export type ListEmailMessagesForEmailFolderIdInput = {
   dateRange?: InputMaybe<DateRangeInput>
-  filter?: InputMaybe<EmailMessageFilterInput>
   folderId: Scalars['ID']
   limit?: InputMaybe<Scalars['Int']>
   nextToken?: InputMaybe<Scalars['String']>
@@ -471,12 +388,6 @@ export type SendEmailMessageInput = {
 export enum SortOrder {
   Asc = 'ASC',
   Desc = 'DESC',
-}
-
-export type StringFilterInput = {
-  beginsWith?: InputMaybe<Scalars['String']>
-  eq?: InputMaybe<Scalars['String']>
-  ne?: InputMaybe<Scalars['String']>
 }
 
 export type SupportedDomains = {

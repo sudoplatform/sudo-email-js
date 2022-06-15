@@ -27,7 +27,6 @@ describe('DefaultEmailFolderService Test Suite', () => {
         anything(),
         anything(),
         anything(),
-        anything(),
       ),
     ).thenResolve(GraphQLDataFactory.emailFolderConnection)
   })
@@ -41,7 +40,6 @@ describe('DefaultEmailFolderService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailFoldersForEmailAddressId(
-          anything(),
           anything(),
           anything(),
           anything(),
@@ -74,7 +72,6 @@ describe('DefaultEmailFolderService Test Suite', () => {
         })
         verify(
           mockAppSync.listEmailFoldersForEmailAddressId(
-            anything(),
             anything(),
             anything(),
             anything(),
