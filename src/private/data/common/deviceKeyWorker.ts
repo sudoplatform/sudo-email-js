@@ -115,9 +115,9 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
   async keyExists(id: string, type: KeyType): Promise<boolean> {
     switch (type) {
       case KeyType.SymmetricKey:
-        return await this.keyManager.doesSymmetricKeyExists(id)
+        return await this.keyManager.doesSymmetricKeyExist(id)
       case KeyType.KeyPair:
-        return await this.keyManager.doesPrivateKeyExists(id)
+        return await this.keyManager.doesPrivateKeyExist(id)
     }
   }
 

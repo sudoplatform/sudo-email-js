@@ -338,13 +338,13 @@ export interface SudoEmailClient {
    *
    * @returns {EmailAddress} The provisioned email address.
    *
-   * @throws {@link NotRegisteredError}
    * @throws {@link InvalidAddressError}
-   * @throws {@link InvalidTokenError}
    * @throws {@link InvalidKeyRingIdError}
    * @throws {@link AddressUnavailableError}
-   * @throws {@link InsufficientEntitlementsError}
-   * @throws {@link ServiceError}
+   * @throws NotRegisteredError
+   * @throws InvalidTokenError
+   * @throws InsufficientEntitlementsError
+   * @throws ServiceError
    */
   provisionEmailAddress(
     input: ProvisionEmailAddressInput,
@@ -356,8 +356,8 @@ export interface SudoEmailClient {
    * @param {string} id The identifier of the email address to deprovision.
    * @returns {EmailAddress} The deprovisioned email address.
    *
-   * @throws {@link NotRegisteredError}
    * @throws {@link AddressNotFoundError}
+   * @throws NotRegisteredError
    */
   deprovisionEmailAddress(id: string): Promise<EmailAddress>
 
@@ -367,8 +367,8 @@ export interface SudoEmailClient {
    * @param {UpdateEmailAddressMetadataInput} input Parameters used to update the metadata of an email address.
    * @returns {string} The id of the updated email address.
    *
-   * @throws {@link NotRegisteredError}
-   * @throws {@link ServiceError}
+   * @throws NotRegisteredError
+   * @throws ServiceError
    */
   updateEmailAddressMetadata(
     input: UpdateEmailAddressMetadataInput,
@@ -380,8 +380,9 @@ export interface SudoEmailClient {
    * @param {CachePolicy} cachePolicy Determines how the supported email domains will be fetched. Default usage is
    *   `remoteOnly`.
    * @returns {string[]} A list of supported domains.
-
-   * @throws {@link DomainNotSetupError}
+   *
+   * @throws NotRegisteredError
+   * @throws ServiceError
    */
   getSupportedEmailDomains(cachePolicy?: CachePolicy): Promise<string[]>
 
@@ -524,12 +525,12 @@ export interface SudoEmailClient {
    * @param {SendEmailMessageInput} input Parameters used to send an email message.
    * @returns {string} The identifier of the email message that is being sent.
    *
-   * @throws {@link NotRegisteredError}
-   * @throws {@link NotAuthorizedError}
    * @throws {@link UnauthorizedAddressError}
-   * @throws {@link LimitExceededError}
    * @throws {@link InvalidEmailContentsError}
-   * @throws {@link InsufficientEntitlementsError}
+   * @throws NotAuthorizedError
+   * @throws NotRegisteredError
+   * @throws LimitExceededError
+   * @throws InsufficientEntitlementsError
    */
   sendEmailMessage(input: SendEmailMessageInput): Promise<string>
 
@@ -545,9 +546,9 @@ export interface SudoEmailClient {
    *              identifiers of the email messages that failed and succeeded to update.
    *    Failure - All email messages failed to update.
    *
-   * @throws {@link NotRegisteredError}
-   * @throws {@link LimitExceededError}
-   * @throws {@link InvalidArgumentError}
+   * @throws NotRegisteredError
+   * @throws LimitExceededError
+   * @throws InvalidArgumentError
    */
   updateEmailMessages(
     input: UpdateEmailMessagesInput,
@@ -567,10 +568,10 @@ export interface SudoEmailClient {
    *              identifiers of the email messages that failed and succeeded to delete.
    *    Failure - All email messages failed to delete.
    *
-   * @throws {@link NotRegisteredError}
-   * @throws {@link InvalidArgumentError}
-   * @throws {@link LimitExceededError}
-   * @throws {@link ServiceError}
+   * @throws NotRegisteredError
+   * @throws InvalidArgumentError
+   * @throws LimitExceededError
+   * @throws ServiceError
    */
   deleteEmailMessages(ids: string[]): Promise<BatchOperationResult<string>>
 
@@ -581,9 +582,9 @@ export interface SudoEmailClient {
    * @returns {string | undefined} The identifier of the email message that was deleted or undefined if the
    * email message could not be deleted.
    *
-   * @throws {@link NotRegisteredError}
-   * @throws {@link LimitExceededError}
-   * @throws {@link ServiceError}
+   * @throws NotRegisteredError
+   * @throws LimitExceededError
+   * @throws ServiceError
    */
   deleteEmailMessage(id: string): Promise<string | undefined>
 
