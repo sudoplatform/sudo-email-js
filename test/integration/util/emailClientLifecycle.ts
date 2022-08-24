@@ -25,16 +25,16 @@ import {
 import { WebSudoCryptoProvider } from '@sudoplatform/sudo-web-crypto-provider'
 import * as fs from 'fs'
 import { v4 } from 'uuid'
-import {
-  AddressNotFoundError,
-  DefaultSudoEmailClient,
-  EmailAddress,
-  SudoEmailClient,
-} from '../../../src'
 import { ApiClient } from '../../../src/private/data/common/apiClient'
 import { PrivateSudoEmailClientOptions } from '../../../src/private/data/common/privateSudoEmailClientOptions'
-import { EntitlementsBuilder } from '../util/entitlements'
+import { AddressNotFoundError } from '../../../src/public/errors'
+import {
+  DefaultSudoEmailClient,
+  SudoEmailClient,
+} from '../../../src/public/sudoEmailClient'
+import { EmailAddress } from '../../../src/public/typings/emailAddress'
 import { createSudo } from './createSudo'
+import { EntitlementsBuilder } from './entitlements'
 
 // [START] - Polyfills
 global.fetch = require('node-fetch')

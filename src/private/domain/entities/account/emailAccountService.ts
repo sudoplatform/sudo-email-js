@@ -1,5 +1,5 @@
 import { CachePolicy } from '@sudoplatform/sudo-common'
-import { UpdateEmailAddressMetadataInput } from '../../../../public'
+import { UpdateEmailAddressMetadataInput } from '../../../../public/sudoEmailClient'
 import { EmailAccountEntity } from './emailAccountEntity'
 import { EmailAddressEntity } from './emailAddressEntity'
 import { EmailDomainEntity } from './emailDomainEntity'

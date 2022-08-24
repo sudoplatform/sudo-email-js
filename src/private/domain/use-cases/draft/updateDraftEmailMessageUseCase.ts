@@ -1,5 +1,8 @@
-import { CachePolicy, DefaultLogger } from '@sudoplatform/sudo-common'
-import { AddressNotFoundError, MessageNotFoundError } from '../../../../public'
+import { CachePolicy, DefaultLogger, Logger } from '@sudoplatform/sudo-common'
+import {
+  AddressNotFoundError,
+  MessageNotFoundError,
+} from '../../../../public/errors'
 import { EmailAccountService } from '../../entities/account/emailAccountService'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
 
@@ -26,12 +29,14 @@ interface UpdateDraftEmailMessageUseCaseOutput {
  * Application business logic for updating a draft email message.
  */
 export class UpdateDraftEmailMessageUseCase {
-  private readonly log = new DefaultLogger(this.constructor.name)
+  private readonly log: Logger
 
   constructor(
     private readonly emailAccountService: EmailAccountService,
     private readonly emailMessageService: EmailMessageService,
-  ) {}
+  ) {
+    this.log = new DefaultLogger(this.constructor.name)
+  }
 
   async execute({
     id,

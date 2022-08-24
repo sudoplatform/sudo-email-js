@@ -1,5 +1,5 @@
-import { DefaultLogger } from '@sudoplatform/sudo-common'
-import { InvalidArgumentError } from '../../../../public'
+import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
+import { InvalidArgumentError } from '../../../../public/errors'
 import { EmailAccountService } from '../../entities/account/emailAccountService'
 import { EmailAddressEntity } from '../../entities/account/emailAddressEntity'
 import { EmailDomainEntity } from '../../entities/account/emailDomainEntity'
@@ -19,9 +19,11 @@ interface CheckEmailAddressAvailabilityUseCaseInput {
  * Application business logic for checking the availability of an email address.
  */
 export class CheckEmailAddressAvailabilityUseCase {
-  private readonly log = new DefaultLogger(this.constructor.name)
+  private readonly log: Logger
 
-  constructor(private readonly emailAccountService: EmailAccountService) {}
+  constructor(private readonly emailAccountService: EmailAccountService) {
+    this.log = new DefaultLogger(this.constructor.name)
+  }
 
   async execute({
     localParts,

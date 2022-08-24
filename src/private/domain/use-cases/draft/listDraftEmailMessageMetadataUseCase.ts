@@ -1,4 +1,4 @@
-import { DefaultLogger } from '@sudoplatform/sudo-common'
+import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { DraftEmailMessageMetadataEntity } from '../../entities/message/draftEmailMessageMetadataEntity'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
 
@@ -26,9 +26,10 @@ interface ListDraftEmailMessageMetadataUseCaseOutput {
  * Application business logic for retrieving a list of ids of draft email messages.
  */
 export class ListDraftEmailMessageMetadataUseCase {
-  private readonly log = new DefaultLogger(this.constructor.name)
-
-  constructor(private readonly emailMessageService: EmailMessageService) {}
+  private readonly log: Logger
+  constructor(private readonly emailMessageService: EmailMessageService) {
+    this.log = new DefaultLogger(this.constructor.name)
+  }
 
   async execute({
     emailAddressId,

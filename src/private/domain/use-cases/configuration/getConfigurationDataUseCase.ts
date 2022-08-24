@@ -1,4 +1,4 @@
-import { DefaultLogger } from '@sudoplatform/sudo-common'
+import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { EmailConfigurationDataService } from '../../entities/configuration/configurationDataService'
 
 export interface GetConfigurationDataUseCaseOutput {
@@ -12,11 +12,13 @@ export interface GetConfigurationDataUseCaseOutput {
  * Application business logic for retrieving configuration data.
  */
 export class GetConfigurationDataUseCase {
-  private readonly log = new DefaultLogger(this.constructor.name)
+  private readonly log: Logger
 
   public constructor(
     private readonly configurationDataService: EmailConfigurationDataService,
-  ) {}
+  ) {
+    this.log = new DefaultLogger(this.constructor.name)
+  }
 
   async execute(): Promise<GetConfigurationDataUseCaseOutput> {
     this.log.debug(this.constructor.name)

@@ -1,4 +1,4 @@
-import { CachePolicy, DefaultLogger } from '@sudoplatform/sudo-common'
+import { CachePolicy, DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { AddressNotFoundError } from '../../../../public/errors'
 import { EmailAccountService } from '../../entities/account/emailAccountService'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
@@ -23,12 +23,14 @@ interface SaveDraftEmailMessageUseCaseOutput {
  * Application business logic for saving a draft email message.
  */
 export class SaveDraftEmailMessageUseCase {
-  private readonly log = new DefaultLogger(this.constructor.name)
+  private readonly log: Logger
 
   constructor(
     private readonly emailAccountService: EmailAccountService,
     private readonly emailMessageService: EmailMessageService,
-  ) {}
+  ) {
+    this.log = new DefaultLogger(this.constructor.name)
+  }
 
   async execute({
     rfc822Data,

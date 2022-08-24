@@ -1,4 +1,4 @@
-import { CachePolicy, DefaultLogger } from '@sudoplatform/sudo-common'
+import { CachePolicy, DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { DateRange } from '../../../../public/typings/dateRange'
 import { Direction, State } from '../../../../public/typings/emailMessage'
 import { SortOrder } from '../../../../public/typings/sortOrder'
@@ -65,8 +65,11 @@ interface ListEmailMessagesForEmailFolderIdUseCaseOutput {
  * Application business logic for listing email messages for an email folder id.
  */
 export class ListEmailMessagesForEmailFolderIdUseCase {
-  private readonly log = new DefaultLogger(this.constructor.name)
-  constructor(private readonly emailMessageService: EmailMessageService) {}
+  private readonly log: Logger
+
+  constructor(private readonly emailMessageService: EmailMessageService) {
+    this.log = new DefaultLogger(this.constructor.name)
+  }
 
   async execute({
     folderId,

@@ -5,8 +5,7 @@ import {
   SudoKeyManager,
 } from '@sudoplatform/sudo-common'
 import { SudoProfilesClient } from '@sudoplatform/sudo-profiles'
-import { SudoUserClient } from '@sudoplatform/sudo-user'
-import * as userSdk from '@sudoplatform/sudo-user/lib/sdk'
+import { internal as userSdk, SudoUserClient } from '@sudoplatform/sudo-user'
 import { WebSudoCryptoProvider } from '@sudoplatform/sudo-web-crypto-provider'
 import {
   anything,
@@ -18,13 +17,7 @@ import {
   when,
 } from 'ts-mockito'
 import { v4 } from 'uuid'
-import {
-  BatchOperationResultStatus,
-  DefaultSudoEmailClient,
-  DraftEmailMessage,
-  DraftEmailMessageMetadata,
-  SudoEmailClient,
-} from '../../../src'
+
 import { UpdateEmailMessagesStatus } from '../../../src/gen/graphqlTypes'
 import { DefaultEmailAccountService } from '../../../src/private/data/account/defaultEmailAccountService'
 import { ApiClient } from '../../../src/private/data/common/apiClient'
@@ -56,6 +49,13 @@ import { ListEmailMessagesForEmailAddressIdUseCase } from '../../../src/private/
 import { ListEmailMessagesForEmailFolderIdUseCase } from '../../../src/private/domain/use-cases/message/listEmailMessagesForEmailFolderIdUseCase'
 import { SendEmailMessageUseCase } from '../../../src/private/domain/use-cases/message/sendEmailMessageUseCase'
 import { UpdateEmailMessagesUseCase } from '../../../src/private/domain/use-cases/message/updateEmailMessagesUseCase'
+import {
+  DefaultSudoEmailClient,
+  SudoEmailClient,
+} from '../../../src/public/sudoEmailClient'
+import { BatchOperationResultStatus } from '../../../src/public/typings/batchOperationResult'
+import { DraftEmailMessage } from '../../../src/public/typings/draftEmailMessage'
+import { DraftEmailMessageMetadata } from '../../../src/public/typings/draftEmailMessageMetadata'
 import { SortOrder } from '../../../src/public/typings/sortOrder'
 import { str2ab } from '../../util/buffer'
 import { APIDataFactory } from '../data-factory/api'
@@ -92,7 +92,7 @@ jest.mock('@sudoplatform/sudo-web-crypto-provider')
 const JestMockWebSudoCryptoProvider = WebSudoCryptoProvider as jest.MockedClass<
   typeof WebSudoCryptoProvider
 >
-jest.mock('@sudoplatform/sudo-user/lib/sdk')
+jest.mock('@sudoplatform/sudo-user')
 const JestMockUserConfig = userSdk as jest.Mocked<typeof userSdk>
 
 jest.mock('../../../src/private/data/common/deviceKeyWorker')

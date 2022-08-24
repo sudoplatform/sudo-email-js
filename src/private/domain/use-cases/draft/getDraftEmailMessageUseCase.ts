@@ -1,4 +1,4 @@
-import { DefaultLogger } from '@sudoplatform/sudo-common'
+import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
 
 /**
@@ -30,9 +30,11 @@ export interface GetDraftEmailMessageUseCaseOutput {
  * Application business logic for retrieving a draft email message.
  */
 export class GetDraftEmailMessageUseCase {
-  private readonly log = new DefaultLogger(this.constructor.name)
+  private readonly log: Logger
 
-  constructor(private readonly emailMessageService: EmailMessageService) {}
+  constructor(private readonly emailMessageService: EmailMessageService) {
+    this.log = new DefaultLogger(this.constructor.name)
+  }
 
   async execute({
     id,

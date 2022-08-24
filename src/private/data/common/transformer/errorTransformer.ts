@@ -1,6 +1,7 @@
 import {
   AppSyncError,
   DefaultLogger,
+  Logger,
   mapGraphQLToClientError,
   NotRegisteredError,
   ServiceError,
@@ -19,7 +20,11 @@ import {
 } from '../../../../public/errors'
 
 export class ErrorTransformer {
-  private readonly log = new DefaultLogger(this.constructor.name)
+  private readonly log: Logger
+
+  constructor() {
+    this.log = new DefaultLogger(this.constructor.name)
+  }
 
   toClientError(error: AppSyncError): Error {
     this.log.debug('GraphQL call failed', { error })

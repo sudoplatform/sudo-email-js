@@ -1,8 +1,8 @@
 import {
+  Buffer as BufferUtil,
   EncryptionAlgorithm,
   KeyNotFoundError,
 } from '@sudoplatform/sudo-common'
-import { Buffer as BufferUtil } from '@sudoplatform/sudo-common/lib/utils/buffer'
 import {
   EmailAddress,
   KeyFormat as GraphQLKeyFormat,

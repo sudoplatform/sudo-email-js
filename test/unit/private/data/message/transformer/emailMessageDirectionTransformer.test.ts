@@ -1,6 +1,6 @@
-import { Direction } from '../../../../../../src'
 import { EmailMessageDirection } from '../../../../../../src/gen/graphqlTypes'
 import { EmailMessageDirectionTransformer } from '../../../../../../src/private/data/message/transformer/emailMessageDirectionTransformer'
+import { Direction } from '../../../../../../src/public/typings/emailMessage'
 
 describe('EmailMessageDirectionTransformer Test Suite', () => {
   const instanceUnderTest = new EmailMessageDirectionTransformer()

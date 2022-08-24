@@ -1,6 +1,6 @@
-import { State } from '../../../../../../src'
 import { EmailMessageState } from '../../../../../../src/gen/graphqlTypes'
 import { EmailMessageStateTransformer } from '../../../../../../src/private/data/message/transformer/emailMessageStateTransformer'
+import { State } from '../../../../../../src/public/typings/emailMessage'
 
 describe('EmailMessageStateTransformer Test Suite', () => {
   const instanceUnderTest = new EmailMessageStateTransformer()

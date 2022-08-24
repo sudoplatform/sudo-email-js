@@ -1,6 +1,7 @@
 import { CachePolicy } from '@sudoplatform/sudo-common'
 import { v4 } from 'uuid'
-import { EmailAddress, SudoEmailClient } from '../../../src'
+import { SudoEmailClient } from '../../../src/public/sudoEmailClient'
+import { EmailAddress } from '../../../src/public/typings/emailAddress'
 
 export const provisionEmailAddress = async (
   ownershipProofToken: string,

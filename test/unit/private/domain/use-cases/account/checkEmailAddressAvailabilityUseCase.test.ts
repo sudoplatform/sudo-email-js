@@ -7,9 +7,9 @@ import {
   verify,
   when,
 } from 'ts-mockito'
-import { InvalidArgumentError } from '../../../../../../src'
 import { EmailAccountService } from '../../../../../../src/private/domain/entities/account/emailAccountService'
 import { CheckEmailAddressAvailabilityUseCase } from '../../../../../../src/private/domain/use-cases/account/checkEmailAddressAvailabilityUseCase'
+import { InvalidArgumentError } from '../../../../../../src/public/errors'
 import { EntityDataFactory } from '../../../../data-factory/entity'
 
 describe('CheckEmailAddressAvailabilityUseCase Test Suite', () => {

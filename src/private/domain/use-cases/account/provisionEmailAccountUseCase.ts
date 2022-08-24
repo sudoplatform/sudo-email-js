@@ -1,4 +1,4 @@
-import { DefaultLogger } from '@sudoplatform/sudo-common'
+import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { EmailAccountEntity } from '../../entities/account/emailAccountEntity'
 import { EmailAccountService } from '../../entities/account/emailAccountService'
 import { EmailAddressEntity } from '../../entities/account/emailAddressEntity'
@@ -19,11 +19,12 @@ interface ProvisionEmailAccountUseCaseInput {
  * Application business logic for provisioning an email account.
  */
 export class ProvisionEmailAccountUseCase {
-  private readonly log = new DefaultLogger(this.constructor.name)
-
+  private readonly log: Logger
   public constructor(
     private readonly emailAccountService: EmailAccountService,
-  ) {}
+  ) {
+    this.log = new DefaultLogger(this.constructor.name)
+  }
 
   async execute({
     emailAddressEntity,

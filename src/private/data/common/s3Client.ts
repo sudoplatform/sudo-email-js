@@ -1,7 +1,9 @@
-import { DefaultLogger } from '@sudoplatform/sudo-common'
+import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { S3UploadError } from '@sudoplatform/sudo-profiles'
-import { SudoUserClient } from '@sudoplatform/sudo-user'
-import { IdentityServiceConfig } from '@sudoplatform/sudo-user/lib/sdk'
+import {
+  internal as SudoUserInternal,
+  SudoUserClient,
+} from '@sudoplatform/sudo-user'
 import { AWSError } from 'aws-sdk'
 import S3 from 'aws-sdk/clients/s3'
 import { CognitoIdentityCredentials } from 'aws-sdk/lib/core'
@@ -91,13 +93,14 @@ export class S3DownloadError extends Error {
 }
 
 export class S3Client {
-  private readonly log = new DefaultLogger(this.constructor.name)
+  private readonly log: Logger
   private readonly providerName: string
 
   constructor(
     private readonly userClient: SudoUserClient,
-    private readonly identityServiceConfig: IdentityServiceConfig,
+    private readonly identityServiceConfig: SudoUserInternal.IdentityServiceConfig,
   ) {
+    this.log = new DefaultLogger(this.constructor.name)
     this.providerName = `cognito-idp.${this.identityServiceConfig.region}.amazonaws.com/${this.identityServiceConfig.poolId}`
   }
 

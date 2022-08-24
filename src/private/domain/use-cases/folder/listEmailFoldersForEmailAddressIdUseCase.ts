@@ -1,4 +1,4 @@
-import { CachePolicy, DefaultLogger } from '@sudoplatform/sudo-common'
+import { CachePolicy, DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { EmailFolderService } from '../../entities/folder/emailFolderService'
 import { FolderUseCaseOutput } from '../shared/folder'
 
@@ -33,8 +33,10 @@ interface ListEmailFoldersForEmailAddressIdUseCaseOutput {
  * Application business logic for listing email folders.
  */
 export class ListEmailFoldersForEmailAddressIdUseCase {
-  private readonly log = new DefaultLogger(this.constructor.name)
-  constructor(private readonly emailFolderService: EmailFolderService) {}
+  private readonly log: Logger
+  constructor(private readonly emailFolderService: EmailFolderService) {
+    this.log = new DefaultLogger(this.constructor.name)
+  }
 
   async execute({
     emailAddressId,

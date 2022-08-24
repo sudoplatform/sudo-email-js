@@ -1,4 +1,4 @@
-import { CachePolicy, DefaultLogger } from '@sudoplatform/sudo-common'
+import { CachePolicy, DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import {
   AddressNotFoundError,
   LimitExceededError,
@@ -37,8 +37,7 @@ interface DeleteDraftEmailMessagesUseCaseOutput {
  * Application business logic for deleting multiple draft email messages at once.
  */
 export class DeleteDraftEmailMessagesUseCase {
-  private readonly log = new DefaultLogger(this.constructor.name)
-
+  private readonly log: Logger
   private readonly Configuration = {
     // Max limit of number of ids that can be deleted per request.
     IdsSizeLimit: 10,
@@ -47,7 +46,9 @@ export class DeleteDraftEmailMessagesUseCase {
   constructor(
     private readonly emailAccountService: EmailAccountService,
     private readonly emailMessageService: EmailMessageService,
-  ) {}
+  ) {
+    this.log = new DefaultLogger(this.constructor.name)
+  }
 
   async execute({
     ids,

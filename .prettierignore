@@ -1,3 +1,12 @@
 build/
 docs/
 lib/
+cjs/
+coverage/
+node_modules/
+types/
+typings/
+.yarn/
+.vscode/
+config/
+coverage/

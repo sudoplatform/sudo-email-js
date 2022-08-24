@@ -10,13 +10,16 @@ import {
   when,
 } from 'ts-mockito'
 import { v4 } from 'uuid'
-import { AddressNotFoundError, LimitExceededError } from '../../../../../../src'
 import { EmailAccountService } from '../../../../../../src/private/domain/entities/account/emailAccountService'
 import {
   EmailMessageService,
   EmailMessageServiceDeleteDraftError,
 } from '../../../../../../src/private/domain/entities/message/emailMessageService'
 import { DeleteDraftEmailMessagesUseCase } from '../../../../../../src/private/domain/use-cases/draft/deleteDraftEmailMessagesUseCase'
+import {
+  AddressNotFoundError,
+  LimitExceededError,
+} from '../../../../../../src/public/errors'
 import { EntityDataFactory } from '../../../../data-factory/entity'
 
 describe('DeleteDraftEmailMessagesUseCase Test Suite', () => {

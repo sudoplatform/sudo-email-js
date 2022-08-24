@@ -1,4 +1,4 @@
-import { DefaultLogger } from '@sudoplatform/sudo-common'
+import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
 
 /**
@@ -29,9 +29,11 @@ interface GetEmailMessageRfc822DataUseCaseOutput {
  * Application business logic for retrieving an email message RFC 822 data.
  */
 export class GetEmailMessageRfc822DataUseCase {
-  private readonly log = new DefaultLogger(this.constructor.name)
+  private readonly log: Logger
 
-  constructor(private emailMessageService: EmailMessageService) {}
+  constructor(private emailMessageService: EmailMessageService) {
+    this.log = new DefaultLogger(this.constructor.name)
+  }
 
   async execute({
     id,

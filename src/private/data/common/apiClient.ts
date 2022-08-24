@@ -7,6 +7,7 @@ import {
   DefaultLogger,
   FatalError,
   isAppSyncNetworkError,
+  Logger,
   mapNetworkErrorToClientError,
   UnknownGraphQLError,
 } from '@sudoplatform/sudo-common'
@@ -84,12 +85,14 @@ import {
 import { ErrorTransformer } from './transformer/errorTransformer'
 
 export class ApiClient {
-  private readonly log = new DefaultLogger(this.constructor.name)
+  private readonly log: Logger
   private readonly client: AWSAppSyncClient<NormalizedCacheObject>
 
-  private readonly graphqlErrorTransformer = new ErrorTransformer()
+  private readonly graphqlErrorTransformer: ErrorTransformer
 
   public constructor(apiClientManager?: ApiClientManager) {
+    this.log = new DefaultLogger(this.constructor.name)
+    this.graphqlErrorTransformer = new ErrorTransformer()
     const clientManager =
       apiClientManager ?? DefaultApiClientManager.getInstance()
     this.client = clientManager.getClient({ disableOffline: true })

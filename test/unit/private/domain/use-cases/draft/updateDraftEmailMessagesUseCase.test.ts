@@ -1,13 +1,13 @@
 import { anything, instance, mock, reset, verify, when } from 'ts-mockito'
 import { v4 } from 'uuid'
-import {
-  AddressNotFoundError,
-  MessageNotFoundError,
-} from '../../../../../../src'
 import { S3Client } from '../../../../../../src/private/data/common/s3Client'
 import { EmailAccountService } from '../../../../../../src/private/domain/entities/account/emailAccountService'
 import { EmailMessageService } from '../../../../../../src/private/domain/entities/message/emailMessageService'
 import { UpdateDraftEmailMessageUseCase } from '../../../../../../src/private/domain/use-cases/draft/updateDraftEmailMessageUseCase'
+import {
+  AddressNotFoundError,
+  MessageNotFoundError,
+} from '../../../../../../src/public/errors'
 import { str2ab } from '../../../../../util/buffer'
 import { EntityDataFactory } from '../../../../data-factory/entity'
 

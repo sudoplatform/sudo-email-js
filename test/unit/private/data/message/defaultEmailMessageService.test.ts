@@ -15,7 +15,6 @@ import {
   when,
 } from 'ts-mockito'
 import { v4 } from 'uuid'
-import { InternalError, UpdateEmailMessagesInput } from '../../../../../src'
 import { UpdateEmailMessagesStatus } from '../../../../../src/gen/graphqlTypes'
 import { ApiClient } from '../../../../../src/private/data/common/apiClient'
 import {
@@ -33,6 +32,8 @@ import { DefaultEmailMessageService } from '../../../../../src/private/data/mess
 import { DraftEmailMessageEntity } from '../../../../../src/private/domain/entities/message/draftEmailMessageEntity'
 import { DraftEmailMessageMetadataEntity } from '../../../../../src/private/domain/entities/message/draftEmailMessageMetadataEntity'
 import { EmailMessageServiceDeleteDraftError } from '../../../../../src/private/domain/entities/message/emailMessageService'
+import { InternalError } from '../../../../../src/public/errors'
+import { UpdateEmailMessagesInput } from '../../../../../src/public/sudoEmailClient'
 import { SortOrder } from '../../../../../src/public/typings/sortOrder'
 import { ab2str, str2ab } from '../../../../util/buffer'
 import { DraftEmailMessageDataFactory } from '../../../data-factory/draftEmailMessage'

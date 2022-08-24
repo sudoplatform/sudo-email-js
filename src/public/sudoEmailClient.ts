@@ -3,15 +3,16 @@ import {
   DefaultLogger,
   DefaultSudoKeyManager,
   ListOutput,
+  Logger,
   SudoCryptoProvider,
   SudoKeyManager,
 } from '@sudoplatform/sudo-common'
-import { SudoUserClient } from '@sudoplatform/sudo-user'
+
 import {
-  Config,
-  getIdentityServiceConfig,
-  IdentityServiceConfig,
-} from '@sudoplatform/sudo-user/lib/sdk'
+  internal as SudoUserInternal,
+  SudoUserClient,
+} from '@sudoplatform/sudo-user'
+
 import { WebSudoCryptoProvider } from '@sudoplatform/sudo-web-crypto-provider'
 import { Mutex } from 'async-mutex'
 import { CognitoIdentityCredentials } from 'aws-sdk/lib/core'
@@ -58,7 +59,10 @@ import { ListEmailMessagesForEmailAddressIdUseCase } from '../private/domain/use
 import { ListEmailMessagesForEmailFolderIdUseCase } from '../private/domain/use-cases/message/listEmailMessagesForEmailFolderIdUseCase'
 import { SendEmailMessageUseCase } from '../private/domain/use-cases/message/sendEmailMessageUseCase'
 import { UpdateEmailMessagesUseCase } from '../private/domain/use-cases/message/updateEmailMessagesUseCase'
-import { BatchOperationResult, BatchOperationResultStatus } from './typings'
+import {
+  BatchOperationResult,
+  BatchOperationResultStatus,
+} from './typings/batchOperationResult'
 import { ConfigurationData } from './typings/configurationData'
 import { DateRange } from './typings/dateRange'
 import { DraftEmailMessage } from './typings/draftEmailMessage'
@@ -663,12 +667,15 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   private readonly emailMessageService: DefaultEmailMessageService
   private readonly sudoCryptoProvider: SudoCryptoProvider
   private readonly keyManager: SudoKeyManager
-  private readonly identityServiceConfig: IdentityServiceConfig
+  private readonly identityServiceConfig: SudoUserInternal.IdentityServiceConfig
   private readonly emailServiceConfig: EmailServiceConfig
-  private readonly log = new DefaultLogger(this.constructor.name)
-  private readonly mutex = new Mutex()
+  private readonly log: Logger
+  private readonly mutex: Mutex
 
   public constructor(opts: SudoEmailClientOptions) {
+    this.log = new DefaultLogger(this.constructor.name)
+    this.mutex = new Mutex()
+
     const privateOptions = opts as PrivateSudoEmailClientOptions
     this.apiClient = privateOptions.apiClient ?? new ApiClient()
     this.userClient = opts.sudoUserClient
@@ -679,7 +686,8 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
         'com.sudoplatform.appservicename',
       )
 
-    const config: Config = getIdentityServiceConfig()
+    const config: SudoUserInternal.Config =
+      SudoUserInternal.getIdentityServiceConfig()
 
     this.identityServiceConfig =
       privateOptions.identityServiceConfig ?? config.identityService

@@ -3,10 +3,11 @@ import {
   DefaultLogger,
   EncryptionAlgorithm,
   KeyNotFoundError,
+  Logger,
   SudoKeyManager,
 } from '@sudoplatform/sudo-common'
-import * as uuid from 'uuid'
-import { InternalError } from '../../..'
+import { v4 } from 'uuid'
+import { InternalError } from '../../../public/errors'
 import { PublicKeyFormatTransformer } from './transformer/publicKeyFormatTransformer'
 
 export enum DeviceKeyWorkerKeyFormat {
@@ -59,15 +60,17 @@ export interface DeviceKeyWorker {
 }
 
 export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
-  private log = new DefaultLogger(this.constructor.name)
+  private log: Logger
 
   readonly Defaults = {
     Algorithm: 'RSAEncryptionOAEPAESCBC',
   }
-  constructor(private readonly keyManager: SudoKeyManager) {}
+  constructor(private readonly keyManager: SudoKeyManager) {
+    this.log = new DefaultLogger(this.constructor.name)
+  }
 
   async generateKeyPair(): Promise<DeviceKey> {
-    const keyPairId = uuid.v4()
+    const keyPairId = v4()
 
     await this.keyManager.generateKeyPair(keyPairId)
     const publicKey = await this.keyManager.getPublicKey(keyPairId)
@@ -90,7 +93,7 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
   }
 
   async generateCurrentSymmetricKey(): Promise<string> {
-    const keyId = uuid.v4()
+    const keyId = v4()
     const keyIdBits = new TextEncoder().encode(keyId)
     // We need to delete any old key id information before adding a new key.
     await this.keyManager.deletePassword(SYMMETRIC_KEY_ID)
@@ -180,7 +183,7 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
     keyPairId: string
     encrypted: ArrayBuffer
   }): Promise<string> {
-    const cipherKeyId = uuid.v4()
+    const cipherKeyId = v4()
     await this.keyManager.generateSymmetricKey(cipherKeyId)
     const cipherKey = await this.keyManager.getSymmetricKey(cipherKeyId)
     if (!cipherKey) {

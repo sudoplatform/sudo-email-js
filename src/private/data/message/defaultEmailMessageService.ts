@@ -2,14 +2,15 @@ import {
   DecodeError,
   DefaultLogger,
   KeyNotFoundError,
+  Logger,
 } from '@sudoplatform/sudo-common'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { isLeft } from 'fp-ts/lib/Either'
 import * as t from 'io-ts'
 import { PathReporter } from 'io-ts/PathReporter'
-import * as uuid from 'uuid'
-import { InternalError } from '../../..'
+import { v4 } from 'uuid'
 import { DateRangeInput } from '../../../gen/graphqlTypes'
+import { InternalError } from '../../../public/errors'
 import { DraftEmailMessageEntity } from '../../domain/entities/message/draftEmailMessageEntity'
 import { DraftEmailMessageMetadataEntity } from '../../domain/entities/message/draftEmailMessageMetadataEntity'
 import { EmailMessageEntity } from '../../domain/entities/message/emailMessageEntity'
@@ -43,6 +44,7 @@ import {
 } from '../common/s3Client'
 import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransformer'
 import { SortOrderTransformer } from '../common/transformer/sortOrderTransformer'
+// eslint-disable-next-line tree-shaking/no-side-effects-in-initialization
 import { withDefault } from '../common/withDefault'
 import { SealedEmailMessageEntityTransformer } from './transformer/sealedEmailMessageEntityTransformer'
 
@@ -75,7 +77,7 @@ const EmailHeaderDetailsCodec = t.intersection(
 type EmailHeaderDetails = t.TypeOf<typeof EmailHeaderDetailsCodec>
 
 export class DefaultEmailMessageService implements EmailMessageService {
-  private readonly log = new DefaultLogger(this.constructor.name)
+  private readonly log: Logger
 
   constructor(
     private readonly appSync: ApiClient,
@@ -83,7 +85,9 @@ export class DefaultEmailMessageService implements EmailMessageService {
     private readonly s3Client: S3Client,
     private readonly deviceKeyWorker: DeviceKeyWorker,
     private readonly emailServiceConfig: EmailServiceConfig,
-  ) {}
+  ) {
+    this.log = new DefaultLogger(this.constructor.name)
+  }
 
   private readonly Defaults = {
     IdentityIdClaimName: 'custom:identityId',
@@ -106,7 +110,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     const keyPrefix = await this.constructS3KeyForEmailAddressId(
       senderEmailAddressId,
     )
-    const draftId = id ?? uuid.v4()
+    const draftId = id ?? v4()
     const key = `${keyPrefix}/draft/${draftId}`
     const sealed = await this.deviceKeyWorker.sealString({
       keyType: KeyType.SymmetricKey,
@@ -232,7 +236,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     const keyPrefix = await this.constructS3KeyForEmailAddressId(
       senderEmailAddressId,
     )
-    const id = uuid.v4()
+    const id = v4()
     const key = `${keyPrefix}/${id}`
     const bucket = this.emailServiceConfig.transientBucket
     const region = this.emailServiceConfig.region

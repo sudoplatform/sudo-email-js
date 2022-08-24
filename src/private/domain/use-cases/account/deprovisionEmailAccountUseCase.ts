@@ -1,4 +1,4 @@
-import { DefaultLogger } from '@sudoplatform/sudo-common'
+import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { EmailAccountEntity } from '../../entities/account/emailAccountEntity'
 import { EmailAccountService } from '../../entities/account/emailAccountService'
 
@@ -6,11 +6,13 @@ import { EmailAccountService } from '../../entities/account/emailAccountService'
  * Application business logic for deprovisioning an email account.
  */
 export class DeprovisionEmailAccountUseCase {
-  private readonly log = new DefaultLogger(this.constructor.name)
+  private readonly log: Logger
 
   public constructor(
     private readonly emailAccountService: EmailAccountService,
-  ) {}
+  ) {
+    this.log = new DefaultLogger(this.constructor.name)
+  }
 
   async execute(id: string): Promise<EmailAccountEntity> {
     this.log.debug(this.constructor.name, {

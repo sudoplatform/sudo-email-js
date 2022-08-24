@@ -15,7 +15,6 @@ import {
   when,
 } from 'ts-mockito'
 import { v4 } from 'uuid'
-import { InternalError } from '../../../../../src'
 import {
   DefaultDeviceKeyWorker,
   DeviceKey,
@@ -23,6 +22,7 @@ import {
   KeyType,
   SYMMETRIC_KEY_ID,
 } from '../../../../../src/private/data/common/deviceKeyWorker'
+import { InternalError } from '../../../../../src/public/errors'
 import { ab2str, b64str2str, str2ab } from '../../../../util/buffer'
 import { EntityDataFactory } from '../../../data-factory/entity'
 

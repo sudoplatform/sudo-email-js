@@ -1,4 +1,4 @@
-import { DefaultLogger } from '@sudoplatform/sudo-common'
+import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { LimitExceededError } from '../../../../public/errors'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
 import { UpdateEmailMessagesStatus } from '../../entities/message/updateEmailMessagesStatus'
@@ -33,7 +33,7 @@ interface UpdateEmailMessagesUseCaseOutput {
  * Application business logic for updating multiple email messages at once.
  */
 export class UpdateEmailMessagesUseCase {
-  private readonly log = new DefaultLogger(this.constructor.name)
+  private readonly log: Logger
 
   private readonly Defaults = {
     // Max limit of number of ids that can be updated per request.
@@ -42,7 +42,9 @@ export class UpdateEmailMessagesUseCase {
 
   public constructor(
     private readonly emailMessageService: EmailMessageService,
-  ) {}
+  ) {
+    this.log = new DefaultLogger(this.constructor.name)
+  }
 
   async execute({
     ids,
