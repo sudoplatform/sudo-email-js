@@ -12,7 +12,6 @@ import {
   UnknownGraphQLError,
 } from '@sudoplatform/sudo-common'
 import { NormalizedCacheObject } from 'apollo-cache-inmemory'
-import { OperationVariables } from 'apollo-client/core/types'
 import {
   FetchPolicy,
   MutationOptions,
@@ -95,7 +94,10 @@ export class ApiClient {
     this.graphqlErrorTransformer = new ErrorTransformer()
     const clientManager =
       apiClientManager ?? DefaultApiClientManager.getInstance()
-    this.client = clientManager.getClient({ disableOffline: true })
+    this.client = clientManager.getClient({
+      disableOffline: true,
+      configNamespace: 'emService',
+    })
   }
 
   public async provisionEmailAddress(
@@ -352,18 +354,18 @@ export class ApiClient {
     return data.getPublicKeyForEmail ?? undefined
   }
 
-  async performQuery<Q, QVariables = OperationVariables>({
+  async performQuery<Q>({
     variables,
     fetchPolicy,
     query,
     calleeName,
-  }: QueryOptions<QVariables> & { calleeName?: string }): Promise<Q> {
+  }: QueryOptions & { calleeName?: string }): Promise<Q> {
     let result
     try {
       result = await this.client.query<Q>({
-        variables: variables,
+        variables,
         fetchPolicy,
-        query: query,
+        query,
       })
     } catch (err) {
       if (isAppSyncNetworkError(err as Error)) {
@@ -395,18 +397,18 @@ export class ApiClient {
     }
   }
 
-  async performMutation<M, MVariables = OperationVariables>({
+  async performMutation<M>({
     mutation,
     variables,
     calleeName,
-  }: Omit<MutationOptions<M, MVariables>, 'fetchPolicy'> & {
+  }: Omit<MutationOptions<M>, 'fetchPolicy'> & {
     calleeName?: string
   }): Promise<M> {
     let result
     try {
       result = await this.client.mutate<M>({
-        mutation: mutation,
-        variables: variables,
+        mutation,
+        variables,
       })
     } catch (err) {
       if (isAppSyncNetworkError(err as Error)) {
