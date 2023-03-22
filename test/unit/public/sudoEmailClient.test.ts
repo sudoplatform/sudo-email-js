@@ -1294,54 +1294,6 @@ describe('SudoEmailClient Test Suite', () => {
     })
   })
 
-  describe('listDraftEmailMessageIds', () => {
-    beforeEach(() => {
-      when(
-        mockListDraftEmailMessageMetadataUseCase.execute(anything()),
-      ).thenResolve({
-        metadata: [{ id: 'id', updatedAt: new Date() }],
-      })
-    })
-
-    it('generates use case', async () => {
-      await instanceUnderTest.listDraftEmailMessageIds('')
-      expect(
-        JestMockListDraftEmailMessageMetadataUseCase,
-      ).toHaveBeenCalledTimes(1)
-    })
-
-    it('calls use case as expected', async () => {
-      const emailAddressId = v4()
-      await instanceUnderTest.listDraftEmailMessageIds(emailAddressId)
-      verify(
-        mockListDraftEmailMessageMetadataUseCase.execute(anything()),
-      ).once()
-      const [actualArgs] = capture(
-        mockListDraftEmailMessageMetadataUseCase.execute,
-      ).first()
-      expect(actualArgs).toEqual<typeof actualArgs>({
-        emailAddressId,
-      })
-    })
-
-    it('returns empty list when use case returns empty list', async () => {
-      when(
-        mockListDraftEmailMessageMetadataUseCase.execute(anything()),
-      ).thenResolve({
-        metadata: [],
-      })
-      await expect(
-        instanceUnderTest.listDraftEmailMessageIds(''),
-      ).resolves.toHaveLength(0)
-    })
-
-    it('returns expected result', async () => {
-      await expect(
-        instanceUnderTest.listDraftEmailMessageIds(''),
-      ).resolves.toEqual(['id'])
-    })
-  })
-
   describe('listDraftEmailMessageMetadata', () => {
     const updatedAt = new Date()
     beforeEach(() => {

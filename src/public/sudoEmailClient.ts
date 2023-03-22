@@ -504,15 +504,6 @@ export interface SudoEmailClient {
   ): Promise<DraftEmailMessage | undefined>
 
   /**
-   * Get the list of draft email messages for the specified email address.
-   *
-   * @param {string} emailAddressId The identifier of the email address associated with the draft email messages.
-   * @returns {string[]} An array of draft email message ids or an empty array if no matching draft email messages
-   *  can be found.
-   */
-  listDraftEmailMessageIds(emailAddressId: string): Promise<string[]>
-
-  /**
    * Get the list of draft email message metadata for the specified email address.
    *
    * @param {string} emailAddressId The identifier of the email address associated with the draft email messages.
@@ -1016,18 +1007,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     this.log.debug(this.deleteDraftEmailMessages.name, { id })
     const useCase = new GetDraftEmailMessageUseCase(this.emailMessageService)
     return await useCase.execute({ id, emailAddressId })
-  }
-
-  public async listDraftEmailMessageIds(
-    emailAddressId: string,
-  ): Promise<string[]> {
-    this.log.debug(this.listDraftEmailMessageIds.name, { emailAddressId })
-    const useCase = new ListDraftEmailMessageMetadataUseCase(
-      this.emailMessageService,
-    )
-    const { metadata } = await useCase.execute({ emailAddressId })
-
-    return metadata.map((m) => m.id)
   }
 
   public async listDraftEmailMessageMetadata(

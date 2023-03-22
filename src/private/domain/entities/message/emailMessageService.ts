@@ -33,9 +33,9 @@ export interface GetDraftInput {
 }
 
 /**
- * Input for `EmailMessageService.listDrafts` method.
+ * Input for `EmailMessageService.listDraftsMetadata` method.
  *
- * @interface ListDraftsInput
+ * @interface ListDraftsMetadataInput
  * @property {string} emailAddressId Identifier of the email address associated with the draft email messages.
  */
 export interface ListDraftsMetadataInput {

@@ -7,7 +7,7 @@ import { createEmailMessageRfc822String } from '../util/createEmailMessage'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 
-describe('SudoEmailClient listDraftEmailMessageIds Test Suite', () => {
+describe('SudoEmailClient listDraftEmailMessageMeatdata Test Suite', () => {
   jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
 
@@ -70,13 +70,6 @@ describe('SudoEmailClient listDraftEmailMessageIds Test Suite', () => {
       { emailAddresses: [emailAddress], sudos: [sudo] },
       { emailClient: instanceUnderTest, profilesClient, userClient },
     )
-  })
-
-  it('lists multiple draft ids across an email address', async () => {
-    const draftIds = draftData.map(({ id }) => id)
-    await expect(
-      instanceUnderTest.listDraftEmailMessageIds(emailAddress.id),
-    ).resolves.toStrictEqual(expect.arrayContaining(draftIds))
   })
 
   it('lists multiple draft metadata across an email address', async () => {
