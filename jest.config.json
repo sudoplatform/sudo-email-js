@@ -1,9 +1,18 @@
 {
   "preset": "ts-jest",
   "testEnvironment": "jsdom",
-  "testMatch": ["<rootDir>/test/**/*.test.ts"],
-  "testPathIgnorePatterns": ["/node_modules/", "/lib/", "/cjs/", "/types/"],
-  "setupFilesAfterEnv": ["./jest.setup.ts"],
+  "testMatch": [
+    "<rootDir>/test/**/*.test.ts"
+  ],
+  "testPathIgnorePatterns": [
+    "/node_modules/",
+    "/lib/",
+    "/cjs/",
+    "/types/"
+  ],
+  "setupFilesAfterEnv": [
+    "./jest.setup.ts"
+  ],
   "clearMocks": true,
   "collectCoverageFrom": [
     "src/**/*.ts",
@@ -11,12 +20,19 @@
     "!**/*.d.ts",
     "!node_modules/**"
   ],
-  "coverageReporters": ["text", "json-summary", "html"],
+  "coverageReporters": [
+    "text",
+    "json-summary",
+    "html"
+  ],
   "coverageDirectory": "<rootDir>/build/coverage",
-  "moduleDirectories": ["node_modules"],
+  "moduleDirectories": [
+    "node_modules"
+  ],
   "globals": {
     "ts-jest": {
       "tsconfig": "tsconfig.test.json"
     }
-  }
+  },
+  "testRunner": "jest-jasmine2"
 }

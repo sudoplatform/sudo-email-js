@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { CachePolicy, DefaultLogger } from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
@@ -7,6 +13,7 @@ import waitForExpect from 'wait-for-expect'
 import {
   BatchOperationResultStatus,
   EmailAddress,
+  InvalidArgumentError,
   LimitExceededError,
   SudoEmailClient,
 } from '../../../src'
@@ -53,11 +60,6 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
     emailAddresses = []
   })
 
-  it('returns success when deleting zero email messages', async () => {
-    await expect(
-      instanceUnderTest.deleteEmailMessages([]),
-    ).resolves.toStrictEqual({ status: BatchOperationResultStatus.Success })
-  })
   it("returns failure when multiple emails that don't exist are attempted to be deleted", async () => {
     await expect(
       instanceUnderTest.deleteEmailMessages(['1', '2', '3']),
@@ -69,11 +71,16 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
       instanceUnderTest.deleteEmailMessages(messagIds),
     ).resolves.toStrictEqual({ status: BatchOperationResultStatus.Failure })
   })
-  it('throws an error when limit is exceeded', async () => {
+  it('throws LimitExceededError when limit is exceeded', async () => {
     const messagIds = _.range(101).map((i) => i.toString())
     await expect(
       instanceUnderTest.deleteEmailMessages(messagIds),
     ).rejects.toThrow(LimitExceededError)
+  })
+  it('throws InvalidArgumentError when input ids argument is empty', async () => {
+    await expect(instanceUnderTest.deleteEmailMessages([])).rejects.toThrow(
+      InvalidArgumentError,
+    )
   })
   it('deletes multiple email messages successfully', async () => {
     const messageStrings = _.range(2).map((i) =>

@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import {
   ApiClientManager,
   DefaultApiClientManager,
@@ -16,8 +22,11 @@ import {
   FetchPolicy,
   MutationOptions,
   QueryOptions,
+  SubscriptionOptions,
 } from 'apollo-client/core/watchQueryOptions'
 import { ApolloError } from 'apollo-client/errors/ApolloError'
+import { Observable } from 'apollo-client/util/Observable'
+import { FetchResult } from 'apollo-link'
 import AWSAppSyncClient from 'aws-appsync'
 import {
   AvailableAddresses,
@@ -62,6 +71,10 @@ import {
   ListEmailMessagesForEmailAddressIdQuery,
   ListEmailMessagesForEmailFolderIdDocument,
   ListEmailMessagesForEmailFolderIdQuery,
+  OnEmailMessageCreatedDocument,
+  OnEmailMessageCreatedSubscription,
+  OnEmailMessageDeletedDocument,
+  OnEmailMessageDeletedSubscription,
   PaginatedPublicKey,
   ProvisionEmailAddressDocument,
   ProvisionEmailAddressInput,
@@ -315,6 +328,26 @@ export class ApiClient {
     return data.listEmailMessagesForEmailFolderId
   }
 
+  public onEmailMessageDeleted(
+    ownerId: string,
+  ): Observable<FetchResult<OnEmailMessageDeletedSubscription>> {
+    return this.performSubscription({
+      query: OnEmailMessageDeletedDocument,
+      variables: { owner: ownerId },
+      calleeName: this.onEmailMessageDeleted.name,
+    })
+  }
+
+  public onEmailMessageCreated(
+    ownerId: string,
+  ): Observable<FetchResult<OnEmailMessageCreatedSubscription>> {
+    return this.performSubscription({
+      query: OnEmailMessageCreatedDocument,
+      variables: { owner: ownerId },
+      calleeName: this.onEmailMessageCreated.name,
+    })
+  }
+
   public async createPublicKey(
     input: CreatePublicKeyInput,
   ): Promise<PublicKey> {
@@ -354,7 +387,7 @@ export class ApiClient {
     return data.getPublicKeyForEmail ?? undefined
   }
 
-  async performQuery<Q>({
+  private async performQuery<Q>({
     variables,
     fetchPolicy,
     query,
@@ -397,7 +430,7 @@ export class ApiClient {
     }
   }
 
-  async performMutation<M>({
+  private async performMutation<M>({
     mutation,
     variables,
     calleeName,
@@ -436,6 +469,31 @@ export class ApiClient {
       throw new FatalError(
         `${calleeName ?? '<no callee>'} did not return any result`,
       )
+    }
+  }
+
+  private performSubscription<S>({
+    query,
+    variables,
+    calleeName,
+  }: Omit<SubscriptionOptions, 'fetchPolicy'> & {
+    calleeName?: string
+  }): Observable<FetchResult<S>> {
+    try {
+      return this.client.subscribe<S>({
+        query,
+        variables,
+      })
+    } catch (err) {
+      const clientError = err as ApolloError
+      this.log.debug('error received', { calleeName, clientError })
+      const error = clientError.graphQLErrors?.[0]
+      if (error) {
+        this.log.debug('appSync subscription failed with error', { error })
+        throw this.graphqlErrorTransformer.toClientError(error)
+      } else {
+        throw new UnknownGraphQLError(err)
+      }
     }
   }
 }

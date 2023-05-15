@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { OwnerEntity } from '../common/ownerEntity'
 import { EmailFolderEntity } from '../folder/emailFolderEntity'
 import { EmailAddressEntity } from './emailAddressEntity'

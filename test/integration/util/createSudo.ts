@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import waitForExpect from 'wait-for-expect'
 

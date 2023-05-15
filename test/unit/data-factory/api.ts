@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { ListOutput, Owner } from '@sudoplatform/sudo-common'
 import { ConfigurationData } from '../../../src/public/typings/configurationData'
 import { EmailAddress } from '../../../src/public/typings/emailAddress'

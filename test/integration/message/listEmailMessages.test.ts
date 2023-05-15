@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import {
   CachePolicy,
   DefaultLogger,
@@ -275,9 +281,14 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               emailAddressId: emailAddress.id,
               cachePolicy: CachePolicy.RemoteOnly,
             })
+          expect(messages).not.toBeNull()
+          expect(messages.status).toStrictEqual(
+            ListOperationResultStatus.Partial,
+          )
           if (messages.status !== ListOperationResultStatus.Partial) {
             fail(`Expect result not returned: ${messages}`)
           }
+
           expect(messages.items).toHaveLength(0)
           expect(messages.failed).toHaveLength(2)
           const inbound = messages.failed.filter(

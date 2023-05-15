@@ -1,5 +1,14 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
-import { LimitExceededError } from '../../../../public/errors'
+import {
+  InvalidArgumentError,
+  LimitExceededError,
+} from '../../../../public/errors'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
 
 /**
@@ -32,11 +41,8 @@ export class DeleteEmailMessagesUseCase {
     this.log.debug(this.constructor.name, {
       limit: this.Configuration.IdsSizeLimit,
     })
-    if (!ids.size) {
-      return {
-        successIds: [],
-        failureIds: [],
-      }
+    if (ids.size === 0) {
+      throw new InvalidArgumentError()
     }
     if (ids.size > this.Configuration.IdsSizeLimit) {
       throw new LimitExceededError(

@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { EmailAccountEntity } from '../../entities/account/emailAccountEntity'
 import { EmailAccountService } from '../../entities/account/emailAccountService'

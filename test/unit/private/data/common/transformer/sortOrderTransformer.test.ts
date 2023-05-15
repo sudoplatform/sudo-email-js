@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { SortOrder as SortOrderGraphQL } from '../../../../../../src/gen/graphqlTypes'
 import { SortOrderTransformer } from '../../../../../../src/private/data/common/transformer/sortOrderTransformer'
 import { SortOrder } from '../../../../../../src/public/typings/sortOrder'

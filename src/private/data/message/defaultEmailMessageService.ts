@@ -1,15 +1,33 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import {
   DecodeError,
   DefaultLogger,
+  FatalError,
   KeyNotFoundError,
   Logger,
 } from '@sudoplatform/sudo-common'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
+import { FetchResult } from 'apollo-link'
 import { isLeft } from 'fp-ts/lib/Either'
 import * as t from 'io-ts'
 import { PathReporter } from 'io-ts/PathReporter'
 import { v4 } from 'uuid'
-import { DateRangeInput } from '../../../gen/graphqlTypes'
+import {
+  DateRangeInput,
+  OnEmailMessageCreatedSubscription,
+  OnEmailMessageDeletedSubscription,
+  SealedEmailMessage,
+} from '../../../gen/graphqlTypes'
+import {
+  ConnectionState,
+  EmailMessage,
+  EmailMessageSubscriber,
+} from '../../../public'
 import { InternalError } from '../../../public/errors'
 import { DraftEmailMessageEntity } from '../../domain/entities/message/draftEmailMessageEntity'
 import { DraftEmailMessageMetadataEntity } from '../../domain/entities/message/draftEmailMessageMetadataEntity'
@@ -19,6 +37,8 @@ import {
   DeleteEmailMessagesInput,
   EmailMessageService,
   EmailMessageServiceDeleteDraftError,
+  EmailMessageServiceSubscribeToEmailMessagesInput,
+  EmailMessageServiceUnsubscribeFromEmailMessagesInput,
   GetDraftInput,
   GetEmailMessageInput,
   GetEmailMessageRfc822DataInput,
@@ -42,6 +62,10 @@ import {
   S3DownloadError,
   S3Error,
 } from '../common/s3Client'
+import {
+  Subscribable,
+  SubscriptionManager,
+} from '../common/subscriptionManager'
 import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransformer'
 import { SortOrderTransformer } from '../common/transformer/sortOrderTransformer'
 // eslint-disable-next-line tree-shaking/no-side-effects-in-initialization
@@ -79,6 +103,16 @@ type EmailHeaderDetails = t.TypeOf<typeof EmailHeaderDetailsCodec>
 export class DefaultEmailMessageService implements EmailMessageService {
   private readonly log: Logger
 
+  private readonly createSubscriptionManager: SubscriptionManager<
+    OnEmailMessageCreatedSubscription,
+    EmailMessageSubscriber
+  >
+
+  private readonly deleteSubscriptionManager: SubscriptionManager<
+    OnEmailMessageDeletedSubscription,
+    EmailMessageSubscriber
+  >
+
   constructor(
     private readonly appSync: ApiClient,
     private readonly userClient: SudoUserClient,
@@ -87,6 +121,15 @@ export class DefaultEmailMessageService implements EmailMessageService {
     private readonly emailServiceConfig: EmailServiceConfig,
   ) {
     this.log = new DefaultLogger(this.constructor.name)
+    this.createSubscriptionManager = new SubscriptionManager<
+      OnEmailMessageCreatedSubscription,
+      EmailMessageSubscriber
+    >()
+
+    this.deleteSubscriptionManager = new SubscriptionManager<
+      OnEmailMessageDeletedSubscription,
+      EmailMessageSubscriber
+    >()
   }
 
   private readonly Defaults = {
@@ -103,9 +146,9 @@ export class DefaultEmailMessageService implements EmailMessageService {
     senderEmailAddressId,
     id,
   }: SaveDraftInput): Promise<DraftEmailMessageMetadataEntity> {
-    let keyId = await this.deviceKeyWorker.getCurrentSymmetricKeyId()
+    const keyId = await this.deviceKeyWorker.getCurrentSymmetricKeyId()
     if (!keyId) {
-      keyId = await this.deviceKeyWorker.generateCurrentSymmetricKey()
+      throw new KeyNotFoundError('Symmetric key not found')
     }
     const keyPrefix = await this.constructS3KeyForEmailAddressId(
       senderEmailAddressId,
@@ -547,5 +590,199 @@ export class DefaultEmailMessageService implements EmailMessageService {
       ...emailMessageEntity,
       ...parsedRFC822Header,
     }
+  }
+
+  subscribeToEmailMessages(
+    input: EmailMessageServiceSubscribeToEmailMessagesInput,
+  ): void {
+    // subscribe to email messages created
+    this.createSubscriptionManager.subscribe(
+      input.subscriptionId,
+      input.subscriber,
+    )
+    // If subscription manager watcher and subscription hasn't been setup yet
+    // create them and watch for email message changes per `owner`.
+    if (!this.createSubscriptionManager.getWatcher()) {
+      this.createSubscriptionManager.setWatcher(
+        this.appSync.onEmailMessageCreated(input.ownerId),
+      )
+
+      this.createSubscriptionManager.setSubscription(
+        this.setupEmailMessagesCreatedSubscription(),
+      )
+
+      this.createSubscriptionManager.connectionStatusChanged(
+        ConnectionState.Connected,
+      )
+    }
+
+    // Subscribe to email messages deleted
+    this.deleteSubscriptionManager.subscribe(
+      input.subscriptionId,
+      input.subscriber,
+    )
+    // If subscription manager watcher and subscription hasn't been setup yet
+    // create them and watch for email message changes per `owner`.
+    if (!this.deleteSubscriptionManager.getWatcher()) {
+      this.deleteSubscriptionManager.setWatcher(
+        this.appSync.onEmailMessageDeleted(input.ownerId),
+      )
+
+      this.deleteSubscriptionManager.setSubscription(
+        this.setupEmailMessagesDeletedSubscription(),
+      )
+
+      this.deleteSubscriptionManager.connectionStatusChanged(
+        ConnectionState.Connected,
+      )
+    }
+  }
+
+  unsubscribeFromEmailMessages(
+    input: EmailMessageServiceUnsubscribeFromEmailMessagesInput,
+  ): void {
+    this.createSubscriptionManager.unsubscribe(input.subscriptionId)
+    this.deleteSubscriptionManager.unsubscribe(input.subscriptionId)
+  }
+
+  private onSubscriptionCompleted<
+    SubscriptionManagerType extends SubscriptionManager<
+      Subscribable,
+      EmailMessageSubscriber
+    >,
+  >(subscriptionManager: SubscriptionManagerType, subscriptionName: string) {
+    this.log.info(`completed ${subscriptionName} subscription`)
+
+    subscriptionManager.connectionStatusChanged(ConnectionState.Disconnected)
+  }
+
+  private onSubscriptionError<
+    SubscriptionManagerType extends SubscriptionManager<
+      Subscribable,
+      EmailMessageSubscriber
+    >,
+  >(
+    subscriptionManager: SubscriptionManagerType,
+    subscriptionName: string,
+    error: any,
+  ) {
+    this.log.info(`failed to update ${subscriptionName} subscription`, {
+      error,
+    })
+    subscriptionManager.connectionStatusChanged(ConnectionState.Disconnected)
+  }
+
+  private async onSubscriptionNext<
+    SubscriptionType =
+      | OnEmailMessageDeletedSubscription
+      | OnEmailMessageCreatedSubscription,
+  >(
+    subscriptionName: string,
+    result: FetchResult<SubscriptionType>,
+    getData: (data: SubscriptionType) => SealedEmailMessage,
+    callback: (emailMessage: EmailMessage) => Promise<void>,
+  ) {
+    return void (async (
+      result: FetchResult<SubscriptionType>,
+    ): Promise<void> => {
+      this.log.info(`executing ${subscriptionName} subscription`, {
+        result,
+      })
+      if (result.data) {
+        const data = getData(result.data)
+        if (!data) {
+          throw new FatalError(
+            `${subscriptionName} subscription response contained error`,
+          )
+        } else {
+          this.log.info(`${subscriptionName} subscription successful`, {
+            data,
+          })
+
+          const sealedEmailMessageEntity =
+            new SealedEmailMessageEntityTransformer().transformGraphQL(data)
+          const unsealedEmailMessageEntity = await this.unsealEmailMessage(
+            sealedEmailMessageEntity,
+          )
+          await callback(unsealedEmailMessageEntity)
+        }
+      }
+    })(result)
+  }
+
+  private setupEmailMessagesCreatedSubscription():
+    | ZenObservable.Subscription
+    | undefined {
+    const subscription = this.createSubscriptionManager
+      .getWatcher()
+      ?.subscribe({
+        complete: () => {
+          this.onSubscriptionCompleted(
+            this.createSubscriptionManager,
+            'onEmailMessageCreated',
+          )
+        },
+        error: (error) => {
+          this.onSubscriptionError(
+            this.createSubscriptionManager,
+            'onEmailMessageCreated',
+            error,
+          )
+        },
+        next: (result: FetchResult<OnEmailMessageCreatedSubscription>) => {
+          return void (async (
+            result: FetchResult<OnEmailMessageCreatedSubscription>,
+          ): Promise<void> => {
+            return this.onSubscriptionNext(
+              'onEmailMessageCreated',
+              result,
+              (data) => {
+                return data.onEmailMessageCreated
+              },
+              async (message) =>
+                this.createSubscriptionManager.emailMessageCreated(message),
+            )
+          })(result)
+        },
+      })
+    return subscription
+  }
+
+  private setupEmailMessagesDeletedSubscription():
+    | ZenObservable.Subscription
+    | undefined {
+    const subscription = this.deleteSubscriptionManager
+      .getWatcher()
+      ?.subscribe({
+        complete: () => {
+          this.onSubscriptionCompleted(
+            this.deleteSubscriptionManager,
+            'onEmailMessageDeleted',
+          )
+        },
+        error: (error) => {
+          this.onSubscriptionError(
+            this.deleteSubscriptionManager,
+            'onEmailMessageDeleted',
+            error,
+          )
+        },
+        next: (result: FetchResult<OnEmailMessageDeletedSubscription>) => {
+          return void (async (
+            result: FetchResult<OnEmailMessageDeletedSubscription>,
+          ): Promise<void> => {
+            return this.onSubscriptionNext(
+              'onEmailMessageDeleted',
+              result,
+              (data) => {
+                return data.onEmailMessageDeleted
+              },
+              async (message) =>
+                this.deleteSubscriptionManager.emailMessageDeleted(message),
+            )
+          })(result)
+        },
+      })
+    return subscription
   }
 }

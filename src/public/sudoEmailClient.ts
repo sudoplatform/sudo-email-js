@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import {
   CachePolicy,
   DefaultLogger,
@@ -58,6 +64,8 @@ import { GetEmailMessageUseCase } from '../private/domain/use-cases/message/getE
 import { ListEmailMessagesForEmailAddressIdUseCase } from '../private/domain/use-cases/message/listEmailMessagesForEmailAddressIdUseCase'
 import { ListEmailMessagesForEmailFolderIdUseCase } from '../private/domain/use-cases/message/listEmailMessagesForEmailFolderIdUseCase'
 import { SendEmailMessageUseCase } from '../private/domain/use-cases/message/sendEmailMessageUseCase'
+import { SubscribeToEmailMessagesUseCase } from '../private/domain/use-cases/message/subscribeToEmailMessagesUseCase'
+import { UnsubscribeFromEmailMessagesUseCase } from '../private/domain/use-cases/message/unsubscribeFromEmailMessagesUseCase'
 import { UpdateEmailMessagesUseCase } from '../private/domain/use-cases/message/updateEmailMessagesUseCase'
 import {
   BatchOperationResult,
@@ -69,7 +77,7 @@ import { DraftEmailMessage } from './typings/draftEmailMessage'
 import { DraftEmailMessageMetadata } from './typings/draftEmailMessageMetadata'
 import { EmailAddress } from './typings/emailAddress'
 import { EmailFolder } from './typings/emailFolder'
-import { EmailMessage } from './typings/emailMessage'
+import { EmailMessage, EmailMessageSubscriber } from './typings/emailMessage'
 import { EmailMessageRfc822Data } from './typings/emailMessageRfc822Data'
 import {
   ListEmailAddressesResult,
@@ -626,6 +634,27 @@ export interface SudoEmailClient {
   ): Promise<ListEmailMessagesResult>
 
   /**
+   * Subscribe to email message events.
+   *
+   * @param {string} subscriptionId unique identifier to differentiate subscriptions; note that specifying a duplicate subscription
+   * id will replace the previous subscription.
+   * @param {EmailMessageSubscriber} subscriber implementation of callback to be invoked when email message event occurs
+   * @returns {void}
+   */
+  subscribeToEmailMessages(
+    subscriptionId: string,
+    subscriber: EmailMessageSubscriber,
+  ): Promise<void>
+
+  /**
+   * Unsubscribe from email message events.
+   *
+   * @param {string} subscriptionId unique identifier to differentiate subscription
+   * @returns {void}
+   **/
+  unsubscribeFromEmailMessages(subscriptionId: string): void
+
+  /**
    * Get the configuration data for the email service.
    *
    * @returns {ConfigurationData} The configuration data for the email service.
@@ -1112,6 +1141,24 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const transformer = new ListEmailMessagesAPITransformer()
     const result = transformer.transform(emailMessages, resultNextToken)
     return result
+  }
+
+  public async subscribeToEmailMessages(
+    subscriptionId: string,
+    subscriber: EmailMessageSubscriber,
+  ): Promise<void> {
+    const useCase = new SubscribeToEmailMessagesUseCase(
+      this.emailMessageService,
+      this.userClient,
+    )
+    await useCase.execute({ subscriptionId, subscriber })
+  }
+
+  public unsubscribeFromEmailMessages(subscriptionId: string): void {
+    const useCase = new UnsubscribeFromEmailMessagesUseCase(
+      this.emailMessageService,
+    )
+    useCase.execute({ subscriptionId })
   }
 
   public async reset(): Promise<void> {

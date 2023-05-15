@@ -1,7 +1,16 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { anything, instance, mock, reset, when } from 'ts-mockito'
 import { EmailMessageService } from '../../../../../../src/private/domain/entities/message/emailMessageService'
 import { DeleteEmailMessagesUseCase } from '../../../../../../src/private/domain/use-cases/message/deleteEmailMessagesUseCase'
-import { LimitExceededError } from '../../../../../../src/public/errors'
+import {
+  InvalidArgumentError,
+  LimitExceededError,
+} from '../../../../../../src/public/errors'
 import { EmailMessageDataFactory } from '../../../../data-factory/emailMessage'
 
 describe('DeleteEmailMessageUseCase tests', () => {
@@ -23,11 +32,10 @@ describe('DeleteEmailMessageUseCase tests', () => {
     ).resolves.toEqual({ successIds: ['messageToDelete'], failureIds: [] })
   })
 
-  it('deleting zero email messages succeeds', async () => {
-    await expect(instanceUnderTest.execute(new Set([]))).resolves.toEqual({
-      successIds: [],
-      failureIds: [],
-    })
+  it('deleting zero email messages fails', async () => {
+    await expect(instanceUnderTest.execute(new Set([]))).rejects.toThrow(
+      InvalidArgumentError,
+    )
   })
 
   it('deleting more than limit email messages fails', async () => {

@@ -390,6 +390,20 @@ export enum SortOrder {
   Desc = 'DESC',
 }
 
+export type Subscription = {
+  __typename?: 'Subscription'
+  onEmailMessageCreated: SealedEmailMessage
+  onEmailMessageDeleted: SealedEmailMessage
+}
+
+export type SubscriptionOnEmailMessageCreatedArgs = {
+  owner: Scalars['String']
+}
+
+export type SubscriptionOnEmailMessageDeletedArgs = {
+  owner: Scalars['ID']
+}
+
 export type SupportedDomains = {
   __typename?: 'SupportedDomains'
   domains: Array<Scalars['String']>
@@ -1097,6 +1111,72 @@ export type GetPublicKeysForEmailQuery = {
       createdAtEpochMs: number
       updatedAtEpochMs: number
     }>
+  }
+}
+
+export type OnEmailMessageDeletedSubscriptionVariables = Exact<{
+  owner: Scalars['ID']
+}>
+
+export type OnEmailMessageDeletedSubscription = {
+  __typename?: 'Subscription'
+  onEmailMessageDeleted: {
+    __typename?: 'SealedEmailMessage'
+    id: string
+    owner: string
+    emailAddressId: string
+    version: number
+    createdAtEpochMs: number
+    updatedAtEpochMs: number
+    sortDateEpochMs: number
+    folderId: string
+    previousFolderId?: string | null
+    direction: EmailMessageDirection
+    seen: boolean
+    state: EmailMessageState
+    clientRefId?: string | null
+    size: number
+    owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+    rfc822Header: {
+      __typename?: 'SealedAttribute'
+      algorithm: string
+      keyId: string
+      plainTextType: string
+      base64EncodedSealedData: string
+    }
+  }
+}
+
+export type OnEmailMessageCreatedSubscriptionVariables = Exact<{
+  owner: Scalars['String']
+}>
+
+export type OnEmailMessageCreatedSubscription = {
+  __typename?: 'Subscription'
+  onEmailMessageCreated: {
+    __typename?: 'SealedEmailMessage'
+    id: string
+    owner: string
+    emailAddressId: string
+    version: number
+    createdAtEpochMs: number
+    updatedAtEpochMs: number
+    sortDateEpochMs: number
+    folderId: string
+    previousFolderId?: string | null
+    direction: EmailMessageDirection
+    seen: boolean
+    state: EmailMessageState
+    clientRefId?: string | null
+    size: number
+    owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+    rfc822Header: {
+      __typename?: 'SealedAttribute'
+      algorithm: string
+      keyId: string
+      plainTextType: string
+      base64EncodedSealedData: string
+    }
   }
 }
 
@@ -3801,4 +3881,229 @@ export const GetPublicKeysForEmailDocument = {
 } as unknown as DocumentNode<
   GetPublicKeysForEmailQuery,
   GetPublicKeysForEmailQueryVariables
+>
+export const OnEmailMessageDeletedDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'subscription',
+      name: { kind: 'Name', value: 'OnEmailMessageDeleted' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'owner' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'onEmailMessageDeleted' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'owner' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'owner' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedEmailMessage' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SealedEmailMessage' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SealedEmailMessage' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owners' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'sortDateEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'folderId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'previousFolderId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'direction' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'seen' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'clientRefId' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'rfc822Header' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'plainTextType' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'base64EncodedSealedData' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  OnEmailMessageDeletedSubscription,
+  OnEmailMessageDeletedSubscriptionVariables
+>
+export const OnEmailMessageCreatedDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'subscription',
+      name: { kind: 'Name', value: 'onEmailMessageCreated' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'owner' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'String' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'onEmailMessageCreated' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'owner' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'owner' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedEmailMessage' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SealedEmailMessage' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SealedEmailMessage' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owners' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'sortDateEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'folderId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'previousFolderId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'direction' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'seen' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'clientRefId' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'rfc822Header' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'plainTextType' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'base64EncodedSealedData' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  OnEmailMessageCreatedSubscription,
+  OnEmailMessageCreatedSubscriptionVariables
 >

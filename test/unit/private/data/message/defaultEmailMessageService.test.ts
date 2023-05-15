@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import {
   CachePolicy,
   DecodeError,
@@ -15,7 +21,15 @@ import {
   when,
 } from 'ts-mockito'
 import { v4 } from 'uuid'
-import { UpdateEmailMessagesStatus } from '../../../../../src/gen/graphqlTypes'
+import {
+  ConnectionState,
+  EmailMessage,
+  EmailMessageSubscriber,
+} from '../../../../../src'
+import {
+  OnEmailMessageDeletedSubscription,
+  UpdateEmailMessagesStatus,
+} from '../../../../../src/gen/graphqlTypes'
 import { ApiClient } from '../../../../../src/private/data/common/apiClient'
 import {
   DeviceKeyWorker,
@@ -28,6 +42,7 @@ import {
   S3DownloadError,
   S3Error,
 } from '../../../../../src/private/data/common/s3Client'
+import { SubscriptionManager } from '../../../../../src/private/data/common/subscriptionManager'
 import { DefaultEmailMessageService } from '../../../../../src/private/data/message/defaultEmailMessageService'
 import { DraftEmailMessageEntity } from '../../../../../src/private/domain/entities/message/draftEmailMessageEntity'
 import { DraftEmailMessageMetadataEntity } from '../../../../../src/private/domain/entities/message/draftEmailMessageMetadataEntity'
@@ -50,6 +65,11 @@ const unsealedHeaderDetailsHasAttachmentsTrueString =
 const unsealedHeaderDetailsString =
   '{"bcc":[],"to":[{"emailAddress":"testie@unittest.org"}],"from":[{"emailAddress":"testie@unittest.org"}],"cc":[],"replyTo":[],"subject":"testSubject","hasAttachments":false}'
 
+jest.mock('../../../../../src/private/data/common/subscriptionManager')
+const JestMockSubscriptionManager = SubscriptionManager as jest.MockedClass<
+  typeof SubscriptionManager
+>
+
 describe('DefaultEmailMessageService Test Suite', () => {
   const mockAppSync = mock<ApiClient>()
   const mockUserClient = mock<SudoUserClient>()
@@ -57,6 +77,13 @@ describe('DefaultEmailMessageService Test Suite', () => {
   const mockS3ManagedUpload = mock<AWS.S3.ManagedUpload>()
   const mockCognitoIdentityCredentials = mock<AWS.CognitoIdentityCredentials>()
   const mockS3Client = mock<S3Client>()
+  const mockSubscriptionManager =
+    mock<
+      SubscriptionManager<
+        OnEmailMessageDeletedSubscription,
+        EmailMessageSubscriber
+      >
+    >()
   let instanceUnderTest: DefaultEmailMessageService
 
   beforeEach(() => {
@@ -80,6 +107,9 @@ describe('DefaultEmailMessageService Test Suite', () => {
     when(mockDeviceKeyWorker.sealString(anything())).thenResolve('')
     when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
       true,
+    )
+    JestMockSubscriptionManager.mockImplementation(() =>
+      instance(mockSubscriptionManager),
     )
   })
 
@@ -631,7 +661,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
   })
 
   describe('saveDraft', () => {
-    it('generates a current symmetric key if one does not exist', async () => {
+    it('throws error if symmetric key does not exist', async () => {
       when(mockS3Client.upload(anything())).thenResolve({
         key: '',
         lastModified: new Date(),
@@ -639,17 +669,13 @@ describe('DefaultEmailMessageService Test Suite', () => {
       when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve(
         undefined,
       )
-      when(mockDeviceKeyWorker.generateCurrentSymmetricKey()).thenResolve(
-        'symmetricKeyId',
-      )
-      when(mockUserClient.getLatestAuthToken()).thenResolve('latestAuthToken')
       await expect(
         instanceUnderTest.saveDraft({
           rfc822Data: str2ab(''),
           senderEmailAddressId: '',
         }),
-      ).resolves.toBeDefined()
-      verify(mockDeviceKeyWorker.generateCurrentSymmetricKey()).once()
+      ).rejects.toThrow(new KeyNotFoundError('Symmetric key not found'))
+      verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
     })
 
     it.each`
@@ -1112,6 +1138,41 @@ describe('DefaultEmailMessageService Test Suite', () => {
           cause: new KeyNotFoundError(),
         },
       })
+    })
+  })
+
+  describe('subscribeToEmailMessages', () => {
+    const mockOwnerId = 'owner-id'
+    const mockSubscriberId = 'subscriber-id'
+
+    it('calls services correctly', () => {
+      when(mockSubscriptionManager.getWatcher()).thenReturn(null)
+      instanceUnderTest.subscribeToEmailMessages({
+        subscriptionId: mockOwnerId,
+        ownerId: mockSubscriberId,
+        subscriber: {
+          emailMessageDeleted(emailMessage: EmailMessage): void {},
+          connectionStatusChanged(state: ConnectionState): void {
+            return
+          },
+          emailMessageCreated(emailMessage: EmailMessage): void {},
+        },
+      })
+      verify(mockSubscriptionManager.subscribe(anything(), anything())).twice()
+      const [actualId, actualSubscriber] = capture(
+        mockSubscriptionManager.subscribe,
+      ).first()
+      expect(actualId).toEqual<typeof actualId>(mockOwnerId)
+      verify(mockAppSync.onEmailMessageDeleted(anything())).once()
+      const [ownerId] = capture(mockAppSync.onEmailMessageDeleted).first()
+      verify(mockSubscriptionManager.getWatcher()).times(4)
+      verify(mockSubscriptionManager.setWatcher(anything())).twice()
+      verify(mockSubscriptionManager.setSubscription(anything())).twice()
+      verify(
+        mockSubscriptionManager.connectionStatusChanged(
+          ConnectionState.Connected,
+        ),
+      ).twice()
     })
   })
 })

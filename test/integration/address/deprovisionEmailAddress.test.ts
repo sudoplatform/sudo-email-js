@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import {
   CachePolicy,
   DefaultLogger,
@@ -70,12 +76,12 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
     )
 
     const toBeDeletedKeys = await cryptoProvider.exportKeys()
-    expect(toBeDeletedKeys.length).toBe(2)
+    expect(toBeDeletedKeys.length).toBe(5)
 
     await provisionEmailAddress(ownershipProofToken, instanceUnderTest)
 
     const allKeys = await cryptoProvider.exportKeys()
-    expect(allKeys.length).toBe(4)
+    expect(allKeys.length).toBe(7)
 
     const deprovisionedEmailAddress =
       await instanceUnderTest.deprovisionEmailAddress(emailAddress.id)

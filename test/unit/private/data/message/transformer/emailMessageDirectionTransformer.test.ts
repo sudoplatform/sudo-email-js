@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { EmailMessageDirection } from '../../../../../../src/gen/graphqlTypes'
 import { EmailMessageDirectionTransformer } from '../../../../../../src/private/data/message/transformer/emailMessageDirectionTransformer'
 import { Direction } from '../../../../../../src/public/typings/emailMessage'

@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { EmailMessageState } from '../../../../../../src/gen/graphqlTypes'
 import { EmailMessageStateTransformer } from '../../../../../../src/private/data/message/transformer/emailMessageStateTransformer'
 import { State } from '../../../../../../src/public/typings/emailMessage'

@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { SealedEmailMessage } from '../../../../gen/graphqlTypes'
 import { SealedEmailMessageEntity } from '../../../domain/entities/message/sealedEmailMessageEntity'
 import { EmailMessageDirectionTransformer } from './emailMessageDirectionTransformer'

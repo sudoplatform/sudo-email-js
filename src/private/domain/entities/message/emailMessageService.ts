@@ -1,4 +1,11 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { CachePolicy } from '@sudoplatform/sudo-common'
+import { EmailMessageSubscriber } from '../../../../public'
 import { DateRange } from '../../../../public/typings/dateRange'
 import { SortOrder } from '../../../../public/typings/sortOrder'
 import { DraftEmailMessageEntity } from './draftEmailMessageEntity'
@@ -198,6 +205,30 @@ export class EmailMessageServiceDeleteDraftError extends Error {
 }
 
 /**
+ * Input for `EmailMessageService.subscribeToEmailMessages` method.
+ *
+ * @interface EmailMessageServiceSubscribeToEmailMessagesInput
+ * @property {string} subscriptionId ID that will be used to identity the subscription.
+ * @property {string} ownerId ID of the calling owner.
+ * @property {EmailAddressSubscriber} subscriber Object representing the email address subscriber.
+ */
+export interface EmailMessageServiceSubscribeToEmailMessagesInput {
+  subscriptionId: string
+  ownerId: string
+  subscriber: EmailMessageSubscriber
+}
+
+/**
+ * Input for `EmailMessageService.unsubscribeFromEmailMessages` method.
+ *
+ * @interface EmailMessageServiceUnsubscribeFromEmailMessagesInput
+ * @property {string} subscriptionId ID of the subscription from which to be unsubscribed.
+ */
+export interface EmailMessageServiceUnsubscribeFromEmailMessagesInput {
+  subscriptionId: string
+}
+
+/**
  * Core entity representation of an email message service used in business logic. Used to perform operations for email messages.
  *
  * @interface EmailMessageService
@@ -303,4 +334,22 @@ export interface EmailMessageService {
   listMessagesForEmailFolderId(
     input: ListEmailMessagesForEmailFolderIdInput,
   ): Promise<ListEmailMessagesForEmailFolderIdOutput>
+
+  /**
+   * Subscribe to email message events.
+   *
+   * @param {EmailMessageServiceSubscribeToEmailMessagesInput} input Input parameters to subscribe to email message events.
+   */
+  subscribeToEmailMessages(
+    input: EmailMessageServiceSubscribeToEmailMessagesInput,
+  ): void
+
+  /**
+   * Unsubcribe from email message events.
+   *
+   * @param {EmailMessageServiceUnsubscribeFromEmailMessagesInput} input Input parameters to unsubscribe from email message events.
+   */
+  unsubscribeFromEmailMessages(
+    input: EmailMessageServiceUnsubscribeFromEmailMessagesInput,
+  ): void
 }

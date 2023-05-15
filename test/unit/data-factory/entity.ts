@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { EmailAccountEntity } from '../../../src/private/domain/entities/account/emailAccountEntity'
 import { EmailAddressEntity } from '../../../src/private/domain/entities/account/emailAddressEntity'
 import { EmailDomainEntity } from '../../../src/private/domain/entities/account/emailDomainEntity'

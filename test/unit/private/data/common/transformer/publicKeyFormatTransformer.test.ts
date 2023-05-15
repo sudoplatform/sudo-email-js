@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { PublicKeyFormat } from '@sudoplatform/sudo-common'
 import { DeviceKeyWorkerKeyFormat } from '../../../../../../src/private/data/common/deviceKeyWorker'
 import { PublicKeyFormatTransformer } from '../../../../../../src/private/data/common/transformer/publicKeyFormatTransformer'

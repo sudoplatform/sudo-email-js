@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { internal as SudoUserInternal } from '@sudoplatform/sudo-user'
 import _ from 'lodash'
 import {

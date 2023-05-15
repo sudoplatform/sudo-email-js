@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { instance, mock, reset, verify, when } from 'ts-mockito'
 import { ApiClient } from '../../../../../src/private/data/common/apiClient'
 import { DefaultConfigurationDataService } from '../../../../../src/private/data/configuration/defaultConfigurationDataService'

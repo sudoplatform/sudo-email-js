@@ -1,0 +1,11 @@
+subscription OnEmailMessageDeleted($owner: ID!) {
+  onEmailMessageDeleted(owner: $owner) {
+    ...SealedEmailMessage
+  }
+}
+
+subscription onEmailMessageCreated($owner: String!) {
+  onEmailMessageCreated(owner: $owner) {
+    ...SealedEmailMessage
+  }
+}

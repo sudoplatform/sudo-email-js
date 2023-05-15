@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import {
   Buffer as BufferUtil,
   EncryptionAlgorithm,
@@ -51,6 +57,10 @@ export class DefaultEmailAccountService implements EmailAccountService {
 
   async create(input: CreateEmailAccountInput): Promise<EmailAccountEntity> {
     const key = await this.deviceKeyWorker.generateKeyPair()
+    const symmetricKeyId =
+      (await this.deviceKeyWorker.getCurrentSymmetricKeyId()) ??
+      (await this.deviceKeyWorker.generateCurrentSymmetricKey())
+
     let keyFormat: GraphQLKeyFormat | undefined
     switch (key.format) {
       case DeviceKeyWorkerKeyFormat.RsaPublicKey:
@@ -73,10 +83,6 @@ export class DefaultEmailAccountService implements EmailAccountService {
     }
 
     if (input.emailAddressEntity.alias) {
-      const symmetricKeyId =
-        (await this.deviceKeyWorker.getCurrentSymmetricKeyId()) ??
-        (await this.deviceKeyWorker.generateCurrentSymmetricKey())
-
       const sealedAlias = await this.deviceKeyWorker.sealString({
         payload: BufferUtil.fromString(input.emailAddressEntity.alias),
         keyId: symmetricKeyId,
@@ -206,9 +212,11 @@ export class DefaultEmailAccountService implements EmailAccountService {
   async updateMetadata(
     input: UpdateEmailAccountMetadataInput,
   ): Promise<string> {
-    const symmetricKeyId =
-      (await this.deviceKeyWorker.getCurrentSymmetricKeyId()) ??
-      (await this.deviceKeyWorker.generateCurrentSymmetricKey())
+    const symmetricKeyId = await this.deviceKeyWorker.getCurrentSymmetricKeyId()
+
+    if (!symmetricKeyId) {
+      throw new KeyNotFoundError('Symmeric key not found')
+    }
 
     const updateEmailAddressMetadataInput: UpdateEmailAddressMetadataInput = {
       id: input.id,

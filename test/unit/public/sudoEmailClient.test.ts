@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import {
   CachePolicy,
   DefaultConfigurationManager,
@@ -49,6 +55,8 @@ import { ListEmailMessagesForEmailAddressIdUseCase } from '../../../src/private/
 import { ListEmailMessagesForEmailFolderIdUseCase } from '../../../src/private/domain/use-cases/message/listEmailMessagesForEmailFolderIdUseCase'
 import { SendEmailMessageUseCase } from '../../../src/private/domain/use-cases/message/sendEmailMessageUseCase'
 import { UpdateEmailMessagesUseCase } from '../../../src/private/domain/use-cases/message/updateEmailMessagesUseCase'
+import { SubscribeToEmailMessagesUseCase } from '../../../src/private/domain/use-cases/message/subscribeToEmailMessagesUseCase'
+import { UnsubscribeFromEmailMessagesUseCase } from '../../../src/private/domain/use-cases/message/unsubscribeFromEmailMessagesUseCase'
 import {
   DefaultSudoEmailClient,
   SudoEmailClient,
@@ -60,6 +68,7 @@ import { SortOrder } from '../../../src/public/typings/sortOrder'
 import { str2ab } from '../../util/buffer'
 import { APIDataFactory } from '../data-factory/api'
 import { EntityDataFactory } from '../data-factory/entity'
+import { EmailMessage } from '../../../src'
 
 // Constructor mocks
 
@@ -250,6 +259,20 @@ const JestMockGetEmailMessageRfc822DataUseCase =
 jest.mock(
   '../../../src/private/domain/use-cases/message/getEmailMessageRfc822DataUseCase',
 )
+const JestMockSubscribeToEmailMessagesUseCase =
+  SubscribeToEmailMessagesUseCase as jest.MockedClass<
+    typeof SubscribeToEmailMessagesUseCase
+  >
+jest.mock(
+  '../../../src/private/domain/use-cases/message/subscribeToEmailMessagesUseCase',
+)
+const JestMockUnsubscribeFromEmailMessagesUseCase =
+  UnsubscribeFromEmailMessagesUseCase as jest.MockedClass<
+    typeof UnsubscribeFromEmailMessagesUseCase
+  >
+jest.mock(
+  '../../../src/private/domain/use-cases/message/unsubscribeFromEmailMessagesUseCase',
+)
 
 describe('SudoEmailClient Test Suite', () => {
   // Opt Mocks
@@ -300,6 +323,10 @@ describe('SudoEmailClient Test Suite', () => {
     mock<ListEmailMessagesForEmailFolderIdUseCase>()
   const mockGetEmailMessageRfc822DataUseCase =
     mock<GetEmailMessageRfc822DataUseCase>()
+  const mockSubscribeToEmailMessagesUseCase =
+    mock<SubscribeToEmailMessagesUseCase>()
+  const mockUnsubscribeFromEmailMessagesUseCase =
+    mock<UnsubscribeFromEmailMessagesUseCase>()
 
   let instanceUnderTest: SudoEmailClient
 
@@ -354,6 +381,8 @@ describe('SudoEmailClient Test Suite', () => {
     reset(mockListEmailMessagesForEmailAddressIdUseCase)
     reset(mockListEmailMessagesForEmailFolderIdUseCase)
     reset(mockGetEmailMessageRfc822DataUseCase)
+    reset(mockSubscribeToEmailMessagesUseCase)
+    reset(mockUnsubscribeFromEmailMessagesUseCase)
     reset(mockGetConfigurationDataUseCase)
 
     JestMockDefaultEmailAccountService.mockClear()
@@ -387,6 +416,8 @@ describe('SudoEmailClient Test Suite', () => {
     JestMockListEmailMessagesForEmailAddressIdUseCase.mockClear()
     JestMockListEmailMessagesForEmailFolderIdUseCase.mockClear()
     JestMockGetEmailMessageRfc822DataUseCase.mockClear()
+    JestMockSubscribeToEmailMessagesUseCase.mockClear()
+    JestMockUnsubscribeFromEmailMessagesUseCase.mockClear()
 
     JestMockDefaultConfigurationDataService.mockImplementation(() =>
       instance(mockConfigurationDataService),
@@ -470,6 +501,12 @@ describe('SudoEmailClient Test Suite', () => {
     JestMockGetEmailMessageRfc822DataUseCase.mockImplementation(() =>
       instance(mockGetEmailMessageRfc822DataUseCase),
     )
+    JestMockSubscribeToEmailMessagesUseCase.mockImplementation(() =>
+      instance(mockSubscribeToEmailMessagesUseCase),
+    )
+    JestMockUnsubscribeFromEmailMessagesUseCase.mockImplementation(() =>
+      instance(mockUnsubscribeFromEmailMessagesUseCase),
+    )
   }
 
   beforeEach(() => {
@@ -515,6 +552,7 @@ describe('SudoEmailClient Test Suite', () => {
       expect(JestMockDefaultEmailMessageService).toHaveBeenCalledTimes(1)
     })
   })
+
   describe('provisionEmailAddress', () => {
     beforeEach(() => {
       when(mockProvisionEmailAccountUseCase.execute(anything())).thenResolve(
@@ -647,6 +685,7 @@ describe('SudoEmailClient Test Suite', () => {
       ).resolves.toEqual('id')
     })
   })
+
   describe('updateEmailMessages', () => {
     beforeEach(() => {
       when(mockUpdateEmailMessagesUseCase.execute(anything())).thenResolve({
@@ -718,6 +757,7 @@ describe('SudoEmailClient Test Suite', () => {
       })
     })
   })
+
   describe('getSupportedEmailDomains', () => {
     beforeEach(() => {
       when(mockGetSupportedEmailDomainsUseCase.execute(anything())).thenResolve(
@@ -742,6 +782,7 @@ describe('SudoEmailClient Test Suite', () => {
       ).resolves.toEqual(['domain.com'])
     })
   })
+
   describe('checkEmailAddressAvailability', () => {
     beforeEach(() => {
       when(
@@ -786,6 +827,7 @@ describe('SudoEmailClient Test Suite', () => {
       ).resolves.toEqual(['test@example.com'])
     })
   })
+
   describe('getEmailAddress', () => {
     beforeEach(() => {
       when(mockGetEmailAccountUseCase.execute(anything())).thenResolve(
@@ -828,6 +870,7 @@ describe('SudoEmailClient Test Suite', () => {
       ).resolves.toEqual(APIDataFactory.emailAddress)
     })
   })
+
   describe('listEmailAddresses', () => {
     beforeEach(() => {
       when(mockListEmailAccountsUseCase.execute(anything())).thenResolve({
@@ -915,6 +958,7 @@ describe('SudoEmailClient Test Suite', () => {
       })
     })
   })
+
   describe('listEmailAddressesForSudoId', () => {
     beforeEach(() => {
       when(
@@ -989,6 +1033,7 @@ describe('SudoEmailClient Test Suite', () => {
       })
     })
   })
+
   describe('listEmailFoldersForEmailAddressId', () => {
     beforeEach(() => {
       when(
@@ -1060,6 +1105,7 @@ describe('SudoEmailClient Test Suite', () => {
       })
     })
   })
+
   describe('createDraftEmailMessage', () => {
     const updatedAt = new Date()
 
@@ -1234,6 +1280,7 @@ describe('SudoEmailClient Test Suite', () => {
       })
     })
   })
+
   describe('getDraftEmailMessage', () => {
     const updatedAt = new Date()
     const rfc822Data = str2ab('data')
@@ -1388,6 +1435,7 @@ describe('SudoEmailClient Test Suite', () => {
       ).resolves.toEqual(APIDataFactory.emailMessage)
     })
   })
+
   describe('getEmailMessageRfc822Data', () => {
     beforeEach(() => {
       when(
@@ -1439,6 +1487,7 @@ describe('SudoEmailClient Test Suite', () => {
       })
     })
   })
+
   describe('listEmailMessagesForEmailAddressId', () => {
     beforeEach(() => {
       when(
@@ -1523,6 +1572,7 @@ describe('SudoEmailClient Test Suite', () => {
       })
     })
   })
+
   describe('listEmailMessagesForEmailFolderId', () => {
     beforeEach(() => {
       when(
@@ -1680,6 +1730,7 @@ describe('SudoEmailClient Test Suite', () => {
       })
     })
   })
+
   describe('deleteEmailMessage', () => {
     it('deletes a single message successfully', async () => {
       when(mockDeleteEmailMessagesUseCase.execute(anything())).thenResolve({
@@ -1736,6 +1787,27 @@ describe('SudoEmailClient Test Suite', () => {
       })
     })
   })
+
+  describe('subscribeToEmailMessages', () => {
+    it('generates use case', async () => {
+      await instanceUnderTest.subscribeToEmailMessages('subscriber-id', {
+        emailMessageDeleted(emailMessage: EmailMessage): void {},
+        emailMessageCreated(emailMessage: EmailMessage): void {},
+      })
+      expect(JestMockSubscribeToEmailMessagesUseCase).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('unsubscribeFromEmailMessages', () => {
+    it('generates use case', async () => {
+      await instanceUnderTest.unsubscribeFromEmailMessages('subscriber-id')
+
+      expect(JestMockUnsubscribeFromEmailMessagesUseCase).toHaveBeenCalledTimes(
+        1,
+      )
+    })
+  })
+
   describe('getConfigurationData', () => {
     beforeEach(() => {
       when(mockGetConfigurationDataUseCase.execute()).thenResolve(

@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { ListOperationResultStatus } from '@sudoplatform/sudo-common'
 import { EmailMessageAddress } from '../../../../public/typings/emailMessage'
 import { ListEmailMessagesResult } from '../../../../public/typings/listOperationResult'
