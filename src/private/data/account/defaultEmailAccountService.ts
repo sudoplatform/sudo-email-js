@@ -5,7 +5,6 @@
  */
 
 import {
-  Buffer as BufferUtil,
   EncryptionAlgorithm,
   KeyNotFoundError,
 } from '@sudoplatform/sudo-common'
@@ -84,7 +83,7 @@ export class DefaultEmailAccountService implements EmailAccountService {
 
     if (input.emailAddressEntity.alias) {
       const sealedAlias = await this.deviceKeyWorker.sealString({
-        payload: BufferUtil.fromString(input.emailAddressEntity.alias),
+        payload: new TextEncoder().encode(input.emailAddressEntity.alias),
         keyId: symmetricKeyId,
         keyType: KeyType.SymmetricKey,
       })
@@ -215,7 +214,7 @@ export class DefaultEmailAccountService implements EmailAccountService {
     const symmetricKeyId = await this.deviceKeyWorker.getCurrentSymmetricKeyId()
 
     if (!symmetricKeyId) {
-      throw new KeyNotFoundError('Symmeric key not found')
+      throw new KeyNotFoundError('Symmetric key not found')
     }
 
     const updateEmailAddressMetadataInput: UpdateEmailAddressMetadataInput = {
@@ -225,7 +224,7 @@ export class DefaultEmailAccountService implements EmailAccountService {
 
     if (input.values.alias) {
       const sealedAlias = await this.deviceKeyWorker.sealString({
-        payload: BufferUtil.fromString(input.values.alias),
+        payload: new TextEncoder().encode(input.values.alias),
         keyId: symmetricKeyId,
         keyType: KeyType.SymmetricKey,
       })
@@ -251,19 +250,18 @@ export class DefaultEmailAccountService implements EmailAccountService {
     const transformed =
       this.emailAccountTransformer.transformGraphQL(emailAddress)
     if (emailAddress.alias) {
-      const status = await this.deviceKeyWorker.keyExists(
+      const symmetricKeyExists = await this.deviceKeyWorker.keyExists(
         emailAddress.alias.keyId,
         KeyType.SymmetricKey,
       )
-      if (status) {
+      if (symmetricKeyExists) {
         try {
           const unsealedAlias = await this.unsealAlias(emailAddress.alias)
           transformed.emailAddress.alias = unsealedAlias
         } catch (error) {
-          transformed.status = {
-            type: 'Failed',
-            cause: error as Error,
-          }
+          // Tolerate inability to unseal alias. We have the correct
+          // key so this is a decoding error
+          transformed.emailAddress.alias = ''
         }
       } else {
         transformed.status = {

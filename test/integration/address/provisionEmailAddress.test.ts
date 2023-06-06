@@ -7,6 +7,7 @@
 import {
   DefaultLogger,
   InsufficientEntitlementsError,
+  ListOperationResultStatus,
 } from '@sudoplatform/sudo-common'
 import { SudoEntitlementsClient } from '@sudoplatform/sudo-entitlements'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
@@ -29,6 +30,8 @@ import {
   generateSafeLocalPart,
   provisionEmailAddress,
 } from '../util/provisionEmailAddress'
+import { instance } from 'ts-mockito'
+import waitForExpect from 'wait-for-expect'
 
 describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
   jest.setTimeout(240000)
@@ -60,6 +63,7 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
     )
     emailAddresses = []
   })
+
   it('returns expected output', async () => {
     const localPart = generateSafeLocalPart()
     const emailAddressAlias = 'Some Alias'
@@ -81,6 +85,45 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
     expect(emailAddress.folders.map((f) => f.folderName)).toEqual(
       expect.arrayContaining(['INBOX', 'SENT', 'OUTBOX', 'TRASH']),
     )
+  })
+
+  it('provisions an address with multi-byte UTF-8 characters in alias', async () => {
+    const localPart = generateSafeLocalPart()
+    const emailAddressAlias = 'Some Alias 😎'
+    const emailAddress = await provisionEmailAddress(
+      ownershipProofToken,
+      instanceUnderTest,
+      { localPart, alias: emailAddressAlias },
+    )
+    emailAddresses.push(emailAddress)
+
+    expect(emailAddress.id).toBeDefined()
+    expect(emailAddress.emailAddress).toMatch(new RegExp(`^${localPart}@.+`))
+    const sub = await userClient.getSubject()
+    expect(emailAddress.owner).toStrictEqual(sub)
+    expect(emailAddress.owners[0].id).toStrictEqual(sudo.id)
+    expect(emailAddress.owners[0].issuer).toStrictEqual(sudoIssuer)
+    expect(emailAddress.alias).toBeDefined()
+    expect(emailAddress.alias).toStrictEqual(emailAddressAlias)
+    expect(emailAddress.folders).toHaveLength(4)
+    expect(emailAddress.folders.map((f) => f.folderName)).toEqual(
+      expect.arrayContaining(['INBOX', 'SENT', 'OUTBOX', 'TRASH']),
+    )
+
+    await waitForExpect(
+      async () =>
+        await expect(
+          instanceUnderTest.getEmailAddress({ id: emailAddress.id }),
+        ).resolves.toEqual(emailAddress),
+    )
+    await waitForExpect(async () => {
+      const addresses = await instanceUnderTest.listEmailAddresses({})
+      expect(addresses.status).toEqual(ListOperationResultStatus.Success)
+      if (addresses.status !== ListOperationResultStatus.Success) {
+        fail(`addresses.status unexpected value`)
+      }
+      expect(addresses.items).toEqual([emailAddress])
+    })
   })
 
   it('throws an error when provisioning with an invalid local part', async () => {

@@ -58,6 +58,7 @@ describe('DefaultEmailAccountService Test Suite', () => {
         format: DeviceKeyWorkerKeyFormat.RsaPublicKey,
       })
     })
+
     it('calls appSync correctly', async () => {
       when(mockAppSync.provisionEmailAddress(anything())).thenResolve(
         GraphQLDataFactory.emailAddress,
@@ -224,6 +225,36 @@ describe('DefaultEmailAccountService Test Suite', () => {
       expect(result).toEqual(
         EntityDataFactory.emailAccountWithEmailAddressAlias,
       )
+      verify(mockDeviceKeyWorker.unsealString(anything())).once()
+    })
+
+    it('tolerates unseal failure on alias', async () => {
+      when(mockAppSync.getEmailAddress(anything(), anything())).thenResolve(
+        GraphQLDataFactory.emailAddressWithAlias,
+      )
+      when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
+        true,
+      )
+      when(mockDeviceKeyWorker.unsealString(anything())).thenReject(
+        new Error('Some Error'),
+      )
+
+      const id = v4()
+      const result = await instanceUnderTest.get({
+        id,
+        cachePolicy: CachePolicy.CacheOnly,
+      })
+      verify(mockAppSync.getEmailAddress(anything(), anything())).once()
+      const [inputArg, policyArg] = capture(mockAppSync.getEmailAddress).first()
+      expect(inputArg).toStrictEqual<typeof inputArg>(id)
+      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+      expect(result).toEqual({
+        ...EntityDataFactory.emailAccountWithEmailAddressAlias,
+        emailAddress: {
+          ...EntityDataFactory.emailAccountWithEmailAddressAlias.emailAddress,
+          alias: '',
+        },
+      })
       verify(mockDeviceKeyWorker.unsealString(anything())).once()
     })
 
