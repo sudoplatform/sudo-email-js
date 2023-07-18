@@ -12,6 +12,7 @@ import { DraftEmailMessage, EmailAddress, SudoEmailClient } from '../../../src'
 import { createEmailMessageRfc822String } from '../util/createEmailMessage'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import { delay } from '../../util/delay'
 
 describe('SudoEmailClient listDraftEmailMessageMeatdata Test Suite', () => {
   jest.setTimeout(240000)
@@ -25,6 +26,7 @@ describe('SudoEmailClient listDraftEmailMessageMeatdata Test Suite', () => {
 
   let emailAddress: EmailAddress
   let draftData: DraftEmailMessage[] = []
+  const NUMBER_DRAFTS = 9
 
   beforeEach(async () => {
     const result = await setupEmailClient(log)
@@ -39,7 +41,7 @@ describe('SudoEmailClient listDraftEmailMessageMeatdata Test Suite', () => {
       instanceUnderTest,
     )
     const encoder = new TextEncoder()
-    const draftDataArrays = _.range(9)
+    const draftDataArrays = _.range(NUMBER_DRAFTS)
       .map(() =>
         createEmailMessageRfc822String({
           from: [{ emailAddress: emailAddress.emailAddress }],
@@ -53,15 +55,15 @@ describe('SudoEmailClient listDraftEmailMessageMeatdata Test Suite', () => {
       )
       .map((s) => encoder.encode(s))
 
-    draftData = await Promise.all(
-      draftDataArrays.map(async (d) => {
-        const metadata = await instanceUnderTest.createDraftEmailMessage({
-          senderEmailAddressId: emailAddress.id,
-          rfc822Data: d,
-        })
-        return { ...metadata, rfc822Data: d }
-      }),
-    )
+    for (let d of draftDataArrays) {
+      const metadata = await instanceUnderTest.createDraftEmailMessage({
+        senderEmailAddressId: emailAddress.id,
+        rfc822Data: d,
+      })
+      draftData.push({ ...metadata, rfc822Data: d })
+      // delay to avoid hitting request limit
+      await delay(10)
+    }
   })
 
   afterEach(async () => {

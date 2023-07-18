@@ -47,19 +47,23 @@
     "@sudoplatform/sudo-user": "^13.0.0"
   },
   "dependencies": {
-    "@sudoplatform/sudo-web-crypto-provider": "^8.0.0",
+    "@aws-sdk/client-s3": "^3.369.0",
+    "@aws-sdk/credential-provider-cognito-identity": "^3.369.0",
+    "@aws-sdk/credential-providers": "^3.369.0",
+    "@aws-sdk/lib-storage": "^3.369.0",
+    "@sudoplatform/sudo-web-crypto-provider": "^8.0.1",
     "apollo-cache-inmemory": "^1.6.6",
     "async-mutex": "^0.4.0",
     "aws-appsync": "4.1.9",
     "aws-sdk": "^2.1333.0",
-    "fp-ts": "^2.14.0",
+    "fp-ts": "^2.16.0",
     "graphql": "^15.8.0",
     "io-ts": "^2.2.20",
     "lodash": "^4.17.21",
     "monocle-ts": "^2.3.13",
     "newtype-ts": "^0.3.5",
     "redux": "^4.2.1",
-    "tslib": "^2.5.0"
+    "tslib": "^2.6.0"
   },
   "resolutions": {
     "apollo-cache-inmemory": "^1.6.6",
@@ -74,7 +78,9 @@
     "debug": "^4.3.4",
     "ua-parser-js": "^1.0.35",
     "json5": "^2.2.3",
-    "**/undici": "^5.22.0"
+    "**/undici": "^5.22.0",
+    "fast-xml-parser": "^4.1.2",
+    "semver": "^7.5.2"
   },
   "devDependencies": {
     "@graphql-codegen/add": "^4.0.1",
@@ -83,13 +89,13 @@
     "@graphql-codegen/typescript": "^3.0.4",
     "@graphql-codegen/typescript-operations": "^3.0.4",
     "@graphql-typed-document-node/apollo-client-2": "^1.0.0",
-    "@sudoplatform/sudo-api-client": "^14.0.0",
-    "@sudoplatform/sudo-common": "^8.5.1",
-    "@sudoplatform/sudo-entitlements": "^16.0.0",
-    "@sudoplatform/sudo-entitlements-admin": "^11.1.0",
-    "@sudoplatform/sudo-profiles": "^17.0.0",
-    "@sudoplatform/sudo-user": "^13.0.0",
-    "@types/jest": "^29.5.1",
+    "@sudoplatform/sudo-api-client": "^14.0.1",
+    "@sudoplatform/sudo-common": "^8.8.0",
+    "@sudoplatform/sudo-entitlements": "^16.0.3",
+    "@sudoplatform/sudo-entitlements-admin": "^11.2.1",
+    "@sudoplatform/sudo-profiles": "^17.0.4",
+    "@sudoplatform/sudo-user": "^13.0.2",
+    "@types/jest": "^29.5.3",
     "@types/lodash": "^4.14.194",
     "@types/nodemailer": "^6.4.7",
     "@types/uuid": "^9.0.1",
@@ -97,7 +103,7 @@
     "@typescript-eslint/parser": "^5.59.0",
     "apollo-client": "^2.6.10",
     "concurrently": "^8.0.1",
-    "eslint": "^8.39.0",
+    "eslint": "^8.44.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-prettier": "^4.2.1",
@@ -125,8 +131,7 @@
     "1085321": 1674529691,
     "1085403": 1674529673,
     "1087848": 1674529662,
-    "1092240": 1687287151,
-    "1092243": 1687288766
+    "1092240": 1687287151
   },
   "outdatedSuppressions": {
     "major": {

@@ -10,7 +10,6 @@ import {
   KeyNotFoundError,
 } from '@sudoplatform/sudo-common'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
-import * as AWS from 'aws-sdk'
 import {
   anything,
   capture,
@@ -74,8 +73,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
   const mockAppSync = mock<ApiClient>()
   const mockUserClient = mock<SudoUserClient>()
   const mockDeviceKeyWorker = mock<DeviceKeyWorker>()
-  const mockS3ManagedUpload = mock<AWS.S3.ManagedUpload>()
-  const mockCognitoIdentityCredentials = mock<AWS.CognitoIdentityCredentials>()
   const mockS3Client = mock<S3Client>()
   const mockSubscriptionManager =
     mock<
@@ -90,9 +87,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     reset(mockAppSync)
     reset(mockUserClient)
     reset(mockDeviceKeyWorker)
-    reset(mockS3ManagedUpload)
     reset(mockS3Client)
-    reset(mockCognitoIdentityCredentials)
     instanceUnderTest = new DefaultEmailMessageService(
       instance(mockAppSync),
       instance(mockUserClient),

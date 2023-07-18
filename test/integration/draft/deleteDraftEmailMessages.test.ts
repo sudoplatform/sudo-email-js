@@ -35,7 +35,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
   let emailAddress: EmailAddress
   let draftMetadata: DraftEmailMessageMetadata
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const result = await setupEmailClient(log)
     instanceUnderTest = result.emailClient
     profilesClient = result.profilesClient
@@ -47,6 +47,9 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
       sudoOwnershipProofToken,
       instanceUnderTest,
     )
+  })
+
+  beforeEach(async () => {
     const draftEmailMessageString = createEmailMessageRfc822String({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [],
@@ -67,11 +70,14 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
       emailAddressId: emailAddress.id,
       ids: [draftMetadata.id],
     })
+    await delay(1000)
+  })
+
+  afterAll(async () => {
     await teardown(
       { emailAddresses: [emailAddress], sudos: [sudo] },
       { emailClient: instanceUnderTest, profilesClient, userClient },
     )
-    await delay(1000)
   })
 
   it('deletes a draft successfully', async () => {
@@ -128,11 +134,19 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
           }),
       ),
     )
-    await expect(
-      instanceUnderTest.deleteDraftEmailMessages({
-        emailAddressId: emailAddress.id,
-        ids: draftMetadata.map((m) => m.id),
-      }),
-    ).resolves.toStrictEqual({ status: BatchOperationResultStatus.Success })
+    const deleteResult = await instanceUnderTest.deleteDraftEmailMessages({
+      emailAddressId: emailAddress.id,
+      ids: draftMetadata.map((m) => m.id),
+    })
+    log.info('delete result', { deleteResult })
+    expect(deleteResult).toStrictEqual({
+      status: BatchOperationResultStatus.Success,
+    })
+    // await expect(
+    //   instanceUnderTest.deleteDraftEmailMessages({
+    //     emailAddressId: emailAddress.id,
+    //     ids: draftMetadata.map((m) => m.id),
+    //   }),
+    // ).resolves.toStrictEqual({ status: BatchOperationResultStatus.Success })
   })
 })
