@@ -68,7 +68,7 @@ import { SortOrder } from '../../../src/public/typings/sortOrder'
 import { str2ab } from '../../util/buffer'
 import { APIDataFactory } from '../data-factory/api'
 import { EntityDataFactory } from '../data-factory/entity'
-import { EmailMessage } from '../../../src'
+import { EmailMessage, InvalidArgumentError } from '../../../src'
 
 // Constructor mocks
 
@@ -1826,6 +1826,14 @@ describe('SudoEmailClient Test Suite', () => {
       await expect(instanceUnderTest.getConfigurationData()).resolves.toEqual(
         APIDataFactory.configurationData,
       )
+    })
+  })
+
+  describe('importKeys', () => {
+    it('throws InvalidArgumentError if no data provided to import', async () => {
+      await expect(
+        instanceUnderTest.importKeys(new ArrayBuffer(0)),
+      ).rejects.toThrow(InvalidArgumentError)
     })
   })
 })

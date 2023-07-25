@@ -24,7 +24,7 @@
 <ul class="tsd-hierarchy">
 <li><a href="../classes/DefaultSudoEmailClient.html" class="tsd-signature-type tsd-kind-class">DefaultSudoEmailClient</a></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:337</li></ul></aside>
+<li>Defined in src/public/sudoEmailClient.ts:340</li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -38,12 +38,14 @@
 <a href="SudoEmailClient.html#deleteEmailMessage" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>delete<wbr/>Email<wbr/>Message</span></a>
 <a href="SudoEmailClient.html#deleteEmailMessages" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>delete<wbr/>Email<wbr/>Messages</span></a>
 <a href="SudoEmailClient.html#deprovisionEmailAddress" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>deprovision<wbr/>Email<wbr/>Address</span></a>
+<a href="SudoEmailClient.html#exportKeys" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>export<wbr/>Keys</span></a>
 <a href="SudoEmailClient.html#getConfigurationData" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>get<wbr/>Configuration<wbr/>Data</span></a>
 <a href="SudoEmailClient.html#getDraftEmailMessage" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>get<wbr/>Draft<wbr/>Email<wbr/>Message</span></a>
 <a href="SudoEmailClient.html#getEmailAddress" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>get<wbr/>Email<wbr/>Address</span></a>
 <a href="SudoEmailClient.html#getEmailMessage" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>get<wbr/>Email<wbr/>Message</span></a>
 <a href="SudoEmailClient.html#getEmailMessageRfc822Data" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>get<wbr/>Email<wbr/>Message<wbr/>Rfc822<wbr/>Data</span></a>
 <a href="SudoEmailClient.html#getSupportedEmailDomains" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>get<wbr/>Supported<wbr/>Email<wbr/>Domains</span></a>
+<a href="SudoEmailClient.html#importKeys" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>import<wbr/>Keys</span></a>
 <a href="SudoEmailClient.html#listDraftEmailMessageMetadata" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>list<wbr/>Draft<wbr/>Email<wbr/>Message<wbr/>Metadata</span></a>
 <a href="SudoEmailClient.html#listEmailAddresses" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>list<wbr/>Email<wbr/>Addresses</span></a>
 <a href="SudoEmailClient.html#listEmailAddressesForSudoId" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>list<wbr/>Email<wbr/>Addresses<wbr/>For<wbr/>Sudo<wbr/>Id</span></a>
@@ -86,7 +88,7 @@
 <h4>Throws</h4><p><a href="../classes/InvalidAddressError.html" class="tsd-kind-class">InvalidAddressError</a></p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:410</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:413</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="createDraftEmailMessage" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>create<wbr/>Draft<wbr/>Email<wbr/>Message</span><a href="#createDraftEmailMessage" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -108,7 +110,7 @@
 <h4>Throws</h4><p><a href="../classes/AddressNotFoundError.html" class="tsd-kind-class">AddressNotFoundError</a></p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:464</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:467</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="deleteDraftEmailMessages" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>delete<wbr/>Draft<wbr/>Email<wbr/>Messages</span><a href="#deleteDraftEmailMessages" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -139,7 +141,7 @@ Any emailAddressId that is not owned or does not exist, will throw an error.</p>
 <h4>Throws</h4><p><a href="../classes/LimitExceededError.html" class="tsd-kind-class">LimitExceededError</a></p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:499</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:502</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="deleteEmailMessage" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>delete<wbr/>Email<wbr/>Message</span><a href="#deleteEmailMessage" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -166,7 +168,7 @@ email message could not be deleted.</p>
 <h4>Throws</h4><p>ServiceError</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:591</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:594</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="deleteEmailMessages" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>delete<wbr/>Email<wbr/>Messages</span><a href="#deleteEmailMessages" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -200,7 +202,7 @@ email message could not be deleted.</p>
 <h4>Throws</h4><p>ServiceError</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:578</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:581</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="deprovisionEmailAddress" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>deprovision<wbr/>Email<wbr/>Address</span><a href="#deprovisionEmailAddress" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -224,7 +226,19 @@ email message could not be deleted.</p>
 <h4>Throws</h4><p>NotRegisteredError</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:373</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:376</li></ul></aside></li></ul></section>
+<section class="tsd-panel tsd-member"><a id="exportKeys" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><span>export<wbr/>Keys</span><a href="#exportKeys" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
+<ul class="tsd-signatures">
+<li class="tsd-signature tsd-anchor-link" id="exportKeys.exportKeys-1"><span class="tsd-kind-call-signature">export<wbr/>Keys</span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type ">ArrayBuffer</span><span class="tsd-signature-symbol">&gt;</span><a href="#exportKeys.exportKeys-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
+<li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Export the cryptographic keys to a key archive.</p>
+</div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type ">ArrayBuffer</span><span class="tsd-signature-symbol">&gt;</span></h4><p>Key archive data.</p>
+
+<div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
+<ul>
+<li>Defined in src/public/sudoEmailClient.ts:671</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="getConfigurationData" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Configuration<wbr/>Data</span><a href="#getConfigurationData" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -236,7 +250,7 @@ email message could not be deleted.</p>
 
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:661</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:664</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="getDraftEmailMessage" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Draft<wbr/>Email<wbr/>Message</span><a href="#getDraftEmailMessage" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -256,7 +270,7 @@ email message could not be deleted.</p>
 
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:509</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:512</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="getEmailAddress" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Email<wbr/>Address</span><a href="#getEmailAddress" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -277,7 +291,7 @@ email message could not be deleted.</p>
 
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:421</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:424</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="getEmailMessage" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Email<wbr/>Message</span><a href="#getEmailMessage" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -298,7 +312,7 @@ email message could not be deleted.</p>
 
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:600</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:603</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="getEmailMessageRfc822Data" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Email<wbr/>Message<wbr/>Rfc822<wbr/>Data</span><a href="#getEmailMessageRfc822Data" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -319,7 +333,7 @@ email message could not be deleted.</p>
 
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:611</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:614</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="getSupportedEmailDomains" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>get<wbr/>Supported<wbr/>Email<wbr/>Domains</span><a href="#getSupportedEmailDomains" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -344,7 +358,26 @@ email message could not be deleted.</p>
 <h4>Throws</h4><p>ServiceError</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:398</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:401</li></ul></aside></li></ul></section>
+<section class="tsd-panel tsd-member"><a id="importKeys" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><span>import<wbr/>Keys</span><a href="#importKeys" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
+<ul class="tsd-signatures">
+<li class="tsd-signature tsd-anchor-link" id="importKeys.importKeys-1"><span class="tsd-kind-call-signature">import<wbr/>Keys</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">archiveData</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span><a href="#importKeys.importKeys-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
+<li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Imports cryptographic keys from a key archive.</p>
+</div>
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
+<li>
+<h5><span class="tsd-kind-parameter">archiveData</span>: <span class="tsd-signature-type ">ArrayBuffer</span></h5>
+<div class="tsd-comment tsd-typography"><p>Key archive data to import the keys from.</p>
+</div>
+<div class="tsd-comment tsd-typography"></div></li></ul></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
+<div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
+<ul>
+<li>Defined in src/public/sudoEmailClient.ts:678</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="listDraftEmailMessageMetadata" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>list<wbr/>Draft<wbr/>Email<wbr/>Message<wbr/>Metadata</span><a href="#listDraftEmailMessageMetadata" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -365,7 +398,7 @@ email message could not be deleted.</p>
 
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:520</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:523</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="listEmailAddresses" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>list<wbr/>Email<wbr/>Addresses</span><a href="#listEmailAddresses" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -385,7 +418,7 @@ email message could not be deleted.</p>
 
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:431</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:434</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="listEmailAddressesForSudoId" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>list<wbr/>Email<wbr/>Addresses<wbr/>For<wbr/>Sudo<wbr/>Id</span><a href="#listEmailAddressesForSudoId" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -405,7 +438,7 @@ email message could not be deleted.</p>
 
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:441</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:444</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="listEmailFoldersForEmailAddressId" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>list<wbr/>Email<wbr/>Folders<wbr/>For<wbr/>Email<wbr/>Address<wbr/>Id</span><a href="#listEmailFoldersForEmailAddressId" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -426,7 +459,7 @@ email message could not be deleted.</p>
 
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:452</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:455</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="listEmailMessagesForEmailAddressId" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>list<wbr/>Email<wbr/>Messages<wbr/>For<wbr/>Email<wbr/>Address<wbr/>Id</span><a href="#listEmailMessagesForEmailAddressId" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -446,7 +479,7 @@ email message could not be deleted.</p>
 
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:621</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:624</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="listEmailMessagesForEmailFolderId" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>list<wbr/>Email<wbr/>Messages<wbr/>For<wbr/>Email<wbr/>Folder<wbr/>Id</span><a href="#listEmailMessagesForEmailFolderId" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -466,7 +499,7 @@ email message could not be deleted.</p>
 
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:631</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:634</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="provisionEmailAddress" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>provision<wbr/>Email<wbr/>Address</span><a href="#provisionEmailAddress" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -509,7 +542,7 @@ the following criteria:</p>
 <h4>Throws</h4><p>ServiceError</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:360</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:363</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="reset" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>reset</span><a href="#reset" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -520,7 +553,7 @@ the following criteria:</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:666</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:683</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="sendEmailMessage" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>send<wbr/>Email<wbr/>Message</span><a href="#sendEmailMessage" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -552,7 +585,7 @@ the following criteria:</p>
 <h4>Throws</h4><p>InsufficientEntitlementsError</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:537</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:540</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="subscribeToEmailMessages" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>subscribe<wbr/>To<wbr/>Email<wbr/>Messages</span><a href="#subscribeToEmailMessages" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -577,7 +610,7 @@ id will replace the previous subscription.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:643</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:646</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="unsubscribeFromEmailMessages" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>unsubscribe<wbr/>From<wbr/>Email<wbr/>Messages</span><a href="#unsubscribeFromEmailMessages" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -596,7 +629,7 @@ id will replace the previous subscription.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:654</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:657</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="updateDraftEmailMessage" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>update<wbr/>Draft<wbr/>Email<wbr/>Message</span><a href="#updateDraftEmailMessage" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -620,7 +653,7 @@ id will replace the previous subscription.</p>
 <h4>Throws</h4><p><a href="../classes/MessageNotFoundError.html" class="tsd-kind-class">MessageNotFoundError</a></p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:477</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:480</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="updateEmailAddressMetadata" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>update<wbr/>Email<wbr/>Address<wbr/>Metadata</span><a href="#updateEmailAddressMetadata" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -644,7 +677,7 @@ id will replace the previous subscription.</p>
 <h4>Throws</h4><p>ServiceError</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:384</li></ul></aside></li></ul></section>
+<li>Defined in src/public/sudoEmailClient.ts:387</li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="updateEmailMessages" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>update<wbr/>Email<wbr/>Messages</span><a href="#updateEmailMessages" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -675,7 +708,7 @@ id will replace the previous subscription.</p>
 <h4>Throws</h4><p>InvalidArgumentError</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in src/public/sudoEmailClient.ts:555</li></ul></aside></li></ul></section></section></div>
+<li>Defined in src/public/sudoEmailClient.ts:558</li></ul></aside></li></ul></section></section></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
@@ -700,12 +733,14 @@ id will replace the previous subscription.</p>
 <li><a href="#deleteEmailMessage" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>delete<wbr/>Email<wbr/>Message</span></a></li>
 <li><a href="#deleteEmailMessages" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>delete<wbr/>Email<wbr/>Messages</span></a></li>
 <li><a href="#deprovisionEmailAddress" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>deprovision<wbr/>Email<wbr/>Address</span></a></li>
+<li><a href="#exportKeys" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>export<wbr/>Keys</span></a></li>
 <li><a href="#getConfigurationData" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>get<wbr/>Configuration<wbr/>Data</span></a></li>
 <li><a href="#getDraftEmailMessage" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>get<wbr/>Draft<wbr/>Email<wbr/>Message</span></a></li>
 <li><a href="#getEmailAddress" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>get<wbr/>Email<wbr/>Address</span></a></li>
 <li><a href="#getEmailMessage" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>get<wbr/>Email<wbr/>Message</span></a></li>
 <li><a href="#getEmailMessageRfc822Data" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>get<wbr/>Email<wbr/>Message<wbr/>Rfc822<wbr/>Data</span></a></li>
 <li><a href="#getSupportedEmailDomains" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>get<wbr/>Supported<wbr/>Email<wbr/>Domains</span></a></li>
+<li><a href="#importKeys" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>import<wbr/>Keys</span></a></li>
 <li><a href="#listDraftEmailMessageMetadata" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>list<wbr/>Draft<wbr/>Email<wbr/>Message<wbr/>Metadata</span></a></li>
 <li><a href="#listEmailAddresses" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>list<wbr/>Email<wbr/>Addresses</span></a></li>
 <li><a href="#listEmailAddressesForSudoId" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>list<wbr/>Email<wbr/>Addresses<wbr/>For<wbr/>Sudo<wbr/>Id</span></a></li>

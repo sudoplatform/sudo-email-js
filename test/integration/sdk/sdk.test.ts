@@ -12,14 +12,22 @@ import {
 } from '@sudoplatform/sudo-common'
 import { DefaultSudoUserClient } from '@sudoplatform/sudo-user'
 import { WebSudoCryptoProvider } from '@sudoplatform/sudo-web-crypto-provider'
-import { DefaultSudoEmailClient } from '../../../src'
+import {
+  ConnectionState,
+  DefaultSudoEmailClient,
+  EmailMessage,
+} from '../../../src'
 import { str2ab } from '../../util/buffer'
+import { delay } from '../../util/delay'
 import { createEmailMessageRfc822String } from '../util/createEmailMessage'
 import { setupEmailClient } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import { v4 } from 'uuid'
 
 describe('SDK Tests', () => {
   jest.setTimeout(240000)
+
+  const logger = new DefaultLogger('IUT')
 
   it('should allow reinitialisation as a new user and be able to be used to draft emails', async () => {
     // We test this by creating two separate user client instances
@@ -113,7 +121,6 @@ describe('SDK Tests', () => {
     )
     const emailKeyManager = new DefaultSudoKeyManager(emailCryptoProvider)
 
-    const logger = new DefaultLogger('IUT')
     const userClient = new DefaultSudoUserClient({
       logger,
       sudoKeyManager: userKeyManager,
@@ -170,5 +177,110 @@ describe('SDK Tests', () => {
     expect(new Uint8Array(retrievedDraft2.rfc822Data)).toEqual(
       new Uint8Array(draft2RFC822Data),
     )
+  })
+
+  it('export, then import keys correctly', async () => {
+    const testEmailClient = await setupEmailClient(
+      new DefaultLogger('User Export/Import'),
+    )
+    const emailClient = testEmailClient.emailClient
+    const emailAddress = await provisionEmailAddress(
+      testEmailClient.ownershipProofToken,
+      emailClient,
+      { alias: 'Export/Import' },
+    )
+    const draftString = createEmailMessageRfc822String({
+      from: [{ emailAddress: emailAddress.emailAddress }],
+      to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
+      cc: [],
+      bcc: [],
+      replyTo: [],
+      body: 'Message 1',
+      attachments: [],
+    })
+    const draftRFC822Data = str2ab(draftString)
+    const draftMetadata = await emailClient.createDraftEmailMessage({
+      rfc822Data: draftRFC822Data,
+      senderEmailAddressId: emailAddress.id,
+    })
+    const storedDraftEmailMessage = await emailClient.getDraftEmailMessage({
+      id: draftMetadata.id,
+      emailAddressId: emailAddress.id,
+    })
+    let recvdEmailMessage: EmailMessage | undefined
+    let connectionState: ConnectionState | undefined
+    const subscriptionId = v4()
+    await emailClient.subscribeToEmailMessages(subscriptionId, {
+      emailMessageCreated(emailMessage: EmailMessage): void {
+        if (emailMessage.folderId.includes('INBOX')) {
+          recvdEmailMessage = emailMessage
+        }
+      },
+      connectionStatusChanged(state: ConnectionState): void {
+        connectionState = state
+      },
+      emailMessageDeleted(emailMessage: EmailMessage): void {},
+    })
+
+    for (let i = 0; i < 10; i++) {
+      if (connectionState === ConnectionState.Connected) {
+        break
+      } else {
+        await delay(250)
+      }
+    }
+    expect(connectionState).toBe(ConnectionState.Connected)
+
+    await emailClient.sendEmailMessage({
+      rfc822Data: draftRFC822Data,
+      senderEmailAddressId: emailAddress.id,
+    })
+    for (let i = 0; i < 40; i++) {
+      if (recvdEmailMessage) {
+        break
+      } else {
+        await delay(500)
+      }
+    }
+    expect(recvdEmailMessage).toBeTruthy()
+    emailClient.unsubscribeFromEmailMessages(subscriptionId)
+
+    const storedRecvdEmailMessage = await emailClient.getEmailMessage({
+      id: recvdEmailMessage?.id ?? 'fail',
+    })
+    const storedEmailAddress = await emailClient.getEmailAddress({
+      id: emailAddress.id,
+    })
+
+    const exportedKeysEmail = await emailClient.exportKeys()
+    // remove all crypto keys from KeyManager
+    await emailClient.reset()
+    if (recvdEmailMessage?.id) {
+      const noKeyEmailMessage = await emailClient.getEmailMessage({
+        id: recvdEmailMessage.id,
+      })
+      expect(noKeyEmailMessage).toBeTruthy()
+      // should not get correct values for sealed properties
+      expect(noKeyEmailMessage?.to).toEqual([])
+      expect(noKeyEmailMessage?.subject).toBeUndefined()
+
+      // restore keys
+      await emailClient.importKeys(exportedKeysEmail)
+      const restoredKeyMessage = await emailClient.getEmailMessage({
+        id: recvdEmailMessage.id,
+      })
+      expect(restoredKeyMessage).toEqual(storedRecvdEmailMessage)
+      const restoredKeyAddress = await emailClient.getEmailAddress({
+        id: emailAddress.id,
+      })
+      expect(restoredKeyAddress).toEqual(storedEmailAddress)
+      const restoredDraft = await emailClient.getDraftEmailMessage({
+        id: draftMetadata.id,
+        emailAddressId: emailAddress.id,
+      })
+      expect(restoredDraft).toEqual(storedDraftEmailMessage)
+    } else {
+      fail('No received email message id')
+    }
   })
 })

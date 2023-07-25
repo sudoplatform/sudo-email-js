@@ -7,7 +7,9 @@
 import {
   CachePolicy,
   DefaultLogger,
+  DefaultSudoKeyArchive,
   DefaultSudoKeyManager,
+  KeyArchiveKeyType,
   ListOutput,
   Logger,
   SudoCryptoProvider,
@@ -83,6 +85,7 @@ import {
   ListEmailMessagesResult,
 } from './typings/listOperationResult'
 import { SortOrder } from './typings/sortOrder'
+import { InvalidArgumentError } from './errors'
 
 /**
  * Pagination interface designed to be extended for list interfaces.
@@ -661,6 +664,20 @@ export interface SudoEmailClient {
   getConfigurationData(): Promise<ConfigurationData>
 
   /**
+   * Export the cryptographic keys to a key archive.
+   *
+   * @return Key archive data.
+   */
+  exportKeys(): Promise<ArrayBuffer>
+
+  /**
+   * Imports cryptographic keys from a key archive.
+   *
+   * @param archiveData Key archive data to import the keys from.
+   */
+  importKeys(archiveData: ArrayBuffer): Promise<void>
+
+  /**
    * Removes any cached data maintained by this client.
    */
   reset(): Promise<void>
@@ -1158,6 +1175,25 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       this.emailMessageService,
     )
     useCase.execute({ subscriptionId })
+  }
+
+  public async exportKeys(): Promise<ArrayBuffer> {
+    const keyArchive = new DefaultSudoKeyArchive(this.keyManager, {
+      excludedKeyTypes: new Set([KeyArchiveKeyType.PublicKey]),
+    })
+    await keyArchive.loadKeys()
+    return await keyArchive.archive(undefined)
+  }
+
+  public async importKeys(archiveData: ArrayBuffer): Promise<void> {
+    if (archiveData.byteLength === 0) {
+      throw new InvalidArgumentError()
+    }
+    const unarchiver = new DefaultSudoKeyArchive(this.keyManager, {
+      archiveData,
+    })
+    await unarchiver.unarchive(undefined)
+    await unarchiver.saveKeys()
   }
 
   public async reset(): Promise<void> {
