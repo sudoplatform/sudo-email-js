@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -71,6 +71,7 @@ import { SortOrderTransformer } from '../common/transformer/sortOrderTransformer
 // eslint-disable-next-line tree-shaking/no-side-effects-in-initialization
 import { withDefault } from '../common/withDefault'
 import { SealedEmailMessageEntityTransformer } from './transformer/sealedEmailMessageEntityTransformer'
+import { gunzipAsync } from '../../util/zlibAsync'
 
 const EmailAddressEntityCodec = t.intersection(
   [t.type({ emailAddress: t.string }), t.partial({ displayName: t.string })],
@@ -347,6 +348,38 @@ export class DefaultEmailMessageService implements EmailMessageService {
       })
       sealedString = result.body
       this.log.debug('sealedString', { sealedString })
+
+      const contentEncodingValues = (
+        result.contentEncoding?.split(',') ?? [
+          'sudoplatform-crypto',
+          'sudoplatform-binary-data',
+        ]
+      ).reverse()
+      let decodedString = sealedString
+      for (const encodingValue of contentEncodingValues) {
+        switch (encodingValue.trim().toLowerCase()) {
+          case 'sudoplatform-compression':
+            const decompressed = await gunzipAsync(
+              Buffer.from(decodedString, 'base64'),
+            )
+            decodedString = new TextDecoder().decode(decompressed)
+            break
+          case 'sudoplatform-crypto':
+            decodedString = await this.deviceKeyWorker.unsealString({
+              keyType: KeyType.KeyPair,
+              keyId: sealedEmailMessage.rfc822Header.keyId,
+              encrypted: decodedString,
+            })
+            break
+          case 'sudoplatform-binary-data': //no-op
+            break
+          default:
+            throw new DecodeError(
+              `Invalid Content-Encoding value: ${encodingValue}`,
+            )
+        }
+      }
+      return new TextEncoder().encode(decodedString)
     } catch (error: unknown) {
       const s3DownloadError = error as S3DownloadError
       if (s3DownloadError.code === S3Error.NoSuchKey) {
@@ -354,12 +387,6 @@ export class DefaultEmailMessageService implements EmailMessageService {
       }
       throw error
     }
-    const unsealedData = await this.deviceKeyWorker.unsealString({
-      keyType: KeyType.KeyPair,
-      keyId: sealedEmailMessage.rfc822Header.keyId,
-      encrypted: sealedString,
-    })
-    return new TextEncoder().encode(unsealedData)
   }
 
   async getMessage(

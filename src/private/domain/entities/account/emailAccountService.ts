@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -9,6 +9,7 @@ import { UpdateEmailAddressMetadataInput } from '../../../../public/sudoEmailCli
 import { EmailAccountEntity } from './emailAccountEntity'
 import { EmailAddressEntity } from './emailAddressEntity'
 import { EmailDomainEntity } from './emailDomainEntity'
+import { EmailAddressPublicInfoEntity } from './emailAddressPublicInfoEntity'
 
 /**
  * Input for `EmailAccountService.create` method.
@@ -103,6 +104,16 @@ export interface ListEmailAccountsOutput {
 }
 
 /**
+ * Input for `EmailAccountService.lookupEmailAddressesPublicInfoInput` method.
+ *
+ * @interface LookupEmailAddressesPublicInfoInput
+ * @property {string[]} emailAddresses A list of email address strings in format 'local-part@domain'.
+ */
+export interface LookupEmailAddressesPublicInfoInput {
+  emailAddresses: string[]
+}
+
+/**
  * Input for `EmailAccountService.checkAvailability` method.
  *
  * @interface CheckEmailAddressAvailabilityInput
@@ -179,6 +190,17 @@ export interface EmailAccountService {
   listForSudoId(
     input: ListEmailAccountsForSudoIdInput,
   ): Promise<ListEmailAccountsOutput>
+
+  /**
+   * Retrieve public information for provided email addresses.
+   *
+   * @param {LookupEmailAddressesPublicInfoInput} input Parameters used to lookup public info for email addresses.
+   * @returns {EmailAddressPublicInfoEntity[]} The list of public info objects found, or empty if no email addresses
+   * or public keys were found.
+   */
+  lookupPublicInfo(
+    input: LookupEmailAddressesPublicInfoInput,
+  ): Promise<EmailAddressPublicInfoEntity[]>
 
   /**
    * Check if an email address is available to be created within a domain.

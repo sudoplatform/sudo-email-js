@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -46,6 +46,7 @@ export interface S3ClientDownloadOutput {
   lastModified: Date
   body: string
   metadata?: Record<string, string>
+  contentEncoding?: string
 }
 
 export interface S3ClientListOutput {
@@ -212,6 +213,7 @@ export class S3Client {
       const result: S3ClientDownloadOutput = {
         lastModified,
         body,
+        contentEncoding: response.ContentEncoding,
       }
       if (response.Metadata) {
         result.metadata = response.Metadata

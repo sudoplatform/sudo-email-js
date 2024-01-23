@@ -16,7 +16,7 @@ mutation DeprovisionEmailAddress($input: DeprovisionEmailAddressInput!) {
 
 mutation UpdateEmailAddressMetadata($input: UpdateEmailAddressMetadataInput!) {
   updateEmailAddressMetadata(input: $input)
-} 
+}
 
 mutation SendEmailMessage($input: SendEmailMessageInput!) {
   sendEmailMessage(input: $input)
@@ -30,6 +30,24 @@ mutation UpdateEmailMessages($input: UpdateEmailMessagesInput!) {
 
 mutation DeleteEmailMessage($input: DeleteEmailMessageInput!) {
   deleteEmailMessage(input: $input)
+}
+
+mutation CreateCustomEmailFolder($input: CreateCustomEmailFolderInput!) {
+  createCustomEmailFolder(input: $input) {
+    ...EmailFolder
+  }
+}
+
+mutation BlockEmailAddresses($input: BlockEmailAddressesInput!) {
+  blockEmailAddresses(input: $input) {
+    ...BlockAddressesResult
+  }
+}
+
+mutation UnblockEmailAddresses($input: UnblockEmailAddressesInput!) {
+  unblockEmailAddresses(input: $input) {
+    ...BlockAddressesResult
+  }
 }
 
 ##########

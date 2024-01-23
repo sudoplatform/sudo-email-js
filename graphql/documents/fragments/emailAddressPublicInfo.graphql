@@ -1,0 +1,4 @@
+fragment EmailAddressPublicInfo on EmailAddressPublicInfo {
+  emailAddress
+  publicKey
+}

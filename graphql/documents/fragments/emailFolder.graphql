@@ -1,3 +1,5 @@
+# import SealedAttribute from "sealedAttribute.graphql"
+
 fragment EmailFolder on EmailFolder {
   id
   owner
@@ -10,6 +12,9 @@ fragment EmailFolder on EmailFolder {
   updatedAtEpochMs
   emailAddressId
   folderName
+  customFolderName {
+    ...SealedAttribute
+  }
   size
   unseenCount
   ttl

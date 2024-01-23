@@ -1,10 +1,15 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
+import {
+  CachePolicy,
+  DecodeError,
+  EncryptionAlgorithm,
+  KeyNotFoundError,
+} from '@sudoplatform/sudo-common'
 import {
   anything,
   capture,
@@ -19,14 +24,20 @@ import { ApiClient } from '../../../../../src/private/data/common/apiClient'
 import { DefaultEmailFolderService } from '../../../../../src/private/data/folder/defaultEmailFolderService'
 import { EntityDataFactory } from '../../../data-factory/entity'
 import { GraphQLDataFactory } from '../../../data-factory/graphQL'
+import { DeviceKeyWorker } from '../../../../../src/private/data/common/deviceKeyWorker'
 
 describe('DefaultEmailFolderService Test Suite', () => {
   const mockAppSync = mock<ApiClient>()
+  const mockDeviceKeyWorker = mock<DeviceKeyWorker>()
   let instanceUnderTest: DefaultEmailFolderService
 
   beforeEach(() => {
     reset(mockAppSync)
-    instanceUnderTest = new DefaultEmailFolderService(instance(mockAppSync))
+    reset(mockDeviceKeyWorker)
+    instanceUnderTest = new DefaultEmailFolderService(
+      instance(mockAppSync),
+      instance(mockDeviceKeyWorker),
+    )
     when(
       mockAppSync.listEmailFoldersForEmailAddressId(
         anything(),
@@ -35,6 +46,10 @@ describe('DefaultEmailFolderService Test Suite', () => {
         anything(),
       ),
     ).thenResolve(GraphQLDataFactory.emailFolderConnection)
+
+    when(mockAppSync.createCustomEmailFolder(anything())).thenResolve(
+      GraphQLDataFactory.emailFolderWithCustomFolderName,
+    )
   })
 
   describe('listEmailFoldersForEmailAddressId', () => {
@@ -86,5 +101,121 @@ describe('DefaultEmailFolderService Test Suite', () => {
         ).once()
       },
     )
+  })
+
+  describe('createCustomEmailFolderForEmailAddressId', () => {
+    it('calls appSync correctly', async () => {
+      when(mockAppSync.createCustomEmailFolder(anything())).thenResolve(
+        GraphQLDataFactory.emailFolderWithCustomFolderName,
+      )
+
+      when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve('keyId')
+      when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
+        true,
+      )
+      when(mockDeviceKeyWorker.sealString(anything())).thenResolve(
+        'TxsJ3delkBH2I1t0qQDscg==',
+      )
+      when(mockDeviceKeyWorker.unsealString(anything())).thenResolve('CUSTOM')
+
+      const result =
+        await instanceUnderTest.createCustomEmailFolderForEmailAddressId({
+          emailAddressId: 'testEmailAddressId',
+          customFolderName: 'CUSTOM',
+        })
+
+      expect(result).toStrictEqual({
+        ...EntityDataFactory.emailFolderWithCustomEmailFolderName,
+      })
+
+      verify(mockAppSync.createCustomEmailFolder(anything())).once()
+      const [inputArgs] = capture(mockAppSync.createCustomEmailFolder).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
+        customFolderName: {
+          algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding,
+          keyId: 'keyId',
+          plainTextType: 'string',
+          base64EncodedSealedData: 'TxsJ3delkBH2I1t0qQDscg==',
+        },
+      })
+    })
+    it('failed result with KeyNotFoundError if symmetric key does not exist', async () => {
+      when(mockAppSync.createCustomEmailFolder(anything())).thenResolve(
+        GraphQLDataFactory.emailFolderWithCustomFolderName,
+      )
+
+      when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve('keyId')
+      when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
+        false,
+      )
+      when(mockDeviceKeyWorker.sealString(anything())).thenResolve(
+        'TxsJ3delkBH2I1t0qQDscg==',
+      )
+
+      const result =
+        await instanceUnderTest.createCustomEmailFolderForEmailAddressId({
+          emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
+          customFolderName: 'CUSTOM',
+        })
+
+      expect(result).toStrictEqual({
+        ...EntityDataFactory.emailFolder,
+        status: { type: 'Failed', cause: new KeyNotFoundError() },
+      })
+
+      const [inputArgs] = capture(mockAppSync.createCustomEmailFolder).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
+        customFolderName: {
+          algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding,
+          keyId: 'keyId',
+          plainTextType: 'string',
+          base64EncodedSealedData: 'TxsJ3delkBH2I1t0qQDscg==',
+        },
+      })
+
+      verify(mockAppSync.createCustomEmailFolder(anything())).once()
+    })
+    it('decoding error should be tolerated and return empty value for customFolderName ', async () => {
+      when(mockAppSync.createCustomEmailFolder(anything())).thenResolve(
+        GraphQLDataFactory.emailFolderWithCustomFolderName,
+      )
+      when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve('keyId')
+      when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
+        true,
+      )
+      when(mockDeviceKeyWorker.sealString(anything())).thenResolve(
+        'TxsJ3delkBH2I1t0qQDscg==',
+      )
+      when(mockDeviceKeyWorker.unsealString(anything())).thenReject(
+        new DecodeError('Error decoding custom folder name'),
+      )
+
+      const result =
+        await instanceUnderTest.createCustomEmailFolderForEmailAddressId({
+          emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
+          customFolderName: 'CUSTOM',
+        })
+
+      expect(result).toStrictEqual({
+        ...EntityDataFactory.emailFolder,
+        customFolderName: '',
+      })
+
+      const [inputArgs] = capture(mockAppSync.createCustomEmailFolder).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
+        customFolderName: {
+          algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding,
+          keyId: 'keyId',
+          plainTextType: 'string',
+          base64EncodedSealedData: 'TxsJ3delkBH2I1t0qQDscg==',
+        },
+      })
+
+      verify(mockAppSync.createCustomEmailFolder(anything())).once()
+      verify(mockDeviceKeyWorker.unsealString(anything())).once()
+    })
   })
 })

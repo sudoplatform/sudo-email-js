@@ -1,11 +1,12 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { EmailAccountEntity } from '../../../src/private/domain/entities/account/emailAccountEntity'
 import { EmailAddressEntity } from '../../../src/private/domain/entities/account/emailAddressEntity'
+import { EmailAddressPublicInfoEntity } from '../../../src/private/domain/entities/account/emailAddressPublicInfoEntity'
 import { EmailDomainEntity } from '../../../src/private/domain/entities/account/emailDomainEntity'
 import { OwnerEntity } from '../../../src/private/domain/entities/common/ownerEntity'
 import { EmailConfigurationDataEntity } from '../../../src/private/domain/entities/configuration/emailConfigurationDataEntity'
@@ -39,6 +40,17 @@ export class EntityDataFactory {
     emailAddress: 'testie@unittest.org',
   }
 
+  static readonly emailAddressesPublicInfo: EmailAddressPublicInfoEntity[] = [
+    {
+      emailAddress: EntityDataFactory.emailAddress.emailAddress,
+      publicKey: 'testPublicKey',
+    },
+    {
+      emailAddress: `${EntityDataFactory.emailAddress.emailAddress}_2`,
+      publicKey: 'testPublicKey_2',
+    },
+  ]
+
   static readonly emailAddressWithAlias: EmailAddressEntity = {
     ...EntityDataFactory.emailAddress,
     alias: 'Some Alias',
@@ -52,6 +64,12 @@ export class EntityDataFactory {
     size: 1,
     unseenCount: 1,
     ttl: undefined,
+    status: { type: 'Completed' },
+  }
+
+  static readonly emailFolderWithCustomEmailFolderName: EmailFolderEntity = {
+    ...EntityDataFactory.emailFolder,
+    customFolderName: 'CUSTOM',
   }
 
   static readonly emailAccount: EmailAccountEntity = {

@@ -1,13 +1,15 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import {
   AvailableAddresses,
+  BlockEmailAddressesBulkUpdateResult,
   EmailAddress,
   EmailAddressConnection,
+  EmailAddressPublicInfo,
   EmailAddressWithoutFoldersFragment,
   EmailConfigurationData,
   EmailFolder,
@@ -15,6 +17,7 @@ import {
   EmailMessageConnection,
   EmailMessageDirection,
   EmailMessageState,
+  GetEmailAddressBlocklistResponse,
   KeyFormat,
   Owner,
   ProvisionEmailAddressPublicKeyInput,
@@ -22,6 +25,7 @@ import {
   SealedAttribute,
   SealedEmailMessage,
   SupportedDomains,
+  UpdateEmailMessagesStatus,
 } from '../../../src/gen/graphqlTypes'
 
 export class GraphQLDataFactory {
@@ -58,6 +62,19 @@ export class GraphQLDataFactory {
     size: 1,
     unseenCount: 1,
     ttl: undefined,
+    customFolderName: undefined,
+  }
+
+  static readonly customEmailFolderName: SealedAttribute = {
+    algorithm: 'AES/CBC/PKCS7Padding',
+    keyId: 'keyId',
+    plainTextType: 'string',
+    base64EncodedSealedData: 'XCetZSBBbGlzzz==',
+  }
+
+  static readonly emailFolderWithCustomFolderName: EmailFolder = {
+    ...GraphQLDataFactory.emailFolder,
+    customFolderName: GraphQLDataFactory.customEmailFolderName,
   }
 
   static readonly emailAddressWithoutFolders: EmailAddressWithoutFoldersFragment =
@@ -112,6 +129,29 @@ export class GraphQLDataFactory {
     nextToken: undefined,
   }
 
+  static readonly blockedAddressUpdateResult: BlockEmailAddressesBulkUpdateResult =
+    {
+      status: UpdateEmailMessagesStatus.Success,
+    }
+
+  static readonly getEmailAddressBlocklistResult: GetEmailAddressBlocklistResponse =
+    {
+      sealedBlockedAddresses: [
+        {
+          algorithm: 'sealingAlgorithm',
+          base64EncodedSealedData: 'sealedData1',
+          keyId: 'keyId',
+          plainTextType: ' string',
+        },
+        {
+          algorithm: 'sealingAlgorithm',
+          base64EncodedSealedData: 'sealedData2',
+          keyId: 'keyId',
+          plainTextType: ' string',
+        },
+      ],
+    }
+
   static readonly sealedEmailMessage: SealedEmailMessage = {
     ...GraphQLDataFactory.commonProps,
     owners: [GraphQLDataFactory.owner],
@@ -151,4 +191,15 @@ export class GraphQLDataFactory {
     algorithm: 'dummyAlgorithm',
     publicKey: 'dummyPublicKey',
   }
+
+  static readonly emailAddressesPublicInfo: EmailAddressPublicInfo[] = [
+    {
+      emailAddress: GraphQLDataFactory.emailAddress.emailAddress,
+      publicKey: GraphQLDataFactory.publicKey.publicKey,
+    },
+    {
+      emailAddress: `${GraphQLDataFactory.emailAddress.emailAddress}_2`,
+      publicKey: `${GraphQLDataFactory.publicKey.publicKey}_2`,
+    },
+  ]
 }

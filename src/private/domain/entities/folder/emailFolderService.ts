@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -36,6 +36,18 @@ export interface ListEmailFoldersForEmailAddressIdOutput {
 }
 
 /**
+ * Input for `EmailFolderService.createCustomEmailFolderForEmailAddressId` method.
+ *
+ * @interface CreateCustomEmailFolderForEmailAddressIdInput
+ * @property {string} emailAddressId The identifier of the email address associated with the custom email folder.
+ * @property {string} customFolderName The name of the custom email folder to be created.
+ */
+export interface CreateCustomEmailFolderForEmailAddressIdInput {
+  emailAddressId: string
+  customFolderName: string
+}
+
+/**
  * Core entity representation of an email folder service used in business logic. Used to perform operations for email folders.
  *
  * @interface EmailFolderService
@@ -50,4 +62,14 @@ export interface EmailFolderService {
   listEmailFoldersForEmailAddressId(
     input: ListEmailFoldersForEmailAddressIdInput,
   ): Promise<ListEmailFoldersForEmailAddressIdOutput>
+
+  /**
+   * Create a custom email folder for the email address associated with the emailAddressId.
+   *
+   * @param {CreateCustomEmailFolderForEmailAddressIdInput} input Parameters used to create a custom email folder for an email address.
+   * @returns {EmailFolderEntity} The custom email folder.
+   */
+  createCustomEmailFolderForEmailAddressId(
+    input: CreateCustomEmailFolderForEmailAddressIdInput,
+  ): Promise<EmailFolderEntity>
 }

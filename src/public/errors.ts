@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -33,6 +33,12 @@ export class InvalidEmailDomainError extends EmailError {
 }
 
 export class InvalidKeyRingIdError extends EmailError {
+  constructor(msg?: string) {
+    super(msg)
+  }
+}
+
+export class MissingKeyError extends EmailError {
   constructor(msg?: string) {
     super(msg)
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -10,6 +10,7 @@ import {
 } from '@sudoplatform/sudo-common'
 import {
   EmailAddress,
+  EmailFolder,
   KeyFormat as GraphQLKeyFormat,
   ProvisionEmailAddressInput,
   SealedAttribute,
@@ -27,6 +28,7 @@ import {
   ListEmailAccountsForSudoIdInput,
   ListEmailAccountsInput,
   ListEmailAccountsOutput,
+  LookupEmailAddressesPublicInfoInput,
   UpdateEmailAccountMetadataInput,
 } from '../../domain/entities/account/emailAccountService'
 import { EmailAddressEntity } from '../../domain/entities/account/emailAddressEntity'
@@ -41,6 +43,9 @@ import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransfo
 import { EmailAccountEntityTransformer } from './transformer/emailAccountEntityTransformer'
 import { EmailAddressEntityTransformer } from './transformer/emailAddressEntityTransformer'
 import { EmailDomainEntityTransformer } from './transformer/emailDomainEntityTransformer'
+import { EmailFolderEntity } from '../../domain/entities/folder/emailFolderEntity'
+import { EmailAddressPublicInfoEntity } from '../../domain/entities/account/emailAddressPublicInfoEntity'
+import { EmailAddressPublicInfoTransformer } from './transformer/emailAddressPublicInfoTransformer'
 
 export class DefaultEmailAccountService implements EmailAccountService {
   private readonly emailAccountTransformer: EmailAccountEntityTransformer
@@ -181,6 +186,20 @@ export class DefaultEmailAccountService implements EmailAccountService {
     }
   }
 
+  async lookupPublicInfo({
+    emailAddresses,
+  }: LookupEmailAddressesPublicInfoInput): Promise<
+    EmailAddressPublicInfoEntity[]
+  > {
+    const result = await this.appSync.lookupEmailAddressesPublicInfo(
+      emailAddresses,
+    )
+
+    return result.items.map((publicInfo) =>
+      EmailAddressPublicInfoTransformer.transformGraphQL(publicInfo),
+    )
+  }
+
   async checkAvailability(
     input: CheckEmailAddressAvailabilityInput,
   ): Promise<EmailAddressEntity[]> {
@@ -249,6 +268,7 @@ export class DefaultEmailAccountService implements EmailAccountService {
   ): Promise<EmailAccountEntity> => {
     const transformed =
       this.emailAccountTransformer.transformGraphQL(emailAddress)
+
     if (emailAddress.alias) {
       const symmetricKeyExists = await this.deviceKeyWorker.keyExists(
         emailAddress.alias.keyId,
@@ -256,7 +276,7 @@ export class DefaultEmailAccountService implements EmailAccountService {
       )
       if (symmetricKeyExists) {
         try {
-          const unsealedAlias = await this.unsealAlias(emailAddress.alias)
+          const unsealedAlias = await this.unsealSealedData(emailAddress.alias)
           transformed.emailAddress.alias = unsealedAlias
         } catch (error) {
           // Tolerate inability to unseal alias. We have the correct
@@ -286,15 +306,53 @@ export class DefaultEmailAccountService implements EmailAccountService {
       }
     }
 
+    // Unseal each custom folder name that exists on the email address
+    await Promise.all(
+      transformed.folders.map(async (f): Promise<EmailFolderEntity> => {
+        return this.unsealCustomFolderNameIfExists(f, emailAddress.folders)
+      }),
+    )
+
     return transformed
   }
 
-  unsealAlias = async (alias: SealedAttribute): Promise<string> => {
+  unsealSealedData = async (sealedData: SealedAttribute): Promise<string> => {
     return this.deviceKeyWorker.unsealString({
-      encrypted: alias.base64EncodedSealedData,
-      keyId: alias.keyId,
+      encrypted: sealedData.base64EncodedSealedData,
+      keyId: sealedData.keyId,
       keyType: KeyType.SymmetricKey,
       algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding,
     })
+  }
+
+  async unsealCustomFolderNameIfExists(
+    transformedFolder: EmailFolderEntity,
+    folders: EmailFolder[],
+  ): Promise<EmailFolderEntity> {
+    const folder = folders.find((f) => f.id == transformedFolder.id)
+    if (folder && folder.customFolderName) {
+      const symmetricKeyExists = await this.deviceKeyWorker.keyExists(
+        folder.customFolderName.keyId,
+        KeyType.SymmetricKey,
+      )
+      if (symmetricKeyExists) {
+        try {
+          const unsealedCustomFolderName = await this.unsealSealedData(
+            folder.customFolderName,
+          )
+          transformedFolder.customFolderName = unsealedCustomFolderName
+        } catch (error) {
+          // Tolerate inability to unseal customFolderName. We have the correct
+          // key so this is a decoding error
+          transformedFolder.customFolderName = ''
+        }
+      } else {
+        transformedFolder.status = {
+          type: 'Failed',
+          cause: new KeyNotFoundError(),
+        }
+      }
+    }
+    return transformedFolder
   }
 }

@@ -1,0 +1,21 @@
+fragment BlockedAddress on BlockedEmailAddress {
+  owner
+  owners {
+    id
+    issuer
+  }
+  version
+  createdAtEpochMs
+  updatedAtEpochMs
+  hashAlgorithm
+  hashedBlockedValue
+  sealedValue {
+    ...SealedAttribute
+  }
+}
+
+fragment BlockAddressesResult on BlockEmailAddressesBulkUpdateResult {
+  status
+  failedAddresses
+  successAddresses
+}

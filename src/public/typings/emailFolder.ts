@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -14,7 +14,8 @@ import { Owner } from '@sudoplatform/sudo-common'
  * @property {string} owner Identifier of the user that owns the email folder.
  * @property {Owner[]} owners List of identifiers of user/accounts associated with this email folder.
  * @property {string} emailAddressId Identifier of the email address associated with the email folder.
- * @property {string} folderName Name assigned to the email folder (i.e. INBOX, SENT, TRASH, OUTBOX).
+ * @property {string} folderName Name assigned to the email folder for standard folders (i.e. INBOX, SENT, TRASH, OUTBOX).
+ * @property {string} customFolderName Custom name assigned to the email folder. This is not populated for standard folders. 
  * @property {number} size The total size of all email messages assigned to the email folder.
  * @property {number} unseenCount The total count of unseen email messages assigned to the email folder.
  * @property {number} ttl An optional TTL signifying when email messages are deleted from the email folder.
@@ -27,6 +28,7 @@ export interface EmailFolder {
   owners: Owner[]
   emailAddressId: string
   folderName: string
+  customFolderName?: string
   size: number
   unseenCount: number
   ttl?: number

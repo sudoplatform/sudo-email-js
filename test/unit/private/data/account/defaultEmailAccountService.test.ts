@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -34,6 +34,11 @@ import {
 } from '../../../../../src/private/domain/entities/account/emailAccountService'
 import { EntityDataFactory } from '../../../data-factory/entity'
 import { GraphQLDataFactory } from '../../../data-factory/graphQL'
+import {
+  LookupEmailAddressesPublicInfoInput,
+  LookupEmailAddressesPublicInfoResponse,
+} from '../../../../../src/gen/graphqlTypes'
+import { EmailAddressPublicInfoEntity } from '../../../../../src/private/domain/entities/account/emailAddressPublicInfoEntity'
 
 describe('DefaultEmailAccountService Test Suite', () => {
   const mockAppSync = mock<ApiClient>()
@@ -581,6 +586,32 @@ describe('DefaultEmailAccountService Test Suite', () => {
         ).once()
       },
     )
+  })
+
+  describe('lookupPublicInfo', () => {
+    const emailAddresses = GraphQLDataFactory.emailAddressesPublicInfo.map(
+      ({ emailAddress }) => emailAddress,
+    )
+
+    it('calls appsync correctly', async () => {
+      when(mockAppSync.lookupEmailAddressesPublicInfo(anything())).thenResolve({
+        items: GraphQLDataFactory.emailAddressesPublicInfo,
+      })
+
+      await expect(
+        instanceUnderTest.lookupPublicInfo({
+          emailAddresses,
+        }),
+      ).resolves.toEqual<EmailAddressPublicInfoEntity[]>(
+        EntityDataFactory.emailAddressesPublicInfo,
+      )
+
+      verify(mockAppSync.lookupEmailAddressesPublicInfo(anything())).once()
+      const [inputArgs] = capture(
+        mockAppSync.lookupEmailAddressesPublicInfo,
+      ).first()
+      expect(inputArgs).toStrictEqual(emailAddresses)
+    })
   })
 
   describe('checkAvailability', () => {

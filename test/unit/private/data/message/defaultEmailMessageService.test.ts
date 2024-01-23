@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -54,6 +54,7 @@ import { DraftEmailMessageDataFactory } from '../../../data-factory/draftEmailMe
 import { EmailMessageRfc822DataFactory } from '../../../data-factory/emailMessageRfc822Data'
 import { EntityDataFactory } from '../../../data-factory/entity'
 import { GraphQLDataFactory } from '../../../data-factory/graphQL'
+import * as zlibAsync from '../../../../../src/private/util/zlibAsync'
 
 const identityServiceConfig = DraftEmailMessageDataFactory.identityServiceConfig
 
@@ -81,6 +82,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         EmailMessageSubscriber
       >
     >()
+  const gunzipSpy = jest.spyOn(zlibAsync, 'gunzipAsync')
   let instanceUnderTest: DefaultEmailMessageService
 
   beforeEach(() => {
@@ -922,6 +924,101 @@ describe('DefaultEmailMessageService Test Suite', () => {
       )
       expect(fetchPolicyArg).toBeUndefined()
       verify(mockAppSync.getEmailMessage(anything())).once()
+      expect(gunzipSpy).toHaveBeenCalledTimes(0)
+    })
+
+    it('calls gunzip if content is zipped', async () => {
+      when(mockS3Client.download(anything())).thenResolve({
+        ...EmailMessageRfc822DataFactory.s3ClientDownloadOutput,
+        contentEncoding:
+          'sudoplatform-compression, sudoplatform-crypto, sudoplatform-binary-data',
+      })
+      when(mockAppSync.getEmailMessage(anything())).thenResolve(
+        GraphQLDataFactory.sealedEmailMessage,
+      )
+      const unsealedDraft = 'unsealedDraft'
+      when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
+        unsealedDraft,
+      )
+      gunzipSpy.mockResolvedValueOnce(str2ab(unsealedDraft))
+      const returnedValue = await instanceUnderTest.getEmailMessageRfc822Data(
+        EmailMessageRfc822DataFactory.getRfc822DataInput,
+      )
+      expect(ab2str(returnedValue!)).toEqual(unsealedDraft)
+
+      const [s3DownloadArg] = capture(mockS3Client.download).first()
+      expect(s3DownloadArg).toEqual({
+        bucket: 'bucket',
+        region: 'region',
+        key: 'identityId/email/testEmailAddressId/testId-testKeyId',
+      })
+      verify(mockS3Client.download(anything())).once()
+
+      const [idArg, fetchPolicyArg] = capture(
+        mockAppSync.getEmailMessage,
+      ).first()
+      expect(idArg).toStrictEqual(
+        EmailMessageRfc822DataFactory.getRfc822DataInput.id,
+      )
+      expect(fetchPolicyArg).toBeUndefined()
+      verify(mockAppSync.getEmailMessage(anything())).once()
+      expect(gunzipSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not call gunzip if contentEncoding does not include sudoplatform-compression', async () => {
+      when(mockS3Client.download(anything())).thenResolve({
+        ...EmailMessageRfc822DataFactory.s3ClientDownloadOutput,
+        contentEncoding: 'sudoplatform-crypto, sudoplatform-binary-data',
+      })
+      when(mockAppSync.getEmailMessage(anything())).thenResolve(
+        GraphQLDataFactory.sealedEmailMessage,
+      )
+      const unsealedDraft = 'unsealedDraft'
+      when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
+        unsealedDraft,
+      )
+      await expect(
+        instanceUnderTest.getEmailMessageRfc822Data(
+          EmailMessageRfc822DataFactory.getRfc822DataInput,
+        ),
+      ).resolves.toStrictEqual(new TextEncoder().encode(unsealedDraft))
+
+      const [s3DownloadArg] = capture(mockS3Client.download).first()
+      expect(s3DownloadArg).toEqual({
+        bucket: 'bucket',
+        region: 'region',
+        key: 'identityId/email/testEmailAddressId/testId-testKeyId',
+      })
+      verify(mockS3Client.download(anything())).once()
+
+      const [idArg, fetchPolicyArg] = capture(
+        mockAppSync.getEmailMessage,
+      ).first()
+      expect(idArg).toStrictEqual(
+        EmailMessageRfc822DataFactory.getRfc822DataInput.id,
+      )
+      expect(fetchPolicyArg).toBeUndefined()
+      verify(mockAppSync.getEmailMessage(anything())).once()
+      expect(gunzipSpy).toHaveBeenCalledTimes(0)
+    })
+
+    it('throws if given an invalid contentEncoding value', async () => {
+      when(mockS3Client.download(anything())).thenResolve({
+        ...EmailMessageRfc822DataFactory.s3ClientDownloadOutput,
+        contentEncoding: 'some-unknown-compression-system',
+      })
+      when(mockAppSync.getEmailMessage(anything())).thenResolve(
+        GraphQLDataFactory.sealedEmailMessage,
+      )
+      const unsealedDraft = 'unsealedDraft'
+      when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
+        unsealedDraft,
+      )
+      await expect(
+        instanceUnderTest.getEmailMessageRfc822Data(
+          EmailMessageRfc822DataFactory.getRfc822DataInput,
+        ),
+      ).rejects.toThrow(DecodeError)
     })
 
     it('returns undefined if s3 download throws NoSuchKey', async () => {
@@ -958,6 +1055,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       )
       expect(fetchPolicyArg).toBeUndefined()
       verify(mockAppSync.getEmailMessage(anything())).once()
+      expect(gunzipSpy).toHaveBeenCalledTimes(0)
     })
 
     it('throws error if s3 download throws error other than NoSuchKey', async () => {
@@ -994,6 +1092,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       )
       expect(fetchPolicyArg).toBeUndefined()
       verify(mockAppSync.getEmailMessage(anything())).once()
+      expect(gunzipSpy).toHaveBeenCalledTimes(0)
     })
 
     it('returns undefined if there is no message with supplied id', async () => {
@@ -1019,6 +1118,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       )
       expect(fetchPolicyArg).toBeUndefined()
       verify(mockAppSync.getEmailMessage(anything())).once()
+      expect(gunzipSpy).toHaveBeenCalledTimes(0)
     })
   })
 

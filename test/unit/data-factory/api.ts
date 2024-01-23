@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,6 +7,7 @@
 import { ListOutput, Owner } from '@sudoplatform/sudo-common'
 import { ConfigurationData } from '../../../src/public/typings/configurationData'
 import { EmailAddress } from '../../../src/public/typings/emailAddress'
+import { EmailAddressPublicInfo } from '../../../src/public/typings/emailAddressPublicInfo'
 import { EmailFolder } from '../../../src/public/typings/emailFolder'
 import {
   Direction,
@@ -45,6 +46,11 @@ export class APIDataFactory {
     ttl: undefined,
   }
 
+  static readonly emailFolderWithCustomFolderName: EmailFolder = {
+    ...APIDataFactory.emailFolder,
+    customFolderName: 'CUSTOM',
+  }
+
   static readonly emailAddress: EmailAddress = {
     ...APIDataFactory.commonProps,
     lastReceivedAt: new Date(3.0),
@@ -53,6 +59,11 @@ export class APIDataFactory {
     emailAddress: 'testie@unittest.org',
     size: 0,
     folders: [{ ...APIDataFactory.emailFolder }],
+  }
+
+  static readonly emailAddressPublicInfo: EmailAddressPublicInfo = {
+    emailAddress: APIDataFactory.emailAddress.emailAddress,
+    publicKey: 'testPublicKey',
   }
 
   static readonly emailFolderListOutput: ListOutput<EmailFolder> = {

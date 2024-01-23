@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -34,9 +34,6 @@ describe('ListEmailFoldersForEmailAddressIdUseCase Test Suite', () => {
   describe('execute', () => {
     it('completes successfully', async () => {
       const emailAddressId = v4()
-      when(
-        mockEmailFolderService.listEmailFoldersForEmailAddressId(anything()),
-      ).thenResolve()
       when(
         mockEmailFolderService.listEmailFoldersForEmailAddressId(anything()),
       ).thenResolve({ folders: [EntityDataFactory.emailFolder] })

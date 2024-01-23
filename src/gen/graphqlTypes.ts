@@ -35,9 +35,48 @@ export type AvailableAddresses = {
   addresses: Array<Scalars['String']>
 }
 
+export type BlockEmailAddressesBulkUpdateResult = {
+  __typename?: 'BlockEmailAddressesBulkUpdateResult'
+  failedAddresses?: Maybe<Array<Scalars['String']>>
+  status: UpdateEmailMessagesStatus
+  successAddresses?: Maybe<Array<Scalars['String']>>
+}
+
+export type BlockEmailAddressesInput = {
+  blockedAddresses: Array<BlockedEmailAddressInput>
+  owner: Scalars['ID']
+}
+
+export enum BlockedAddressHashAlgorithm {
+  Sha256 = 'SHA256',
+}
+
+export type BlockedEmailAddress = {
+  __typename?: 'BlockedEmailAddress'
+  createdAtEpochMs: Scalars['Float']
+  hashAlgorithm: BlockedAddressHashAlgorithm
+  hashedBlockedValue: Scalars['String']
+  owner: Scalars['ID']
+  owners: Array<Owner>
+  sealedValue: SealedAttribute
+  updatedAtEpochMs: Scalars['Float']
+  version: Scalars['Int']
+}
+
+export type BlockedEmailAddressInput = {
+  hashAlgorithm: BlockedAddressHashAlgorithm
+  hashedBlockedValue: Scalars['String']
+  sealedValue: SealedAttributeInput
+}
+
 export type CheckEmailAddressAvailabilityInput = {
   domains?: InputMaybe<Array<Scalars['String']>>
   localParts: Array<Scalars['String']>
+}
+
+export type CreateCustomEmailFolderInput = {
+  customFolderName: SealedAttributeInput
+  emailAddressId: Scalars['ID']
 }
 
 export type CreatePublicKeyInput = {
@@ -93,6 +132,12 @@ export type EmailAddressMetadataUpdateValuesInput = {
   alias?: InputMaybe<SealedAttributeInput>
 }
 
+export type EmailAddressPublicInfo = {
+  __typename?: 'EmailAddressPublicInfo'
+  emailAddress: Scalars['String']
+  publicKey: Scalars['String']
+}
+
 export type EmailConfigurationData = {
   __typename?: 'EmailConfigurationData'
   deleteEmailMessagesLimit: Scalars['Int']
@@ -104,6 +149,7 @@ export type EmailConfigurationData = {
 export type EmailFolder = {
   __typename?: 'EmailFolder'
   createdAtEpochMs: Scalars['Float']
+  customFolderName?: Maybe<SealedAttribute>
   emailAddressId: Scalars['ID']
   folderName: Scalars['String']
   id: Scalars['ID']
@@ -147,6 +193,15 @@ export type EmailMessageUpdateValuesInput = {
   seen?: InputMaybe<Scalars['Boolean']>
 }
 
+export type GetEmailAddressBlocklistInput = {
+  owner: Scalars['ID']
+}
+
+export type GetEmailAddressBlocklistResponse = {
+  __typename?: 'GetEmailAddressBlocklistResponse'
+  sealedBlockedAddresses: Array<SealedAttribute>
+}
+
 export enum KeyFormat {
   RsaPublicKey = 'RSA_PUBLIC_KEY',
   Spki = 'SPKI',
@@ -185,16 +240,36 @@ export type ListEmailMessagesForEmailFolderIdInput = {
   sortOrder?: InputMaybe<SortOrder>
 }
 
+export type LookupEmailAddressesPublicInfoInput = {
+  emailAddresses: Array<Scalars['String']>
+}
+
+export type LookupEmailAddressesPublicInfoResponse = {
+  __typename?: 'LookupEmailAddressesPublicInfoResponse'
+  items: Array<EmailAddressPublicInfo>
+}
+
 export type Mutation = {
   __typename?: 'Mutation'
+  blockEmailAddresses: BlockEmailAddressesBulkUpdateResult
+  createCustomEmailFolder: EmailFolder
   createPublicKeyForEmail: PublicKey
   deleteEmailMessage: Scalars['ID']
   deleteEmailMessages: Array<Scalars['ID']>
   deprovisionEmailAddress: EmailAddress
   provisionEmailAddress: EmailAddress
   sendEmailMessage: Scalars['ID']
+  unblockEmailAddresses: BlockEmailAddressesBulkUpdateResult
   updateEmailAddressMetadata: Scalars['ID']
   updateEmailMessages: UpdateEmailMessagesResult
+}
+
+export type MutationBlockEmailAddressesArgs = {
+  input: BlockEmailAddressesInput
+}
+
+export type MutationCreateCustomEmailFolderArgs = {
+  input: CreateCustomEmailFolderInput
 }
 
 export type MutationCreatePublicKeyForEmailArgs = {
@@ -219,6 +294,10 @@ export type MutationProvisionEmailAddressArgs = {
 
 export type MutationSendEmailMessageArgs = {
   input: SendEmailMessageInput
+}
+
+export type MutationUnblockEmailAddressesArgs = {
+  input: UnblockEmailAddressesInput
 }
 
 export type MutationUpdateEmailAddressMetadataArgs = {
@@ -278,6 +357,7 @@ export type Query = {
   __typename?: 'Query'
   checkEmailAddressAvailability: AvailableAddresses
   getEmailAddress?: Maybe<EmailAddress>
+  getEmailAddressBlocklist: GetEmailAddressBlocklistResponse
   getEmailConfig: EmailConfigurationData
   getEmailDomains: SupportedDomains
   getEmailMessage?: Maybe<SealedEmailMessage>
@@ -289,6 +369,7 @@ export type Query = {
   listEmailFoldersForEmailAddressId: EmailFolderConnection
   listEmailMessagesForEmailAddressId: EmailMessageConnection
   listEmailMessagesForEmailFolderId: EmailMessageConnection
+  lookupEmailAddressesPublicInfo: LookupEmailAddressesPublicInfoResponse
 }
 
 export type QueryCheckEmailAddressAvailabilityArgs = {
@@ -297,6 +378,10 @@ export type QueryCheckEmailAddressAvailabilityArgs = {
 
 export type QueryGetEmailAddressArgs = {
   id: Scalars['String']
+}
+
+export type QueryGetEmailAddressBlocklistArgs = {
+  input: GetEmailAddressBlocklistInput
 }
 
 export type QueryGetEmailMessageArgs = {
@@ -336,6 +421,10 @@ export type QueryListEmailMessagesForEmailAddressIdArgs = {
 
 export type QueryListEmailMessagesForEmailFolderIdArgs = {
   input: ListEmailMessagesForEmailFolderIdInput
+}
+
+export type QueryLookupEmailAddressesPublicInfoArgs = {
+  input: LookupEmailAddressesPublicInfoInput
 }
 
 export type S3EmailObjectInput = {
@@ -409,6 +498,11 @@ export type SupportedDomains = {
   domains: Array<Scalars['String']>
 }
 
+export type UnblockEmailAddressesInput = {
+  owner: Scalars['ID']
+  unblockedAddresses: Array<Scalars['String']>
+}
+
 export type UpdateEmailAddressMetadataInput = {
   id: Scalars['ID']
   values: EmailAddressMetadataUpdateValuesInput
@@ -430,6 +524,31 @@ export enum UpdateEmailMessagesStatus {
   Failed = 'FAILED',
   Partial = 'PARTIAL',
   Success = 'SUCCESS',
+}
+
+export type BlockedAddressFragment = {
+  __typename?: 'BlockedEmailAddress'
+  owner: string
+  version: number
+  createdAtEpochMs: number
+  updatedAtEpochMs: number
+  hashAlgorithm: BlockedAddressHashAlgorithm
+  hashedBlockedValue: string
+  owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+  sealedValue: {
+    __typename?: 'SealedAttribute'
+    algorithm: string
+    keyId: string
+    plainTextType: string
+    base64EncodedSealedData: string
+  }
+}
+
+export type BlockAddressesResultFragment = {
+  __typename?: 'BlockEmailAddressesBulkUpdateResult'
+  status: UpdateEmailMessagesStatus
+  failedAddresses?: Array<string> | null
+  successAddresses?: Array<string> | null
 }
 
 export type EmailAddressWithoutFoldersFragment = {
@@ -481,6 +600,13 @@ export type EmailAddressFragment = {
     unseenCount: number
     ttl?: number | null
     owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+    customFolderName?: {
+      __typename?: 'SealedAttribute'
+      algorithm: string
+      keyId: string
+      plainTextType: string
+      base64EncodedSealedData: string
+    } | null
   }>
   owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
   alias?: {
@@ -490,6 +616,12 @@ export type EmailAddressFragment = {
     plainTextType: string
     base64EncodedSealedData: string
   } | null
+}
+
+export type EmailAddressPublicInfoFragment = {
+  __typename?: 'EmailAddressPublicInfo'
+  emailAddress: string
+  publicKey: string
 }
 
 export type EmailConfigurationDataFragment = {
@@ -513,6 +645,13 @@ export type EmailFolderFragment = {
   unseenCount: number
   ttl?: number | null
   owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+  customFolderName?: {
+    __typename?: 'SealedAttribute'
+    algorithm: string
+    keyId: string
+    plainTextType: string
+    base64EncodedSealedData: string
+  } | null
 }
 
 export type OwnerFragment = { __typename?: 'Owner'; id: string; issuer: string }
@@ -631,6 +770,13 @@ export type ProvisionEmailAddressMutation = {
       unseenCount: number
       ttl?: number | null
       owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+      customFolderName?: {
+        __typename?: 'SealedAttribute'
+        algorithm: string
+        keyId: string
+        plainTextType: string
+        base64EncodedSealedData: string
+      } | null
     }>
     owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
     alias?: {
@@ -712,6 +858,63 @@ export type DeleteEmailMessageMutationVariables = Exact<{
 export type DeleteEmailMessageMutation = {
   __typename?: 'Mutation'
   deleteEmailMessage: string
+}
+
+export type CreateCustomEmailFolderMutationVariables = Exact<{
+  input: CreateCustomEmailFolderInput
+}>
+
+export type CreateCustomEmailFolderMutation = {
+  __typename?: 'Mutation'
+  createCustomEmailFolder: {
+    __typename?: 'EmailFolder'
+    id: string
+    owner: string
+    version: number
+    createdAtEpochMs: number
+    updatedAtEpochMs: number
+    emailAddressId: string
+    folderName: string
+    size: number
+    unseenCount: number
+    ttl?: number | null
+    owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+    customFolderName?: {
+      __typename?: 'SealedAttribute'
+      algorithm: string
+      keyId: string
+      plainTextType: string
+      base64EncodedSealedData: string
+    } | null
+  }
+}
+
+export type BlockEmailAddressesMutationVariables = Exact<{
+  input: BlockEmailAddressesInput
+}>
+
+export type BlockEmailAddressesMutation = {
+  __typename?: 'Mutation'
+  blockEmailAddresses: {
+    __typename?: 'BlockEmailAddressesBulkUpdateResult'
+    status: UpdateEmailMessagesStatus
+    failedAddresses?: Array<string> | null
+    successAddresses?: Array<string> | null
+  }
+}
+
+export type UnblockEmailAddressesMutationVariables = Exact<{
+  input: UnblockEmailAddressesInput
+}>
+
+export type UnblockEmailAddressesMutation = {
+  __typename?: 'Mutation'
+  unblockEmailAddresses: {
+    __typename?: 'BlockEmailAddressesBulkUpdateResult'
+    status: UpdateEmailMessagesStatus
+    failedAddresses?: Array<string> | null
+    successAddresses?: Array<string> | null
+  }
 }
 
 export type CreatePublicKeyForEmailMutationVariables = Exact<{
@@ -799,6 +1002,13 @@ export type GetEmailAddressQuery = {
       unseenCount: number
       ttl?: number | null
       owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+      customFolderName?: {
+        __typename?: 'SealedAttribute'
+        algorithm: string
+        keyId: string
+        plainTextType: string
+        base64EncodedSealedData: string
+      } | null
     }>
     owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
     alias?: {
@@ -846,6 +1056,13 @@ export type ListEmailAddressesQuery = {
         unseenCount: number
         ttl?: number | null
         owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+        customFolderName?: {
+          __typename?: 'SealedAttribute'
+          algorithm: string
+          keyId: string
+          plainTextType: string
+          base64EncodedSealedData: string
+        } | null
       }>
       owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
       alias?: {
@@ -894,6 +1111,13 @@ export type ListEmailAddressesForSudoIdQuery = {
         unseenCount: number
         ttl?: number | null
         owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+        customFolderName?: {
+          __typename?: 'SealedAttribute'
+          algorithm: string
+          keyId: string
+          plainTextType: string
+          base64EncodedSealedData: string
+        } | null
       }>
       owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
       alias?: {
@@ -903,6 +1127,22 @@ export type ListEmailAddressesForSudoIdQuery = {
         plainTextType: string
         base64EncodedSealedData: string
       } | null
+    }>
+  }
+}
+
+export type LookupEmailAddressesPublicInfoQueryVariables = Exact<{
+  input: LookupEmailAddressesPublicInfoInput
+}>
+
+export type LookupEmailAddressesPublicInfoQuery = {
+  __typename?: 'Query'
+  lookupEmailAddressesPublicInfo: {
+    __typename?: 'LookupEmailAddressesPublicInfoResponse'
+    items: Array<{
+      __typename?: 'EmailAddressPublicInfo'
+      emailAddress: string
+      publicKey: string
     }>
   }
 }
@@ -929,6 +1169,13 @@ export type ListEmailFoldersForEmailAddressIdQuery = {
       unseenCount: number
       ttl?: number | null
       owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+      customFolderName?: {
+        __typename?: 'SealedAttribute'
+        algorithm: string
+        keyId: string
+        plainTextType: string
+        base64EncodedSealedData: string
+      } | null
     }>
   }
 }
@@ -1114,6 +1361,24 @@ export type GetPublicKeysForEmailQuery = {
   }
 }
 
+export type GetEmailAddressBlocklistQueryVariables = Exact<{
+  input: GetEmailAddressBlocklistInput
+}>
+
+export type GetEmailAddressBlocklistQuery = {
+  __typename?: 'Query'
+  getEmailAddressBlocklist: {
+    __typename?: 'GetEmailAddressBlocklistResponse'
+    sealedBlockedAddresses: Array<{
+      __typename?: 'SealedAttribute'
+      algorithm: string
+      keyId: string
+      plainTextType: string
+      base64EncodedSealedData: string
+    }>
+  }
+}
+
 export type OnEmailMessageDeletedSubscriptionVariables = Exact<{
   owner: Scalars['ID']
 }>
@@ -1205,6 +1470,98 @@ export const SealedAttributeFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<SealedAttributeFragment, unknown>
+export const BlockedAddressFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'BlockedAddress' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'BlockedEmailAddress' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owners' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'hashAlgorithm' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'hashedBlockedValue' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sealedValue' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedAttribute' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SealedAttribute' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SealedAttribute' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainTextType' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'base64EncodedSealedData' },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<BlockedAddressFragment, unknown>
+export const BlockAddressesResultFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'BlockAddressesResult' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'BlockEmailAddressesBulkUpdateResult' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'failedAddresses' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'successAddresses' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<BlockAddressesResultFragment, unknown>
 export const EmailAddressWithoutFoldersFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -1312,9 +1669,42 @@ export const EmailFolderFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'folderName' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customFolderName' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedAttribute' },
+                },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'unseenCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ttl' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SealedAttribute' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SealedAttribute' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainTextType' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'base64EncodedSealedData' },
+          },
         ],
       },
     },
@@ -1452,6 +1842,19 @@ export const EmailAddressFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'folderName' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customFolderName' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedAttribute' },
+                },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'unseenCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ttl' } },
@@ -1460,6 +1863,26 @@ export const EmailAddressFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<EmailAddressFragment, unknown>
+export const EmailAddressPublicInfoFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EmailAddressPublicInfo' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EmailAddressPublicInfo' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'emailAddress' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicKey' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<EmailAddressPublicInfoFragment, unknown>
 export const EmailConfigurationDataFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -1879,6 +2302,19 @@ export const ProvisionEmailAddressDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'folderName' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customFolderName' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedAttribute' },
+                },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'unseenCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ttl' } },
@@ -2265,6 +2701,276 @@ export const DeleteEmailMessageDocument = {
   DeleteEmailMessageMutation,
   DeleteEmailMessageMutationVariables
 >
+export const CreateCustomEmailFolderDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CreateCustomEmailFolder' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'CreateCustomEmailFolderInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'createCustomEmailFolder' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'EmailFolder' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SealedAttribute' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SealedAttribute' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainTextType' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'base64EncodedSealedData' },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EmailFolder' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EmailFolder' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owners' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'folderName' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customFolderName' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedAttribute' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'unseenCount' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'ttl' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  CreateCustomEmailFolderMutation,
+  CreateCustomEmailFolderMutationVariables
+>
+export const BlockEmailAddressesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'BlockEmailAddresses' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'BlockEmailAddressesInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'blockEmailAddresses' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'BlockAddressesResult' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'BlockAddressesResult' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'BlockEmailAddressesBulkUpdateResult' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'failedAddresses' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'successAddresses' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  BlockEmailAddressesMutation,
+  BlockEmailAddressesMutationVariables
+>
+export const UnblockEmailAddressesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'UnblockEmailAddresses' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'UnblockEmailAddressesInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'unblockEmailAddresses' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'BlockAddressesResult' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'BlockAddressesResult' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'BlockEmailAddressesBulkUpdateResult' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'failedAddresses' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'successAddresses' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  UnblockEmailAddressesMutation,
+  UnblockEmailAddressesMutationVariables
+>
 export const CreatePublicKeyForEmailDocument = {
   kind: 'Document',
   definitions: [
@@ -2635,6 +3341,19 @@ export const GetEmailAddressDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'folderName' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customFolderName' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedAttribute' },
+                },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'unseenCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ttl' } },
@@ -2837,6 +3556,19 @@ export const ListEmailAddressesDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'folderName' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customFolderName' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedAttribute' },
+                },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'unseenCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ttl' } },
@@ -3039,6 +3771,19 @@ export const ListEmailAddressesForSudoIdDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'folderName' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customFolderName' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedAttribute' },
+                },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'unseenCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ttl' } },
@@ -3079,6 +3824,90 @@ export const ListEmailAddressesForSudoIdDocument = {
 } as unknown as DocumentNode<
   ListEmailAddressesForSudoIdQuery,
   ListEmailAddressesForSudoIdQueryVariables
+>
+export const LookupEmailAddressesPublicInfoDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'LookupEmailAddressesPublicInfo' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: {
+                kind: 'Name',
+                value: 'LookupEmailAddressesPublicInfoInput',
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'lookupEmailAddressesPublicInfo' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'items' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'EmailAddressPublicInfo' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EmailAddressPublicInfo' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EmailAddressPublicInfo' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'emailAddress' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicKey' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  LookupEmailAddressesPublicInfoQuery,
+  LookupEmailAddressesPublicInfoQueryVariables
 >
 export const ListEmailFoldersForEmailAddressIdDocument = {
   kind: 'Document',
@@ -3147,6 +3976,26 @@ export const ListEmailFoldersForEmailAddressIdDocument = {
     },
     {
       kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SealedAttribute' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SealedAttribute' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainTextType' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'base64EncodedSealedData' },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
       name: { kind: 'Name', value: 'EmailFolder' },
       typeCondition: {
         kind: 'NamedType',
@@ -3173,6 +4022,19 @@ export const ListEmailFoldersForEmailAddressIdDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'folderName' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customFolderName' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedAttribute' },
+                },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'unseenCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'ttl' } },
@@ -3881,6 +4743,92 @@ export const GetPublicKeysForEmailDocument = {
 } as unknown as DocumentNode<
   GetPublicKeysForEmailQuery,
   GetPublicKeysForEmailQueryVariables
+>
+export const GetEmailAddressBlocklistDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetEmailAddressBlocklist' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'GetEmailAddressBlocklistInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'getEmailAddressBlocklist' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'sealedBlockedAddresses' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'SealedAttribute' },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SealedAttribute' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SealedAttribute' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainTextType' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'base64EncodedSealedData' },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  GetEmailAddressBlocklistQuery,
+  GetEmailAddressBlocklistQueryVariables
 >
 export const OnEmailMessageDeletedDocument = {
   kind: 'Document',

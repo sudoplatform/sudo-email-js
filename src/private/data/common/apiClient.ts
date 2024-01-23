@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -30,9 +30,16 @@ import { FetchResult } from 'apollo-link'
 import AWSAppSyncClient from 'aws-appsync'
 import {
   AvailableAddresses,
+  BlockEmailAddressesBulkUpdateResult,
+  BlockEmailAddressesDocument,
+  BlockEmailAddressesInput,
+  BlockEmailAddressesMutation,
   CheckEmailAddressAvailabilityDocument,
   CheckEmailAddressAvailabilityInput,
   CheckEmailAddressAvailabilityQuery,
+  CreateCustomEmailFolderDocument,
+  CreateCustomEmailFolderInput,
+  CreateCustomEmailFolderMutation,
   CreatePublicKeyForEmailDocument,
   CreatePublicKeyForEmailMutation,
   CreatePublicKeyInput,
@@ -47,8 +54,12 @@ import {
   EmailAddressConnection,
   EmailAddressWithoutFoldersFragment,
   EmailConfigurationData,
+  EmailFolder,
   EmailFolderConnection,
   EmailMessageConnection,
+  GetEmailAddressBlocklistDocument,
+  GetEmailAddressBlocklistQuery,
+  GetEmailAddressBlocklistResponse,
   GetEmailAddressDocument,
   GetEmailAddressQuery,
   GetEmailConfigDocument,
@@ -71,6 +82,9 @@ import {
   ListEmailMessagesForEmailAddressIdQuery,
   ListEmailMessagesForEmailFolderIdDocument,
   ListEmailMessagesForEmailFolderIdQuery,
+  LookupEmailAddressesPublicInfoDocument,
+  LookupEmailAddressesPublicInfoQuery,
+  LookupEmailAddressesPublicInfoResponse,
   OnEmailMessageCreatedDocument,
   OnEmailMessageCreatedSubscription,
   OnEmailMessageDeletedDocument,
@@ -86,6 +100,9 @@ import {
   SendEmailMessageMutation,
   SortOrder,
   SupportedDomains,
+  UnblockEmailAddressesDocument,
+  UnblockEmailAddressesInput,
+  UnblockEmailAddressesMutation,
   UpdateEmailAddressMetadataDocument,
   UpdateEmailAddressMetadataInput,
   UpdateEmailAddressMetadataMutation,
@@ -122,6 +139,53 @@ export class ApiClient {
       calleeName: this.provisionEmailAddress.name,
     })
     return data.provisionEmailAddress
+  }
+
+  public async createCustomEmailFolder(
+    input: CreateCustomEmailFolderInput,
+  ): Promise<EmailFolder> {
+    const data = await this.performMutation<CreateCustomEmailFolderMutation>({
+      mutation: CreateCustomEmailFolderDocument,
+      variables: { input },
+      calleeName: this.createCustomEmailFolder.name,
+    })
+    return data.createCustomEmailFolder
+  }
+
+  public async blockEmailAddresses(
+    input: BlockEmailAddressesInput,
+  ): Promise<BlockEmailAddressesBulkUpdateResult> {
+    const data = await this.performMutation<BlockEmailAddressesMutation>({
+      mutation: BlockEmailAddressesDocument,
+      variables: { input },
+      calleeName: this.blockEmailAddresses.name,
+    })
+    return data.blockEmailAddresses
+  }
+
+  public async unblockEmailAddresses(
+    input: UnblockEmailAddressesInput,
+  ): Promise<BlockEmailAddressesBulkUpdateResult> {
+    const data = await this.performMutation<UnblockEmailAddressesMutation>({
+      mutation: UnblockEmailAddressesDocument,
+      variables: { input },
+      calleeName: this.unblockEmailAddresses.name,
+    })
+    return data.unblockEmailAddresses
+  }
+
+  public async getEmailAddressBlocklist(
+    owner: string,
+    fetchPolicy: FetchPolicy = 'network-only',
+  ): Promise<GetEmailAddressBlocklistResponse> {
+    const data = await this.performQuery<GetEmailAddressBlocklistQuery>({
+      query: GetEmailAddressBlocklistDocument,
+      variables: { input: { owner } },
+      fetchPolicy,
+      calleeName: this.getEmailAddressBlocklist.name,
+    })
+
+    return data.getEmailAddressBlocklist
   }
 
   public async deprovisionEmailAddress(
@@ -220,6 +284,19 @@ export class ApiClient {
       calleeName: this.listEmailAddressesForSudoId.name,
     })
     return data.listEmailAddressesForSudoId
+  }
+
+  public async lookupEmailAddressesPublicInfo(
+    emailAddresses: string[],
+    fetchPolicy: FetchPolicy = 'network-only',
+  ): Promise<LookupEmailAddressesPublicInfoResponse> {
+    const data = await this.performQuery<LookupEmailAddressesPublicInfoQuery>({
+      query: LookupEmailAddressesPublicInfoDocument,
+      variables: { input: { emailAddresses } },
+      fetchPolicy,
+      calleeName: this.lookupEmailAddressesPublicInfo.name,
+    })
+    return data.lookupEmailAddressesPublicInfo
   }
 
   public async listEmailFoldersForEmailAddressId(

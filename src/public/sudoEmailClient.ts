@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -12,6 +12,7 @@ import {
   KeyArchiveKeyType,
   ListOutput,
   Logger,
+  ServiceError,
   SudoCryptoProvider,
   SudoKeyManager,
 } from '@sudoplatform/sudo-common'
@@ -59,6 +60,7 @@ import { ListDraftEmailMessageMetadataUseCase } from '../private/domain/use-case
 import { SaveDraftEmailMessageUseCase } from '../private/domain/use-cases/draft/saveDraftEmailMessageUseCase'
 import { UpdateDraftEmailMessageUseCase } from '../private/domain/use-cases/draft/updateDraftEmailMessageUseCase'
 import { ListEmailFoldersForEmailAddressIdUseCase } from '../private/domain/use-cases/folder/listEmailFoldersForEmailAddressIdUseCase'
+import { CreateCustomEmailFolderUseCase } from '../private/domain/use-cases/folder/createCustomEmailFolderUseCase'
 import { DeleteEmailMessagesUseCase } from '../private/domain/use-cases/message/deleteEmailMessagesUseCase'
 import { GetEmailMessageRfc822DataUseCase } from '../private/domain/use-cases/message/getEmailMessageRfc822DataUseCase'
 import { GetEmailMessageUseCase } from '../private/domain/use-cases/message/getEmailMessageUseCase'
@@ -86,6 +88,15 @@ import {
 } from './typings/listOperationResult'
 import { SortOrder } from './typings/sortOrder'
 import { InvalidArgumentError } from './errors'
+import { EmailFolderAPITransformer } from '../private/data/folder/transformer/emailFolderAPITransformer'
+import { EmailAddressPublicInfo } from './typings/emailAddressPublicInfo'
+import { LookupEmailAddressesPublicInfoUseCase } from '../private/domain/use-cases/account/lookupEmailAddressesPublicInfoUseCase'
+import { EmailAddressPublicInfoTransformer } from '../private/data/account/transformer/emailAddressPublicInfoTransformer'
+import { BlockEmailAddressesUseCase } from '../private/domain/use-cases/blocklist/blockEmailAddresses'
+import { EmailAddressBlocklistService } from '../private/domain/entities/blocklist/emailAddressBlocklistService'
+import { DefaultEmailAddressBlocklistService } from '../private/data/blocklist/defaultEmailAddressBlocklistService'
+import { UnblockEmailAddressesUseCase } from '../private/domain/use-cases/blocklist/unblockEmailAddresses'
+import { GetEmailAddressBlocklistUseCase } from '../private/domain/use-cases/blocklist/getEmailAddressBlocklist'
 
 /**
  * Pagination interface designed to be extended for list interfaces.
@@ -136,6 +147,16 @@ export interface ListEmailAddressesForSudoIdInput extends Pagination {
 }
 
 /**
+ * Input for `SudoEmailClient.lookupEmailAddressesPublicInfoInput`.
+ *
+ * @interface LookupEmailAddressesPublicInfoInput
+ * @property {string[]} emailAddresses A list of email address strings in format 'local-part@domain'.
+ */
+export interface LookupEmailAddressesPublicInfoInput {
+  emailAddresses: string[]
+}
+
+/**
  * Input for `SudoEmailClient.listEmailFoldersForEmailAddressId`.
  *
  * @interface ListEmailFoldersForEmailAddressIdInput
@@ -145,6 +166,52 @@ export interface ListEmailAddressesForSudoIdInput extends Pagination {
 export interface ListEmailFoldersForEmailAddressIdInput extends Pagination {
   emailAddressId: string
   cachePolicy?: CachePolicy
+}
+
+/**
+ * Input for `SudoEmailClient.CreateCustomEmailFolder`.
+ *
+ * @interface CreateCustomEmailFolderInput
+ * @property {string} emailAddressId The identifier of the email address to be associated with the custom email folder.
+ * @property {string} customFolderName The name of the custom email folder to be created.
+ */
+export interface CreateCustomEmailFolderInput {
+  emailAddressId: string
+  customFolderName: string
+}
+
+/**
+ * Input for `SudoEmailClient.BlockEmailAddresses`
+ *
+ * @interface BlockEmailAddressesInput
+ * @property {string} owner The owner for the address doing the blocking
+ * @property {string[]} addresses List of addresses to be blocked in the [local-part]@[domain] format
+ */
+export interface BlockEmailAddressesInput {
+  owner: string
+  addresses: string[]
+}
+
+/**
+ * Input for `SudoEmailClient.UnblockEmailAddresses`
+ *
+ * @interface UnblockEmailAddressesInput
+ * @property {string} owner The owner for the address doing the unblocking
+ * @property {string[]} addresses List of addresses to be unblocked in the [local-part]@[domain] format
+ */
+export interface UnblockEmailAddressesInput {
+  owner: string
+  addresses: string[]
+}
+
+/**
+ * Input for `SudoEmailClient.GetEmailAddressBlocklist`
+ *
+ * @interface GetEmailAddressBlocklistInput
+ * @property {string} owner The owner of the blocklist
+ */
+export interface GetEmailAddressBlocklistInput {
+  owner: string
 }
 
 /**
@@ -446,6 +513,22 @@ export interface SudoEmailClient {
   ): Promise<ListEmailAddressesResult>
 
   /**
+   * Get a list of public information objects associated with the provided email addresses.
+
+   * Results can only be retrieved in batches of 50. Anything greater will throw a {@link LimitExceededError}.
+   *
+   * @param {LookupEmailAddressesPublicInfoInput} input Parameters used to retrieve a list of public information objects for a list
+   * of email addresses.
+   * @returns {EmailAddressPublicInfo[]} An array of public info objects, or an empty array if email addresses
+   * or their public keys cannot be found.
+   *
+   * @throws LimitExceededError
+   */
+  lookupEmailAddressesPublicInfo(
+    input: LookupEmailAddressesPublicInfoInput,
+  ): Promise<EmailAddressPublicInfo[]>
+
+  /**
    * Get a list of email folders associated with the email address identified by emailAddressId.
    *
    * @param {ListEmailFoldersForEmailAddressIdInput} input Parameters used to retrieve a list of email folders for an emailAddressId.
@@ -455,6 +538,46 @@ export interface SudoEmailClient {
   listEmailFoldersForEmailAddressId(
     input: ListEmailFoldersForEmailAddressIdInput,
   ): Promise<ListOutput<EmailFolder>>
+
+  /**
+   * Create a custom email folder for the email address identified by emailAddressId.
+   *
+   * @param {CreateCustomEmailFolderInput} input Parameters used to create a custom email folder.
+   * @returns {EmailFolder} The created custom email folder.
+   */
+  createCustomEmailFolder(
+    input: CreateCustomEmailFolderInput,
+  ): Promise<EmailFolder>
+
+  /**
+   * Block email address(es) for the given owner
+   *
+   * @param {BlockEmailAddressesInput} input Parameters to block email addresses
+   * @returns {Promise<BatchOperationResult<string>>} The results of the operation
+   */
+  blockEmailAddresses(
+    input: BlockEmailAddressesInput,
+  ): Promise<BatchOperationResult<string>>
+
+  /**
+   * Unblock email address(es) for the given owner
+   *
+   * @param {UnblockEmailAddressesInput} input Parameters to unblock email addresses
+   * @returns {Promise<BatchOperationResult<string>>} The results of the operation
+   */
+  unblockEmailAddresses(
+    input: UnblockEmailAddressesInput,
+  ): Promise<BatchOperationResult<string>>
+
+  /**
+   * Get email address blocklist for given owner
+   *
+   * @param {GetEmailAddressBlocklistInput} input Parameters to get blocklist
+   * @return {Promise<string[]>} The list of unsealed blocked addresses
+   */
+  getEmailAddressBlocklist(
+    input: GetEmailAddressBlocklistInput,
+  ): Promise<string[]>
 
   /**
    * Create a draft email message in RFC 6854 (supersedes RFC 822)(https://tools.ietf.org/html/rfc6854) format.
@@ -701,6 +824,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   private readonly emailAccountService: DefaultEmailAccountService
   private readonly emailFolderService: DefaultEmailFolderService
   private readonly emailMessageService: DefaultEmailMessageService
+  private readonly emailAddressBlocklistService: EmailAddressBlocklistService
   private readonly sudoCryptoProvider: SudoCryptoProvider
   private readonly keyManager: SudoKeyManager
   private readonly identityServiceConfig: SudoUserInternal.IdentityServiceConfig
@@ -743,13 +867,20 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       this.apiClient,
       deviceKeyWorker,
     )
-    this.emailFolderService = new DefaultEmailFolderService(this.apiClient)
+    this.emailFolderService = new DefaultEmailFolderService(
+      this.apiClient,
+      deviceKeyWorker,
+    )
     this.emailMessageService = new DefaultEmailMessageService(
       this.apiClient,
       this.userClient,
       s3Client,
       deviceKeyWorker,
       this.emailServiceConfig,
+    )
+    this.emailAddressBlocklistService = new DefaultEmailAddressBlocklistService(
+      this.apiClient,
+      deviceKeyWorker,
     )
   }
 
@@ -962,6 +1093,24 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     })
   }
 
+  public async lookupEmailAddressesPublicInfo({
+    emailAddresses,
+  }: LookupEmailAddressesPublicInfoInput): Promise<EmailAddressPublicInfo[]> {
+    this.log.debug(this.lookupEmailAddressesPublicInfo.name, {
+      emailAddresses,
+    })
+
+    const useCase = new LookupEmailAddressesPublicInfoUseCase(
+      this.emailAccountService,
+    )
+
+    const result = await useCase.execute({ emailAddresses })
+
+    return result.map((publicInfo) =>
+      EmailAddressPublicInfoTransformer.transformEntity(publicInfo),
+    )
+  }
+
   public async listEmailFoldersForEmailAddressId({
     emailAddressId,
     cachePolicy,
@@ -977,14 +1126,106 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const useCase = new ListEmailFoldersForEmailAddressIdUseCase(
       this.emailFolderService,
     )
-    const { folders: items, nextToken: resultNextToken } =
-      await useCase.execute({
-        emailAddressId,
-        cachePolicy,
-        limit,
-        nextToken,
-      })
-    return { items, nextToken: resultNextToken }
+    const { folders, nextToken: resultNextToken } = await useCase.execute({
+      emailAddressId,
+      cachePolicy,
+      limit,
+      nextToken,
+    })
+
+    const folderTransformer = new EmailFolderAPITransformer()
+    const transformedFolders = folders.map((folder) =>
+      folderTransformer.transformEntity(folder),
+    )
+
+    return { items: transformedFolders, nextToken: resultNextToken }
+  }
+
+  public async createCustomEmailFolder({
+    emailAddressId,
+    customFolderName,
+  }: CreateCustomEmailFolderInput): Promise<EmailFolder> {
+    this.log.debug(this.createCustomEmailFolder.name, {
+      emailAddressId,
+      customFolderName,
+    })
+
+    const useCase = new CreateCustomEmailFolderUseCase(this.emailFolderService)
+    const result = await useCase.execute({
+      emailAddressId,
+      customFolderName,
+    })
+
+    const apiTransformer = new EmailFolderAPITransformer()
+    return apiTransformer.transformEntity(result)
+  }
+
+  public async blockEmailAddresses(
+    input: BlockEmailAddressesInput,
+  ): Promise<BatchOperationResult<string>> {
+    this.log.debug(this.blockEmailAddresses.name, { input })
+
+    const useCase = new BlockEmailAddressesUseCase(
+      this.emailAddressBlocklistService,
+    )
+    const result = await useCase.execute({
+      owner: input.owner,
+      blockedAddresses: input.addresses,
+    })
+
+    switch (result.status) {
+      case UpdateEmailMessagesStatus.Success:
+        return { status: BatchOperationResultStatus.Success }
+      case UpdateEmailMessagesStatus.Failed:
+        return { status: BatchOperationResultStatus.Failure }
+      case UpdateEmailMessagesStatus.Partial:
+        return {
+          status: BatchOperationResultStatus.Partial,
+          failureValues: result.failedAddresses ?? [],
+          successValues: result.successAddresses ?? [],
+        }
+      default:
+        throw new ServiceError(`Invalid Update Status ${result.status}`)
+    }
+  }
+
+  public async unblockEmailAddresses(
+    input: UnblockEmailAddressesInput,
+  ): Promise<BatchOperationResult<string>> {
+    this.log.debug(this.unblockEmailAddresses.name, { input })
+
+    const useCase = new UnblockEmailAddressesUseCase(
+      this.emailAddressBlocklistService,
+    )
+    const result = await useCase.execute({
+      owner: input.owner,
+      unblockedAddresses: input.addresses,
+    })
+
+    switch (result.status) {
+      case UpdateEmailMessagesStatus.Success:
+        return { status: BatchOperationResultStatus.Success }
+      case UpdateEmailMessagesStatus.Failed:
+        return { status: BatchOperationResultStatus.Failure }
+      case UpdateEmailMessagesStatus.Partial:
+        return {
+          status: BatchOperationResultStatus.Partial,
+          failureValues: result.failedAddresses ?? [],
+          successValues: result.successAddresses ?? [],
+        }
+      default:
+        throw new ServiceError(`Invalid Update Status ${result.status}`)
+    }
+  }
+
+  public async getEmailAddressBlocklist({
+    owner,
+  }: GetEmailAddressBlocklistInput): Promise<string[]> {
+    const useCase = new GetEmailAddressBlocklistUseCase(
+      this.emailAddressBlocklistService,
+    )
+
+    return await useCase.execute({ owner })
   }
 
   public async createDraftEmailMessage({

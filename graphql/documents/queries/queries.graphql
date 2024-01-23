@@ -42,6 +42,16 @@ query ListEmailAddressesForSudoId($input: ListEmailAddressesForSudoIdInput!) {
   }
 }
 
+query LookupEmailAddressesPublicInfo(
+  $input: LookupEmailAddressesPublicInfoInput!
+) {
+  lookupEmailAddressesPublicInfo(input: $input) {
+    items {
+      ...EmailAddressPublicInfo
+    }
+  }
+}
+
 query ListEmailFoldersForEmailAddressId(
   $input: ListEmailFoldersForEmailAddressIdInput!
 ) {
@@ -104,5 +114,13 @@ query GetPublicKeyForEmail($keyId: String!) {
 query GetPublicKeysForEmail($limit: Int, $nextToken: String) {
   getPublicKeysForEmail(limit: $limit, nextToken: $nextToken) {
     ...PaginatedPublicKey
+  }
+}
+
+query GetEmailAddressBlocklist($input: GetEmailAddressBlocklistInput!) {
+  getEmailAddressBlocklist(input: $input) {
+    sealedBlockedAddresses {
+      ...SealedAttribute
+    }
   }
 }
