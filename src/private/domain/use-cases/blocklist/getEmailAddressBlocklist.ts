@@ -4,18 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
+import {
+  DefaultLogger,
+  Logger,
+  NotSignedInError,
+} from '@sudoplatform/sudo-common'
 import { EmailAddressBlocklistService } from '../../entities/blocklist/emailAddressBlocklistService'
-
-/**
- * Input for `GetEmailAddressBlocklistUseCase`
- *
- * @interface GetEmailAddressBlocklistUseCaseInput
- * @property {string} owner The id of the owner of the blocklist
- */
-export interface GetEmailAddressBlocklistUseCaseInput {
-  owner: string
-}
+import { SudoUserClient } from '@sudoplatform/sudo-user'
+import { UnsealedBlockedAddress } from '../../../../public/typings/blockedAddresses'
 
 /**
  * Application business logic for getting email address blocklist
@@ -24,19 +20,22 @@ export class GetEmailAddressBlocklistUseCase {
   private readonly log: Logger
   constructor(
     private readonly emailBlocklistService: EmailAddressBlocklistService,
+    private readonly userClient: SudoUserClient,
   ) {
     this.log = new DefaultLogger(this.constructor.name)
   }
 
-  async execute({
-    owner,
-  }: GetEmailAddressBlocklistUseCaseInput): Promise<string[]> {
-    this.log.debug(this.constructor.name, { owner })
+  async execute(): Promise<UnsealedBlockedAddress[]> {
+    this.log.debug(this.constructor.name)
+    // Blocklists are 'owned' by the user for now.
+    const owner = await this.userClient.getSubject()
+
+    if (!owner) {
+      throw new NotSignedInError()
+    }
 
     const result =
-      await this.emailBlocklistService.getEmailAddressBlocklistForOwner({
-        owner,
-      })
+      await this.emailBlocklistService.getEmailAddressBlocklistForOwner(owner)
 
     return result
   }

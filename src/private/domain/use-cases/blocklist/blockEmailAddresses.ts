@@ -4,19 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
+import {
+  DefaultLogger,
+  Logger,
+  NotSignedInError,
+} from '@sudoplatform/sudo-common'
 import { EmailAddressBlocklistService } from '../../entities/blocklist/emailAddressBlocklistService'
 import { BlockEmailAddressesBulkUpdateResult } from '../../../../gen/graphqlTypes'
+import { SudoUserClient } from '@sudoplatform/sudo-user'
 
 /**
  * Input for `BlockEmailAddressesUseCase`
  *
  * @interface BlockEmailAddressesUseCaseInput
- * @property {string} owner The id of the owner of the user creating the blocklist
  * @property {string[]} blockedAddresses List of the addresses to block
  */
 export interface BlockEmailAddressesUseCaseInput {
-  owner: string
   blockedAddresses: string[]
 }
 
@@ -27,18 +30,23 @@ export class BlockEmailAddressesUseCase {
   private readonly log: Logger
   constructor(
     private readonly emailBlocklistService: EmailAddressBlocklistService,
+    private readonly userClient: SudoUserClient,
   ) {
     this.log = new DefaultLogger(this.constructor.name)
   }
 
   async execute({
-    owner,
     blockedAddresses,
   }: BlockEmailAddressesUseCaseInput): Promise<BlockEmailAddressesBulkUpdateResult> {
     this.log.debug(this.constructor.name, {
-      owner,
       blockedAddresses,
     })
+    // Blocklists are 'owned' by the user for now.
+    const owner = await this.userClient.getSubject()
+
+    if (!owner) {
+      throw new NotSignedInError()
+    }
 
     return await this.emailBlocklistService.blockEmailAddressesForOwner({
       owner,

@@ -8,14 +8,23 @@ import { anything, instance, mock, reset, when } from 'ts-mockito'
 import { DefaultEmailAddressBlocklistService } from '../../../../../../src/private/data/blocklist/defaultEmailAddressBlocklistService'
 import { GetEmailAddressBlocklistUseCase } from '../../../../../../src/private/domain/use-cases/blocklist/getEmailAddressBlocklist'
 import { v4 } from 'uuid'
+import { SudoUserClient } from '@sudoplatform/sudo-user'
+import { UnsealedBlockedAddress } from '../../../../../../src/public'
 
 describe('GetEmailAddressBlocklistUseCase Test Suite', () => {
   const mockBlockedEmailAddressService =
     mock<DefaultEmailAddressBlocklistService>()
+  const mockUserClient = mock<SudoUserClient>()
 
   let instanceUnderTest: GetEmailAddressBlocklistUseCase
   const mockOwner = 'mockOwner'
-  const blockedAddresses = [`spammyMcSpamface-${v4()}@spambot.com`]
+  const blockedAddresses: UnsealedBlockedAddress[] = [
+    {
+      address: `spammyMcSpamface-${v4()}@spambot.com`,
+      hashedBlockedValue: 'dummyHashedValue',
+      status: { type: 'Completed' },
+    },
+  ]
 
   beforeEach(() => {
     reset(mockBlockedEmailAddressService)
@@ -24,17 +33,17 @@ describe('GetEmailAddressBlocklistUseCase Test Suite', () => {
         anything(),
       ),
     ).thenResolve(blockedAddresses)
+    when(mockUserClient.getSubject()).thenResolve(mockOwner)
 
     instanceUnderTest = new GetEmailAddressBlocklistUseCase(
       instance(mockBlockedEmailAddressService),
+      instance(mockUserClient),
     )
   })
 
   describe('execute', () => {
     it('returns successful requests correctly', async () => {
-      const result = await instanceUnderTest.execute({
-        owner: mockOwner,
-      })
+      const result = await instanceUnderTest.execute()
       expect(result).toEqual(blockedAddresses)
     })
 
@@ -45,9 +54,7 @@ describe('GetEmailAddressBlocklistUseCase Test Suite', () => {
         ),
       ).thenResolve([])
 
-      const result = await instanceUnderTest.execute({
-        owner: mockOwner,
-      })
+      const result = await instanceUnderTest.execute()
       expect(result).toEqual([])
     })
   })

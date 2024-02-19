@@ -26,6 +26,7 @@ import { provisionEmailAddress } from '../util/provisionEmailAddress'
 describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
   jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
+  const ootoSimulatorAddress = 'ooto@simulator.amazonses.com'
 
   let emailAddresses: EmailAddress[] = []
 
@@ -86,7 +87,7 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
     const messageStrings = _.range(2).map((i) =>
       createEmailMessageRfc822String({
         from: [{ emailAddress: emailAddress.emailAddress }],
-        to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
+        to: [{ emailAddress: ootoSimulatorAddress }],
         cc: [],
         bcc: [],
         replyTo: [],
@@ -111,7 +112,7 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
   it("returns partial result when deleting messages that do and don't exist simultaneously", async () => {
     const messageString = createEmailMessageRfc822String({
       from: [{ emailAddress: emailAddress.emailAddress }],
-      to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
+      to: [{ emailAddress: ootoSimulatorAddress }],
       cc: [],
       bcc: [],
       replyTo: [],

@@ -30,6 +30,7 @@ import { provisionEmailAddress } from '../util/provisionEmailAddress'
 describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
   jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
+  const ootoSimulatorAddress = 'ooto@simulator.amazonses.com'
 
   let instanceUnderTest: SudoEmailClient
   let profilesClient: SudoProfilesClient
@@ -62,7 +63,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
   test('update seen status of single email message should return success status', async () => {
     const messageString = createEmailMessageRfc822String({
       from: [{ emailAddress: emailAddress.emailAddress }],
-      to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
+      to: [{ emailAddress: ootoSimulatorAddress }],
       cc: [],
       bcc: [],
       replyTo: [],
@@ -101,7 +102,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
     const messageStrings = _.range(2).map((i) =>
       createEmailMessageRfc822String({
         from: [{ emailAddress: emailAddress.emailAddress }],
-        to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
+        to: [{ emailAddress: ootoSimulatorAddress }],
         cc: [],
         bcc: [],
         replyTo: [],
@@ -146,7 +147,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
     const messageStrings = _.range(2).map((i) =>
       createEmailMessageRfc822String({
         from: [{ emailAddress: emailAddress.emailAddress }],
-        to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
+        to: [{ emailAddress: ootoSimulatorAddress }],
         cc: [],
         bcc: [],
         replyTo: [],
@@ -201,7 +202,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
   test('previousFolderId does not change when message is moved to same folder', async () => {
     const messageString = createEmailMessageRfc822String({
       from: [{ emailAddress: emailAddress.emailAddress }],
-      to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
+      to: [{ emailAddress: ootoSimulatorAddress }],
       cc: [],
       bcc: [],
       replyTo: [],
@@ -262,7 +263,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
   test('update email messages with mixture of failed and successful updates should return partial status', async () => {
     const messageString = createEmailMessageRfc822String({
       from: [{ emailAddress: emailAddress.emailAddress }],
-      to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
+      to: [{ emailAddress: ootoSimulatorAddress }],
       cc: [],
       bcc: [],
       replyTo: [],

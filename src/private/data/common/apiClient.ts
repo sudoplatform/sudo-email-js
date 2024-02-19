@@ -59,7 +59,7 @@ import {
   EmailMessageConnection,
   GetEmailAddressBlocklistDocument,
   GetEmailAddressBlocklistQuery,
-  GetEmailAddressBlocklistResponse,
+  GetEmailAddressBlocklistResponseFragment,
   GetEmailAddressDocument,
   GetEmailAddressQuery,
   GetEmailConfigDocument,
@@ -177,7 +177,7 @@ export class ApiClient {
   public async getEmailAddressBlocklist(
     owner: string,
     fetchPolicy: FetchPolicy = 'network-only',
-  ): Promise<GetEmailAddressBlocklistResponse> {
+  ): Promise<GetEmailAddressBlocklistResponseFragment> {
     const data = await this.performQuery<GetEmailAddressBlocklistQuery>({
       query: GetEmailAddressBlocklistDocument,
       variables: { input: { owner } },

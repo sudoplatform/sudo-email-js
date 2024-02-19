@@ -119,8 +119,6 @@ query GetPublicKeysForEmail($limit: Int, $nextToken: String) {
 
 query GetEmailAddressBlocklist($input: GetEmailAddressBlocklistInput!) {
   getEmailAddressBlocklist(input: $input) {
-    sealedBlockedAddresses {
-      ...SealedAttribute
-    }
+    ...GetEmailAddressBlocklistResponse
   }
 }

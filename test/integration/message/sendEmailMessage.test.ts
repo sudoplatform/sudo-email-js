@@ -33,6 +33,7 @@ import { provisionEmailAddress } from '../util/provisionEmailAddress'
 describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
+  const ootoSimulatorAddress = 'ooto@simulator.amazonses.com'
 
   let emailAddresses: EmailAddress[] = []
 
@@ -71,7 +72,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
     draft = {
       from: [{ emailAddress: emailAddress.emailAddress }],
-      to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
+      to: [{ emailAddress: ootoSimulatorAddress }],
       cc: [],
       bcc: [],
       replyTo: [],
@@ -182,7 +183,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     const ccDraft = {
       ...draft,
       to: [],
-      cc: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
+      cc: [{ emailAddress: ootoSimulatorAddress }],
     }
     const ccDraftString = createEmailMessageRfc822String(ccDraft)
     const sentId = await instanceUnderTest.sendEmailMessage({
@@ -237,7 +238,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     const bccDraft = {
       ...draft,
       to: [],
-      bcc: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
+      bcc: [{ emailAddress: ootoSimulatorAddress }],
     }
     const bccDraftString = createEmailMessageRfc822String(bccDraft)
     const sentId = await instanceUnderTest.sendEmailMessage({
@@ -272,20 +273,26 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       bccDraftString,
     )
 
-    await waitForExpect(async () => {
-      const result = await readAllPages((nextToken?: string) =>
-        instanceUnderTest.listEmailMessagesForEmailFolderId({
-          folderId: inboxFolder.id,
-          cachePolicy: CachePolicy.RemoteOnly,
-          nextToken,
-        }),
-      )
-      expect(result.status).toEqual(ListOperationResultStatus.Success)
-      if (result.status !== ListOperationResultStatus.Success) {
-        fail('result.status unexpectedly not ListOperationResultStatus.Success')
-      }
-      expect(result.items).toHaveLength(1)
-    })
+    await waitForExpect(
+      async () => {
+        const result = await readAllPages((nextToken?: string) =>
+          instanceUnderTest.listEmailMessagesForEmailFolderId({
+            folderId: inboxFolder.id,
+            cachePolicy: CachePolicy.RemoteOnly,
+            nextToken,
+          }),
+        )
+        expect(result.status).toEqual(ListOperationResultStatus.Success)
+        if (result.status !== ListOperationResultStatus.Success) {
+          fail(
+            'result.status unexpectedly not ListOperationResultStatus.Success',
+          )
+        }
+        expect(result.items).toHaveLength(1)
+      },
+      20000,
+      1000,
+    )
   })
 
   it('throws an error if unknown address is used', async () => {

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { UnsealedBlockedAddress } from '../../../../public/typings/blockedAddresses'
 import { UpdateEmailMessagesStatus } from '../message/updateEmailMessagesStatus'
 
 /**
@@ -28,6 +29,18 @@ export interface BlockEmailAddressesForOwnerInput {
 export interface UnblockEmailAddressesForOwnerInput {
   owner: string
   unblockedAddresses: string[]
+}
+
+/**
+ * Input for `EmailAddressBlocklistService.unblockEmailAddressesByHashedValue` method
+ *
+ * @interface UnblockEmailAddressesByHashedValueInput
+ * @property {string} owner The id of the owner of the blocklist
+ * @property {string[]} hashedValues List of the hashed values to unblock
+ */
+export interface UnblockEmailAddressesByHashedValueInput {
+  owner: string
+  hashedValues: string[]
 }
 
 /**
@@ -71,10 +84,22 @@ export interface EmailAddressBlocklistService {
   ): Promise<BlockEmailAddressesBulkUpdateOutput>
 
   /**
+   * Unblock email addresses by hashed value for the given user
+   *
+   * @param {UnblockEmailAddressesByHashedValueInput} input Parameters used to unblock email addresses
+   * @returns {BlockEmailAddressesBulkUpdateOutput} The response indicating if the address(es) were unblocked successfully
+   */
+  unblockEmailAddressesByHashedValue(
+    input: UnblockEmailAddressesByHashedValueInput,
+  ): Promise<BlockEmailAddressesBulkUpdateOutput>
+
+  /**
    * Get list of blocked email addresses for a given user
    *
    * @param {string} owner The owner of the blocklist
-   * @returns {string[]} The list of unsealed blocked email addresses
+   * @returns {UnsealedBlockedAddress[]} The list of unsealed blocked email addresses
    */
-  getEmailAddressBlocklistForOwner(input: { owner: string }): Promise<string[]>
+  getEmailAddressBlocklistForOwner(
+    owner: string,
+  ): Promise<UnsealedBlockedAddress[]>
 }

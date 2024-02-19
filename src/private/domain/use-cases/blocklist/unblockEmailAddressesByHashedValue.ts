@@ -14,19 +14,19 @@ import { BlockEmailAddressesBulkUpdateResult } from '../../../../gen/graphqlType
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 
 /**
- * Input for `UnblockEmailAddressesUseCase`
+ * Input for `UnblockEmailAddressesByHashedValueUseCase`
  *
- * @interface UnblockEmailAddressesUseCaseInput
- * @property {string[]} blockedAddresses List of the addresses to unblock
+ * @interface UnblockEmailAddressesByHashedValueUseCaseInput
+ * @property {string[]} hashedValues List of the hashedValues to unblock
  */
-export interface UnblockEmailAddressesUseCaseInput {
-  unblockedAddresses: string[]
+export interface UnblockEmailAddressesByHashedValueUseCaseInput {
+  hashedValues: string[]
 }
 
 /**
  * Application business logic for unblocking email addresses
  */
-export class UnblockEmailAddressesUseCase {
+export class UnblockEmailAddressesByHashedValueUseCase {
   private readonly log: Logger
   constructor(
     private readonly emailBlocklistService: EmailAddressBlocklistService,
@@ -36,10 +36,10 @@ export class UnblockEmailAddressesUseCase {
   }
 
   async execute({
-    unblockedAddresses,
-  }: UnblockEmailAddressesUseCaseInput): Promise<BlockEmailAddressesBulkUpdateResult> {
+    hashedValues,
+  }: UnblockEmailAddressesByHashedValueUseCaseInput): Promise<BlockEmailAddressesBulkUpdateResult> {
     this.log.debug(this.constructor.name, {
-      unblockedAddresses,
+      hashedValues,
     })
     // Blocklists are 'owned' by the user for now.
     const owner = await this.userClient.getSubject()
@@ -48,9 +48,9 @@ export class UnblockEmailAddressesUseCase {
       throw new NotSignedInError()
     }
 
-    return await this.emailBlocklistService.unblockEmailAddressesForOwner({
+    return await this.emailBlocklistService.unblockEmailAddressesByHashedValue({
       owner,
-      unblockedAddresses,
+      hashedValues,
     })
   }
 }

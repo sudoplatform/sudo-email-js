@@ -97,6 +97,8 @@ import { EmailAddressBlocklistService } from '../private/domain/entities/blockli
 import { DefaultEmailAddressBlocklistService } from '../private/data/blocklist/defaultEmailAddressBlocklistService'
 import { UnblockEmailAddressesUseCase } from '../private/domain/use-cases/blocklist/unblockEmailAddresses'
 import { GetEmailAddressBlocklistUseCase } from '../private/domain/use-cases/blocklist/getEmailAddressBlocklist'
+import { UnblockEmailAddressesByHashedValueUseCase } from '../private/domain/use-cases/blocklist/unblockEmailAddressesByHashedValue'
+import { UnsealedBlockedAddress } from './typings/blockedAddresses'
 
 /**
  * Pagination interface designed to be extended for list interfaces.
@@ -184,34 +186,30 @@ export interface CreateCustomEmailFolderInput {
  * Input for `SudoEmailClient.BlockEmailAddresses`
  *
  * @interface BlockEmailAddressesInput
- * @property {string} owner The owner for the address doing the blocking
  * @property {string[]} addresses List of addresses to be blocked in the [local-part]@[domain] format
  */
 export interface BlockEmailAddressesInput {
-  owner: string
-  addresses: string[]
+  addressesToBlock: string[]
 }
 
 /**
  * Input for `SudoEmailClient.UnblockEmailAddresses`
  *
  * @interface UnblockEmailAddressesInput
- * @property {string} owner The owner for the address doing the unblocking
  * @property {string[]} addresses List of addresses to be unblocked in the [local-part]@[domain] format
  */
 export interface UnblockEmailAddressesInput {
-  owner: string
   addresses: string[]
 }
 
 /**
- * Input for `SudoEmailClient.GetEmailAddressBlocklist`
+ * Input for `SudoEmailClient.UnblockEmailAddressesByHashedValue`
  *
- * @interface GetEmailAddressBlocklistInput
- * @property {string} owner The owner of the blocklist
+ * @interface UnblockEmailAddressesByHashedValueInput
+ * @property {string[]} hashedValues List of hashedValues to be unblocked
  */
-export interface GetEmailAddressBlocklistInput {
-  owner: string
+export interface UnblockEmailAddressesByHashedValueInput {
+  hashedValues: string[]
 }
 
 /**
@@ -570,14 +568,21 @@ export interface SudoEmailClient {
   ): Promise<BatchOperationResult<string>>
 
   /**
-   * Get email address blocklist for given owner
+   * Unblock email address(es) for the given owner
    *
-   * @param {GetEmailAddressBlocklistInput} input Parameters to get blocklist
-   * @return {Promise<string[]>} The list of unsealed blocked addresses
+   * @param {UnblockEmailAddressesByHashedValueInput} input Parameters to unblock email addresses
+   * @returns {Promise<BatchOperationResult<string>>} The results of the operation
    */
-  getEmailAddressBlocklist(
-    input: GetEmailAddressBlocklistInput,
-  ): Promise<string[]>
+  unblockEmailAddressesByHashedValue(
+    input: UnblockEmailAddressesByHashedValueInput,
+  ): Promise<BatchOperationResult<string>>
+
+  /**
+   * Get email address blocklist for logged in user
+   *
+   * @returns {Promise<UnsealedBlockedAddress[]>} The list of unsealed blocked addresses
+   */
+  getEmailAddressBlocklist(): Promise<UnsealedBlockedAddress[]>
 
   /**
    * Create a draft email message in RFC 6854 (supersedes RFC 822)(https://tools.ietf.org/html/rfc6854) format.
@@ -1167,10 +1172,10 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
 
     const useCase = new BlockEmailAddressesUseCase(
       this.emailAddressBlocklistService,
+      this.userClient,
     )
     const result = await useCase.execute({
-      owner: input.owner,
-      blockedAddresses: input.addresses,
+      blockedAddresses: input.addressesToBlock,
     })
 
     switch (result.status) {
@@ -1196,9 +1201,9 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
 
     const useCase = new UnblockEmailAddressesUseCase(
       this.emailAddressBlocklistService,
+      this.userClient,
     )
     const result = await useCase.execute({
-      owner: input.owner,
       unblockedAddresses: input.addresses,
     })
 
@@ -1218,14 +1223,40 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     }
   }
 
-  public async getEmailAddressBlocklist({
-    owner,
-  }: GetEmailAddressBlocklistInput): Promise<string[]> {
+  public async unblockEmailAddressesByHashedValue(
+    input: UnblockEmailAddressesByHashedValueInput,
+  ): Promise<BatchOperationResult<string>> {
+    this.log.debug(this.unblockEmailAddressesByHashedValue.name, { input })
+
+    const useCase = new UnblockEmailAddressesByHashedValueUseCase(
+      this.emailAddressBlocklistService,
+      this.userClient,
+    )
+    const result = await useCase.execute({ hashedValues: input.hashedValues })
+
+    switch (result.status) {
+      case UpdateEmailMessagesStatus.Success:
+        return { status: BatchOperationResultStatus.Success }
+      case UpdateEmailMessagesStatus.Failed:
+        return { status: BatchOperationResultStatus.Failure }
+      case UpdateEmailMessagesStatus.Partial:
+        return {
+          status: BatchOperationResultStatus.Partial,
+          failureValues: result.failedAddresses ?? [],
+          successValues: result.successAddresses ?? [],
+        }
+      default:
+        throw new ServiceError(`Invalid Update Status ${result.status}`)
+    }
+  }
+
+  public async getEmailAddressBlocklist(): Promise<UnsealedBlockedAddress[]> {
     const useCase = new GetEmailAddressBlocklistUseCase(
       this.emailAddressBlocklistService,
+      this.userClient,
     )
 
-    return await useCase.execute({ owner })
+    return await useCase.execute()
   }
 
   public async createDraftEmailMessage({

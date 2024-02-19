@@ -33,6 +33,7 @@ import { provisionEmailAddress } from '../util/provisionEmailAddress'
 describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
   jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
+  const ootoSimulatorAddress = 'ooto@simulator.amazonses.com'
 
   let instanceUnderTest: SudoEmailClient
   let profilesClient: SudoProfilesClient
@@ -60,15 +61,19 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
   })
 
   /**
-   * Send a generic/dummy email message (to self, from self).
+   * Send a generic/dummy email message.
    */
-  const sendEmailMessage = async (emailAddress?: EmailAddress) => {
-    if (!emailAddress) {
+  const sendEmailMessage = async (
+    senderEmailAddress?: EmailAddress,
+    toAddress: string = ootoSimulatorAddress,
+  ) => {
+    if (!senderEmailAddress) {
       fail('Cannot send email message (no provisioned email address)')
     }
+
     const messageDetails = {
-      from: [{ emailAddress: emailAddress.emailAddress }],
-      to: [{ emailAddress: emailAddress.emailAddress }],
+      from: [{ emailAddress: senderEmailAddress.emailAddress }],
+      to: [{ emailAddress: toAddress }],
       cc: [],
       bcc: [],
       replyTo: [],
@@ -79,7 +84,7 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
     const messageString = createEmailMessageRfc822String(messageDetails)
     await instanceUnderTest.sendEmailMessage({
       rfc822Data: str2ab(messageString),
-      senderEmailAddressId: emailAddress.id,
+      senderEmailAddressId: senderEmailAddress.id,
     })
   }
 

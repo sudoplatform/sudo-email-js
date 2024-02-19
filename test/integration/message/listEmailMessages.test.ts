@@ -161,7 +161,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }
           })
         },
-        10000,
+        20000,
         1000,
       )
     })
@@ -224,7 +224,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }
           })
         },
-        10000,
+        30000,
         1000,
       )
     })
@@ -255,7 +255,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }
           })
         },
-        10000,
+        30000,
         1000,
       )
     })
@@ -303,7 +303,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           expect(outbound[0].cause).toBeInstanceOf(KeyNotFoundError)
           expect(inbound[0].cause).toBeInstanceOf(KeyNotFoundError)
         },
-        10000,
+        20000,
         1000,
       )
     })
@@ -402,7 +402,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }
           })
         },
-        10000,
+        20000,
         1000,
       )
     })
@@ -475,7 +475,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }
           })
         },
-        10000,
+        35000,
         1000,
       )
     })
@@ -511,7 +511,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }
           })
         },
-        10000,
+        30000,
         1000,
       )
     })

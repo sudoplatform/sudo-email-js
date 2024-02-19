@@ -4,11 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EncryptionAlgorithm } from '@sudoplatform/sudo-common'
+import {
+  DecodeError,
+  DefaultLogger,
+  EncryptionAlgorithm,
+  KeyNotFoundError,
+  Logger,
+} from '@sudoplatform/sudo-common'
 import {
   BlockEmailAddressesBulkUpdateOutput,
   BlockEmailAddressesForOwnerInput,
   EmailAddressBlocklistService,
+  UnblockEmailAddressesByHashedValueInput,
   UnblockEmailAddressesForOwnerInput,
 } from '../../domain/entities/blocklist/emailAddressBlocklistService'
 import { ApiClient } from '../common/apiClient'
@@ -23,22 +30,26 @@ import EmailAddressParser from '../../domain/entities/common/mechanisms/emailAdd
 import { DefaultEmailAddressParser } from '../common/mechanisms/defaultEmailAddressParser'
 import { InvalidArgumentError, MissingKeyError } from '../../../public'
 import { generateHash } from '../../util/stringUtils'
+import { UnsealedBlockedAddress } from '../../../public/typings/blockedAddresses'
 
 export class DefaultEmailAddressBlocklistService
   implements EmailAddressBlocklistService
 {
+  private readonly log: Logger
   private readonly parser: EmailAddressParser
   constructor(
     private readonly appSync: ApiClient,
     private readonly deviceKeyWorker: DeviceKeyWorker,
   ) {
+    this.log = new DefaultLogger(this.constructor.name)
     this.parser = new DefaultEmailAddressParser()
   }
 
   async blockEmailAddressesForOwner(
     input: BlockEmailAddressesForOwnerInput,
   ): Promise<BlockEmailAddressesBulkUpdateOutput> {
-    const { blockedAddresses: cleartextBlockedAddresses } = input
+    this.log.debug('blockEmailAddressesForOwner init', { input })
+    const { blockedAddresses: cleartextBlockedAddresses, owner } = input
     if (cleartextBlockedAddresses.length === 0) {
       throw new InvalidArgumentError(
         'At least one valid email address must be passed',
@@ -70,7 +81,7 @@ export class DefaultEmailAddressBlocklistService
             keyType: KeyType.SymmetricKey,
           }),
         )
-        hashedBlockedValues.push(generateHash(`${input.owner}|${address}`))
+        hashedBlockedValues.push(generateHash(`${owner}|${address}`))
       })
 
     const sealedBlockedEmailAddresses = await Promise.all(
@@ -78,7 +89,7 @@ export class DefaultEmailAddressBlocklistService
     )
 
     const blockEmailAddressesInput: BlockEmailAddressesInput = {
-      owner: input.owner,
+      owner,
       blockedAddresses: input.blockedAddresses.map((_, index) => ({
         hashAlgorithm: BlockedAddressHashAlgorithm.Sha256,
         hashedBlockedValue: hashedBlockedValues[index],
@@ -120,6 +131,7 @@ export class DefaultEmailAddressBlocklistService
   async unblockEmailAddressesForOwner(
     input: UnblockEmailAddressesForOwnerInput,
   ): Promise<BlockEmailAddressesBulkUpdateOutput> {
+    this.log.debug('unblockEmailAddressesForOwner init', { input })
     const { unblockedAddresses: cleartextUnblockedAddresses, owner } = input
     if (cleartextUnblockedAddresses.length === 0) {
       throw new InvalidArgumentError(
@@ -173,27 +185,98 @@ export class DefaultEmailAddressBlocklistService
     }
   }
 
-  async getEmailAddressBlocklistForOwner(input: {
-    owner: string
-  }): Promise<string[]> {
-    const response = await this.appSync.getEmailAddressBlocklist(input.owner)
+  async unblockEmailAddressesByHashedValue(
+    input: UnblockEmailAddressesByHashedValueInput,
+  ): Promise<BlockEmailAddressesBulkUpdateOutput> {
+    this.log.debug('unblockEmailAddressesByHashedValue init', { input })
+    const { hashedValues, owner } = input
+    if (hashedValues.length === 0) {
+      throw new InvalidArgumentError('At least one hashed value must be passed')
+    }
 
-    if (response.sealedBlockedAddresses.length === 0) {
+    const unblockEmailAddressesInput: UnblockEmailAddressesInput = {
+      owner,
+      unblockedAddresses: [...new Set(hashedValues)],
+    }
+
+    const result = await this.appSync.unblockEmailAddresses(
+      unblockEmailAddressesInput,
+    )
+
+    if (
+      result.status === UpdateEmailMessagesStatus.Failed ||
+      result.status === UpdateEmailMessagesStatus.Success
+    ) {
+      return { status: result.status }
+    }
+
+    return {
+      status: result.status,
+      failedAddresses: result.failedAddresses ?? [],
+      successAddresses: result.successAddresses ?? [],
+    }
+  }
+
+  async getEmailAddressBlocklistForOwner(
+    owner: string,
+  ): Promise<UnsealedBlockedAddress[]> {
+    this.log.debug('getEmailAddressBlocklistForOwner init', { owner })
+    const response = await this.appSync.getEmailAddressBlocklist(owner)
+
+    if (response.blockedAddresses.length === 0) {
       return []
     }
 
-    const unsealedBlockedEmailAddressesPromises: Promise<string>[] = []
+    let unsealedBlockedEmailAddressesPromises: UnsealedBlockedAddress[] = []
 
-    response.sealedBlockedAddresses.forEach((sealedAddress) => {
-      unsealedBlockedEmailAddressesPromises.push(
-        this.deviceKeyWorker.unsealString({
-          encrypted: sealedAddress.base64EncodedSealedData,
-          keyId: sealedAddress.keyId,
-          keyType: KeyType.SymmetricKey,
-        }),
-      )
-    })
+    unsealedBlockedEmailAddressesPromises = await Promise.all(
+      response.blockedAddresses.map(
+        async (sealed): Promise<UnsealedBlockedAddress> => {
+          if (
+            await this.deviceKeyWorker.keyExists(
+              sealed.sealedValue.keyId,
+              KeyType.SymmetricKey,
+            )
+          ) {
+            let unsealedAddress = ''
+            try {
+              unsealedAddress = await this.deviceKeyWorker.unsealString({
+                encrypted: sealed.sealedValue.base64EncodedSealedData,
+                keyType: KeyType.SymmetricKey,
+                keyId: sealed.sealedValue.keyId,
+              })
+            } catch (e) {
+              this.log.error('Error decoding blocked address', { e })
+              return {
+                hashedBlockedValue: sealed.hashedBlockedValue,
+                status: {
+                  type: 'Failed',
+                  cause: new DecodeError(),
+                },
+                address: '',
+              }
+            }
+            return {
+              hashedBlockedValue: sealed.hashedBlockedValue,
+              status: {
+                type: 'Completed',
+              },
+              address: unsealedAddress,
+            }
+          } else {
+            return {
+              hashedBlockedValue: sealed.hashedBlockedValue,
+              status: {
+                type: 'Failed',
+                cause: new KeyNotFoundError(),
+              },
+              address: '',
+            }
+          }
+        },
+      ),
+    )
 
-    return await Promise.all(unsealedBlockedEmailAddressesPromises)
+    return unsealedBlockedEmailAddressesPromises
   }
 }

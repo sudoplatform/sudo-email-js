@@ -20,6 +20,7 @@ import {
   BlockEmailAddressesBulkUpdateOutput,
   BlockEmailAddressesForOwnerInput,
   EmailAddressBlocklistService,
+  UnblockEmailAddressesByHashedValueInput,
   UnblockEmailAddressesForOwnerInput,
 } from '../../../../../src/private/domain/entities/blocklist/emailAddressBlocklistService'
 import { GraphQLDataFactory } from '../../../data-factory/graphQL'
@@ -30,12 +31,14 @@ import {
   UnblockEmailAddressesInput,
 } from '../../../../../src/gen/graphqlTypes'
 import { InvalidArgumentError } from '../../../../../src/public'
+import { DecodeError, KeyNotFoundError } from '@sudoplatform/sudo-common'
 
 describe('DefaultEmailAddressBlocklist Test Suite', () => {
   const mockAppSync = mock<ApiClient>()
   const mockDeviceKeyWorker = mock<DeviceKeyWorker>()
   let instanceUnderTest: EmailAddressBlocklistService
   const mockOwner = 'mockOwner'
+  const mockUnsealedAddress = 'spammyMcSpamface@spambot.com'
 
   beforeEach(() => {
     reset(mockAppSync)
@@ -55,9 +58,16 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       GraphQLDataFactory.getEmailAddressBlocklistResult,
     )
     when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve('keyId')
+    when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
+      true,
+    )
+    when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
+      mockUnsealedAddress,
+    )
   })
 
   describe('blockEmailAddresses', () => {
+    const mockOwner = 'mockOwner'
     it('call appSync correctly', async () => {
       const input: BlockEmailAddressesForOwnerInput = {
         owner: mockOwner,
@@ -66,7 +76,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       await instanceUnderTest.blockEmailAddressesForOwner(input)
       verify(mockAppSync.blockEmailAddresses(anything())).once()
       const [inputArgs] = capture(mockAppSync.blockEmailAddresses).first()
-      expect(inputArgs.owner).toEqual(input.owner)
+      expect(inputArgs.owner).toEqual(mockOwner)
       expect(inputArgs.blockedAddresses).toHaveLength(
         input.blockedAddresses.length,
       )
@@ -188,6 +198,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
   })
 
   describe('unblockEmailAddresses', () => {
+    const mockOwner = 'mockOwner'
     it('call appSync correctly', async () => {
       const input: UnblockEmailAddressesForOwnerInput = {
         owner: mockOwner,
@@ -196,7 +207,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       await instanceUnderTest.unblockEmailAddressesForOwner(input)
       verify(mockAppSync.unblockEmailAddresses(anything())).once()
       const [inputArgs] = capture(mockAppSync.unblockEmailAddresses).first()
-      expect(inputArgs.owner).toEqual(input.owner)
+      expect(inputArgs.owner).toEqual(mockOwner)
       expect(inputArgs.unblockedAddresses).toHaveLength(
         input.unblockedAddresses.length,
       )
@@ -315,34 +326,232 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
     })
   })
 
+  describe('unblockEmailAddressesByHashedValue', () => {
+    const mockOwner = 'mockOwner'
+    it('call appSync correctly', async () => {
+      const input: UnblockEmailAddressesByHashedValueInput = {
+        owner: mockOwner,
+        hashedValues: [`dummyHash-${v4()}`],
+      }
+      await instanceUnderTest.unblockEmailAddressesByHashedValue(input)
+      verify(mockAppSync.unblockEmailAddresses(anything())).once()
+      const [inputArgs] = capture(mockAppSync.unblockEmailAddresses).first()
+      expect(inputArgs.owner).toEqual(mockOwner)
+      expect(inputArgs.unblockedAddresses).toHaveLength(
+        input.hashedValues.length,
+      )
+    })
+
+    it('throws error if passed an empty array', async () => {
+      const input: UnblockEmailAddressesByHashedValueInput = {
+        owner: mockOwner,
+        hashedValues: [],
+      }
+      await expect(
+        instanceUnderTest.unblockEmailAddressesByHashedValue(input),
+      ).rejects.toThrow(InvalidArgumentError)
+    })
+
+    it('unblocks a single hashedValue', async () => {
+      const hashedValue = `hashedValue-${v4()}`
+      const input: UnblockEmailAddressesByHashedValueInput = {
+        owner: mockOwner,
+        hashedValues: [hashedValue],
+      }
+
+      const result = await instanceUnderTest.unblockEmailAddressesByHashedValue(
+        input,
+      )
+      expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
+        status: UpdateEmailMessagesStatus.Success,
+      })
+      verify(mockAppSync.unblockEmailAddresses(anything())).once()
+    })
+
+    it('unblocks multiple hashedValues at once', async () => {
+      const hashedValues = [
+        `hashedValue-${v4()}`,
+        `hashedValue-${v4()}`,
+        `hashedValue-${v4()}`,
+      ]
+      const input: UnblockEmailAddressesByHashedValueInput = {
+        owner: mockOwner,
+        hashedValues,
+      }
+
+      const result = await instanceUnderTest.unblockEmailAddressesByHashedValue(
+        input,
+      )
+      expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
+        status: UpdateEmailMessagesStatus.Success,
+      })
+      verify(mockAppSync.unblockEmailAddresses(anything())).once()
+    })
+
+    it('returns failed status requests correctly', async () => {
+      when(mockAppSync.unblockEmailAddresses(anything())).thenResolve({
+        status: UpdateEmailMessagesStatus.Failed,
+      })
+      const hashedValues = [
+        `hashedValue-${v4()}`,
+        `hashedValue-${v4()}`,
+        `hashedValue-${v4()}`,
+      ]
+      const input: UnblockEmailAddressesByHashedValueInput = {
+        owner: mockOwner,
+        hashedValues,
+      }
+      const result = await instanceUnderTest.unblockEmailAddressesByHashedValue(
+        input,
+      )
+      expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
+        status: UpdateEmailMessagesStatus.Failed,
+      })
+      verify(mockAppSync.unblockEmailAddresses(anything())).once()
+    })
+
+    it('returns partial status request correctly', async () => {
+      when(mockAppSync.unblockEmailAddresses(anything())).thenCall(
+        (input: UnblockEmailAddressesInput) => {
+          const [first, ...rest] = input.unblockedAddresses
+          return Promise.resolve({
+            status: UpdateEmailMessagesStatus.Partial,
+            failedAddresses: [first],
+            successAddresses: rest,
+          })
+        },
+      )
+      const hashedValues = [
+        `hashedValue-${v4()}`,
+        `hashedValue-${v4()}`,
+        `hashedValue-${v4()}`,
+      ]
+      const input: UnblockEmailAddressesByHashedValueInput = {
+        owner: mockOwner,
+        hashedValues,
+      }
+      const result = await instanceUnderTest.unblockEmailAddressesByHashedValue(
+        input,
+      )
+      expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
+        status: UpdateEmailMessagesStatus.Partial,
+        failedAddresses: [hashedValues[0]],
+        successAddresses: [hashedValues[1], hashedValues[2]],
+      })
+      verify(mockAppSync.unblockEmailAddresses(anything())).once()
+    })
+  })
+
   describe('getEmailAddressBlocklistForOwner', () => {
-    it('Returns and empty list of not blocked addresses are found', async () => {
+    it('Returns an empty list of not blocked addresses are found', async () => {
       when(mockAppSync.getEmailAddressBlocklist(anything())).thenResolve({
-        sealedBlockedAddresses: [],
+        blockedAddresses: [],
       })
 
-      const result = await instanceUnderTest.getEmailAddressBlocklistForOwner({
-        owner: mockOwner,
-      })
+      const result = await instanceUnderTest.getEmailAddressBlocklistForOwner(
+        mockOwner,
+      )
 
       expect(result).toHaveLength(0)
     })
 
     it('Returns the unsealed list of addresses', async () => {
-      const result = await instanceUnderTest.getEmailAddressBlocklistForOwner({
-        owner: mockOwner,
-      })
+      const result = await instanceUnderTest.getEmailAddressBlocklistForOwner(
+        mockOwner,
+      )
 
       verify(mockAppSync.getEmailAddressBlocklist(anything())).once()
+      verify(mockDeviceKeyWorker.keyExists(anything(), anything())).times(
+        GraphQLDataFactory.getEmailAddressBlocklistResult.blockedAddresses
+          .length,
+      )
       verify(mockDeviceKeyWorker.unsealString(anything())).times(
-        GraphQLDataFactory.getEmailAddressBlocklistResult.sealedBlockedAddresses
+        GraphQLDataFactory.getEmailAddressBlocklistResult.blockedAddresses
           .length,
       )
 
       expect(result).toHaveLength(
-        GraphQLDataFactory.getEmailAddressBlocklistResult.sealedBlockedAddresses
+        GraphQLDataFactory.getEmailAddressBlocklistResult.blockedAddresses
           .length,
       )
+      result.forEach((value) => {
+        expect(value.address).toEqual(mockUnsealedAddress)
+        expect(value.hashedBlockedValue).toEqual('hashedValue')
+        expect(value.status).toEqual({
+          type: 'Completed',
+        })
+      })
+    })
+
+    it('Returns entity with error if key not found', async () => {
+      when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
+        false,
+        true,
+      ) // First will be false, second true
+      const result = await instanceUnderTest.getEmailAddressBlocklistForOwner(
+        mockOwner,
+      )
+
+      verify(mockAppSync.getEmailAddressBlocklist(anything())).once()
+      verify(mockDeviceKeyWorker.keyExists(anything(), anything())).times(
+        GraphQLDataFactory.getEmailAddressBlocklistResult.blockedAddresses
+          .length,
+      )
+      verify(mockDeviceKeyWorker.unsealString(anything())).times(
+        GraphQLDataFactory.getEmailAddressBlocklistResult.blockedAddresses
+          .length - 1, // won't get called on first pass
+      )
+
+      expect(result).toHaveLength(
+        GraphQLDataFactory.getEmailAddressBlocklistResult.blockedAddresses
+          .length,
+      )
+      expect(result[0].address).toEqual('')
+      expect(result[0].status).toEqual({
+        type: 'Failed',
+        cause: new KeyNotFoundError(),
+      })
+      expect(result[0].hashedBlockedValue).toEqual('hashedValue')
+      expect(result[1].address).toEqual(mockUnsealedAddress)
+      expect(result[1].hashedBlockedValue).toEqual('hashedValue')
+      expect(result[1].status).toEqual({
+        type: 'Completed',
+      })
+    })
+
+    it('Returns entity with error if decoding failed', async () => {
+      when(mockDeviceKeyWorker.unsealString(anything()))
+        .thenThrow(new DecodeError())
+        .thenResolve(mockUnsealedAddress)
+      const result = await instanceUnderTest.getEmailAddressBlocklistForOwner(
+        mockOwner,
+      )
+
+      verify(mockAppSync.getEmailAddressBlocklist(anything())).once()
+      verify(mockDeviceKeyWorker.keyExists(anything(), anything())).times(
+        GraphQLDataFactory.getEmailAddressBlocklistResult.blockedAddresses
+          .length,
+      )
+      verify(mockDeviceKeyWorker.unsealString(anything())).times(
+        GraphQLDataFactory.getEmailAddressBlocklistResult.blockedAddresses
+          .length,
+      )
+
+      expect(result).toHaveLength(
+        GraphQLDataFactory.getEmailAddressBlocklistResult.blockedAddresses
+          .length,
+      )
+      expect(result[0].address).toEqual('')
+      expect(result[0].status).toEqual({
+        type: 'Failed',
+        cause: new DecodeError(),
+      })
+      expect(result[0].hashedBlockedValue).toEqual('hashedValue')
+      expect(result[1].address).toEqual(mockUnsealedAddress)
+      expect(result[1].hashedBlockedValue).toEqual('hashedValue')
+      expect(result[1].status).toEqual({
+        type: 'Completed',
+      })
     })
   })
 })

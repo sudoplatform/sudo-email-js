@@ -18,6 +18,7 @@ import {
   EmailMessageDirection,
   EmailMessageState,
   GetEmailAddressBlocklistResponse,
+  GetEmailAddressBlocklistResponseFragment,
   KeyFormat,
   Owner,
   ProvisionEmailAddressPublicKeyInput,
@@ -134,20 +135,26 @@ export class GraphQLDataFactory {
       status: UpdateEmailMessagesStatus.Success,
     }
 
-  static readonly getEmailAddressBlocklistResult: GetEmailAddressBlocklistResponse =
+  static readonly getEmailAddressBlocklistResult: GetEmailAddressBlocklistResponseFragment =
     {
-      sealedBlockedAddresses: [
+      blockedAddresses: [
         {
-          algorithm: 'sealingAlgorithm',
-          base64EncodedSealedData: 'sealedData1',
-          keyId: 'keyId',
-          plainTextType: ' string',
+          hashedBlockedValue: 'hashedValue',
+          sealedValue: {
+            algorithm: 'sealingAlgorithm',
+            base64EncodedSealedData: 'sealedData1',
+            keyId: 'keyId',
+            plainTextType: ' string',
+          },
         },
         {
-          algorithm: 'sealingAlgorithm',
-          base64EncodedSealedData: 'sealedData2',
-          keyId: 'keyId',
-          plainTextType: ' string',
+          hashedBlockedValue: 'hashedValue',
+          sealedValue: {
+            algorithm: 'sealingAlgorithm',
+            base64EncodedSealedData: 'sealedData2',
+            keyId: 'keyId',
+            plainTextType: ' string',
+          },
         },
       ],
     }

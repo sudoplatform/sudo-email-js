@@ -19,3 +19,12 @@ fragment BlockAddressesResult on BlockEmailAddressesBulkUpdateResult {
   failedAddresses
   successAddresses
 }
+
+fragment GetEmailAddressBlocklistResponse on GetEmailAddressBlocklistResponse {
+  blockedAddresses {
+    sealedValue {
+      ...SealedAttribute
+    }
+    hashedBlockedValue
+  }
+}

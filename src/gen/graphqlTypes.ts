@@ -199,7 +199,7 @@ export type GetEmailAddressBlocklistInput = {
 
 export type GetEmailAddressBlocklistResponse = {
   __typename?: 'GetEmailAddressBlocklistResponse'
-  sealedBlockedAddresses: Array<SealedAttribute>
+  blockedAddresses: Array<BlockedEmailAddress>
 }
 
 export enum KeyFormat {
@@ -549,6 +549,21 @@ export type BlockAddressesResultFragment = {
   status: UpdateEmailMessagesStatus
   failedAddresses?: Array<string> | null
   successAddresses?: Array<string> | null
+}
+
+export type GetEmailAddressBlocklistResponseFragment = {
+  __typename?: 'GetEmailAddressBlocklistResponse'
+  blockedAddresses: Array<{
+    __typename?: 'BlockedEmailAddress'
+    hashedBlockedValue: string
+    sealedValue: {
+      __typename?: 'SealedAttribute'
+      algorithm: string
+      keyId: string
+      plainTextType: string
+      base64EncodedSealedData: string
+    }
+  }>
 }
 
 export type EmailAddressWithoutFoldersFragment = {
@@ -1369,12 +1384,16 @@ export type GetEmailAddressBlocklistQuery = {
   __typename?: 'Query'
   getEmailAddressBlocklist: {
     __typename?: 'GetEmailAddressBlocklistResponse'
-    sealedBlockedAddresses: Array<{
-      __typename?: 'SealedAttribute'
-      algorithm: string
-      keyId: string
-      plainTextType: string
-      base64EncodedSealedData: string
+    blockedAddresses: Array<{
+      __typename?: 'BlockedEmailAddress'
+      hashedBlockedValue: string
+      sealedValue: {
+        __typename?: 'SealedAttribute'
+        algorithm: string
+        keyId: string
+        plainTextType: string
+        base64EncodedSealedData: string
+      }
     }>
   }
 }
@@ -1562,6 +1581,70 @@ export const BlockAddressesResultFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<BlockAddressesResultFragment, unknown>
+export const GetEmailAddressBlocklistResponseFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'GetEmailAddressBlocklistResponse' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'GetEmailAddressBlocklistResponse' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'blockedAddresses' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'sealedValue' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'SealedAttribute' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'hashedBlockedValue' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SealedAttribute' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SealedAttribute' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainTextType' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'base64EncodedSealedData' },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetEmailAddressBlocklistResponseFragment, unknown>
 export const EmailAddressWithoutFoldersFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -4787,16 +4870,10 @@ export const GetEmailAddressBlocklistDocument = {
               kind: 'SelectionSet',
               selections: [
                 {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'sealedBlockedAddresses' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: { kind: 'Name', value: 'SealedAttribute' },
-                      },
-                    ],
+                  kind: 'FragmentSpread',
+                  name: {
+                    kind: 'Name',
+                    value: 'GetEmailAddressBlocklistResponse',
                   },
                 },
               ],
@@ -4821,6 +4898,45 @@ export const GetEmailAddressBlocklistDocument = {
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'base64EncodedSealedData' },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'GetEmailAddressBlocklistResponse' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'GetEmailAddressBlocklistResponse' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'blockedAddresses' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'sealedValue' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'SealedAttribute' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'hashedBlockedValue' },
+                },
+              ],
+            },
           },
         ],
       },

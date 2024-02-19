@@ -6,36 +6,35 @@
 
 import { anything, instance, mock, reset, when } from 'ts-mockito'
 import { DefaultEmailAddressBlocklistService } from '../../../../../../src/private/data/blocklist/defaultEmailAddressBlocklistService'
-import { UnblockEmailAddressesUseCase } from '../../../../../../src/private/domain/use-cases/blocklist/unblockEmailAddresses'
+import { UnblockEmailAddressesByHashedValueUseCase } from '../../../../../../src/private/domain/use-cases/blocklist/unblockEmailAddressesByHashedValue'
 import { v4 } from 'uuid'
 import { UpdateEmailMessagesStatus } from '../../../../../../src/private/domain/entities/message/updateEmailMessagesStatus'
 import {
   BlockEmailAddressesBulkUpdateOutput,
-  UnblockEmailAddressesForOwnerInput,
+  UnblockEmailAddressesByHashedValueInput,
 } from '../../../../../../src/private/domain/entities/blocklist/emailAddressBlocklistService'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { NotSignedInError } from '@sudoplatform/sudo-common'
 
-describe('UnblockEmailAddressesUseCase Test Suite', () => {
+describe('UnblockEmailAddressesByHashedValueUseCase Test Suite', () => {
   const mockOwner = 'mockOwner'
   const mockBlockedEmailAddressService =
     mock<DefaultEmailAddressBlocklistService>()
   const mockUserClient = mock<SudoUserClient>()
 
-  let instanceUnderTest: UnblockEmailAddressesUseCase
-  const emailAddresses = [
-    `spammyMcSpamface-${v4()}@spambot.com`,
-    `spammyMcSpamface-${v4()}@spambot.com`,
-  ]
+  let instanceUnderTest: UnblockEmailAddressesByHashedValueUseCase
+  const hashedValues = [`hashedValue-${v4()}`, `hashedValue-${v4()}`]
 
   beforeEach(() => {
     reset(mockBlockedEmailAddressService)
     when(
-      mockBlockedEmailAddressService.unblockEmailAddressesForOwner(anything()),
+      mockBlockedEmailAddressService.unblockEmailAddressesByHashedValue(
+        anything(),
+      ),
     ).thenResolve({ status: UpdateEmailMessagesStatus.Success })
     when(mockUserClient.getSubject()).thenResolve(mockOwner)
 
-    instanceUnderTest = new UnblockEmailAddressesUseCase(
+    instanceUnderTest = new UnblockEmailAddressesByHashedValueUseCase(
       instance(mockBlockedEmailAddressService),
       instance(mockUserClient),
     )
@@ -44,7 +43,7 @@ describe('UnblockEmailAddressesUseCase Test Suite', () => {
   describe('execute', () => {
     it('returns successful requests correctly', async () => {
       const result = await instanceUnderTest.execute({
-        unblockedAddresses: emailAddresses,
+        hashedValues,
       })
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
         status: UpdateEmailMessagesStatus.Success,
@@ -53,12 +52,12 @@ describe('UnblockEmailAddressesUseCase Test Suite', () => {
 
     it('returns failed requests correctly', async () => {
       when(
-        mockBlockedEmailAddressService.unblockEmailAddressesForOwner(
+        mockBlockedEmailAddressService.unblockEmailAddressesByHashedValue(
           anything(),
         ),
       ).thenResolve({ status: UpdateEmailMessagesStatus.Failed })
       const result = await instanceUnderTest.execute({
-        unblockedAddresses: emailAddresses,
+        hashedValues,
       })
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
         status: UpdateEmailMessagesStatus.Failed,
@@ -67,11 +66,11 @@ describe('UnblockEmailAddressesUseCase Test Suite', () => {
 
     it('returns partial requests correctly', async () => {
       when(
-        mockBlockedEmailAddressService.unblockEmailAddressesForOwner(
+        mockBlockedEmailAddressService.unblockEmailAddressesByHashedValue(
           anything(),
         ),
-      ).thenCall((input: UnblockEmailAddressesForOwnerInput) => {
-        const [first, ...rest] = input.unblockedAddresses
+      ).thenCall((input: UnblockEmailAddressesByHashedValueInput) => {
+        const [first, ...rest] = input.hashedValues
         return Promise.resolve({
           status: UpdateEmailMessagesStatus.Partial,
           failedAddresses: [first],
@@ -79,19 +78,19 @@ describe('UnblockEmailAddressesUseCase Test Suite', () => {
         })
       })
       const result = await instanceUnderTest.execute({
-        unblockedAddresses: emailAddresses,
+        hashedValues,
       })
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
         status: UpdateEmailMessagesStatus.Partial,
-        failedAddresses: [emailAddresses[0]],
-        successAddresses: [emailAddresses[1]],
+        failedAddresses: [hashedValues[0]],
+        successAddresses: [hashedValues[1]],
       })
     })
     it('throws NotSignedInError if user is not signed in', async () => {
       when(mockUserClient.getSubject()).thenResolve(undefined)
       await expect(
         instanceUnderTest.execute({
-          unblockedAddresses: emailAddresses,
+          hashedValues,
         }),
       ).rejects.toThrow(NotSignedInError)
     })

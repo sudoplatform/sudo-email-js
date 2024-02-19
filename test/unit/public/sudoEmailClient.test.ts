@@ -68,7 +68,11 @@ import { SortOrder } from '../../../src/public/typings/sortOrder'
 import { str2ab } from '../../util/buffer'
 import { APIDataFactory } from '../data-factory/api'
 import { EntityDataFactory } from '../data-factory/entity'
-import { EmailMessage, InvalidArgumentError } from '../../../src'
+import {
+  EmailMessage,
+  InvalidArgumentError,
+  UnsealedBlockedAddress,
+} from '../../../src'
 import { CreateCustomEmailFolderUseCase } from '../../../src/private/domain/use-cases/folder/createCustomEmailFolderUseCase'
 import { LookupEmailAddressesPublicInfoUseCase } from '../../../src/private/domain/use-cases/account/lookupEmailAddressesPublicInfoUseCase'
 import { EmailAddressPublicInfo } from '../../../src/public/typings/emailAddressPublicInfo'
@@ -82,6 +86,10 @@ import {
   UnblockEmailAddressesUseCaseInput,
 } from '../../../src/private/domain/use-cases/blocklist/unblockEmailAddresses'
 import { GetEmailAddressBlocklistUseCase } from '../../../src/private/domain/use-cases/blocklist/getEmailAddressBlocklist'
+import {
+  UnblockEmailAddressesByHashedValueUseCase,
+  UnblockEmailAddressesByHashedValueUseCaseInput,
+} from '../../../src/private/domain/use-cases/blocklist/unblockEmailAddressesByHashedValue'
 
 // Constructor mocks
 
@@ -317,6 +325,13 @@ const JestMockUnblockEmailAddressesUseCase =
     typeof UnblockEmailAddressesUseCase
   >
 jest.mock(
+  '../../../src/private/domain/use-cases/blocklist/unblockEmailAddressesByHashedValue',
+)
+const JestMockUnblockEmailAddressesByHashedValueUseCase =
+  UnblockEmailAddressesByHashedValueUseCase as jest.MockedClass<
+    typeof UnblockEmailAddressesByHashedValueUseCase
+  >
+jest.mock(
   '../../../src/private/domain/use-cases/blocklist/unblockEmailAddresses',
 )
 const JestMockGetEmailAddressBlocklistUseCase =
@@ -388,6 +403,8 @@ describe('SudoEmailClient Test Suite', () => {
     mock<UnsubscribeFromEmailMessagesUseCase>()
   const mockBlockEmailAddressesUseCase = mock<BlockEmailAddressesUseCase>()
   const mockUnblockEmailAddressesUseCase = mock<UnblockEmailAddressesUseCase>()
+  const mockUnblockEmailAddressesByHashedValueUseCase =
+    mock<UnblockEmailAddressesByHashedValueUseCase>()
   const mockGetEmailAddressBlocklistUseCase =
     mock<GetEmailAddressBlocklistUseCase>()
 
@@ -451,6 +468,7 @@ describe('SudoEmailClient Test Suite', () => {
     reset(mockGetConfigurationDataUseCase)
     reset(mockBlockEmailAddressesUseCase)
     reset(mockUnblockEmailAddressesUseCase)
+    reset(mockUnblockEmailAddressesByHashedValueUseCase)
     reset(mockGetEmailAddressBlocklistUseCase)
 
     JestMockDefaultEmailAccountService.mockClear()
@@ -491,6 +509,7 @@ describe('SudoEmailClient Test Suite', () => {
     JestMockUnsubscribeFromEmailMessagesUseCase.mockClear()
     JestMockBlockEmailAddressesUseCase.mockClear()
     JestMockUnblockEmailAddressesUseCase.mockClear()
+    JestMockUnblockEmailAddressesByHashedValueUseCase.mockClear()
     JestMockGetEmailAddressBlocklistUseCase.mockClear()
 
     JestMockDefaultConfigurationDataService.mockImplementation(() =>
@@ -595,6 +614,9 @@ describe('SudoEmailClient Test Suite', () => {
     )
     JestMockUnblockEmailAddressesUseCase.mockImplementation(() =>
       instance(mockUnblockEmailAddressesUseCase),
+    )
+    JestMockUnblockEmailAddressesByHashedValueUseCase.mockImplementation(() =>
+      instance(mockUnblockEmailAddressesByHashedValueUseCase),
     )
     JestMockGetEmailAddressBlocklistUseCase.mockImplementation(() =>
       instance(mockGetEmailAddressBlocklistUseCase),
@@ -725,7 +747,6 @@ describe('SudoEmailClient Test Suite', () => {
   })
 
   describe('blockEmailAddresses', () => {
-    const mockOwner = 'mockOwner'
     beforeEach(() => {
       when(mockBlockEmailAddressesUseCase.execute(anything())).thenResolve({
         status: UpdateEmailMessagesStatus.Success,
@@ -734,8 +755,7 @@ describe('SudoEmailClient Test Suite', () => {
 
     it('generates use case', async () => {
       await instanceUnderTest.blockEmailAddresses({
-        owner: mockOwner,
-        addresses: [`spammyMcSpamface${v4()}@spambot.com`],
+        addressesToBlock: [`spammyMcSpamface${v4()}@spambot.com`],
       })
       expect(JestMockBlockEmailAddressesUseCase).toHaveBeenCalledTimes(1)
     })
@@ -747,13 +767,11 @@ describe('SudoEmailClient Test Suite', () => {
         `spammyMcSpamface${v4()}@spambot.com`,
       ]
       await instanceUnderTest.blockEmailAddresses({
-        owner: mockOwner,
-        addresses: addressesToBlock,
+        addressesToBlock,
       })
       verify(mockBlockEmailAddressesUseCase.execute(anything())).once()
       const [args] = capture(mockBlockEmailAddressesUseCase.execute).first()
       expect(args).toEqual({
-        owner: mockOwner,
         blockedAddresses: addressesToBlock,
       })
     })
@@ -766,8 +784,7 @@ describe('SudoEmailClient Test Suite', () => {
       ]
       await expect(
         instanceUnderTest.blockEmailAddresses({
-          owner: mockOwner,
-          addresses: addressesToBlock,
+          addressesToBlock,
         }),
       ).resolves.toEqual({ status: BatchOperationResultStatus.Success })
     })
@@ -783,8 +800,7 @@ describe('SudoEmailClient Test Suite', () => {
       ]
       await expect(
         instanceUnderTest.blockEmailAddresses({
-          owner: mockOwner,
-          addresses: addressesToBlock,
+          addressesToBlock,
         }),
       ).resolves.toEqual({ status: BatchOperationResultStatus.Failure })
     })
@@ -807,8 +823,7 @@ describe('SudoEmailClient Test Suite', () => {
       ]
       await expect(
         instanceUnderTest.blockEmailAddresses({
-          owner: mockOwner,
-          addresses: addressesToBlock,
+          addressesToBlock,
         }),
       ).resolves.toEqual({
         status: BatchOperationResultStatus.Partial,
@@ -819,7 +834,6 @@ describe('SudoEmailClient Test Suite', () => {
   })
 
   describe('unblockEmailAddresses', () => {
-    const mockOwner = 'mockOwner'
     beforeEach(() => {
       when(mockUnblockEmailAddressesUseCase.execute(anything())).thenResolve({
         status: UpdateEmailMessagesStatus.Success,
@@ -828,7 +842,6 @@ describe('SudoEmailClient Test Suite', () => {
 
     it('generates use case', async () => {
       await instanceUnderTest.unblockEmailAddresses({
-        owner: mockOwner,
         addresses: [`spammyMcSpamface${v4()}@spambot.com`],
       })
       expect(JestMockUnblockEmailAddressesUseCase).toHaveBeenCalledTimes(1)
@@ -841,13 +854,11 @@ describe('SudoEmailClient Test Suite', () => {
         `spammyMcSpamface${v4()}@spambot.com`,
       ]
       await instanceUnderTest.unblockEmailAddresses({
-        owner: mockOwner,
         addresses: addressesToBlock,
       })
       verify(mockUnblockEmailAddressesUseCase.execute(anything())).once()
       const [args] = capture(mockUnblockEmailAddressesUseCase.execute).first()
       expect(args).toEqual({
-        owner: mockOwner,
         unblockedAddresses: addressesToBlock,
       })
     })
@@ -860,7 +871,6 @@ describe('SudoEmailClient Test Suite', () => {
       ]
       await expect(
         instanceUnderTest.unblockEmailAddresses({
-          owner: mockOwner,
           addresses: addressesToBlock,
         }),
       ).resolves.toEqual({ status: BatchOperationResultStatus.Success })
@@ -877,7 +887,6 @@ describe('SudoEmailClient Test Suite', () => {
       ]
       await expect(
         instanceUnderTest.unblockEmailAddresses({
-          owner: mockOwner,
           addresses: addressesToBlock,
         }),
       ).resolves.toEqual({ status: BatchOperationResultStatus.Failure })
@@ -901,7 +910,6 @@ describe('SudoEmailClient Test Suite', () => {
       ]
       await expect(
         instanceUnderTest.unblockEmailAddresses({
-          owner: mockOwner,
           addresses: addressesToBlock,
         }),
       ).resolves.toEqual({
@@ -912,41 +920,139 @@ describe('SudoEmailClient Test Suite', () => {
     })
   })
 
+  describe('unblockEmailAddressesByHashedValue', () => {
+    beforeEach(() => {
+      when(
+        mockUnblockEmailAddressesByHashedValueUseCase.execute(anything()),
+      ).thenResolve({
+        status: UpdateEmailMessagesStatus.Success,
+      })
+    })
+
+    it('generates use case', async () => {
+      await instanceUnderTest.unblockEmailAddressesByHashedValue({
+        hashedValues: [`hashedValue-${v4()}`],
+      })
+      expect(
+        JestMockUnblockEmailAddressesByHashedValueUseCase,
+      ).toHaveBeenCalledTimes(1)
+    })
+
+    it('calls use case as expected', async () => {
+      const hashedValues = [
+        `hashedValue-${v4()}`,
+        `hashedValue-${v4()}`,
+        `hashedValue-${v4()}`,
+      ]
+      await instanceUnderTest.unblockEmailAddressesByHashedValue({
+        hashedValues,
+      })
+      verify(
+        mockUnblockEmailAddressesByHashedValueUseCase.execute(anything()),
+      ).once()
+      const [args] = capture(
+        mockUnblockEmailAddressesByHashedValueUseCase.execute,
+      ).first()
+      expect(args).toEqual({
+        hashedValues,
+      })
+    })
+
+    it('returns expected result on success', async () => {
+      const hashedValues = [
+        `hashedValue-${v4()}`,
+        `hashedValue-${v4()}`,
+        `hashedValue-${v4()}`,
+      ]
+      await expect(
+        instanceUnderTest.unblockEmailAddressesByHashedValue({
+          hashedValues,
+        }),
+      ).resolves.toEqual({ status: BatchOperationResultStatus.Success })
+    })
+
+    it('returns expected result on failure', async () => {
+      when(
+        mockUnblockEmailAddressesByHashedValueUseCase.execute(anything()),
+      ).thenResolve({
+        status: UpdateEmailMessagesStatus.Failed,
+      })
+      const hashedValues = [
+        `hashedValue-${v4()}`,
+        `hashedValue-${v4()}`,
+        `hashedValue-${v4()}`,
+      ]
+      await expect(
+        instanceUnderTest.unblockEmailAddressesByHashedValue({
+          hashedValues,
+        }),
+      ).resolves.toEqual({ status: BatchOperationResultStatus.Failure })
+    })
+
+    it('returns expected result on partial success', async () => {
+      when(
+        mockUnblockEmailAddressesByHashedValueUseCase.execute(anything()),
+      ).thenCall((input: UnblockEmailAddressesByHashedValueUseCaseInput) => {
+        const [first, ...rest] = input.hashedValues
+        return Promise.resolve({
+          status: UpdateEmailMessagesStatus.Partial,
+          failedAddresses: [first],
+          successAddresses: rest,
+        })
+      })
+      const hashedValues = [
+        `hashedValue-${v4()}`,
+        `hashedValue-${v4()}`,
+        `hashedValue-${v4()}`,
+      ]
+      await expect(
+        instanceUnderTest.unblockEmailAddressesByHashedValue({
+          hashedValues,
+        }),
+      ).resolves.toEqual({
+        status: BatchOperationResultStatus.Partial,
+        failureValues: [hashedValues[0]],
+        successValues: [hashedValues[1], hashedValues[2]],
+      })
+    })
+  })
+
   describe('getEmailAddressBlocklist', () => {
     const mockOwner = 'mockOwner'
-    const blockedAddresses = [
-      `spammyMcSpamface-${v4()}@spambot.com`,
-      `spammyMcSpamface-${v4()}@spambot.com`,
+    const blockedAddresses: UnsealedBlockedAddress[] = [
+      {
+        address: `spammyMcSpamface-${v4()}@spambot.com`,
+        hashedBlockedValue: 'dummyHashedValue',
+        status: { type: 'Completed' },
+      },
+      {
+        address: `spammyMcSpamface-${v4()}@spambot.com`,
+        hashedBlockedValue: 'dummyHashedValue',
+        status: { type: 'Completed' },
+      },
     ]
     beforeEach(() => {
-      when(mockGetEmailAddressBlocklistUseCase.execute(anything())).thenResolve(
+      when(mockGetEmailAddressBlocklistUseCase.execute()).thenResolve(
         blockedAddresses,
       )
     })
 
     it('generates use case', async () => {
-      await instanceUnderTest.getEmailAddressBlocklist({
-        owner: mockOwner,
-      })
+      await instanceUnderTest.getEmailAddressBlocklist()
       expect(JestMockGetEmailAddressBlocklistUseCase).toHaveBeenCalledTimes(1)
     })
 
     it('calls use case as expected', async () => {
-      await instanceUnderTest.getEmailAddressBlocklist({
-        owner: mockOwner,
-      })
-      verify(mockGetEmailAddressBlocklistUseCase.execute(anything())).once()
+      await instanceUnderTest.getEmailAddressBlocklist()
+      verify(mockGetEmailAddressBlocklistUseCase.execute()).once()
       const [args] = capture(
         mockGetEmailAddressBlocklistUseCase.execute,
       ).first()
-      expect(args).toEqual({
-        owner: mockOwner,
-      })
     })
 
     it('returns expected list of blocked addresses', async () => {
       await expect(
-        instanceUnderTest.getEmailAddressBlocklist({ owner: mockOwner }),
+        instanceUnderTest.getEmailAddressBlocklist(),
       ).resolves.toEqual(blockedAddresses)
     })
   })
