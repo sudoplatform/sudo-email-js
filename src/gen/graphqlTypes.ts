@@ -135,6 +135,7 @@ export type EmailAddressMetadataUpdateValuesInput = {
 export type EmailAddressPublicInfo = {
   __typename?: 'EmailAddressPublicInfo'
   emailAddress: Scalars['String']
+  keyId: Scalars['String']
   publicKey: Scalars['String']
 }
 
@@ -636,6 +637,7 @@ export type EmailAddressFragment = {
 export type EmailAddressPublicInfoFragment = {
   __typename?: 'EmailAddressPublicInfo'
   emailAddress: string
+  keyId: string
   publicKey: string
 }
 
@@ -1157,6 +1159,7 @@ export type LookupEmailAddressesPublicInfoQuery = {
     items: Array<{
       __typename?: 'EmailAddressPublicInfo'
       emailAddress: string
+      keyId: string
       publicKey: string
     }>
   }
@@ -1960,6 +1963,7 @@ export const EmailAddressPublicInfoFragmentDoc = {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'emailAddress' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'publicKey' } },
         ],
       },
@@ -3983,6 +3987,7 @@ export const LookupEmailAddressesPublicInfoDocument = {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'emailAddress' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'publicKey' } },
         ],
       },

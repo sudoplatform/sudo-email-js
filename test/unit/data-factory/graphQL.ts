@@ -202,10 +202,12 @@ export class GraphQLDataFactory {
   static readonly emailAddressesPublicInfo: EmailAddressPublicInfo[] = [
     {
       emailAddress: GraphQLDataFactory.emailAddress.emailAddress,
+      keyId: GraphQLDataFactory.publicKey.keyId,
       publicKey: GraphQLDataFactory.publicKey.publicKey,
     },
     {
       emailAddress: `${GraphQLDataFactory.emailAddress.emailAddress}_2`,
+      keyId: `${GraphQLDataFactory.publicKey.keyId}_2`,
       publicKey: `${GraphQLDataFactory.publicKey.publicKey}_2`,
     },
   ]

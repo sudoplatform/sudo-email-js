@@ -72,6 +72,7 @@ describe('SudoEmailClient LookupEmailAddressesPublicInfo Test Suite', () => {
         }),
       ).resolves.toContainEqual({
         emailAddress: emailAddress.emailAddress,
+        keyId: expect.any(String),
         publicKey: expect.any(String),
       })
     })

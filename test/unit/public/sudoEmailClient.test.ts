@@ -1506,10 +1506,12 @@ describe('SudoEmailClient Test Suite', () => {
     const publicInfo: EmailAddressPublicInfo[] = [
       {
         emailAddress: emailAddresses[0],
+        keyId: 'testKeyId',
         publicKey: publicKeys[0],
       },
       {
         emailAddress: emailAddresses[1],
+        keyId: 'testKeyId_2',
         publicKey: publicKeys[1],
       },
     ]

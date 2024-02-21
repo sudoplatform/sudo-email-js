@@ -43,10 +43,12 @@ export class EntityDataFactory {
   static readonly emailAddressesPublicInfo: EmailAddressPublicInfoEntity[] = [
     {
       emailAddress: EntityDataFactory.emailAddress.emailAddress,
+      keyId: 'testKeyId',
       publicKey: 'testPublicKey',
     },
     {
       emailAddress: `${EntityDataFactory.emailAddress.emailAddress}_2`,
+      keyId: 'testKeyId_2',
       publicKey: 'testPublicKey_2',
     },
   ]

@@ -26,6 +26,7 @@ describe('EmailAddressPublicInfoTransformer Test Suite', () => {
       ),
     ).toStrictEqual({
       emailAddress: EntityDataFactory.emailAddressesPublicInfo[0].emailAddress,
+      keyId: EntityDataFactory.emailAddressesPublicInfo[0].keyId,
       publicKey: EntityDataFactory.emailAddressesPublicInfo[0].publicKey,
     })
   })

@@ -10,9 +10,11 @@
  *
  * @interface EmailAddressPublicInfoEntity
  * @property {string} emailAddress The email address in format 'local-part@domain'.
+ * @property {string} keyId The identifier associated with the public key.
  * @property {string} publicKey The raw value of the public key for the email address.
  */
 export interface EmailAddressPublicInfoEntity {
   emailAddress: string
+  keyId: string
   publicKey: string
 }

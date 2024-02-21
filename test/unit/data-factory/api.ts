@@ -63,6 +63,7 @@ export class APIDataFactory {
 
   static readonly emailAddressPublicInfo: EmailAddressPublicInfo = {
     emailAddress: APIDataFactory.emailAddress.emailAddress,
+    keyId: 'testKeyId',
     publicKey: 'testPublicKey',
   }
 

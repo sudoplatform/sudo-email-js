@@ -1,4 +1,5 @@
 fragment EmailAddressPublicInfo on EmailAddressPublicInfo {
   emailAddress
+  keyId
   publicKey
 }

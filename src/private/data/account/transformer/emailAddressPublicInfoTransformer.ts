@@ -14,6 +14,7 @@ export class EmailAddressPublicInfoTransformer {
   ): EmailAddressPublicInfoEntity {
     const transformed: EmailAddressPublicInfoEntity = {
       emailAddress: graphql.emailAddress,
+      keyId: graphql.keyId,
       publicKey: graphql.publicKey,
     }
 
@@ -25,6 +26,7 @@ export class EmailAddressPublicInfoTransformer {
   ): EmailAddressPublicInfo {
     const transformed: EmailAddressPublicInfo = {
       emailAddress: entity.emailAddress,
+      keyId: entity.keyId,
       publicKey: entity.publicKey,
     }
 
