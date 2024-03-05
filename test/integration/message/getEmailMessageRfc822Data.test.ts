@@ -10,9 +10,9 @@ import { SudoUserClient } from '@sudoplatform/sudo-user'
 import waitForExpect from 'wait-for-expect'
 import { EmailAddress, SudoEmailClient } from '../../../src'
 import { ab2str, str2ab } from '../../util/buffer'
-import { createEmailMessageRfc822String } from '../util/createEmailMessage'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
 
 describe('getEmailMessageRfc822Data test suite', () => {
   jest.setTimeout(240000)
@@ -52,7 +52,7 @@ describe('getEmailMessageRfc822Data test suite', () => {
   })
 
   function generateRfc822String(body: string): string {
-    return createEmailMessageRfc822String({
+    const str = Rfc822MessageParser.encodeToRfc822DataStr({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [{ emailAddress: 'success@simulator.amazonses.com' }],
       cc: [],
@@ -62,6 +62,8 @@ describe('getEmailMessageRfc822Data test suite', () => {
       body,
       attachments: [],
     })
+
+    return str
   }
 
   function waitForRfc822Data(emailMessageId: string): Promise<any> {
@@ -107,11 +109,11 @@ describe('getEmailMessageRfc822Data test suite', () => {
       expect(arrBuf).toBeDefined()
       if (arrBuf) {
         const receivedRfc822String = ab2str(arrBuf)
-        log.debug('rfc822string', { rfc822string: receivedRfc822String })
+
         expect(receivedRfc822String).toContain(
-          'to: success@simulator.amazonses.com\n',
+          'To: <success@simulator.amazonses.com>',
         )
-        expect(receivedRfc822String).toContain('subject: Testing rfc822Data\n')
+        expect(receivedRfc822String).toContain('Subject: Testing rfc822Data')
         expect(receivedRfc822String).toContain(emailBodies[index])
       }
     }

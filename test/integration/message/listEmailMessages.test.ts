@@ -17,14 +17,13 @@ import waitForExpect from 'wait-for-expect'
 import { Direction, EmailAddress, SudoEmailClient } from '../../../src'
 import { DateRange } from '../../../src/public/typings/dateRange'
 import { SortOrder } from '../../../src/public/typings/sortOrder'
-import { str2ab } from '../../util/buffer'
-import {
-  createEmailMessageRfc822String,
-  EmailMessageDetails,
-} from '../util/createEmailMessage'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { getFolderByName } from '../util/folder'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import {
+  EmailMessageDetails,
+  Rfc822MessageParser,
+} from '../../../src/private/util/rfc822MessageParser'
 
 describe('SudoEmailClient ListEmailMessages Test Suite', () => {
   jest.setTimeout(240000)
@@ -62,9 +61,10 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       body: 'Hello, World',
       attachments: [],
     }
-    const messageString = createEmailMessageRfc822String(messageDetails)
+    const messageBuffer =
+      Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
     await instanceUnderTest.sendEmailMessage({
-      rfc822Data: str2ab(messageString),
+      rfc822Data: messageBuffer,
       senderEmailAddressId: emailAddress.id,
     })
   })
@@ -132,9 +132,10 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     })
 
     it('lists expected email messages respecting date range', async () => {
-      const messageString = createEmailMessageRfc822String(messageDetails)
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
       await instanceUnderTest.sendEmailMessage({
-        rfc822Data: str2ab(messageString),
+        rfc822Data: messageBuffer,
         senderEmailAddressId: emailAddress.id,
       })
       const dateRange: DateRange = {
@@ -167,9 +168,10 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     })
 
     it('returns empty list for out of range date', async () => {
-      const messageString = createEmailMessageRfc822String(messageDetails)
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
       await instanceUnderTest.sendEmailMessage({
-        rfc822Data: str2ab(messageString),
+        rfc822Data: messageBuffer,
         senderEmailAddressId: emailAddress.id,
       })
       await waitForExpect(
@@ -194,9 +196,10 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     })
 
     it('lists expected email messages in ascending order', async () => {
-      const messageString = createEmailMessageRfc822String(messageDetails)
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
       await instanceUnderTest.sendEmailMessage({
-        rfc822Data: str2ab(messageString),
+        rfc822Data: messageBuffer,
         senderEmailAddressId: emailAddress.id,
       })
       const dateRange: DateRange = {
@@ -230,9 +233,10 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     })
 
     it('lists expected email messages in descending order', async () => {
-      const messageString = createEmailMessageRfc822String(messageDetails)
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
       await instanceUnderTest.sendEmailMessage({
-        rfc822Data: str2ab(messageString),
+        rfc822Data: messageBuffer,
         senderEmailAddressId: emailAddress.id,
       })
       await waitForExpect(
@@ -368,9 +372,10 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     })
 
     it('lists expected email messages respecting date range', async () => {
-      const messageString = createEmailMessageRfc822String(messageDetails)
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
       await instanceUnderTest.sendEmailMessage({
-        rfc822Data: str2ab(messageString),
+        rfc822Data: messageBuffer,
         senderEmailAddressId: emailAddress.id,
       })
       const dateRange: DateRange = {
@@ -408,9 +413,10 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     })
 
     it('returns empty list for out of range date', async () => {
-      const messageString = createEmailMessageRfc822String(messageDetails)
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
       await instanceUnderTest.sendEmailMessage({
-        rfc822Data: str2ab(messageString),
+        rfc822Data: messageBuffer,
         senderEmailAddressId: emailAddress.id,
       })
       const inboxFolder = await getFolderByName({
@@ -440,9 +446,10 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     })
 
     it('lists expected email messages in ascending order', async () => {
-      const messageString = createEmailMessageRfc822String(messageDetails)
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
       await instanceUnderTest.sendEmailMessage({
-        rfc822Data: str2ab(messageString),
+        rfc822Data: messageBuffer,
         senderEmailAddressId: emailAddress.id,
       })
       const dateRange: DateRange = {
@@ -481,9 +488,10 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     })
 
     it('lists expected email messages in descending order', async () => {
-      const messageString = createEmailMessageRfc822String(messageDetails)
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
       await instanceUnderTest.sendEmailMessage({
-        rfc822Data: str2ab(messageString),
+        rfc822Data: messageBuffer,
         senderEmailAddressId: emailAddress.id,
       })
       const inboxFolder = await getFolderByName({

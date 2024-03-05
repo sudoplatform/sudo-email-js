@@ -17,11 +17,10 @@ import {
   LimitExceededError,
   SudoEmailClient,
 } from '../../../src'
-import { str2ab } from '../../util/buffer'
 import { delay } from '../../util/delay'
-import { createEmailMessageRfc822String } from '../util/createEmailMessage'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
 
 describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
   jest.setTimeout(240000)
@@ -84,8 +83,8 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
     )
   })
   it('deletes multiple email messages successfully', async () => {
-    const messageStrings = _.range(2).map((i) =>
-      createEmailMessageRfc822String({
+    const messageBuffers = _.range(2).map((i) =>
+      Rfc822MessageParser.encodeToRfc822DataBuffer({
         from: [{ emailAddress: emailAddress.emailAddress }],
         to: [{ emailAddress: ootoSimulatorAddress }],
         cc: [],
@@ -96,10 +95,10 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
       }),
     )
     const ids = await Promise.all(
-      messageStrings.map(
-        async (s) =>
+      messageBuffers.map(
+        async (b) =>
           await instanceUnderTest.sendEmailMessage({
-            rfc822Data: str2ab(s),
+            rfc822Data: b,
             senderEmailAddressId: emailAddress.id,
           }),
       ),
@@ -110,7 +109,7 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
     ).resolves.toStrictEqual({ status: BatchOperationResultStatus.Success })
   })
   it("returns partial result when deleting messages that do and don't exist simultaneously", async () => {
-    const messageString = createEmailMessageRfc822String({
+    const messageBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [{ emailAddress: ootoSimulatorAddress }],
       cc: [],
@@ -120,7 +119,7 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
       attachments: [],
     })
     const messageId = await instanceUnderTest.sendEmailMessage({
-      rfc822Data: str2ab(messageString),
+      rfc822Data: messageBuffer,
       senderEmailAddressId: emailAddress.id,
     })
     await waitForExpect(async () => {

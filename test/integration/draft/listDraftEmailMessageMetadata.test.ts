@@ -9,10 +9,10 @@ import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import _ from 'lodash'
 import { DraftEmailMessage, EmailAddress, SudoEmailClient } from '../../../src'
-import { createEmailMessageRfc822String } from '../util/createEmailMessage'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { delay } from '../../util/delay'
+import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
 
 describe('SudoEmailClient listDraftEmailMessageMeatdata Test Suite', () => {
   jest.setTimeout(240000)
@@ -40,20 +40,18 @@ describe('SudoEmailClient listDraftEmailMessageMeatdata Test Suite', () => {
       sudoOwnershipProofToken,
       instanceUnderTest,
     )
-    const encoder = new TextEncoder()
-    const draftDataArrays = _.range(NUMBER_DRAFTS)
-      .map(() =>
-        createEmailMessageRfc822String({
-          from: [{ emailAddress: emailAddress.emailAddress }],
-          to: [],
-          cc: [],
-          bcc: [],
-          replyTo: [],
-          body: 'test draft message',
-          attachments: [],
-        }),
-      )
-      .map((s) => encoder.encode(s))
+
+    const draftDataArrays = _.range(NUMBER_DRAFTS).map(() =>
+      Rfc822MessageParser.encodeToRfc822DataBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body: 'test draft message',
+        attachments: [],
+      }),
+    )
 
     for (let d of draftDataArrays) {
       const metadata = await instanceUnderTest.createDraftEmailMessage({

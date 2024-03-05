@@ -21,11 +21,10 @@ import {
   LimitExceededError,
   SudoEmailClient,
 } from '../../../src'
-import { str2ab } from '../../util/buffer'
-import { createEmailMessageRfc822String } from '../util/createEmailMessage'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { getFolderByName } from '../util/folder'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
 
 describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
   jest.setTimeout(240000)
@@ -61,7 +60,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
   })
 
   test('update seen status of single email message should return success status', async () => {
-    const messageString = createEmailMessageRfc822String({
+    const messageBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [{ emailAddress: ootoSimulatorAddress }],
       cc: [],
@@ -72,7 +71,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
       attachments: [],
     })
     const messageId = await instanceUnderTest.sendEmailMessage({
-      rfc822Data: str2ab(messageString),
+      rfc822Data: messageBuffer,
       senderEmailAddressId: emailAddress.id,
     })
     await waitForExpect(async () => {
@@ -99,8 +98,8 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
   })
 
   test('update seen status of multiple email messages should return success status', async () => {
-    const messageStrings = _.range(2).map((i) =>
-      createEmailMessageRfc822String({
+    const messageBuffers = _.range(2).map((i) =>
+      Rfc822MessageParser.encodeToRfc822DataBuffer({
         from: [{ emailAddress: emailAddress.emailAddress }],
         to: [{ emailAddress: ootoSimulatorAddress }],
         cc: [],
@@ -111,10 +110,10 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
       }),
     )
     const ids = await Promise.all(
-      messageStrings.map(
-        async (s) =>
+      messageBuffers.map(
+        async (b) =>
           await instanceUnderTest.sendEmailMessage({
-            rfc822Data: str2ab(s),
+            rfc822Data: b,
             senderEmailAddressId: emailAddress.id,
           }),
       ),
@@ -144,8 +143,8 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
   })
 
   test('update folderId of multiple email messages should return success status', async () => {
-    const messageStrings = _.range(2).map((i) =>
-      createEmailMessageRfc822String({
+    const messageBuffers = _.range(2).map((i) =>
+      Rfc822MessageParser.encodeToRfc822DataBuffer({
         from: [{ emailAddress: emailAddress.emailAddress }],
         to: [{ emailAddress: ootoSimulatorAddress }],
         cc: [],
@@ -156,10 +155,10 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
       }),
     )
     const ids = await Promise.all(
-      messageStrings.map(
-        async (s) =>
+      messageBuffers.map(
+        async (b) =>
           await instanceUnderTest.sendEmailMessage({
-            rfc822Data: str2ab(s),
+            rfc822Data: b,
             senderEmailAddressId: emailAddress.id,
           }),
       ),
@@ -200,7 +199,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
   })
 
   test('previousFolderId does not change when message is moved to same folder', async () => {
-    const messageString = createEmailMessageRfc822String({
+    const messageBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [{ emailAddress: ootoSimulatorAddress }],
       cc: [],
@@ -210,7 +209,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
       attachments: [],
     })
     const id = await instanceUnderTest.sendEmailMessage({
-      rfc822Data: str2ab(messageString),
+      rfc822Data: messageBuffer,
       senderEmailAddressId: emailAddress.id,
     })
     const sentFolder = emailAddress.folders.find((f) => f.folderName === 'SENT')
@@ -261,7 +260,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
   })
 
   test('update email messages with mixture of failed and successful updates should return partial status', async () => {
-    const messageString = createEmailMessageRfc822String({
+    const messageBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [{ emailAddress: ootoSimulatorAddress }],
       cc: [],
@@ -272,7 +271,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
       attachments: [],
     })
     const messageId = await instanceUnderTest.sendEmailMessage({
-      rfc822Data: str2ab(messageString),
+      rfc822Data: messageBuffer,
       senderEmailAddressId: emailAddress.id,
     })
     const nonExistentId = v4()

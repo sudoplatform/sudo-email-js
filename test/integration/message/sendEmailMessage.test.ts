@@ -21,14 +21,14 @@ import {
   SudoEmailClient,
   UnauthorizedAddressError,
 } from '../../../src'
-import { str2ab } from '../../util/buffer'
-import {
-  createEmailMessageRfc822String,
-  EmailMessageDetails,
-} from '../util/createEmailMessage'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { readAllPages } from '../util/paginator'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import {
+  EmailMessageDetails,
+  Rfc822MessageParser,
+} from '../../../src/private/util/rfc822MessageParser'
+import { str2ab } from '../../util/buffer'
 
 describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   jest.setTimeout(240000)
@@ -79,26 +79,28 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       body: 'Hello, World',
       attachments: [],
     }
-    draftString = createEmailMessageRfc822String(draft)
+    draftString = Rfc822MessageParser.encodeToRfc822DataStr(draft)
     draftWithAttachments = {
       ...draft,
       attachments: [
         {
-          contentType: 'application/pdf',
+          mimeType: 'application/pdf',
           contentTransferEncoding: 'base64',
-          fileName: 'attachment-1.pdf',
-          content: Buffer.from('Content of attachment 1').toString('base64'),
+          filename: 'attachment-1.pdf',
+          data: Buffer.from('Content of attachment 1').toString('base64'),
+          inlineAttachment: false,
         },
         {
-          contentType: 'image/jpeg',
+          mimeType: 'image/jpeg',
           contentTransferEncoding: 'base64',
-          fileName: 'attachment-2.jpeg',
-          content: Buffer.from('Content of attachment 2').toString('base64'),
+          filename: 'attachment-2.jpeg',
+          data: Buffer.from('Content of attachment 2').toString('base64'),
+          inlineAttachment: false,
         },
       ],
     }
     draftWithAttachmentsString =
-      createEmailMessageRfc822String(draftWithAttachments)
+      Rfc822MessageParser.encodeToRfc822DataStr(draftWithAttachments)
   })
 
   afterEach(async () => {
@@ -185,7 +187,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       to: [],
       cc: [{ emailAddress: ootoSimulatorAddress }],
     }
-    const ccDraftString = createEmailMessageRfc822String(ccDraft)
+    const ccDraftString = Rfc822MessageParser.encodeToRfc822DataStr(ccDraft)
     const sentId = await instanceUnderTest.sendEmailMessage({
       rfc822Data: str2ab(ccDraftString),
       senderEmailAddressId: emailAddress.id,
@@ -240,7 +242,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       to: [],
       bcc: [{ emailAddress: ootoSimulatorAddress }],
     }
-    const bccDraftString = createEmailMessageRfc822String(bccDraft)
+    const bccDraftString = Rfc822MessageParser.encodeToRfc822DataStr(bccDraft)
     const sentId = await instanceUnderTest.sendEmailMessage({
       rfc822Data: str2ab(bccDraftString),
       senderEmailAddressId: emailAddress.id,
@@ -323,7 +325,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       body: 'Hello, World',
       attachments: [],
     }
-    const badDraftString = createEmailMessageRfc822String(badDraft)
+    const badDraftString = Rfc822MessageParser.encodeToRfc822DataStr(badDraft)
 
     await expect(
       instanceUnderTest.sendEmailMessage({

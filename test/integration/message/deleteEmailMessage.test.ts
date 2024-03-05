@@ -9,10 +9,9 @@ import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import waitForExpect from 'wait-for-expect'
 import { EmailAddress, SudoEmailClient } from '../../../src'
-import { str2ab } from '../../util/buffer'
-import { createEmailMessageRfc822String } from '../util/createEmailMessage'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
 
 describe('SudoEmailClient DeleteEmailMessage Test Suite', () => {
   jest.setTimeout(240000)
@@ -57,7 +56,7 @@ describe('SudoEmailClient DeleteEmailMessage Test Suite', () => {
     ).resolves.toBeUndefined()
   })
   it('deletes a single existing email message', async () => {
-    const messageString = createEmailMessageRfc822String({
+    const messageBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
       cc: [],
@@ -67,7 +66,7 @@ describe('SudoEmailClient DeleteEmailMessage Test Suite', () => {
       attachments: [],
     })
     const messageId = await instanceUnderTest.sendEmailMessage({
-      rfc822Data: str2ab(messageString),
+      rfc822Data: messageBuffer,
       senderEmailAddressId: emailAddress.id,
     })
     await waitForExpect(

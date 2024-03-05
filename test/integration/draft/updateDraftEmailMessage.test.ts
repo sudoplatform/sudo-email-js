@@ -15,11 +15,10 @@ import {
   MessageNotFoundError,
   SudoEmailClient,
 } from '../../../src'
-import { str2ab } from '../../util/buffer'
 import { delay } from '../../util/delay'
-import { createEmailMessageRfc822String } from '../util/createEmailMessage'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
 
 describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
   jest.setTimeout(240000)
@@ -62,7 +61,7 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
   })
 
   it('updates a draft successfully', async () => {
-    const draftString = createEmailMessageRfc822String({
+    const draftBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [],
       cc: [],
@@ -72,14 +71,14 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
       attachments: [],
     })
     const metadata = await instanceUnderTest.createDraftEmailMessage({
-      rfc822Data: str2ab(draftString),
+      rfc822Data: draftBuffer,
       senderEmailAddressId: emailAddress.id,
     })
 
     await delay(1000)
 
     draftMetadata.push(metadata)
-    const updatedDraftString = createEmailMessageRfc822String({
+    const updatedDraftBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [],
       cc: [],
@@ -90,7 +89,7 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
     })
     const updatedMetadata = await instanceUnderTest.updateDraftEmailMessage({
       id: metadata.id,
-      rfc822Data: str2ab(updatedDraftString),
+      rfc822Data: updatedDraftBuffer,
       senderEmailAddressId: emailAddress.id,
     })
     expect(updatedMetadata.id).toEqual(metadata.id)
@@ -105,12 +104,12 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
       }),
     ).resolves.toStrictEqual({
       ...updatedMetadata,
-      rfc822Data: new TextEncoder().encode(updatedDraftString),
+      rfc822Data: updatedDraftBuffer,
     })
   })
 
   it('throws an error if a non-existent draft message id is given', async () => {
-    const draftString = createEmailMessageRfc822String({
+    const draftBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [],
       cc: [],
@@ -122,13 +121,13 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
     await expect(
       instanceUnderTest.updateDraftEmailMessage({
         id: v4(),
-        rfc822Data: str2ab(draftString),
+        rfc822Data: draftBuffer,
         senderEmailAddressId: emailAddress.id,
       }),
     ).rejects.toThrow(MessageNotFoundError)
   })
   it('throws an error if an non-existent email address id is given', async () => {
-    const draftString = createEmailMessageRfc822String({
+    const draftBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [],
       cc: [],
@@ -138,12 +137,12 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
       attachments: [],
     })
     const metadata = await instanceUnderTest.createDraftEmailMessage({
-      rfc822Data: str2ab(draftString),
+      rfc822Data: draftBuffer,
       senderEmailAddressId: emailAddress.id,
     })
     draftMetadata.push(metadata)
 
-    const updatedDraftString = createEmailMessageRfc822String({
+    const updatedDraftBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [],
       cc: [],
@@ -155,7 +154,7 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
     await expect(
       instanceUnderTest.updateDraftEmailMessage({
         id: metadata.id,
-        rfc822Data: str2ab(updatedDraftString),
+        rfc822Data: updatedDraftBuffer,
         senderEmailAddressId: v4(),
       }),
     ).rejects.toThrow(AddressNotFoundError)

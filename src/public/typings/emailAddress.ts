@@ -42,3 +42,8 @@ export interface EmailAddressProps {
 export interface SealedEmailAddressProps {
   alias?: string
 }
+
+export interface EmailAddressDetail {
+  displayName?: string
+  emailAddress: string
+}

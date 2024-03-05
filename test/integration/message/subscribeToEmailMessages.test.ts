@@ -11,24 +11,18 @@ import {
   ConnectionState,
   EmailAddress,
   EmailMessage,
-  EmailMessageSubscriber,
   SudoEmailClient,
 } from '../../../src'
-import { str2ab } from '../../util/buffer'
-import { createEmailMessageRfc822String } from '../util/createEmailMessage'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
-import { generateSafeLocalPart } from '../util/provisionEmailAddress'
 import { anything, instance, mock, when } from 'ts-mockito'
 import { ApiClient } from '../../../src/private/data/common/apiClient'
 import { S3Client } from '../../../src/private/data/common/s3Client'
-import {
-  DeviceKeyWorker,
-  UnsealInput,
-} from '../../../src/private/data/common/deviceKeyWorker'
+import { DeviceKeyWorker } from '../../../src/private/data/common/deviceKeyWorker'
 import { DefaultEmailMessageService } from '../../../src/private/data/message/defaultEmailMessageService'
 import { Observable } from 'apollo-client/util/Observable'
 import { EmailServiceConfig } from '../../../src/private/data/common/config'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
 
 describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
   jest.setTimeout(240000)
@@ -81,9 +75,10 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
       body: '',
       attachments: [],
     }
-    const messageString = createEmailMessageRfc822String(messageDetails)
+    const messageBuffer =
+      Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
     await instanceUnderTest.sendEmailMessage({
-      rfc822Data: str2ab(messageString),
+      rfc822Data: messageBuffer,
       senderEmailAddressId: senderEmailAddress.id,
     })
   }

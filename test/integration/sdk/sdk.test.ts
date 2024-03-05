@@ -17,12 +17,11 @@ import {
   DefaultSudoEmailClient,
   EmailMessage,
 } from '../../../src'
-import { str2ab } from '../../util/buffer'
 import { delay } from '../../util/delay'
-import { createEmailMessageRfc822String } from '../util/createEmailMessage'
 import { setupEmailClient } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { v4 } from 'uuid'
+import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
 
 describe('SDK Tests', () => {
   jest.setTimeout(240000)
@@ -43,7 +42,7 @@ describe('SDK Tests', () => {
       emailClient1.ownershipProofToken,
       emailClient1.emailClient,
     )
-    const draftString1 = createEmailMessageRfc822String({
+    const draftBuffer1 = Rfc822MessageParser.encodeToRfc822DataBuffer({
       from: [{ emailAddress: emailAddress1.emailAddress }],
       to: [],
       cc: [],
@@ -53,10 +52,10 @@ describe('SDK Tests', () => {
       attachments: [],
     })
 
-    const draft1RFC822Data = str2ab(draftString1)
+    const draft1RFC822Data = draftBuffer1
     const draftMetadata1 =
       await emailClient1.emailClient.createDraftEmailMessage({
-        rfc822Data: str2ab(draftString1),
+        rfc822Data: draftBuffer1,
         senderEmailAddressId: emailAddress1.id,
       })
 
@@ -73,7 +72,7 @@ describe('SDK Tests', () => {
       emailClient2.ownershipProofToken,
       emailClient2.emailClient,
     )
-    const draftString2 = createEmailMessageRfc822String({
+    const draftBuffer2 = Rfc822MessageParser.encodeToRfc822DataBuffer({
       from: [{ emailAddress: emailAddress2.emailAddress }],
       to: [],
       cc: [],
@@ -83,7 +82,7 @@ describe('SDK Tests', () => {
       attachments: [],
     })
 
-    const draft2RFC822Data = str2ab(draftString2)
+    const draft2RFC822Data = draftBuffer2
     const draftMetadata2 =
       await emailClient2.emailClient.createDraftEmailMessage({
         rfc822Data: draft2RFC822Data,
@@ -189,7 +188,7 @@ describe('SDK Tests', () => {
       emailClient,
       { alias: 'Export/Import' },
     )
-    const draftString = createEmailMessageRfc822String({
+    const draftBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
       cc: [],
@@ -198,7 +197,7 @@ describe('SDK Tests', () => {
       body: 'Message 1',
       attachments: [],
     })
-    const draftRFC822Data = str2ab(draftString)
+    const draftRFC822Data = draftBuffer
     const draftMetadata = await emailClient.createDraftEmailMessage({
       rfc822Data: draftRFC822Data,
       senderEmailAddressId: emailAddress.id,

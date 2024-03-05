@@ -15,10 +15,10 @@ import {
   EmailAddress,
   SudoEmailClient,
 } from '../../../src'
-import { str2ab } from '../../util/buffer'
-import { createEmailMessageRfc822String } from '../util/createEmailMessage'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
+import { ab2str, str2ab } from '../../util/buffer'
 
 describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
   jest.setTimeout(240000)
@@ -61,7 +61,7 @@ describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
   })
 
   it('creates a draft successfully', async () => {
-    const draftString = createEmailMessageRfc822String({
+    const draftBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [],
       cc: [],
@@ -69,26 +69,28 @@ describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
       replyTo: [],
       body: 'Hello, World',
       attachments: [],
+      subject: 'draft subject',
     })
     const metadata = await instanceUnderTest.createDraftEmailMessage({
-      rfc822Data: str2ab(draftString),
+      rfc822Data: draftBuffer,
       senderEmailAddressId: emailAddress.id,
     })
     draftMetadata.push(metadata)
 
-    await expect(
-      instanceUnderTest.getDraftEmailMessage({
-        id: metadata.id,
-        emailAddressId: emailAddress.id,
-      }),
-    ).resolves.toEqual<DraftEmailMessage>({
+    const draftRes = await instanceUnderTest.getDraftEmailMessage({
+      id: metadata.id,
+      emailAddressId: emailAddress.id,
+    })
+    const draftResDataStr = ab2str(draftRes!.rfc822Data)
+
+    expect(draftRes).toEqual<DraftEmailMessage>({
       ...metadata,
-      rfc822Data: new TextEncoder().encode(draftString),
+      rfc822Data: draftBuffer,
     })
   })
 
   it('throws an error if an non-existent email address id is given', async () => {
-    const draftString = createEmailMessageRfc822String({
+    const draftBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [],
       cc: [],
@@ -99,14 +101,14 @@ describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
     })
     await expect(
       instanceUnderTest.createDraftEmailMessage({
-        rfc822Data: str2ab(draftString),
+        rfc822Data: draftBuffer,
         senderEmailAddressId: v4(),
       }),
     ).rejects.toThrow(AddressNotFoundError)
   })
   it('handles creation of a 1MB draft message', async () => {
     const oneMbBody = '0'.repeat(1 * 1024 * 1024)
-    const message = createEmailMessageRfc822String({
+    const message = Rfc822MessageParser.encodeToRfc822DataBuffer({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [],
       cc: [],
@@ -117,7 +119,7 @@ describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
     })
     const metadata = await instanceUnderTest.createDraftEmailMessage({
       senderEmailAddressId: emailAddress.id,
-      rfc822Data: str2ab(message),
+      rfc822Data: message,
     })
     draftMetadata.push(metadata)
     await expect(

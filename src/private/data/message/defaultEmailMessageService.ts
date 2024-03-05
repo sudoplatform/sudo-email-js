@@ -245,6 +245,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       keyId,
       encrypted: sealedString,
     })
+
     return {
       id: id,
       updatedAt,
@@ -379,6 +380,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
             )
         }
       }
+
       return new TextEncoder().encode(decodedString)
     } catch (error: unknown) {
       const s3DownloadError = error as S3DownloadError

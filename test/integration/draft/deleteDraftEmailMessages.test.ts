@@ -16,11 +16,10 @@ import {
   EmailAddress,
   SudoEmailClient,
 } from '../../../src'
-import { str2ab } from '../../util/buffer'
 import { delay } from '../../util/delay'
-import { createEmailMessageRfc822String } from '../util/createEmailMessage'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
 
 describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
   jest.setTimeout(240000)
@@ -50,17 +49,18 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
   })
 
   beforeEach(async () => {
-    const draftEmailMessageString = createEmailMessageRfc822String({
-      from: [{ emailAddress: emailAddress.emailAddress }],
-      to: [],
-      cc: [],
-      bcc: [],
-      replyTo: [],
-      body: 'test draft message',
-      attachments: [],
-    })
+    const draftEmailMessageBuffer =
+      Rfc822MessageParser.encodeToRfc822DataBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body: 'test draft message',
+        attachments: [],
+      })
     draftMetadata = await instanceUnderTest.createDraftEmailMessage({
-      rfc822Data: str2ab(draftEmailMessageString),
+      rfc822Data: draftEmailMessageBuffer,
       senderEmailAddressId: emailAddress.id,
     })
   })
@@ -114,8 +114,8 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
   })
 
   it('deletes multiple drafts in one operation successfully', async () => {
-    const draftStrings = _.range(9).map(() =>
-      createEmailMessageRfc822String({
+    const draftBuffers = _.range(9).map(() =>
+      Rfc822MessageParser.encodeToRfc822DataBuffer({
         from: [{ emailAddress: emailAddress.emailAddress }],
         to: [],
         cc: [],
@@ -126,11 +126,11 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
       }),
     )
     const draftMetadata = await Promise.all(
-      draftStrings.map(
+      draftBuffers.map(
         async (ds) =>
           await instanceUnderTest.createDraftEmailMessage({
             senderEmailAddressId: emailAddress.id,
-            rfc822Data: str2ab(ds),
+            rfc822Data: ds,
           }),
       ),
     )
