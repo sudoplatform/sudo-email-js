@@ -14,16 +14,22 @@ import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { v4 } from 'uuid'
 import waitForExpect from 'wait-for-expect'
-import { Direction, EmailAddress, SudoEmailClient } from '../../../src'
-import { DateRange } from '../../../src/public/typings/dateRange'
-import { SortOrder } from '../../../src/public/typings/sortOrder'
-import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
-import { getFolderByName } from '../util/folder'
-import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import {
+  BatchOperationResultStatus,
+  Direction,
+  EmailAddress,
+  InvalidArgumentError,
+  SudoEmailClient,
+} from '../../../src'
 import {
   EmailMessageDetails,
   Rfc822MessageParser,
 } from '../../../src/private/util/rfc822MessageParser'
+import { EmailMessageDateRange } from '../../../src/public/typings/emailMessageDateRange'
+import { SortOrder } from '../../../src/public/typings/sortOrder'
+import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
+import { getFolderByName } from '../util/folder'
+import { provisionEmailAddress } from '../util/provisionEmailAddress'
 
 describe('SudoEmailClient ListEmailMessages Test Suite', () => {
   jest.setTimeout(240000)
@@ -74,6 +80,376 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       { emailAddresses: [emailAddress], sudos: [sudo] },
       { emailClient: instanceUnderTest, profilesClient, userClient },
     )
+  })
+
+  describe('listEmailMessages', () => {
+    it('lists expected email messages', async () => {
+      await waitForExpect(
+        async () => {
+          const messages = await instanceUnderTest.listEmailMessages({
+            cachePolicy: CachePolicy.RemoteOnly,
+          })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(2)
+          const inbound = messages.items.filter(
+            (message) => message.direction === Direction.Inbound,
+          )
+          const outbound = messages.items.filter(
+            (message) => message.direction === Direction.Outbound,
+          )
+          expect(outbound).toHaveLength(1)
+          expect(outbound[0].from).toEqual(messageDetails.from)
+          expect(outbound[0].to).toEqual(messageDetails.to)
+          expect(outbound[0].hasAttachments).toEqual(false)
+          expect(outbound[0].size).toBeGreaterThan(0)
+
+          expect(inbound).toHaveLength(1)
+          expect(inbound[0].from).toEqual([simAddress])
+          expect(inbound[0].to).toEqual(messageDetails.from)
+          expect(inbound[0].hasAttachments).toEqual(false)
+          expect(inbound[0].size).toBeGreaterThan(0)
+        },
+        10000,
+        1000,
+      )
+    })
+
+    it('lists expected email messages respecting limit', async () => {
+      await waitForExpect(
+        async () => {
+          const messages = await instanceUnderTest.listEmailMessages({
+            cachePolicy: CachePolicy.RemoteOnly,
+            limit: 1,
+          })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(1)
+        },
+        10000,
+        1000,
+      )
+    })
+
+    it('lists expected email messages respecting sortDate date range', async () => {
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+      await instanceUnderTest.sendEmailMessage({
+        rfc822Data: messageBuffer,
+        senderEmailAddressId: emailAddress.id,
+      })
+      const dateRange: EmailMessageDateRange = {
+        sortDate: {
+          startDate: emailAddress.createdAt,
+          endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+        },
+      }
+      await waitForExpect(
+        async () => {
+          const messages = await instanceUnderTest.listEmailMessages({
+            dateRange,
+            cachePolicy: CachePolicy.RemoteOnly,
+          })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(4)
+          messages.items.forEach((item, index) => {
+            if (index < messages.items.length - 1) {
+              expect(item.sortDate.getTime()).toBeGreaterThan(
+                messages.items[index + 1].sortDate.getTime(),
+              )
+            }
+          })
+        },
+        20000,
+        1000,
+      )
+    })
+
+    it('lists expected email messages respecting updatedAt date range', async () => {
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+      await instanceUnderTest.sendEmailMessage({
+        rfc822Data: messageBuffer,
+        senderEmailAddressId: emailAddress.id,
+      })
+
+      // List all inbound messages
+      let inboundMessageIds: string[] = []
+      await waitForExpect(
+        async () => {
+          const allMessages = await instanceUnderTest.listEmailMessages({
+            cachePolicy: CachePolicy.RemoteOnly,
+          })
+          if (allMessages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${allMessages}`)
+          }
+          expect(allMessages.items).toHaveLength(4)
+
+          inboundMessageIds = allMessages.items
+            .filter((m) => m.direction == Direction.Inbound)
+            .map((m) => m.id)
+        },
+        20000,
+        1000,
+      )
+
+      // Update each inbound message's seen flag subsequently updating the modified date
+      const timestamp = new Date()
+      await waitForExpect(async () => {
+        await expect(
+          instanceUnderTest.updateEmailMessages({
+            ids: inboundMessageIds,
+            values: { seen: true },
+          }),
+        ).resolves.toMatchObject({ status: BatchOperationResultStatus.Success })
+      })
+
+      // List the newly updated email messages
+      await waitForExpect(
+        async () => {
+          const messages = await instanceUnderTest.listEmailMessages({
+            dateRange: {
+              updatedAt: {
+                startDate: timestamp,
+                endDate: new Date(timestamp.getTime() + 100000),
+              },
+            },
+            cachePolicy: CachePolicy.RemoteOnly,
+          })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(2)
+        },
+        20000,
+        1000,
+      )
+    })
+
+    it('returns empty list for out of range sort date', async () => {
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+      await instanceUnderTest.sendEmailMessage({
+        rfc822Data: messageBuffer,
+        senderEmailAddressId: emailAddress.id,
+      })
+      await waitForExpect(
+        async () => {
+          const messages = await instanceUnderTest.listEmailMessages({
+            dateRange: {
+              sortDate: {
+                startDate: sudo.createdAt,
+                endDate: emailAddress.createdAt,
+              },
+            },
+            cachePolicy: CachePolicy.RemoteOnly,
+          })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(0)
+        },
+        10000,
+        1000,
+      )
+    })
+
+    it('returns empty list for out of range updatedAt date', async () => {
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+      await instanceUnderTest.sendEmailMessage({
+        rfc822Data: messageBuffer,
+        senderEmailAddressId: emailAddress.id,
+      })
+      await waitForExpect(
+        async () => {
+          const messages = await instanceUnderTest.listEmailMessages({
+            dateRange: {
+              updatedAt: {
+                startDate: sudo.createdAt,
+                endDate: emailAddress.createdAt,
+              },
+            },
+            cachePolicy: CachePolicy.RemoteOnly,
+          })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(0)
+        },
+        10000,
+        1000,
+      )
+    })
+
+    it('should throw for multiple date ranges specified', async () => {
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+      await instanceUnderTest.sendEmailMessage({
+        rfc822Data: messageBuffer,
+        senderEmailAddressId: emailAddress.id,
+      })
+      await expect(
+        instanceUnderTest.listEmailMessages({
+          dateRange: {
+            sortDate: {
+              startDate: emailAddress.createdAt,
+              endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+            },
+            updatedAt: {
+              startDate: emailAddress.createdAt,
+              endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+            },
+          },
+          cachePolicy: CachePolicy.RemoteOnly,
+        }),
+      ).rejects.toThrow(InvalidArgumentError)
+    })
+
+    it('should throw when input start date greater than end date for sortDate date range', async () => {
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+      await instanceUnderTest.sendEmailMessage({
+        rfc822Data: messageBuffer,
+        senderEmailAddressId: emailAddress.id,
+      })
+      await expect(
+        instanceUnderTest.listEmailMessages({
+          dateRange: {
+            sortDate: {
+              startDate: new Date(emailAddress.createdAt.getTime() + 100000),
+              endDate: emailAddress.createdAt,
+            },
+          },
+          cachePolicy: CachePolicy.RemoteOnly,
+        }),
+      ).rejects.toThrow(InvalidArgumentError)
+    })
+
+    it('should throw when input start date greater than end date for updatedAt date range', async () => {
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+      await instanceUnderTest.sendEmailMessage({
+        rfc822Data: messageBuffer,
+        senderEmailAddressId: emailAddress.id,
+      })
+      await expect(
+        instanceUnderTest.listEmailMessages({
+          dateRange: {
+            updatedAt: {
+              startDate: new Date(emailAddress.createdAt.getTime() + 100000),
+              endDate: emailAddress.createdAt,
+            },
+          },
+          cachePolicy: CachePolicy.RemoteOnly,
+        }),
+      ).rejects.toThrow(InvalidArgumentError)
+    })
+
+    it('lists expected email messages in ascending order', async () => {
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+      await instanceUnderTest.sendEmailMessage({
+        rfc822Data: messageBuffer,
+        senderEmailAddressId: emailAddress.id,
+      })
+      const dateRange: EmailMessageDateRange = {
+        sortDate: {
+          startDate: emailAddress.createdAt,
+          endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+        },
+      }
+      await waitForExpect(
+        async () => {
+          const messages = await instanceUnderTest.listEmailMessages({
+            dateRange,
+            cachePolicy: CachePolicy.RemoteOnly,
+            sortOrder: SortOrder.Asc,
+          })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(4)
+          messages.items.forEach((item, index) => {
+            if (index < messages.items.length - 1) {
+              expect(item.sortDate.getTime()).toBeLessThan(
+                messages.items[index + 1].sortDate.getTime(),
+              )
+            }
+          })
+        },
+        30000,
+        1000,
+      )
+    })
+
+    it('lists expected email messages in descending order', async () => {
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+      await instanceUnderTest.sendEmailMessage({
+        rfc822Data: messageBuffer,
+        senderEmailAddressId: emailAddress.id,
+      })
+      await waitForExpect(
+        async () => {
+          const messages = await instanceUnderTest.listEmailMessages({
+            cachePolicy: CachePolicy.RemoteOnly,
+            sortOrder: SortOrder.Desc,
+          })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(4)
+          messages.items.forEach((item, index) => {
+            if (index < messages.items.length - 1) {
+              expect(item.sortDate.getTime()).toBeGreaterThan(
+                messages.items[index + 1].sortDate.getTime(),
+              )
+            }
+          })
+        },
+        30000,
+        1000,
+      )
+    })
+
+    it('should return partial result', async () => {
+      await waitForExpect(
+        async () => {
+          await instanceUnderTest.reset()
+          const messages = await instanceUnderTest.listEmailMessages({
+            cachePolicy: CachePolicy.RemoteOnly,
+          })
+          expect(messages).not.toBeNull()
+          expect(messages.status).toStrictEqual(
+            ListOperationResultStatus.Partial,
+          )
+          if (messages.status !== ListOperationResultStatus.Partial) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+
+          expect(messages.items).toHaveLength(0)
+          expect(messages.failed).toHaveLength(2)
+          const inbound = messages.failed.filter(
+            (message) => message.item.direction === Direction.Inbound,
+          )
+          const outbound = messages.failed.filter(
+            (message) => message.item.direction === Direction.Outbound,
+          )
+          expect(outbound).toHaveLength(1)
+          expect(inbound).toHaveLength(1)
+
+          expect(outbound[0].cause).toBeInstanceOf(KeyNotFoundError)
+          expect(inbound[0].cause).toBeInstanceOf(KeyNotFoundError)
+        },
+        20000,
+        1000,
+      )
+    })
   })
 
   describe('listEmailMessagesForEmailAddressId', () => {
@@ -131,24 +507,26 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       )
     })
 
-    it('lists expected email messages respecting date range', async () => {
+    it('lists expected email messages respecting sortDate date range', async () => {
       const messageBuffer =
         Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
       await instanceUnderTest.sendEmailMessage({
         rfc822Data: messageBuffer,
         senderEmailAddressId: emailAddress.id,
       })
-      const dateRange: DateRange = {
-        startDate: emailAddress.createdAt,
-        endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+      const dateRange: EmailMessageDateRange = {
+        sortDate: {
+          startDate: emailAddress.createdAt,
+          endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+        },
       }
       await waitForExpect(
         async () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
               emailAddressId: emailAddress.id,
-              cachePolicy: CachePolicy.RemoteOnly,
               dateRange,
+              cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
@@ -167,7 +545,70 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       )
     })
 
-    it('returns empty list for out of range date', async () => {
+    it('lists expected email messages respecting updatedAt date range', async () => {
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+      await instanceUnderTest.sendEmailMessage({
+        rfc822Data: messageBuffer,
+        senderEmailAddressId: emailAddress.id,
+      })
+
+      // List all inbound messages
+      let inboundMessageIds: string[] = []
+      await waitForExpect(
+        async () => {
+          const allMessages = await instanceUnderTest.listEmailMessages({
+            cachePolicy: CachePolicy.RemoteOnly,
+          })
+          if (allMessages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${allMessages}`)
+          }
+          expect(allMessages.items).toHaveLength(4)
+
+          inboundMessageIds = allMessages.items
+            .filter((m) => m.direction == Direction.Inbound)
+            .map((m) => m.id)
+        },
+        20000,
+        1000,
+      )
+
+      // Update each inbound message's seen flag subsequently updating the modified date
+      const timestamp = new Date()
+      await waitForExpect(async () => {
+        await expect(
+          instanceUnderTest.updateEmailMessages({
+            ids: inboundMessageIds,
+            values: { seen: true },
+          }),
+        ).resolves.toMatchObject({ status: BatchOperationResultStatus.Success })
+      })
+
+      // List the newly updated email messages
+      await waitForExpect(
+        async () => {
+          const messages =
+            await instanceUnderTest.listEmailMessagesForEmailAddressId({
+              emailAddressId: emailAddress.id,
+              dateRange: {
+                updatedAt: {
+                  startDate: timestamp,
+                  endDate: new Date(timestamp.getTime() + 100000),
+                },
+              },
+              cachePolicy: CachePolicy.RemoteOnly,
+            })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(2)
+        },
+        20000,
+        1000,
+      )
+    })
+
+    it('returns empty list for out of range sort date', async () => {
       const messageBuffer =
         Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
       await instanceUnderTest.sendEmailMessage({
@@ -179,11 +620,13 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
               emailAddressId: emailAddress.id,
-              cachePolicy: CachePolicy.RemoteOnly,
               dateRange: {
-                startDate: sudo.createdAt,
-                endDate: emailAddress.createdAt,
+                sortDate: {
+                  startDate: sudo.createdAt,
+                  endDate: emailAddress.createdAt,
+                },
               },
+              cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
@@ -195,6 +638,103 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       )
     })
 
+    it('returns empty list for out of range updatedAt date', async () => {
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+      await instanceUnderTest.sendEmailMessage({
+        rfc822Data: messageBuffer,
+        senderEmailAddressId: emailAddress.id,
+      })
+      await waitForExpect(
+        async () => {
+          const messages =
+            await instanceUnderTest.listEmailMessagesForEmailAddressId({
+              emailAddressId: emailAddress.id,
+              dateRange: {
+                updatedAt: {
+                  startDate: sudo.createdAt,
+                  endDate: emailAddress.createdAt,
+                },
+              },
+              cachePolicy: CachePolicy.RemoteOnly,
+            })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(0)
+        },
+        10000,
+        1000,
+      )
+    })
+
+    it('should throw for multiple date ranges specified', async () => {
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+      await instanceUnderTest.sendEmailMessage({
+        rfc822Data: messageBuffer,
+        senderEmailAddressId: emailAddress.id,
+      })
+      await expect(
+        instanceUnderTest.listEmailMessagesForEmailAddressId({
+          emailAddressId: emailAddress.id,
+          dateRange: {
+            sortDate: {
+              startDate: emailAddress.createdAt,
+              endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+            },
+            updatedAt: {
+              startDate: emailAddress.createdAt,
+              endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+            },
+          },
+          cachePolicy: CachePolicy.RemoteOnly,
+        }),
+      ).rejects.toThrow(InvalidArgumentError)
+    })
+
+    it('should throw when input start date greater than end date for sort date range', async () => {
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+      await instanceUnderTest.sendEmailMessage({
+        rfc822Data: messageBuffer,
+        senderEmailAddressId: emailAddress.id,
+      })
+      await expect(
+        instanceUnderTest.listEmailMessagesForEmailAddressId({
+          emailAddressId: emailAddress.id,
+          dateRange: {
+            sortDate: {
+              startDate: new Date(emailAddress.createdAt.getTime() + 100000),
+              endDate: emailAddress.createdAt,
+            },
+          },
+          cachePolicy: CachePolicy.RemoteOnly,
+        }),
+      ).rejects.toThrow(InvalidArgumentError)
+    })
+
+    it('should throw when input start date greater than end date for updatedAt date range', async () => {
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+      await instanceUnderTest.sendEmailMessage({
+        rfc822Data: messageBuffer,
+        senderEmailAddressId: emailAddress.id,
+      })
+      await expect(
+        instanceUnderTest.listEmailMessagesForEmailAddressId({
+          emailAddressId: emailAddress.id,
+          dateRange: {
+            updatedAt: {
+              startDate: new Date(emailAddress.createdAt.getTime() + 100000),
+              endDate: emailAddress.createdAt,
+            },
+          },
+          cachePolicy: CachePolicy.RemoteOnly,
+        }),
+      ).rejects.toThrow(InvalidArgumentError)
+    })
+
     it('lists expected email messages in ascending order', async () => {
       const messageBuffer =
         Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
@@ -202,17 +742,19 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         rfc822Data: messageBuffer,
         senderEmailAddressId: emailAddress.id,
       })
-      const dateRange: DateRange = {
-        startDate: emailAddress.createdAt,
-        endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+      const dateRange: EmailMessageDateRange = {
+        sortDate: {
+          startDate: emailAddress.createdAt,
+          endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+        },
       }
       await waitForExpect(
         async () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
               emailAddressId: emailAddress.id,
-              cachePolicy: CachePolicy.RemoteOnly,
               dateRange,
+              cachePolicy: CachePolicy.RemoteOnly,
               sortOrder: SortOrder.Asc,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
@@ -371,16 +913,18 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       })
     })
 
-    it('lists expected email messages respecting date range', async () => {
+    it('lists expected email messages respecting sortDate date range', async () => {
       const messageBuffer =
         Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
       await instanceUnderTest.sendEmailMessage({
         rfc822Data: messageBuffer,
         senderEmailAddressId: emailAddress.id,
       })
-      const dateRange: DateRange = {
-        startDate: emailAddress.createdAt,
-        endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+      const dateRange: EmailMessageDateRange = {
+        sortDate: {
+          startDate: emailAddress.createdAt,
+          endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+        },
       }
       const inboxFolder = await getFolderByName({
         emailClient: instanceUnderTest,
@@ -392,8 +936,8 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailFolderId({
               folderId: inboxFolder?.id ?? '',
-              cachePolicy: CachePolicy.RemoteOnly,
               dateRange,
+              cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
@@ -412,7 +956,75 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       )
     })
 
-    it('returns empty list for out of range date', async () => {
+    it('lists expected email messages respecting updatedAt date range', async () => {
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+      await instanceUnderTest.sendEmailMessage({
+        rfc822Data: messageBuffer,
+        senderEmailAddressId: emailAddress.id,
+      })
+      const inboxFolder = await getFolderByName({
+        emailClient: instanceUnderTest,
+        emailAddressId: emailAddress.id,
+        folderName: 'INBOX',
+      })
+
+      // List all inbound messages
+      let inboundMessageIds: string[] = []
+      await waitForExpect(
+        async () => {
+          const allMessages = await instanceUnderTest.listEmailMessages({
+            cachePolicy: CachePolicy.RemoteOnly,
+          })
+          if (allMessages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${allMessages}`)
+          }
+          expect(allMessages.items).toHaveLength(4)
+
+          inboundMessageIds = allMessages.items
+            .filter((m) => m.direction == Direction.Inbound)
+            .map((m) => m.id)
+        },
+        20000,
+        1000,
+      )
+
+      // Update each inbound message's seen flag subsequently updating the modified date
+      const timestamp = new Date()
+      await waitForExpect(async () => {
+        await expect(
+          instanceUnderTest.updateEmailMessages({
+            ids: inboundMessageIds,
+            values: { seen: true },
+          }),
+        ).resolves.toMatchObject({ status: BatchOperationResultStatus.Success })
+      })
+
+      // List the newly updated email messages
+      await waitForExpect(
+        async () => {
+          const messages =
+            await instanceUnderTest.listEmailMessagesForEmailFolderId({
+              folderId: inboxFolder?.id ?? '',
+              dateRange: {
+                updatedAt: {
+                  startDate: timestamp,
+                  endDate: new Date(timestamp.getTime() + 100000),
+                },
+              },
+              cachePolicy: CachePolicy.RemoteOnly,
+            })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(2)
+        },
+        20000,
+        1000,
+      )
+    })
+
+    it('returns empty list for out of range sort date', async () => {
       const messageBuffer =
         Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
       await instanceUnderTest.sendEmailMessage({
@@ -429,11 +1041,13 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailFolderId({
               folderId: inboxFolder?.id ?? '',
-              cachePolicy: CachePolicy.RemoteOnly,
               dateRange: {
-                startDate: sudo.createdAt,
-                endDate: emailAddress.createdAt,
+                sortDate: {
+                  startDate: sudo.createdAt,
+                  endDate: emailAddress.createdAt,
+                },
               },
+              cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
@@ -445,6 +1059,123 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       )
     })
 
+    it('returns empty list for out of range updatedAt date', async () => {
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+      await instanceUnderTest.sendEmailMessage({
+        rfc822Data: messageBuffer,
+        senderEmailAddressId: emailAddress.id,
+      })
+      const inboxFolder = await getFolderByName({
+        emailClient: instanceUnderTest,
+        emailAddressId: emailAddress.id,
+        folderName: 'INBOX',
+      })
+      await waitForExpect(
+        async () => {
+          const messages =
+            await instanceUnderTest.listEmailMessagesForEmailFolderId({
+              folderId: inboxFolder?.id ?? '',
+              dateRange: {
+                updatedAt: {
+                  startDate: sudo.createdAt,
+                  endDate: emailAddress.createdAt,
+                },
+              },
+              cachePolicy: CachePolicy.RemoteOnly,
+            })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(0)
+        },
+        10000,
+        1000,
+      )
+    })
+
+    it('should throw for multiple date ranges specified', async () => {
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+      await instanceUnderTest.sendEmailMessage({
+        rfc822Data: messageBuffer,
+        senderEmailAddressId: emailAddress.id,
+      })
+      const inboxFolder = await getFolderByName({
+        emailClient: instanceUnderTest,
+        emailAddressId: emailAddress.id,
+        folderName: 'INBOX',
+      })
+      await expect(
+        instanceUnderTest.listEmailMessagesForEmailFolderId({
+          folderId: inboxFolder?.id ?? '',
+          dateRange: {
+            sortDate: {
+              startDate: emailAddress.createdAt,
+              endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+            },
+            updatedAt: {
+              startDate: emailAddress.createdAt,
+              endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+            },
+          },
+          cachePolicy: CachePolicy.RemoteOnly,
+        }),
+      ).rejects.toThrow(InvalidArgumentError)
+    })
+
+    it('should throw when input start date greater than end date for sort date range', async () => {
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+      await instanceUnderTest.sendEmailMessage({
+        rfc822Data: messageBuffer,
+        senderEmailAddressId: emailAddress.id,
+      })
+      const inboxFolder = await getFolderByName({
+        emailClient: instanceUnderTest,
+        emailAddressId: emailAddress.id,
+        folderName: 'INBOX',
+      })
+      await expect(
+        instanceUnderTest.listEmailMessagesForEmailFolderId({
+          folderId: inboxFolder?.id ?? '',
+          dateRange: {
+            sortDate: {
+              startDate: new Date(emailAddress.createdAt.getTime() + 100000),
+              endDate: emailAddress.createdAt,
+            },
+          },
+          cachePolicy: CachePolicy.RemoteOnly,
+        }),
+      ).rejects.toThrow(InvalidArgumentError)
+    })
+
+    it('should throw when input start date greater than end date for updatedAt date range', async () => {
+      const messageBuffer =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+      await instanceUnderTest.sendEmailMessage({
+        rfc822Data: messageBuffer,
+        senderEmailAddressId: emailAddress.id,
+      })
+      const inboxFolder = await getFolderByName({
+        emailClient: instanceUnderTest,
+        emailAddressId: emailAddress.id,
+        folderName: 'INBOX',
+      })
+      await expect(
+        instanceUnderTest.listEmailMessagesForEmailFolderId({
+          folderId: inboxFolder?.id ?? '',
+          dateRange: {
+            updatedAt: {
+              startDate: new Date(emailAddress.createdAt.getTime() + 100000),
+              endDate: emailAddress.createdAt,
+            },
+          },
+          cachePolicy: CachePolicy.RemoteOnly,
+        }),
+      ).rejects.toThrow(InvalidArgumentError)
+    })
+
     it('lists expected email messages in ascending order', async () => {
       const messageBuffer =
         Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
@@ -452,9 +1183,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         rfc822Data: messageBuffer,
         senderEmailAddressId: emailAddress.id,
       })
-      const dateRange: DateRange = {
-        startDate: emailAddress.createdAt,
-        endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+      const dateRange: EmailMessageDateRange = {
+        sortDate: {
+          startDate: emailAddress.createdAt,
+          endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+        },
       }
       const inboxFolder = await getFolderByName({
         emailClient: instanceUnderTest,
@@ -466,8 +1199,8 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailFolderId({
               folderId: inboxFolder?.id ?? '',
-              cachePolicy: CachePolicy.RemoteOnly,
               dateRange,
+              cachePolicy: CachePolicy.RemoteOnly,
               sortOrder: SortOrder.Asc,
             })
           if (messages.status !== ListOperationResultStatus.Success) {

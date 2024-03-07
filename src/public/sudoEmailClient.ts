@@ -18,8 +18,8 @@ import {
 } from '@sudoplatform/sudo-common'
 
 import {
-  internal as SudoUserInternal,
   SudoUserClient,
+  internal as SudoUserInternal,
 } from '@sudoplatform/sudo-user'
 
 import { WebSudoCryptoProvider } from '@sudoplatform/sudo-web-crypto-provider'
@@ -27,8 +27,10 @@ import { Mutex } from 'async-mutex'
 import { DefaultEmailAccountService } from '../private/data/account/defaultEmailAccountService'
 import { EmailAddressAPITransformer } from '../private/data/account/transformer/emailAddressAPITransformer'
 import { EmailAddressEntityTransformer } from '../private/data/account/transformer/emailAddressEntityTransformer'
+import { EmailAddressPublicInfoTransformer } from '../private/data/account/transformer/emailAddressPublicInfoTransformer'
 import { EmailDomainEntityTransformer } from '../private/data/account/transformer/emailDomainEntityTransformer'
 import { ListEmailAddressesAPITransformer } from '../private/data/account/transformer/listEmailAddressesAPITransformer'
+import { DefaultEmailAddressBlocklistService } from '../private/data/blocklist/defaultEmailAddressBlocklistService'
 import { ApiClient } from '../private/data/common/apiClient'
 import {
   EmailServiceConfig,
@@ -40,10 +42,12 @@ import { S3Client } from '../private/data/common/s3Client'
 import { DefaultConfigurationDataService } from '../private/data/configuration/defaultConfigurationDataService'
 import { ConfigurationDataAPITransformer } from '../private/data/configuration/transformer/configurationDataAPITransformer'
 import { DefaultEmailFolderService } from '../private/data/folder/defaultEmailFolderService'
+import { EmailFolderAPITransformer } from '../private/data/folder/transformer/emailFolderAPITransformer'
 import { DefaultEmailMessageService } from '../private/data/message/defaultEmailMessageService'
 import { EmailMessageAPITransformer } from '../private/data/message/transformer/emailMessageAPITransformer'
 import { ListEmailMessagesAPITransformer } from '../private/data/message/transformer/listEmailMessagesAPITransformer'
 import { EmailDomainEntity } from '../private/domain/entities/account/emailDomainEntity'
+import { EmailAddressBlocklistService } from '../private/domain/entities/blocklist/emailAddressBlocklistService'
 import { UpdateEmailMessagesStatus } from '../private/domain/entities/message/updateEmailMessagesStatus'
 import { CheckEmailAddressAvailabilityUseCase } from '../private/domain/use-cases/account/checkEmailAddressAvailabilityUseCase'
 import { DeprovisionEmailAccountUseCase } from '../private/domain/use-cases/account/deprovisionEmailAccountUseCase'
@@ -51,54 +55,51 @@ import { GetEmailAccountUseCase } from '../private/domain/use-cases/account/getE
 import { GetSupportedEmailDomainsUseCase } from '../private/domain/use-cases/account/getSupportedEmailDomainsUseCase'
 import { ListEmailAccountsForSudoIdUseCase } from '../private/domain/use-cases/account/listEmailAccountsForSudoIdUseCase'
 import { ListEmailAccountsUseCase } from '../private/domain/use-cases/account/listEmailAccountsUseCase'
+import { LookupEmailAddressesPublicInfoUseCase } from '../private/domain/use-cases/account/lookupEmailAddressesPublicInfoUseCase'
 import { ProvisionEmailAccountUseCase } from '../private/domain/use-cases/account/provisionEmailAccountUseCase'
 import { UpdateEmailAccountMetadataUseCase } from '../private/domain/use-cases/account/updateEmailAccountMetadataUseCase'
+import { BlockEmailAddressesUseCase } from '../private/domain/use-cases/blocklist/blockEmailAddresses'
+import { GetEmailAddressBlocklistUseCase } from '../private/domain/use-cases/blocklist/getEmailAddressBlocklist'
+import { UnblockEmailAddressesUseCase } from '../private/domain/use-cases/blocklist/unblockEmailAddresses'
+import { UnblockEmailAddressesByHashedValueUseCase } from '../private/domain/use-cases/blocklist/unblockEmailAddressesByHashedValue'
 import { GetConfigurationDataUseCase } from '../private/domain/use-cases/configuration/getConfigurationDataUseCase'
 import { DeleteDraftEmailMessagesUseCase } from '../private/domain/use-cases/draft/deleteDraftEmailMessagesUseCase'
 import { GetDraftEmailMessageUseCase } from '../private/domain/use-cases/draft/getDraftEmailMessageUseCase'
 import { ListDraftEmailMessageMetadataUseCase } from '../private/domain/use-cases/draft/listDraftEmailMessageMetadataUseCase'
 import { SaveDraftEmailMessageUseCase } from '../private/domain/use-cases/draft/saveDraftEmailMessageUseCase'
 import { UpdateDraftEmailMessageUseCase } from '../private/domain/use-cases/draft/updateDraftEmailMessageUseCase'
-import { ListEmailFoldersForEmailAddressIdUseCase } from '../private/domain/use-cases/folder/listEmailFoldersForEmailAddressIdUseCase'
 import { CreateCustomEmailFolderUseCase } from '../private/domain/use-cases/folder/createCustomEmailFolderUseCase'
+import { ListEmailFoldersForEmailAddressIdUseCase } from '../private/domain/use-cases/folder/listEmailFoldersForEmailAddressIdUseCase'
 import { DeleteEmailMessagesUseCase } from '../private/domain/use-cases/message/deleteEmailMessagesUseCase'
 import { GetEmailMessageRfc822DataUseCase } from '../private/domain/use-cases/message/getEmailMessageRfc822DataUseCase'
 import { GetEmailMessageUseCase } from '../private/domain/use-cases/message/getEmailMessageUseCase'
 import { ListEmailMessagesForEmailAddressIdUseCase } from '../private/domain/use-cases/message/listEmailMessagesForEmailAddressIdUseCase'
 import { ListEmailMessagesForEmailFolderIdUseCase } from '../private/domain/use-cases/message/listEmailMessagesForEmailFolderIdUseCase'
+import { ListEmailMessagesUseCase } from '../private/domain/use-cases/message/listEmailMessagesUseCase'
 import { SendEmailMessageUseCase } from '../private/domain/use-cases/message/sendEmailMessageUseCase'
 import { SubscribeToEmailMessagesUseCase } from '../private/domain/use-cases/message/subscribeToEmailMessagesUseCase'
 import { UnsubscribeFromEmailMessagesUseCase } from '../private/domain/use-cases/message/unsubscribeFromEmailMessagesUseCase'
 import { UpdateEmailMessagesUseCase } from '../private/domain/use-cases/message/updateEmailMessagesUseCase'
+import { InvalidArgumentError } from './errors'
 import {
   BatchOperationResult,
   BatchOperationResultStatus,
 } from './typings/batchOperationResult'
+import { UnsealedBlockedAddress } from './typings/blockedAddresses'
 import { ConfigurationData } from './typings/configurationData'
-import { DateRange } from './typings/dateRange'
 import { DraftEmailMessage } from './typings/draftEmailMessage'
 import { DraftEmailMessageMetadata } from './typings/draftEmailMessageMetadata'
 import { EmailAddress } from './typings/emailAddress'
+import { EmailAddressPublicInfo } from './typings/emailAddressPublicInfo'
 import { EmailFolder } from './typings/emailFolder'
 import { EmailMessage, EmailMessageSubscriber } from './typings/emailMessage'
+import { EmailMessageDateRange } from './typings/emailMessageDateRange'
 import { EmailMessageRfc822Data } from './typings/emailMessageRfc822Data'
 import {
   ListEmailAddressesResult,
   ListEmailMessagesResult,
 } from './typings/listOperationResult'
 import { SortOrder } from './typings/sortOrder'
-import { InvalidArgumentError } from './errors'
-import { EmailFolderAPITransformer } from '../private/data/folder/transformer/emailFolderAPITransformer'
-import { EmailAddressPublicInfo } from './typings/emailAddressPublicInfo'
-import { LookupEmailAddressesPublicInfoUseCase } from '../private/domain/use-cases/account/lookupEmailAddressesPublicInfoUseCase'
-import { EmailAddressPublicInfoTransformer } from '../private/data/account/transformer/emailAddressPublicInfoTransformer'
-import { BlockEmailAddressesUseCase } from '../private/domain/use-cases/blocklist/blockEmailAddresses'
-import { EmailAddressBlocklistService } from '../private/domain/entities/blocklist/emailAddressBlocklistService'
-import { DefaultEmailAddressBlocklistService } from '../private/data/blocklist/defaultEmailAddressBlocklistService'
-import { UnblockEmailAddressesUseCase } from '../private/domain/use-cases/blocklist/unblockEmailAddresses'
-import { GetEmailAddressBlocklistUseCase } from '../private/domain/use-cases/blocklist/getEmailAddressBlocklist'
-import { UnblockEmailAddressesByHashedValueUseCase } from '../private/domain/use-cases/blocklist/unblockEmailAddressesByHashedValue'
-import { UnsealedBlockedAddress } from './typings/blockedAddresses'
 
 /**
  * Pagination interface designed to be extended for list interfaces.
@@ -272,18 +273,32 @@ export interface GetEmailMessageInput {
 }
 
 /**
+ * Input for `SudoEmailClient.listEmailMessages`.
+ *
+ * @interface ListEmailMessagesInput
+ * @property {EmailMessageDateRange} dateRange Email messages matching the specified date range inclusive will be fetched.
+ * @property {CachePolicy} cachePolicy Determines how the email messages will be fetched. Default usage is `remoteOnly`.
+ * @property {SortOrder} sortOrder The direction in which the email messages are sorted. Defaults to descending.
+ */
+export interface ListEmailMessagesInput extends Pagination {
+  dateRange?: EmailMessageDateRange
+  cachePolicy?: CachePolicy
+  sortOrder?: SortOrder
+}
+
+/**
  * Input for `SudoEmailClient.listEmailMessagesForEmailAddressId`.
  *
  * @interface ListEmailMessagesForEmailAddressIdInput
  * @property {string} emailAddressId The identifier of the email address associated with the email message.
+ * @property {EmailMessageDateRange} dateRange Email messages matching the specified date range inclusive will be fetched.
  * @property {CachePolicy} cachePolicy Determines how the email messages will be fetched. Default usage is `remoteOnly`.
- * @property {DateRange} dateRange Email messages created within the date range inclusive will be fetched.
  * @property {SortOrder} sortOrder The direction in which the email messages are sorted. Defaults to descending.
  */
 export interface ListEmailMessagesForEmailAddressIdInput extends Pagination {
   emailAddressId: string
+  dateRange?: EmailMessageDateRange
   cachePolicy?: CachePolicy
-  dateRange?: DateRange
   sortOrder?: SortOrder
 }
 
@@ -292,14 +307,14 @@ export interface ListEmailMessagesForEmailAddressIdInput extends Pagination {
  *
  * @interface ListEmailMessagesForEmailFolderIdInput
  * @property {string} folderId The identifier of the email folder that contains the email message.
+ * @property {EmailMessageDateRange} dateRange Email messages matching the specified date range inclusive will be fetched.
  * @property {CachePolicy} cachePolicy Determines how the email messages will be fetched. Default usage is `remoteOnly`.
- * @property {DateRange} dateRange Email messages created within the date range inclusive will be fetched.
  * @property {SortOrder} sortOrder The direction in which the email messages are sorted. Defaults to descending.
  */
 export interface ListEmailMessagesForEmailFolderIdInput extends Pagination {
   folderId: string
+  dateRange?: EmailMessageDateRange
   cachePolicy?: CachePolicy
-  dateRange?: DateRange
   sortOrder?: SortOrder
 }
 
@@ -742,6 +757,16 @@ export interface SudoEmailClient {
   getEmailMessageRfc822Data(
     input: GetEmailMessageRfc822DataInput,
   ): Promise<EmailMessageRfc822Data | undefined>
+
+  /**
+   * Get the list of all email messages for the user.
+   *
+   * @param {ListEmailMessagesInput} input Parameters used to retrieve a list of all email messages for a user.
+   * @returns {ListEmailMessagesResult} List operation result.
+   */
+  listEmailMessages(
+    input: ListEmailMessagesInput,
+  ): Promise<ListEmailMessagesResult>
 
   /**
    * Get the list of email messages for the specified email address.
@@ -1368,6 +1393,35 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       id,
       emailAddressId,
     })
+  }
+
+  public async listEmailMessages({
+    dateRange,
+    cachePolicy,
+    limit,
+    sortOrder,
+    nextToken,
+  }: ListEmailMessagesInput): Promise<ListEmailMessagesResult> {
+    this.log.debug(this.listEmailMessages.name, {
+      dateRange,
+      cachePolicy,
+      limit,
+      sortOrder,
+      nextToken,
+    })
+    const useCase = new ListEmailMessagesUseCase(this.emailMessageService)
+    const { emailMessages, nextToken: resultNextToken } = await useCase.execute(
+      {
+        dateRange,
+        cachePolicy,
+        limit,
+        sortOrder,
+        nextToken,
+      },
+    )
+    const transformer = new ListEmailMessagesAPITransformer()
+    const result = transformer.transform(emailMessages, resultNextToken)
+    return result
   }
 
   public async listEmailMessagesForEmailAddressId({

@@ -14,47 +14,37 @@ import {
   verify,
   when,
 } from 'ts-mockito'
-import { v4 } from 'uuid'
 import { EmailMessageService } from '../../../../../../src/private/domain/entities/message/emailMessageService'
-import { ListEmailMessagesForEmailFolderIdUseCase } from '../../../../../../src/private/domain/use-cases/message/listEmailMessagesForEmailFolderIdUseCase'
+import { ListEmailMessagesUseCase } from '../../../../../../src/private/domain/use-cases/message/listEmailMessagesUseCase'
 import { EmailMessageDateRange } from '../../../../../../src/public/typings/emailMessageDateRange'
 import { SortOrder } from '../../../../../../src/public/typings/sortOrder'
 import { EntityDataFactory } from '../../../../data-factory/entity'
 
-describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
+describe('ListEmailMessagesUseCase Test Suite', () => {
   const mockEmailMessageService = mock<EmailMessageService>()
 
-  let instanceUnderTest: ListEmailMessagesForEmailFolderIdUseCase
+  let instanceUnderTest: ListEmailMessagesUseCase
 
   beforeEach(() => {
     reset(mockEmailMessageService)
-    instanceUnderTest = new ListEmailMessagesForEmailFolderIdUseCase(
+    instanceUnderTest = new ListEmailMessagesUseCase(
       instance(mockEmailMessageService),
     )
   })
 
   describe('execute', () => {
     it('completes successfully', async () => {
-      const folderId = v4()
-      when(
-        mockEmailMessageService.listMessagesForEmailFolderId(anything()),
-      ).thenResolve({
+      when(mockEmailMessageService.listMessages(anything())).thenResolve({
         emailMessages: [EntityDataFactory.emailMessage],
       })
       const result = await instanceUnderTest.execute({
-        folderId,
         cachePolicy: CachePolicy.CacheOnly,
       })
-      verify(
-        mockEmailMessageService.listMessagesForEmailFolderId(anything()),
-      ).once()
-      const [inputArgs] = capture(
-        mockEmailMessageService.listMessagesForEmailFolderId,
-      ).first()
+      verify(mockEmailMessageService.listMessages(anything())).once()
+      const [inputArgs] = capture(mockEmailMessageService.listMessages).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
-        folderId,
-        cachePolicy: CachePolicy.CacheOnly,
         dateRange: undefined,
+        cachePolicy: CachePolicy.CacheOnly,
         limit: undefined,
         sortOrder: undefined,
         nextToken: undefined,
@@ -65,32 +55,23 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
     })
 
     it('completes successfully with sortDate date range', async () => {
-      const folderId = v4()
       const dateRange: EmailMessageDateRange = {
         sortDate: {
           startDate: new Date(1.0),
           endDate: new Date(2.0),
         },
       }
-      when(
-        mockEmailMessageService.listMessagesForEmailFolderId(anything()),
-      ).thenResolve({
+      when(mockEmailMessageService.listMessages(anything())).thenResolve({
         emailMessages: [EntityDataFactory.emailMessage],
       })
       const result = await instanceUnderTest.execute({
-        folderId,
-        dateRange,
         cachePolicy: CachePolicy.CacheOnly,
+        dateRange,
         sortOrder: SortOrder.Desc,
       })
-      verify(
-        mockEmailMessageService.listMessagesForEmailFolderId(anything()),
-      ).once()
-      const [inputArgs] = capture(
-        mockEmailMessageService.listMessagesForEmailFolderId,
-      ).first()
+      verify(mockEmailMessageService.listMessages(anything())).once()
+      const [inputArgs] = capture(mockEmailMessageService.listMessages).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
-        folderId,
         dateRange,
         cachePolicy: CachePolicy.CacheOnly,
         limit: undefined,
@@ -103,32 +84,23 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
     })
 
     it('completes successfully with updatedAt date range', async () => {
-      const folderId = v4()
       const dateRange: EmailMessageDateRange = {
         updatedAt: {
           startDate: new Date(1.0),
           endDate: new Date(2.0),
         },
       }
-      when(
-        mockEmailMessageService.listMessagesForEmailFolderId(anything()),
-      ).thenResolve({
+      when(mockEmailMessageService.listMessages(anything())).thenResolve({
         emailMessages: [EntityDataFactory.emailMessage],
       })
       const result = await instanceUnderTest.execute({
-        folderId,
-        dateRange,
         cachePolicy: CachePolicy.CacheOnly,
+        dateRange,
         sortOrder: SortOrder.Desc,
       })
-      verify(
-        mockEmailMessageService.listMessagesForEmailFolderId(anything()),
-      ).once()
-      const [inputArgs] = capture(
-        mockEmailMessageService.listMessagesForEmailFolderId,
-      ).first()
+      verify(mockEmailMessageService.listMessages(anything())).once()
+      const [inputArgs] = capture(mockEmailMessageService.listMessages).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
-        folderId,
         dateRange,
         cachePolicy: CachePolicy.CacheOnly,
         limit: undefined,
@@ -141,26 +113,17 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
     })
 
     it('completes successfully with empty result items', async () => {
-      const folderId = v4()
-      when(
-        mockEmailMessageService.listMessagesForEmailFolderId(anything()),
-      ).thenResolve({
+      when(mockEmailMessageService.listMessages(anything())).thenResolve({
         emailMessages: [],
       })
       const result = await instanceUnderTest.execute({
-        folderId,
         cachePolicy: CachePolicy.CacheOnly,
       })
-      verify(
-        mockEmailMessageService.listMessagesForEmailFolderId(anything()),
-      ).once()
-      const [inputArgs] = capture(
-        mockEmailMessageService.listMessagesForEmailFolderId,
-      ).first()
+      verify(mockEmailMessageService.listMessages(anything())).once()
+      const [inputArgs] = capture(mockEmailMessageService.listMessages).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
-        folderId,
-        cachePolicy: CachePolicy.CacheOnly,
         dateRange: undefined,
+        cachePolicy: CachePolicy.CacheOnly,
         limit: undefined,
         sortOrder: undefined,
         nextToken: undefined,

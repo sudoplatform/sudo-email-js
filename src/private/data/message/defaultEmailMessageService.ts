@@ -18,7 +18,7 @@ import * as t from 'io-ts'
 import { PathReporter } from 'io-ts/PathReporter'
 import { v4 } from 'uuid'
 import {
-  DateRangeInput,
+  EmailMessageDateRangeInput,
   OnEmailMessageCreatedSubscription,
   OnEmailMessageDeletedSubscription,
   SealedEmailMessage,
@@ -26,6 +26,7 @@ import {
 import {
   ConnectionState,
   EmailMessage,
+  EmailMessageDateRange,
   EmailMessageSubscriber,
 } from '../../../public'
 import { InternalError } from '../../../public/errors'
@@ -47,6 +48,8 @@ import {
   ListEmailMessagesForEmailAddressIdOutput,
   ListEmailMessagesForEmailFolderIdInput,
   ListEmailMessagesForEmailFolderIdOutput,
+  ListEmailMessagesInput,
+  ListEmailMessagesOutput,
   SaveDraftInput,
   SendMessageInput,
   UpdateEmailMessagesInput,
@@ -68,10 +71,10 @@ import {
 } from '../common/subscriptionManager'
 import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransformer'
 import { SortOrderTransformer } from '../common/transformer/sortOrderTransformer'
+import { gunzipAsync } from '../../util/zlibAsync'
 // eslint-disable-next-line tree-shaking/no-side-effects-in-initialization
 import { withDefault } from '../common/withDefault'
 import { SealedEmailMessageEntityTransformer } from './transformer/sealedEmailMessageEntityTransformer'
-import { gunzipAsync } from '../../util/zlibAsync'
 
 const EmailAddressEntityCodec = t.intersection(
   [t.type({ emailAddress: t.string }), t.partial({ displayName: t.string })],
@@ -409,10 +412,53 @@ export class DefaultEmailMessageService implements EmailMessageService {
     return unsealedEmailMessage
   }
 
+  async listMessages({
+    dateRange,
+    cachePolicy,
+    limit,
+    sortOrder,
+    nextToken,
+  }: ListEmailMessagesInput): Promise<ListEmailMessagesOutput> {
+    const fetchPolicy = cachePolicy
+      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
+      : undefined
+    const sortOrderTransformer = new SortOrderTransformer()
+    const sortOrderInput = sortOrder
+      ? sortOrderTransformer.fromAPItoGraphQL(sortOrder)
+      : undefined
+    const inputDateRange = dateRange
+      ? this.validateDateRange(dateRange)
+      : undefined
+
+    const response = await this.appSync.listEmailMessages(
+      fetchPolicy,
+      inputDateRange,
+      limit,
+      sortOrderInput,
+      nextToken,
+    )
+    let sealedEmailMessages: SealedEmailMessageEntity[] = []
+    if (response.items) {
+      const transformer = new SealedEmailMessageEntityTransformer()
+      sealedEmailMessages = response.items.map((item) =>
+        transformer.transformGraphQL(item),
+      )
+    }
+    const unsealedEmailMessages = await Promise.all(
+      sealedEmailMessages.map(async (message) => {
+        return await this.unsealEmailMessage(message)
+      }),
+    )
+    return {
+      emailMessages: unsealedEmailMessages,
+      nextToken: response.nextToken ?? undefined,
+    }
+  }
+
   async listMessagesForEmailAddressId({
     emailAddressId,
-    cachePolicy,
     dateRange,
+    cachePolicy,
     limit,
     sortOrder,
     nextToken,
@@ -424,13 +470,10 @@ export class DefaultEmailMessageService implements EmailMessageService {
     const sortOrderInput = sortOrder
       ? sortOrderTransformer.fromAPItoGraphQL(sortOrder)
       : undefined
-    let inputDateRange: DateRangeInput | undefined = undefined
-    inputDateRange = dateRange
-      ? (inputDateRange = {
-          startDateEpochMs: dateRange?.startDate.getTime(),
-          endDateEpochMs: dateRange?.endDate.getTime(),
-        })
+    const inputDateRange = dateRange
+      ? this.validateDateRange(dateRange)
       : undefined
+
     const response = await this.appSync.listEmailMessagesForEmailAddressId(
       emailAddressId,
       fetchPolicy,
@@ -459,8 +502,8 @@ export class DefaultEmailMessageService implements EmailMessageService {
 
   async listMessagesForEmailFolderId({
     folderId,
-    cachePolicy,
     dateRange,
+    cachePolicy,
     limit,
     sortOrder,
     nextToken,
@@ -472,13 +515,10 @@ export class DefaultEmailMessageService implements EmailMessageService {
     const sortOrderInput = sortOrder
       ? sortOrderTransformer.fromAPItoGraphQL(sortOrder)
       : undefined
-    let inputDateRange: DateRangeInput | undefined = undefined
-    inputDateRange = dateRange
-      ? (inputDateRange = {
-          startDateEpochMs: dateRange?.startDate.getTime(),
-          endDateEpochMs: dateRange?.endDate.getTime(),
-        })
+    const inputDateRange = dateRange
+      ? this.validateDateRange(dateRange)
       : undefined
+
     const response = await this.appSync.listEmailMessagesForEmailFolderId(
       folderId,
       fetchPolicy,
@@ -672,6 +712,25 @@ export class DefaultEmailMessageService implements EmailMessageService {
   ): void {
     this.createSubscriptionManager.unsubscribe(input.subscriptionId)
     this.deleteSubscriptionManager.unsubscribe(input.subscriptionId)
+  }
+
+  private validateDateRange(
+    dateRange: EmailMessageDateRange,
+  ): EmailMessageDateRangeInput {
+    return {
+      ...('sortDate' in dateRange && {
+        sortDateEpochMs: {
+          startDateEpochMs: dateRange.sortDate.startDate.getTime(),
+          endDateEpochMs: dateRange.sortDate.endDate.getTime(),
+        },
+      }),
+      ...('updatedAt' in dateRange && {
+        updatedAtEpochMs: {
+          startDateEpochMs: dateRange.updatedAt.startDate.getTime(),
+          endDateEpochMs: dateRange.updatedAt.endDate.getTime(),
+        },
+      }),
+    }
   }
 
   private onSubscriptionCompleted<

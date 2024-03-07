@@ -12,10 +12,10 @@ import {
   AppSyncNetworkError,
   DefaultLogger,
   FatalError,
-  isAppSyncNetworkError,
   Logger,
-  mapNetworkErrorToClientError,
   UnknownGraphQLError,
+  isAppSyncNetworkError,
+  mapNetworkErrorToClientError,
 } from '@sudoplatform/sudo-common'
 import { NormalizedCacheObject } from 'apollo-cache-inmemory'
 import {
@@ -43,7 +43,6 @@ import {
   CreatePublicKeyForEmailDocument,
   CreatePublicKeyForEmailMutation,
   CreatePublicKeyInput,
-  DateRangeInput,
   DeleteEmailMessagesDocument,
   DeleteEmailMessagesInput,
   DeleteEmailMessagesMutation,
@@ -57,6 +56,7 @@ import {
   EmailFolder,
   EmailFolderConnection,
   EmailMessageConnection,
+  EmailMessageDateRangeInput,
   GetEmailAddressBlocklistDocument,
   GetEmailAddressBlocklistQuery,
   GetEmailAddressBlocklistResponseFragment,
@@ -78,10 +78,12 @@ import {
   ListEmailAddressesQuery,
   ListEmailFoldersForEmailAddressIdDocument,
   ListEmailFoldersForEmailAddressIdQuery,
+  ListEmailMessagesDocument,
   ListEmailMessagesForEmailAddressIdDocument,
   ListEmailMessagesForEmailAddressIdQuery,
   ListEmailMessagesForEmailFolderIdDocument,
   ListEmailMessagesForEmailFolderIdQuery,
+  ListEmailMessagesQuery,
   LookupEmailAddressesPublicInfoDocument,
   LookupEmailAddressesPublicInfoQuery,
   LookupEmailAddressesPublicInfoResponse,
@@ -359,10 +361,33 @@ export class ApiClient {
     return data.getEmailMessage ?? undefined
   }
 
+  public async listEmailMessages(
+    fetchPolicy: FetchPolicy = 'network-only',
+    dateRange?: EmailMessageDateRangeInput,
+    limit?: number,
+    sortOrder?: SortOrder,
+    nextToken?: string,
+  ): Promise<EmailMessageConnection> {
+    const data = await this.performQuery<ListEmailMessagesQuery>({
+      query: ListEmailMessagesDocument,
+      variables: {
+        input: {
+          specifiedDateRange: dateRange,
+          limit,
+          sortOrder,
+          nextToken,
+        },
+      },
+      fetchPolicy,
+      calleeName: this.listEmailMessages.name,
+    })
+    return data.listEmailMessages
+  }
+
   public async listEmailMessagesForEmailAddressId(
     emailAddressId: string,
     fetchPolicy: FetchPolicy = 'network-only',
-    dateRange?: DateRangeInput,
+    dateRange?: EmailMessageDateRangeInput,
     limit?: number,
     sortOrder?: SortOrder,
     nextToken?: string,
@@ -373,7 +398,7 @@ export class ApiClient {
         variables: {
           input: {
             emailAddressId,
-            dateRange,
+            specifiedDateRange: dateRange,
             limit,
             sortOrder,
             nextToken,
@@ -388,7 +413,7 @@ export class ApiClient {
   public async listEmailMessagesForEmailFolderId(
     folderId: string,
     fetchPolicy: FetchPolicy = 'network-only',
-    dateRange?: DateRangeInput,
+    dateRange?: EmailMessageDateRangeInput,
     limit?: number,
     sortOrder?: SortOrder,
     nextToken?: string,
@@ -397,7 +422,13 @@ export class ApiClient {
       await this.performQuery<ListEmailMessagesForEmailFolderIdQuery>({
         query: ListEmailMessagesForEmailFolderIdDocument,
         variables: {
-          input: { folderId, dateRange, limit, sortOrder, nextToken },
+          input: {
+            folderId,
+            specifiedDateRange: dateRange,
+            limit,
+            sortOrder,
+            nextToken,
+          },
         },
         fetchPolicy,
         calleeName: this.listEmailMessagesForEmailFolderId.name,

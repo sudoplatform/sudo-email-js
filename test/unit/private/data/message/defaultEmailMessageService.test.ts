@@ -309,6 +309,242 @@ describe('DefaultEmailMessageService Test Suite', () => {
     )
   })
 
+  describe('listMessages', () => {
+    beforeEach(() => {
+      when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
+        unsealedHeaderDetailsString,
+      )
+    })
+
+    it('calls appsync correctly', async () => {
+      when(
+        mockAppSync.listEmailMessages(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+      const result = await instanceUnderTest.listMessages({
+        cachePolicy: CachePolicy.CacheOnly,
+      })
+      verify(
+        mockAppSync.listEmailMessages(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).once()
+      const [policyArg] = capture(mockAppSync.listEmailMessages).first()
+      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+      expect(result).toStrictEqual({
+        emailMessages: [EntityDataFactory.emailMessage],
+        nextToken: undefined,
+      })
+    })
+
+    it.each`
+      json                                              | name       | expected
+      ${unsealedHeaderDetailsHasAttachmentsTrueString}  | ${'true'}  | ${true}
+      ${unsealedHeaderDetailsString}                    | ${'false'} | ${false}
+      ${unsealedHeaderDetailsHasAttachmentsUnsetString} | ${'unset'} | ${false}
+    `(
+      'unseals correctly when hasAttachments is $name',
+      async ({ json, expected }) => {
+        when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(json)
+        when(
+          mockAppSync.listEmailMessages(
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+          ),
+        ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+        const result = await instanceUnderTest.listMessages({
+          cachePolicy: CachePolicy.CacheOnly,
+        })
+        verify(
+          mockAppSync.listEmailMessages(
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+          ),
+        ).once()
+        const [policyArg] = capture(mockAppSync.listEmailMessages).first()
+        expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+        expect(result).toStrictEqual({
+          emailMessages: [
+            {
+              ...EntityDataFactory.emailMessage,
+              hasAttachments: expected,
+            },
+          ],
+          nextToken: undefined,
+        })
+      },
+    )
+
+    it.each`
+      cachePolicy               | test
+      ${CachePolicy.CacheOnly}  | ${'cache'}
+      ${CachePolicy.RemoteOnly} | ${'remote'}
+    `(
+      'returns transformed result when calling $test',
+      async ({ cachePolicy }) => {
+        when(
+          mockAppSync.listEmailMessages(
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+          ),
+        ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+        await expect(
+          instanceUnderTest.listMessages({
+            cachePolicy,
+          }),
+        ).resolves.toStrictEqual({
+          emailMessages: [EntityDataFactory.emailMessage],
+          nextToken: undefined,
+        })
+        verify(
+          mockAppSync.listEmailMessages(
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+            anything(),
+          ),
+        ).once()
+      },
+    )
+
+    it.each`
+      sortOrder         | test
+      ${SortOrder.Asc}  | ${'ascending'}
+      ${SortOrder.Desc} | ${'descending'}
+    `('returns transformed result ordered $test', async ({ sortOrder }) => {
+      when(
+        mockAppSync.listEmailMessages(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+      await expect(
+        instanceUnderTest.listMessages({
+          cachePolicy: CachePolicy.CacheOnly,
+          sortOrder,
+        }),
+      ).resolves.toStrictEqual({
+        emailMessages: [EntityDataFactory.emailMessage],
+        nextToken: undefined,
+      })
+      verify(
+        mockAppSync.listEmailMessages(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).once()
+    })
+
+    it('returns result for sortDate date range successfully', async () => {
+      when(
+        mockAppSync.listEmailMessages(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+      const result = await instanceUnderTest.listMessages({
+        cachePolicy: CachePolicy.CacheOnly,
+        dateRange: {
+          sortDate: {
+            startDate: new Date(1),
+            endDate: new Date(2),
+          },
+        },
+      })
+      const [policyArg, dateRangeArg] = capture(
+        mockAppSync.listEmailMessages,
+      ).first()
+      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+      expect(dateRangeArg).toStrictEqual(<typeof dateRangeArg>{
+        sortDateEpochMs: {
+          endDateEpochMs: 2,
+          startDateEpochMs: 1,
+        },
+      })
+      expect(result).toStrictEqual({
+        emailMessages: [EntityDataFactory.emailMessage],
+        nextToken: undefined,
+      })
+      verify(
+        mockAppSync.listEmailMessages(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).once()
+    })
+
+    it('returns result for updatedAt date range successfully', async () => {
+      when(
+        mockAppSync.listEmailMessages(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+      const result = await instanceUnderTest.listMessages({
+        cachePolicy: CachePolicy.CacheOnly,
+        dateRange: {
+          updatedAt: {
+            startDate: new Date(1),
+            endDate: new Date(2),
+          },
+        },
+      })
+      const [policyArg, dateRangeArg] = capture(
+        mockAppSync.listEmailMessages,
+      ).first()
+      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+      expect(dateRangeArg).toStrictEqual(<typeof dateRangeArg>{
+        updatedAtEpochMs: {
+          endDateEpochMs: 2,
+          startDateEpochMs: 1,
+        },
+      })
+      verify(
+        mockAppSync.listEmailMessages(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).once()
+    })
+  })
+
   describe('listMessagesForEmailAddressId', () => {
     beforeEach(() => {
       when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
@@ -467,6 +703,104 @@ describe('DefaultEmailMessageService Test Suite', () => {
           sortOrder,
         }),
       ).resolves.toStrictEqual({
+        emailMessages: [EntityDataFactory.emailMessage],
+        nextToken: undefined,
+      })
+      verify(
+        mockAppSync.listEmailMessagesForEmailAddressId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).once()
+    })
+
+    it('returns result for sortDate date range successfully', async () => {
+      when(
+        mockAppSync.listEmailMessagesForEmailAddressId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+      const emailAddressId = v4()
+      const result = await instanceUnderTest.listMessagesForEmailAddressId({
+        emailAddressId,
+        dateRange: {
+          sortDate: {
+            startDate: new Date(1),
+            endDate: new Date(2),
+          },
+        },
+        cachePolicy: CachePolicy.CacheOnly,
+      })
+      const [idArg, policyArg, dateRangeArg] = capture(
+        mockAppSync.listEmailMessagesForEmailAddressId,
+      ).first()
+      expect(idArg).toStrictEqual<typeof idArg>(emailAddressId)
+      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+      expect(dateRangeArg).toStrictEqual(<typeof dateRangeArg>{
+        sortDateEpochMs: {
+          endDateEpochMs: 2,
+          startDateEpochMs: 1,
+        },
+      })
+      expect(result).toStrictEqual({
+        emailMessages: [EntityDataFactory.emailMessage],
+        nextToken: undefined,
+      })
+      verify(
+        mockAppSync.listEmailMessagesForEmailAddressId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).once()
+    })
+
+    it('returns result for updatedAt date range successfully', async () => {
+      when(
+        mockAppSync.listEmailMessagesForEmailAddressId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+      const emailAddressId = v4()
+      const result = await instanceUnderTest.listMessagesForEmailAddressId({
+        emailAddressId,
+        dateRange: {
+          updatedAt: {
+            startDate: new Date(1),
+            endDate: new Date(2),
+          },
+        },
+        cachePolicy: CachePolicy.CacheOnly,
+      })
+      const [idArg, policyArg, dateRangeArg] = capture(
+        mockAppSync.listEmailMessagesForEmailAddressId,
+      ).first()
+      expect(idArg).toStrictEqual<typeof idArg>(emailAddressId)
+      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+      expect(dateRangeArg).toStrictEqual(<typeof dateRangeArg>{
+        updatedAtEpochMs: {
+          endDateEpochMs: 2,
+          startDateEpochMs: 1,
+        },
+      })
+      expect(result).toStrictEqual({
         emailMessages: [EntityDataFactory.emailMessage],
         nextToken: undefined,
       })
@@ -643,6 +977,100 @@ describe('DefaultEmailMessageService Test Suite', () => {
       ).resolves.toStrictEqual({
         emailMessages: [EntityDataFactory.emailMessage],
         nextToken: undefined,
+      })
+      verify(
+        mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).once()
+    })
+
+    it('returns result for sortDate date range successfully', async () => {
+      when(
+        mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+      const folderId = v4()
+      const result = await instanceUnderTest.listMessagesForEmailFolderId({
+        folderId,
+        dateRange: {
+          sortDate: {
+            startDate: new Date(1),
+            endDate: new Date(2),
+          },
+        },
+        cachePolicy: CachePolicy.CacheOnly,
+      })
+      const [idArg, policyArg, dateRangeArg] = capture(
+        mockAppSync.listEmailMessagesForEmailFolderId,
+      ).first()
+      expect(idArg).toStrictEqual<typeof idArg>(folderId)
+      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+      expect(dateRangeArg).toStrictEqual(<typeof dateRangeArg>{
+        sortDateEpochMs: {
+          endDateEpochMs: 2,
+          startDateEpochMs: 1,
+        },
+      })
+      expect(result).toStrictEqual({
+        emailMessages: [EntityDataFactory.emailMessage],
+        nextToken: undefined,
+      })
+      verify(
+        mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).once()
+    })
+
+    it('returns result for updatedAt date range successfully', async () => {
+      when(
+        mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+      const folderId = v4()
+      const result = await instanceUnderTest.listMessagesForEmailFolderId({
+        folderId,
+        dateRange: {
+          updatedAt: {
+            startDate: new Date(1),
+            endDate: new Date(2),
+          },
+        },
+        cachePolicy: CachePolicy.CacheOnly,
+      })
+      const [idArg, policyArg, dateRangeArg] = capture(
+        mockAppSync.listEmailMessagesForEmailFolderId,
+      ).first()
+      expect(idArg).toStrictEqual<typeof idArg>(folderId)
+      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+      expect(dateRangeArg).toStrictEqual(<typeof dateRangeArg>{
+        updatedAtEpochMs: {
+          endDateEpochMs: 2,
+          startDateEpochMs: 1,
+        },
       })
       verify(
         mockAppSync.listEmailMessagesForEmailFolderId(

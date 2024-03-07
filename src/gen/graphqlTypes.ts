@@ -175,6 +175,11 @@ export type EmailMessageConnection = {
   nextToken?: Maybe<Scalars['String']>
 }
 
+export type EmailMessageDateRangeInput = {
+  sortDateEpochMs?: InputMaybe<DateRangeInput>
+  updatedAtEpochMs?: InputMaybe<DateRangeInput>
+}
+
 export enum EmailMessageDirection {
   Inbound = 'INBOUND',
   Outbound = 'OUTBOUND',
@@ -226,19 +231,26 @@ export type ListEmailFoldersForEmailAddressIdInput = {
 }
 
 export type ListEmailMessagesForEmailAddressIdInput = {
-  dateRange?: InputMaybe<DateRangeInput>
   emailAddressId: Scalars['ID']
   limit?: InputMaybe<Scalars['Int']>
   nextToken?: InputMaybe<Scalars['String']>
   sortOrder?: InputMaybe<SortOrder>
+  specifiedDateRange?: InputMaybe<EmailMessageDateRangeInput>
 }
 
 export type ListEmailMessagesForEmailFolderIdInput = {
-  dateRange?: InputMaybe<DateRangeInput>
   folderId: Scalars['ID']
   limit?: InputMaybe<Scalars['Int']>
   nextToken?: InputMaybe<Scalars['String']>
   sortOrder?: InputMaybe<SortOrder>
+  specifiedDateRange?: InputMaybe<EmailMessageDateRangeInput>
+}
+
+export type ListEmailMessagesInput = {
+  limit?: InputMaybe<Scalars['Int']>
+  nextToken?: InputMaybe<Scalars['String']>
+  sortOrder?: InputMaybe<SortOrder>
+  specifiedDateRange?: InputMaybe<EmailMessageDateRangeInput>
 }
 
 export type LookupEmailAddressesPublicInfoInput = {
@@ -368,6 +380,7 @@ export type Query = {
   listEmailAddresses: EmailAddressConnection
   listEmailAddressesForSudoId: EmailAddressConnection
   listEmailFoldersForEmailAddressId: EmailFolderConnection
+  listEmailMessages: EmailMessageConnection
   listEmailMessagesForEmailAddressId: EmailMessageConnection
   listEmailMessagesForEmailFolderId: EmailMessageConnection
   lookupEmailAddressesPublicInfo: LookupEmailAddressesPublicInfoResponse
@@ -414,6 +427,10 @@ export type QueryListEmailAddressesForSudoIdArgs = {
 
 export type QueryListEmailFoldersForEmailAddressIdArgs = {
   input: ListEmailFoldersForEmailAddressIdInput
+}
+
+export type QueryListEmailMessagesArgs = {
+  input: ListEmailMessagesInput
 }
 
 export type QueryListEmailMessagesForEmailAddressIdArgs = {
@@ -1229,6 +1246,43 @@ export type GetEmailMessageQuery = {
       base64EncodedSealedData: string
     }
   } | null
+}
+
+export type ListEmailMessagesQueryVariables = Exact<{
+  input: ListEmailMessagesInput
+}>
+
+export type ListEmailMessagesQuery = {
+  __typename?: 'Query'
+  listEmailMessages: {
+    __typename?: 'EmailMessageConnection'
+    nextToken?: string | null
+    items: Array<{
+      __typename?: 'SealedEmailMessage'
+      id: string
+      owner: string
+      emailAddressId: string
+      version: number
+      createdAtEpochMs: number
+      updatedAtEpochMs: number
+      sortDateEpochMs: number
+      folderId: string
+      previousFolderId?: string | null
+      direction: EmailMessageDirection
+      seen: boolean
+      state: EmailMessageState
+      clientRefId?: string | null
+      size: number
+      owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+      rfc822Header: {
+        __typename?: 'SealedAttribute'
+        algorithm: string
+        keyId: string
+        plainTextType: string
+        base64EncodedSealedData: string
+      }
+    }>
+  }
 }
 
 export type ListEmailMessagesForEmailAddressIdQueryVariables = Exact<{
@@ -4241,6 +4295,130 @@ export const GetEmailMessageDocument = {
 } as unknown as DocumentNode<
   GetEmailMessageQuery,
   GetEmailMessageQueryVariables
+>
+export const ListEmailMessagesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ListEmailMessages' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'ListEmailMessagesInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'listEmailMessages' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'items' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'SealedEmailMessage' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'nextToken' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SealedEmailMessage' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SealedEmailMessage' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owners' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'sortDateEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'folderId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'previousFolderId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'direction' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'seen' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'clientRefId' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'rfc822Header' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'plainTextType' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'base64EncodedSealedData' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  ListEmailMessagesQuery,
+  ListEmailMessagesQueryVariables
 >
 export const ListEmailMessagesForEmailAddressIdDocument = {
   kind: 'Document',

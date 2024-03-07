@@ -70,6 +70,7 @@ import { APIDataFactory } from '../data-factory/api'
 import { EntityDataFactory } from '../data-factory/entity'
 import {
   EmailMessage,
+  EmailMessageDateRange,
   InvalidArgumentError,
   UnsealedBlockedAddress,
 } from '../../../src'
@@ -90,6 +91,7 @@ import {
   UnblockEmailAddressesByHashedValueUseCase,
   UnblockEmailAddressesByHashedValueUseCaseInput,
 } from '../../../src/private/domain/use-cases/blocklist/unblockEmailAddressesByHashedValue'
+import { ListEmailMessagesUseCase } from '../../../src/private/domain/use-cases/message/listEmailMessagesUseCase'
 
 // Constructor mocks
 
@@ -280,6 +282,11 @@ const JestMockGetEmailMessageUseCase =
 jest.mock(
   '../../../src/private/domain/use-cases/message/getEmailMessageUseCase',
 )
+const JestMockListEmailMessagesUseCase =
+  ListEmailMessagesUseCase as jest.MockedClass<typeof ListEmailMessagesUseCase>
+jest.mock(
+  '../../../src/private/domain/use-cases/message/listEmailMessagesUseCase',
+)
 const JestMockListEmailMessagesForEmailAddressIdUseCase =
   ListEmailMessagesForEmailAddressIdUseCase as jest.MockedClass<
     typeof ListEmailMessagesForEmailAddressIdUseCase
@@ -391,6 +398,7 @@ describe('SudoEmailClient Test Suite', () => {
     mock<ListDraftEmailMessageMetadataUseCase>()
   const mockUpdateEmailMessagesUseCase = mock<UpdateEmailMessagesUseCase>()
   const mockGetEmailMessageUseCase = mock<GetEmailMessageUseCase>()
+  const mockListEmailMessagesUseCase = mock<ListEmailMessagesUseCase>()
   const mockListEmailMessagesForEmailAddressIdUseCase =
     mock<ListEmailMessagesForEmailAddressIdUseCase>()
   const mockListEmailMessagesForEmailFolderIdUseCase =
@@ -460,6 +468,7 @@ describe('SudoEmailClient Test Suite', () => {
     reset(mockListDraftEmailMessageMetadataUseCase)
     reset(mockUpdateEmailMessagesUseCase)
     reset(mockGetEmailMessageUseCase)
+    reset(mockListEmailMessagesUseCase)
     reset(mockListEmailMessagesForEmailAddressIdUseCase)
     reset(mockListEmailMessagesForEmailFolderIdUseCase)
     reset(mockGetEmailMessageRfc822DataUseCase)
@@ -502,6 +511,7 @@ describe('SudoEmailClient Test Suite', () => {
     JestMockListDraftEmailMessageMetadataUseCase.mockClear()
     JestMockUpdateEmailMessagesUseCase.mockClear()
     JestMockGetEmailMessageUseCase.mockClear()
+    JestMockListEmailMessagesUseCase.mockClear()
     JestMockListEmailMessagesForEmailAddressIdUseCase.mockClear()
     JestMockListEmailMessagesForEmailFolderIdUseCase.mockClear()
     JestMockGetEmailMessageRfc822DataUseCase.mockClear()
@@ -593,6 +603,9 @@ describe('SudoEmailClient Test Suite', () => {
     )
     JestMockGetEmailMessageUseCase.mockImplementation(() =>
       instance(mockGetEmailMessageUseCase),
+    )
+    JestMockListEmailMessagesUseCase.mockImplementation(() =>
+      instance(mockListEmailMessagesUseCase),
     )
     JestMockListEmailMessagesForEmailAddressIdUseCase.mockImplementation(() =>
       instance(mockListEmailMessagesForEmailAddressIdUseCase),
@@ -2015,6 +2028,74 @@ describe('SudoEmailClient Test Suite', () => {
     })
   })
 
+  describe('listEmailMessages', () => {
+    beforeEach(() => {
+      when(mockListEmailMessagesUseCase.execute(anything())).thenResolve({
+        emailMessages: [EntityDataFactory.emailMessage],
+        nextToken: 'nextToken',
+      })
+    })
+    it('generates use case', async () => {
+      await instanceUnderTest.listEmailMessages({
+        cachePolicy: CachePolicy.CacheOnly,
+        limit: 0,
+        sortOrder: SortOrder.Desc,
+        nextToken: '',
+      })
+      expect(JestMockListEmailMessagesUseCase).toHaveBeenCalledTimes(1)
+    })
+    it('calls use case as expected', async () => {
+      const cachePolicy = CachePolicy.CacheOnly
+      const dateRange = {
+        sortDate: {
+          startDate: new Date(1.0),
+          endDate: new Date(2.0),
+        },
+      }
+      const limit = 100
+      const sortOrder = SortOrder.Desc
+      const nextToken = v4()
+      await instanceUnderTest.listEmailMessages({
+        dateRange,
+        cachePolicy,
+        limit,
+        sortOrder,
+        nextToken,
+      })
+      verify(mockListEmailMessagesUseCase.execute(anything())).once()
+      const [actualArgs] = capture(mockListEmailMessagesUseCase.execute).first()
+      expect(actualArgs).toEqual<typeof actualArgs>({
+        dateRange,
+        cachePolicy,
+        limit,
+        sortOrder,
+        nextToken,
+      })
+    })
+    it('returns empty list if use case result is empty list', async () => {
+      when(mockListEmailMessagesUseCase.execute(anything())).thenResolve({
+        emailMessages: [],
+        nextToken: undefined,
+      })
+      await expect(
+        instanceUnderTest.listEmailMessages({
+          cachePolicy: CachePolicy.CacheOnly,
+        }),
+      ).resolves.toEqual({ status: 'Success', items: [], nextToken: undefined })
+    })
+    it('returns expected result', async () => {
+      await expect(
+        instanceUnderTest.listEmailMessages({
+          cachePolicy: CachePolicy.CacheOnly,
+        }),
+      ).resolves.toEqual({
+        status: 'Success',
+        items: [APIDataFactory.emailMessage],
+        nextToken: 'nextToken',
+      })
+    })
+  })
+
   describe('listEmailMessagesForEmailAddressId', () => {
     beforeEach(() => {
       when(
@@ -2040,9 +2121,11 @@ describe('SudoEmailClient Test Suite', () => {
     it('calls use case as expected', async () => {
       const emailAddressId = v4()
       const cachePolicy = CachePolicy.CacheOnly
-      const dateRange = {
-        startDate: new Date(1.0),
-        endDate: new Date(2.0),
+      const dateRange: EmailMessageDateRange = {
+        sortDate: {
+          startDate: new Date(1.0),
+          endDate: new Date(2.0),
+        },
       }
       const limit = 100
       const sortOrder = SortOrder.Desc
@@ -2125,9 +2208,11 @@ describe('SudoEmailClient Test Suite', () => {
     it('calls use case as expected', async () => {
       const folderId = v4()
       const cachePolicy = CachePolicy.CacheOnly
-      const dateRange = {
-        startDate: new Date(1.0),
-        endDate: new Date(2.0),
+      const dateRange: EmailMessageDateRange = {
+        sortDate: {
+          startDate: new Date(1.0),
+          endDate: new Date(2.0),
+        },
       }
       const limit = 100
       const sortOrder = SortOrder.Desc
