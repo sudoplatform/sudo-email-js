@@ -18,6 +18,7 @@ import {
   BatchOperationResultStatus,
   Direction,
   EmailAddress,
+  EncryptionStatus,
   InvalidArgumentError,
   SudoEmailClient,
 } from '../../../src'
@@ -66,6 +67,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       subject: 'Important Subject',
       body: 'Hello, World',
       attachments: [],
+      encryptionStatus: EncryptionStatus.UNENCRYPTED,
     }
     const messageBuffer =
       Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
@@ -110,6 +112,9 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           expect(inbound[0].to).toEqual(messageDetails.from)
           expect(inbound[0].hasAttachments).toEqual(false)
           expect(inbound[0].size).toBeGreaterThan(0)
+          expect(inbound[0].encryptionStatus).toEqual(
+            EncryptionStatus.UNENCRYPTED,
+          )
         },
         10000,
         1000,
@@ -482,6 +487,9 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           expect(inbound[0].to).toEqual(messageDetails.from)
           expect(inbound[0].hasAttachments).toEqual(false)
           expect(inbound[0].size).toBeGreaterThan(0)
+          expect(inbound[0].encryptionStatus).toEqual(
+            EncryptionStatus.UNENCRYPTED,
+          )
         },
         10000,
         1000,
@@ -878,6 +886,9 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           )
           expect(messages.items[0].from).toEqual([simAddress])
           expect(messages.items[0].to).toEqual(messageDetails.from)
+          expect(messages.items[0].encryptionStatus).toEqual(
+            EncryptionStatus.UNENCRYPTED,
+          )
         },
         10000,
         1000,

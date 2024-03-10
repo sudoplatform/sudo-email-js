@@ -5,6 +5,7 @@
  */
 
 import { Owner } from '@sudoplatform/sudo-common'
+import { EncryptionStatus } from './encryptionStatus'
 
 /**
  * The Sudo Platform SDK representation of an email message.
@@ -70,6 +71,7 @@ export interface SealedEmailMessageProps {
   sentAt?: Date
   receivedAt?: Date
   hasAttachments: boolean
+  encryptionStatus: EncryptionStatus
 }
 
 export enum Direction {

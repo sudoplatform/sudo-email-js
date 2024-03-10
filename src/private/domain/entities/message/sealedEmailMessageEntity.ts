@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { EncryptionStatus } from '../../../../public/typings/encryptionStatus'
 import { Direction, State } from '../../../../public/typings/emailMessage'
 import { OwnerEntity } from '../common/ownerEntity'
 
@@ -47,4 +48,5 @@ export interface SealedEmailMessageEntity {
   createdAt: Date
   updatedAt: Date
   size: number
+  encryptionStatus: EncryptionStatus
 }

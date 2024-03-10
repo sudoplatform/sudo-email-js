@@ -9,6 +9,7 @@ import { Direction, State } from '../../../../public/typings/emailMessage'
 import { SortOrder } from '../../../../public/typings/sortOrder'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
 import { EmailMessageDateRange } from '../../../../public/typings/emailMessageDateRange'
+import { EncryptionStatus } from '../../../../public'
 
 /**
  * Input for `ListEmailMessagesForEmailAddressIdUseCase` use case.
@@ -63,6 +64,7 @@ interface ListEmailMessagesForEmailAddressIdUseCaseOutput {
     updatedAt: Date
     status: { type: 'Completed' } | { type: 'Failed'; cause: Error }
     size: number
+    encryptionStatus: EncryptionStatus
   }>
   nextToken?: string
 }

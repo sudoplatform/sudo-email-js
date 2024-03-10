@@ -14,6 +14,7 @@ import {
   EmailMessage,
   State,
 } from '../../../src/public/typings/emailMessage'
+import { EncryptionStatus } from '../../../src/public'
 
 export class APIDataFactory {
   private static readonly commonProps = {
@@ -91,5 +92,6 @@ export class APIDataFactory {
     hasAttachments: false,
     sortDate: new Date(1.0),
     size: 12345,
+    encryptionStatus: EncryptionStatus.UNENCRYPTED,
   }
 }

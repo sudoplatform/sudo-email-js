@@ -7,6 +7,7 @@
 import { CachePolicy, DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { Direction, State } from '../../../../public/typings/emailMessage'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
+import { EncryptionStatus } from '../../../../public'
 
 /**
  * Input for `GetEmailMessageUseCase` use case.
@@ -46,6 +47,7 @@ interface GetEmailMessageUseCaseOutput {
   updatedAt: Date
   status: { type: 'Completed' } | { type: 'Failed'; cause: Error }
   size: number
+  encryptionStatus: EncryptionStatus
 }
 
 /**

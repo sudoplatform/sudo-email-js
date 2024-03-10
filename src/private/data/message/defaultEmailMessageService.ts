@@ -602,6 +602,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       hasAttachments: false,
       status: { type: 'Completed' },
       size: sealedEmailMessage.size,
+      encryptionStatus: sealedEmailMessage.encryptionStatus,
     }
 
     const status = await this.deviceKeyWorker.keyExists(

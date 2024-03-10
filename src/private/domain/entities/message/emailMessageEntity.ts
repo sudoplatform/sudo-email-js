@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { EncryptionStatus } from '../../../../public'
 import { Direction, State } from '../../../../public/typings/emailMessage'
 import { EmailAddressEntity } from '../account/emailAddressEntity'
 import { OwnerEntity } from '../common/ownerEntity'
@@ -64,4 +65,5 @@ export interface EmailMessageEntity {
   updatedAt: Date
   status: EmailMessageEntityStatus
   size: number
+  encryptionStatus: EncryptionStatus
 }

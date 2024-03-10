@@ -13,6 +13,7 @@ import { EmailConfigurationDataEntity } from '../../../src/private/domain/entiti
 import { EmailFolderEntity } from '../../../src/private/domain/entities/folder/emailFolderEntity'
 import { EmailMessageEntity } from '../../../src/private/domain/entities/message/emailMessageEntity'
 import { SealedEmailMessageEntity } from '../../../src/private/domain/entities/message/sealedEmailMessageEntity'
+import { EncryptionStatus } from '../../../src/public'
 import { Direction, State } from '../../../src/public/typings/emailMessage'
 
 export class EntityDataFactory {
@@ -124,6 +125,7 @@ export class EntityDataFactory {
     status: { type: 'Completed' },
     sortDate: new Date(1.0),
     size: 12345,
+    encryptionStatus: EncryptionStatus.UNENCRYPTED,
   }
 
   static readonly sealedEmailMessage: SealedEmailMessageEntity = {
@@ -141,6 +143,7 @@ export class EntityDataFactory {
     rfc822Header: 'rfc822Header',
     sortDate: new Date(1.0),
     size: 12345,
+    encryptionStatus: EncryptionStatus.UNENCRYPTED,
   }
 
   static readonly uuidV4Regex = new RegExp(

@@ -23,4 +23,5 @@ fragment SealedEmailMessage on SealedEmailMessage {
     base64EncodedSealedData
   }
   size
+  encryptionStatus
 }

@@ -45,6 +45,7 @@ export class EmailMessageAPITransformer {
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
       size: entity.size,
+      encryptionStatus: entity.encryptionStatus,
     }
   }
 }

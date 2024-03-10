@@ -12,39 +12,48 @@ export type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & {
   [SubKey in K]: Maybe<T[SubKey]>
 }
+export type MakeEmpty<
+  T extends { [key: string]: unknown },
+  K extends keyof T,
+> = { [_ in K]?: never }
+export type Incremental<T> =
+  | T
+  | {
+      [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never
+    }
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: string
-  String: string
-  Boolean: boolean
-  Int: number
-  Float: number
-  AWSDate: any
-  AWSDateTime: any
-  AWSEmail: any
-  AWSIPAddress: any
-  AWSJSON: any
-  AWSPhone: any
-  AWSTime: any
-  AWSTimestamp: any
-  AWSURL: any
+  ID: { input: string; output: string }
+  String: { input: string; output: string }
+  Boolean: { input: boolean; output: boolean }
+  Int: { input: number; output: number }
+  Float: { input: number; output: number }
+  AWSDate: { input: any; output: any }
+  AWSDateTime: { input: any; output: any }
+  AWSEmail: { input: any; output: any }
+  AWSIPAddress: { input: any; output: any }
+  AWSJSON: { input: any; output: any }
+  AWSPhone: { input: any; output: any }
+  AWSTime: { input: any; output: any }
+  AWSTimestamp: { input: any; output: any }
+  AWSURL: { input: any; output: any }
 }
 
 export type AvailableAddresses = {
   __typename?: 'AvailableAddresses'
-  addresses: Array<Scalars['String']>
+  addresses: Array<Scalars['String']['output']>
 }
 
 export type BlockEmailAddressesBulkUpdateResult = {
   __typename?: 'BlockEmailAddressesBulkUpdateResult'
-  failedAddresses?: Maybe<Array<Scalars['String']>>
+  failedAddresses?: Maybe<Array<Scalars['String']['output']>>
   status: UpdateEmailMessagesStatus
-  successAddresses?: Maybe<Array<Scalars['String']>>
+  successAddresses?: Maybe<Array<Scalars['String']['output']>>
 }
 
 export type BlockEmailAddressesInput = {
   blockedAddresses: Array<BlockedEmailAddressInput>
-  owner: Scalars['ID']
+  owner: Scalars['ID']['input']
 }
 
 export enum BlockedAddressHashAlgorithm {
@@ -53,79 +62,79 @@ export enum BlockedAddressHashAlgorithm {
 
 export type BlockedEmailAddress = {
   __typename?: 'BlockedEmailAddress'
-  createdAtEpochMs: Scalars['Float']
+  createdAtEpochMs: Scalars['Float']['output']
   hashAlgorithm: BlockedAddressHashAlgorithm
-  hashedBlockedValue: Scalars['String']
-  owner: Scalars['ID']
+  hashedBlockedValue: Scalars['String']['output']
+  owner: Scalars['ID']['output']
   owners: Array<Owner>
   sealedValue: SealedAttribute
-  updatedAtEpochMs: Scalars['Float']
-  version: Scalars['Int']
+  updatedAtEpochMs: Scalars['Float']['output']
+  version: Scalars['Int']['output']
 }
 
 export type BlockedEmailAddressInput = {
   hashAlgorithm: BlockedAddressHashAlgorithm
-  hashedBlockedValue: Scalars['String']
+  hashedBlockedValue: Scalars['String']['input']
   sealedValue: SealedAttributeInput
 }
 
 export type CheckEmailAddressAvailabilityInput = {
-  domains?: InputMaybe<Array<Scalars['String']>>
-  localParts: Array<Scalars['String']>
+  domains?: InputMaybe<Array<Scalars['String']['input']>>
+  localParts: Array<Scalars['String']['input']>
 }
 
 export type CreateCustomEmailFolderInput = {
   customFolderName: SealedAttributeInput
-  emailAddressId: Scalars['ID']
+  emailAddressId: Scalars['ID']['input']
 }
 
 export type CreatePublicKeyInput = {
-  algorithm: Scalars['String']
+  algorithm: Scalars['String']['input']
   keyFormat?: InputMaybe<KeyFormat>
-  keyId: Scalars['String']
-  keyRingId: Scalars['String']
-  publicKey: Scalars['String']
+  keyId: Scalars['String']['input']
+  keyRingId: Scalars['String']['input']
+  publicKey: Scalars['String']['input']
 }
 
 export type DateRangeInput = {
-  endDateEpochMs: Scalars['Float']
-  startDateEpochMs: Scalars['Float']
+  endDateEpochMs: Scalars['Float']['input']
+  startDateEpochMs: Scalars['Float']['input']
 }
 
 export type DeleteEmailMessageInput = {
-  messageId: Scalars['ID']
+  messageId: Scalars['ID']['input']
 }
 
 export type DeleteEmailMessagesInput = {
-  messageIds: Array<Scalars['ID']>
+  messageIds: Array<Scalars['ID']['input']>
 }
 
 export type DeprovisionEmailAddressInput = {
-  emailAddressId: Scalars['ID']
+  emailAddressId: Scalars['ID']['input']
 }
 
 export type EmailAddress = {
   __typename?: 'EmailAddress'
   alias?: Maybe<SealedAttribute>
-  createdAtEpochMs: Scalars['Float']
-  emailAddress: Scalars['String']
+  createdAtEpochMs: Scalars['Float']['output']
+  emailAddress: Scalars['String']['output']
   folders: Array<EmailFolder>
-  id: Scalars['ID']
-  identityId: Scalars['ID']
-  keyIds: Array<Scalars['String']>
-  keyRingId: Scalars['ID']
-  lastReceivedAtEpochMs?: Maybe<Scalars['Float']>
-  owner: Scalars['ID']
+  id: Scalars['ID']['output']
+  identityId: Scalars['ID']['output']
+  keyIds: Array<Scalars['String']['output']>
+  keyRingId: Scalars['ID']['output']
+  lastReceivedAtEpochMs?: Maybe<Scalars['Float']['output']>
+  owner: Scalars['ID']['output']
   owners: Array<Owner>
-  size: Scalars['Float']
-  updatedAtEpochMs: Scalars['Float']
-  version: Scalars['Int']
+  size: Scalars['Float']['output']
+  updatedAtEpochMs: Scalars['Float']['output']
+  version: Scalars['Int']['output']
 }
 
 export type EmailAddressConnection = {
   __typename?: 'EmailAddressConnection'
   items: Array<EmailAddress>
-  nextToken?: Maybe<Scalars['String']>
+  nextToken?: Maybe<Scalars['String']['output']>
 }
 
 export type EmailAddressMetadataUpdateValuesInput = {
@@ -134,45 +143,45 @@ export type EmailAddressMetadataUpdateValuesInput = {
 
 export type EmailAddressPublicInfo = {
   __typename?: 'EmailAddressPublicInfo'
-  emailAddress: Scalars['String']
-  keyId: Scalars['String']
-  publicKey: Scalars['String']
+  emailAddress: Scalars['String']['output']
+  keyId: Scalars['String']['output']
+  publicKey: Scalars['String']['output']
 }
 
 export type EmailConfigurationData = {
   __typename?: 'EmailConfigurationData'
-  deleteEmailMessagesLimit: Scalars['Int']
-  emailMessageMaxInboundMessageSize: Scalars['Int']
-  emailMessageMaxOutboundMessageSize: Scalars['Int']
-  updateEmailMessagesLimit: Scalars['Int']
+  deleteEmailMessagesLimit: Scalars['Int']['output']
+  emailMessageMaxInboundMessageSize: Scalars['Int']['output']
+  emailMessageMaxOutboundMessageSize: Scalars['Int']['output']
+  updateEmailMessagesLimit: Scalars['Int']['output']
 }
 
 export type EmailFolder = {
   __typename?: 'EmailFolder'
-  createdAtEpochMs: Scalars['Float']
+  createdAtEpochMs: Scalars['Float']['output']
   customFolderName?: Maybe<SealedAttribute>
-  emailAddressId: Scalars['ID']
-  folderName: Scalars['String']
-  id: Scalars['ID']
-  owner: Scalars['ID']
+  emailAddressId: Scalars['ID']['output']
+  folderName: Scalars['String']['output']
+  id: Scalars['ID']['output']
+  owner: Scalars['ID']['output']
   owners: Array<Owner>
-  size: Scalars['Float']
-  ttl?: Maybe<Scalars['Float']>
-  unseenCount: Scalars['Float']
-  updatedAtEpochMs: Scalars['Float']
-  version: Scalars['Int']
+  size: Scalars['Float']['output']
+  ttl?: Maybe<Scalars['Float']['output']>
+  unseenCount: Scalars['Float']['output']
+  updatedAtEpochMs: Scalars['Float']['output']
+  version: Scalars['Int']['output']
 }
 
 export type EmailFolderConnection = {
   __typename?: 'EmailFolderConnection'
   items: Array<EmailFolder>
-  nextToken?: Maybe<Scalars['String']>
+  nextToken?: Maybe<Scalars['String']['output']>
 }
 
 export type EmailMessageConnection = {
   __typename?: 'EmailMessageConnection'
   items: Array<SealedEmailMessage>
-  nextToken?: Maybe<Scalars['String']>
+  nextToken?: Maybe<Scalars['String']['output']>
 }
 
 export type EmailMessageDateRangeInput = {
@@ -185,6 +194,11 @@ export enum EmailMessageDirection {
   Outbound = 'OUTBOUND',
 }
 
+export enum EmailMessageEncryptionStatus {
+  Encrypted = 'ENCRYPTED',
+  Unencrypted = 'UNENCRYPTED',
+}
+
 export enum EmailMessageState {
   Delivered = 'DELIVERED',
   Failed = 'FAILED',
@@ -195,12 +209,12 @@ export enum EmailMessageState {
 }
 
 export type EmailMessageUpdateValuesInput = {
-  folderId?: InputMaybe<Scalars['ID']>
-  seen?: InputMaybe<Scalars['Boolean']>
+  folderId?: InputMaybe<Scalars['ID']['input']>
+  seen?: InputMaybe<Scalars['Boolean']['input']>
 }
 
 export type GetEmailAddressBlocklistInput = {
-  owner: Scalars['ID']
+  owner: Scalars['ID']['input']
 }
 
 export type GetEmailAddressBlocklistResponse = {
@@ -214,47 +228,47 @@ export enum KeyFormat {
 }
 
 export type ListEmailAddressesForSudoIdInput = {
-  limit?: InputMaybe<Scalars['Int']>
-  nextToken?: InputMaybe<Scalars['String']>
-  sudoId: Scalars['ID']
+  limit?: InputMaybe<Scalars['Int']['input']>
+  nextToken?: InputMaybe<Scalars['String']['input']>
+  sudoId: Scalars['ID']['input']
 }
 
 export type ListEmailAddressesInput = {
-  limit?: InputMaybe<Scalars['Int']>
-  nextToken?: InputMaybe<Scalars['String']>
+  limit?: InputMaybe<Scalars['Int']['input']>
+  nextToken?: InputMaybe<Scalars['String']['input']>
 }
 
 export type ListEmailFoldersForEmailAddressIdInput = {
-  emailAddressId: Scalars['ID']
-  limit?: InputMaybe<Scalars['Int']>
-  nextToken?: InputMaybe<Scalars['String']>
+  emailAddressId: Scalars['ID']['input']
+  limit?: InputMaybe<Scalars['Int']['input']>
+  nextToken?: InputMaybe<Scalars['String']['input']>
 }
 
 export type ListEmailMessagesForEmailAddressIdInput = {
-  emailAddressId: Scalars['ID']
-  limit?: InputMaybe<Scalars['Int']>
-  nextToken?: InputMaybe<Scalars['String']>
+  emailAddressId: Scalars['ID']['input']
+  limit?: InputMaybe<Scalars['Int']['input']>
+  nextToken?: InputMaybe<Scalars['String']['input']>
   sortOrder?: InputMaybe<SortOrder>
   specifiedDateRange?: InputMaybe<EmailMessageDateRangeInput>
 }
 
 export type ListEmailMessagesForEmailFolderIdInput = {
-  folderId: Scalars['ID']
-  limit?: InputMaybe<Scalars['Int']>
-  nextToken?: InputMaybe<Scalars['String']>
+  folderId: Scalars['ID']['input']
+  limit?: InputMaybe<Scalars['Int']['input']>
+  nextToken?: InputMaybe<Scalars['String']['input']>
   sortOrder?: InputMaybe<SortOrder>
   specifiedDateRange?: InputMaybe<EmailMessageDateRangeInput>
 }
 
 export type ListEmailMessagesInput = {
-  limit?: InputMaybe<Scalars['Int']>
-  nextToken?: InputMaybe<Scalars['String']>
+  limit?: InputMaybe<Scalars['Int']['input']>
+  nextToken?: InputMaybe<Scalars['String']['input']>
   sortOrder?: InputMaybe<SortOrder>
   specifiedDateRange?: InputMaybe<EmailMessageDateRangeInput>
 }
 
 export type LookupEmailAddressesPublicInfoInput = {
-  emailAddresses: Array<Scalars['String']>
+  emailAddresses: Array<Scalars['String']['input']>
 }
 
 export type LookupEmailAddressesPublicInfoResponse = {
@@ -267,13 +281,13 @@ export type Mutation = {
   blockEmailAddresses: BlockEmailAddressesBulkUpdateResult
   createCustomEmailFolder: EmailFolder
   createPublicKeyForEmail: PublicKey
-  deleteEmailMessage: Scalars['ID']
-  deleteEmailMessages: Array<Scalars['ID']>
+  deleteEmailMessage: Scalars['ID']['output']
+  deleteEmailMessages: Array<Scalars['ID']['output']>
   deprovisionEmailAddress: EmailAddress
   provisionEmailAddress: EmailAddress
-  sendEmailMessage: Scalars['ID']
+  sendEmailMessage: Scalars['ID']['output']
   unblockEmailAddresses: BlockEmailAddressesBulkUpdateResult
-  updateEmailAddressMetadata: Scalars['ID']
+  updateEmailAddressMetadata: Scalars['ID']['output']
   updateEmailMessages: UpdateEmailMessagesResult
 }
 
@@ -323,47 +337,47 @@ export type MutationUpdateEmailMessagesArgs = {
 
 export type Owner = {
   __typename?: 'Owner'
-  id: Scalars['String']
-  issuer: Scalars['String']
+  id: Scalars['String']['output']
+  issuer: Scalars['String']['output']
 }
 
 export type OwnerInput = {
-  id: Scalars['String']
-  issuer: Scalars['String']
+  id: Scalars['String']['input']
+  issuer: Scalars['String']['input']
 }
 
 export type PaginatedPublicKey = {
   __typename?: 'PaginatedPublicKey'
   items: Array<PublicKey>
-  nextToken?: Maybe<Scalars['String']>
+  nextToken?: Maybe<Scalars['String']['output']>
 }
 
 export type ProvisionEmailAddressInput = {
   alias?: InputMaybe<SealedAttributeInput>
-  emailAddress: Scalars['String']
+  emailAddress: Scalars['String']['input']
   key: ProvisionEmailAddressPublicKeyInput
-  ownershipProofTokens: Array<Scalars['String']>
+  ownershipProofTokens: Array<Scalars['String']['input']>
 }
 
 export type ProvisionEmailAddressPublicKeyInput = {
-  algorithm: Scalars['String']
+  algorithm: Scalars['String']['input']
   keyFormat?: InputMaybe<KeyFormat>
-  keyId: Scalars['String']
-  publicKey: Scalars['String']
+  keyId: Scalars['String']['input']
+  publicKey: Scalars['String']['input']
 }
 
 export type PublicKey = {
   __typename?: 'PublicKey'
-  algorithm: Scalars['String']
-  createdAtEpochMs: Scalars['Float']
-  id: Scalars['ID']
+  algorithm: Scalars['String']['output']
+  createdAtEpochMs: Scalars['Float']['output']
+  id: Scalars['ID']['output']
   keyFormat?: Maybe<KeyFormat>
-  keyId: Scalars['String']
-  keyRingId: Scalars['String']
-  owner: Scalars['ID']
-  publicKey: Scalars['String']
-  updatedAtEpochMs: Scalars['Float']
-  version: Scalars['Int']
+  keyId: Scalars['String']['output']
+  keyRingId: Scalars['String']['output']
+  owner: Scalars['ID']['output']
+  publicKey: Scalars['String']['output']
+  updatedAtEpochMs: Scalars['Float']['output']
+  version: Scalars['Int']['output']
 }
 
 export type Query = {
@@ -391,7 +405,7 @@ export type QueryCheckEmailAddressAvailabilityArgs = {
 }
 
 export type QueryGetEmailAddressArgs = {
-  id: Scalars['String']
+  id: Scalars['String']['input']
 }
 
 export type QueryGetEmailAddressBlocklistArgs = {
@@ -399,22 +413,22 @@ export type QueryGetEmailAddressBlocklistArgs = {
 }
 
 export type QueryGetEmailMessageArgs = {
-  id: Scalars['ID']
+  id: Scalars['ID']['input']
 }
 
 export type QueryGetKeyRingForEmailArgs = {
-  keyRingId: Scalars['String']
-  limit?: InputMaybe<Scalars['Int']>
-  nextToken?: InputMaybe<Scalars['String']>
+  keyRingId: Scalars['String']['input']
+  limit?: InputMaybe<Scalars['Int']['input']>
+  nextToken?: InputMaybe<Scalars['String']['input']>
 }
 
 export type QueryGetPublicKeyForEmailArgs = {
-  keyId: Scalars['String']
+  keyId: Scalars['String']['input']
 }
 
 export type QueryGetPublicKeysForEmailArgs = {
-  limit?: InputMaybe<Scalars['Int']>
-  nextToken?: InputMaybe<Scalars['String']>
+  limit?: InputMaybe<Scalars['Int']['input']>
+  nextToken?: InputMaybe<Scalars['String']['input']>
 }
 
 export type QueryListEmailAddressesArgs = {
@@ -446,49 +460,50 @@ export type QueryLookupEmailAddressesPublicInfoArgs = {
 }
 
 export type S3EmailObjectInput = {
-  bucket: Scalars['String']
-  key: Scalars['String']
-  region: Scalars['String']
+  bucket: Scalars['String']['input']
+  key: Scalars['String']['input']
+  region: Scalars['String']['input']
 }
 
 export type SealedAttribute = {
   __typename?: 'SealedAttribute'
-  algorithm: Scalars['String']
-  base64EncodedSealedData: Scalars['String']
-  keyId: Scalars['String']
-  plainTextType: Scalars['String']
+  algorithm: Scalars['String']['output']
+  base64EncodedSealedData: Scalars['String']['output']
+  keyId: Scalars['String']['output']
+  plainTextType: Scalars['String']['output']
 }
 
 export type SealedAttributeInput = {
-  algorithm: Scalars['String']
-  base64EncodedSealedData: Scalars['String']
-  keyId: Scalars['String']
-  plainTextType: Scalars['String']
+  algorithm: Scalars['String']['input']
+  base64EncodedSealedData: Scalars['String']['input']
+  keyId: Scalars['String']['input']
+  plainTextType: Scalars['String']['input']
 }
 
 export type SealedEmailMessage = {
   __typename?: 'SealedEmailMessage'
-  clientRefId?: Maybe<Scalars['String']>
-  createdAtEpochMs: Scalars['Float']
+  clientRefId?: Maybe<Scalars['String']['output']>
+  createdAtEpochMs: Scalars['Float']['output']
   direction: EmailMessageDirection
-  emailAddressId: Scalars['ID']
-  folderId: Scalars['ID']
-  id: Scalars['ID']
-  owner: Scalars['ID']
+  emailAddressId: Scalars['ID']['output']
+  encryptionStatus?: Maybe<EmailMessageEncryptionStatus>
+  folderId: Scalars['ID']['output']
+  id: Scalars['ID']['output']
+  owner: Scalars['ID']['output']
   owners: Array<Owner>
-  previousFolderId?: Maybe<Scalars['ID']>
+  previousFolderId?: Maybe<Scalars['ID']['output']>
   rfc822Header: SealedAttribute
-  seen: Scalars['Boolean']
-  size: Scalars['Float']
-  sortDateEpochMs: Scalars['Float']
+  seen: Scalars['Boolean']['output']
+  size: Scalars['Float']['output']
+  sortDateEpochMs: Scalars['Float']['output']
   state: EmailMessageState
-  updatedAtEpochMs: Scalars['Float']
-  version: Scalars['Int']
+  updatedAtEpochMs: Scalars['Float']['output']
+  version: Scalars['Int']['output']
 }
 
 export type SendEmailMessageInput = {
-  clientRefId?: InputMaybe<Scalars['String']>
-  emailAddressId: Scalars['ID']
+  clientRefId?: InputMaybe<Scalars['String']['input']>
+  emailAddressId: Scalars['ID']['input']
   message: S3EmailObjectInput
 }
 
@@ -504,38 +519,38 @@ export type Subscription = {
 }
 
 export type SubscriptionOnEmailMessageCreatedArgs = {
-  owner: Scalars['String']
+  owner: Scalars['String']['input']
 }
 
 export type SubscriptionOnEmailMessageDeletedArgs = {
-  owner: Scalars['ID']
+  owner: Scalars['ID']['input']
 }
 
 export type SupportedDomains = {
   __typename?: 'SupportedDomains'
-  domains: Array<Scalars['String']>
+  domains: Array<Scalars['String']['output']>
 }
 
 export type UnblockEmailAddressesInput = {
-  owner: Scalars['ID']
-  unblockedAddresses: Array<Scalars['String']>
+  owner: Scalars['ID']['input']
+  unblockedAddresses: Array<Scalars['String']['input']>
 }
 
 export type UpdateEmailAddressMetadataInput = {
-  id: Scalars['ID']
+  id: Scalars['ID']['input']
   values: EmailAddressMetadataUpdateValuesInput
 }
 
 export type UpdateEmailMessagesInput = {
-  messageIds: Array<Scalars['ID']>
+  messageIds: Array<Scalars['ID']['input']>
   values: EmailMessageUpdateValuesInput
 }
 
 export type UpdateEmailMessagesResult = {
   __typename?: 'UpdateEmailMessagesResult'
-  failedMessageIds?: Maybe<Array<Scalars['ID']>>
+  failedMessageIds?: Maybe<Array<Scalars['ID']['output']>>
   status: UpdateEmailMessagesStatus
-  successMessageIds?: Maybe<Array<Scalars['ID']>>
+  successMessageIds?: Maybe<Array<Scalars['ID']['output']>>
 }
 
 export enum UpdateEmailMessagesStatus {
@@ -746,6 +761,7 @@ export type SealedEmailMessageFragment = {
   state: EmailMessageState
   clientRefId?: string | null
   size: number
+  encryptionStatus?: EmailMessageEncryptionStatus | null
   owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
   rfc822Header: {
     __typename?: 'SealedAttribute'
@@ -1005,7 +1021,7 @@ export type CheckEmailAddressAvailabilityQuery = {
 }
 
 export type GetEmailAddressQueryVariables = Exact<{
-  id: Scalars['String']
+  id: Scalars['String']['input']
 }>
 
 export type GetEmailAddressQuery = {
@@ -1216,7 +1232,7 @@ export type ListEmailFoldersForEmailAddressIdQuery = {
 }
 
 export type GetEmailMessageQueryVariables = Exact<{
-  id: Scalars['ID']
+  id: Scalars['ID']['input']
 }>
 
 export type GetEmailMessageQuery = {
@@ -1237,6 +1253,7 @@ export type GetEmailMessageQuery = {
     state: EmailMessageState
     clientRefId?: string | null
     size: number
+    encryptionStatus?: EmailMessageEncryptionStatus | null
     owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
     rfc822Header: {
       __typename?: 'SealedAttribute'
@@ -1273,6 +1290,7 @@ export type ListEmailMessagesQuery = {
       state: EmailMessageState
       clientRefId?: string | null
       size: number
+      encryptionStatus?: EmailMessageEncryptionStatus | null
       owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
       rfc822Header: {
         __typename?: 'SealedAttribute'
@@ -1310,6 +1328,7 @@ export type ListEmailMessagesForEmailAddressIdQuery = {
       state: EmailMessageState
       clientRefId?: string | null
       size: number
+      encryptionStatus?: EmailMessageEncryptionStatus | null
       owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
       rfc822Header: {
         __typename?: 'SealedAttribute'
@@ -1347,6 +1366,7 @@ export type ListEmailMessagesForEmailFolderIdQuery = {
       state: EmailMessageState
       clientRefId?: string | null
       size: number
+      encryptionStatus?: EmailMessageEncryptionStatus | null
       owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
       rfc822Header: {
         __typename?: 'SealedAttribute'
@@ -1360,9 +1380,9 @@ export type ListEmailMessagesForEmailFolderIdQuery = {
 }
 
 export type GetKeyRingForEmailQueryVariables = Exact<{
-  keyRingId: Scalars['String']
-  limit?: InputMaybe<Scalars['Int']>
-  nextToken?: InputMaybe<Scalars['String']>
+  keyRingId: Scalars['String']['input']
+  limit?: InputMaybe<Scalars['Int']['input']>
+  nextToken?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type GetKeyRingForEmailQuery = {
@@ -1387,7 +1407,7 @@ export type GetKeyRingForEmailQuery = {
 }
 
 export type GetPublicKeyForEmailQueryVariables = Exact<{
-  keyId: Scalars['String']
+  keyId: Scalars['String']['input']
 }>
 
 export type GetPublicKeyForEmailQuery = {
@@ -1408,8 +1428,8 @@ export type GetPublicKeyForEmailQuery = {
 }
 
 export type GetPublicKeysForEmailQueryVariables = Exact<{
-  limit?: InputMaybe<Scalars['Int']>
-  nextToken?: InputMaybe<Scalars['String']>
+  limit?: InputMaybe<Scalars['Int']['input']>
+  nextToken?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type GetPublicKeysForEmailQuery = {
@@ -1456,7 +1476,7 @@ export type GetEmailAddressBlocklistQuery = {
 }
 
 export type OnEmailMessageDeletedSubscriptionVariables = Exact<{
-  owner: Scalars['ID']
+  owner: Scalars['ID']['input']
 }>
 
 export type OnEmailMessageDeletedSubscription = {
@@ -1477,6 +1497,7 @@ export type OnEmailMessageDeletedSubscription = {
     state: EmailMessageState
     clientRefId?: string | null
     size: number
+    encryptionStatus?: EmailMessageEncryptionStatus | null
     owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
     rfc822Header: {
       __typename?: 'SealedAttribute'
@@ -1489,7 +1510,7 @@ export type OnEmailMessageDeletedSubscription = {
 }
 
 export type OnEmailMessageCreatedSubscriptionVariables = Exact<{
-  owner: Scalars['String']
+  owner: Scalars['String']['input']
 }>
 
 export type OnEmailMessageCreatedSubscription = {
@@ -1510,6 +1531,7 @@ export type OnEmailMessageCreatedSubscription = {
     state: EmailMessageState
     clientRefId?: string | null
     size: number
+    encryptionStatus?: EmailMessageEncryptionStatus | null
     owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
     rfc822Header: {
       __typename?: 'SealedAttribute'
@@ -2218,6 +2240,7 @@ export const SealedEmailMessageFragmentDoc = {
             },
           },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
         ],
       },
     },
@@ -4288,6 +4311,7 @@ export const GetEmailMessageDocument = {
             },
           },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
         ],
       },
     },
@@ -4412,6 +4436,7 @@ export const ListEmailMessagesDocument = {
             },
           },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
         ],
       },
     },
@@ -4539,6 +4564,7 @@ export const ListEmailMessagesForEmailAddressIdDocument = {
             },
           },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
         ],
       },
     },
@@ -4666,6 +4692,7 @@ export const ListEmailMessagesForEmailFolderIdDocument = {
             },
           },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
         ],
       },
     },
@@ -5232,6 +5259,7 @@ export const OnEmailMessageDeletedDocument = {
             },
           },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
         ],
       },
     },
@@ -5346,6 +5374,7 @@ export const OnEmailMessageCreatedDocument = {
             },
           },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
         ],
       },
     },

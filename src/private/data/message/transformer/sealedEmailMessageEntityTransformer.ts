@@ -4,15 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SealedEmailMessage } from '../../../../gen/graphqlTypes'
+import {
+  EmailMessageEncryptionStatus,
+  SealedEmailMessage,
+} from '../../../../gen/graphqlTypes'
 import { SealedEmailMessageEntity } from '../../../domain/entities/message/sealedEmailMessageEntity'
 import { EmailMessageDirectionTransformer } from './emailMessageDirectionTransformer'
+import { EmailMessageEncryptionStatusTransformer } from './emailMessageEncryptionStatusTransformer'
 import { EmailMessageStateTransformer } from './emailMessageStateTransformer'
 
 export class SealedEmailMessageEntityTransformer {
   transformGraphQL(data: SealedEmailMessage): SealedEmailMessageEntity {
     const directionTransformer = new EmailMessageDirectionTransformer()
     const stateTransformer = new EmailMessageStateTransformer()
+    const encryptionStatusTransformer =
+      new EmailMessageEncryptionStatusTransformer()
     return {
       id: data.id,
       owner: data.owner,
@@ -32,6 +38,9 @@ export class SealedEmailMessageEntityTransformer {
       createdAt: new Date(data.createdAtEpochMs),
       updatedAt: new Date(data.updatedAtEpochMs),
       size: data.size,
+      encryptionStatus: encryptionStatusTransformer.fromGraphQLToAPI(
+        data.encryptionStatus ?? EmailMessageEncryptionStatus.Unencrypted,
+      ),
     }
   }
 }
