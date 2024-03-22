@@ -47,6 +47,10 @@ import { EmailFolderEntity } from '../../domain/entities/folder/emailFolderEntit
 import { EmailAddressPublicInfoEntity } from '../../domain/entities/account/emailAddressPublicInfoEntity'
 import { EmailAddressPublicInfoTransformer } from './transformer/emailAddressPublicInfoTransformer'
 
+export type EmailAccountServiceConfig = {
+  enforceSingletonPublicKey?: boolean
+}
+
 export class DefaultEmailAccountService implements EmailAccountService {
   private readonly emailAccountTransformer: EmailAccountEntityTransformer
   private readonly emailAddressTransformer: EmailAddressEntityTransformer
@@ -54,13 +58,18 @@ export class DefaultEmailAccountService implements EmailAccountService {
   constructor(
     private readonly appSync: ApiClient,
     private readonly deviceKeyWorker: DeviceKeyWorker,
+    private readonly config?: EmailAccountServiceConfig,
   ) {
     this.emailAccountTransformer = new EmailAccountEntityTransformer()
     this.emailAddressTransformer = new EmailAddressEntityTransformer()
   }
 
   async create(input: CreateEmailAccountInput): Promise<EmailAccountEntity> {
-    const key = await this.deviceKeyWorker.generateKeyPair()
+    // Retrieve Public Key to create email account with.
+    const key = this.config?.enforceSingletonPublicKey
+      ? await this.deviceKeyWorker.getSingletonKeyPair()
+      : await this.deviceKeyWorker.generateKeyPair()
+
     const symmetricKeyId =
       (await this.deviceKeyWorker.getCurrentSymmetricKeyId()) ??
       (await this.deviceKeyWorker.generateCurrentSymmetricKey())
@@ -111,9 +120,13 @@ export class DefaultEmailAccountService implements EmailAccountService {
 
   async delete(input: DeleteEmailAccountInput): Promise<EmailAccountEntity> {
     const result = await this.appSync.deprovisionEmailAddress(input)
-    for (const keyId of result.keyIds) {
-      await this.deviceKeyWorker.removeKey(keyId, KeyType.KeyPair)
+
+    if (!this.config?.enforceSingletonPublicKey) {
+      for (const keyId of result.keyIds) {
+        await this.deviceKeyWorker.removeKey(keyId, KeyType.KeyPair)
+      }
     }
+
     return this.emailAccountTransformer.transformGraphQL({
       ...result,
       folders: [],

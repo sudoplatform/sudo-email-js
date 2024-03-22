@@ -37,6 +37,7 @@ import { AddressNotFoundError } from '../../../src/public/errors'
 import {
   DefaultSudoEmailClient,
   SudoEmailClient,
+  SudoEmailClientConfig,
 } from '../../../src/public/sudoEmailClient'
 import { EmailAddress } from '../../../src/public/typings/emailAddress'
 import { createSudo } from './createSudo'
@@ -94,6 +95,7 @@ export interface SetupEmailClientOutput {
 
 export const setupEmailClient = async (
   log: DefaultLogger,
+  clientConfig: SudoEmailClientConfig = {},
 ): Promise<SetupEmailClientOutput> => {
   try {
     if (!adminApiKey) {
@@ -181,6 +183,9 @@ export const setupEmailClient = async (
       sudoCryptoProvider: emailCryptoProvider,
       apiClient,
       sudoKeyManager: emailKeyManager,
+      sudoEmailClientConfig: {
+        ...clientConfig,
+      },
     }
     const emailClient = new DefaultSudoEmailClient(options)
     await emailClient.reset().catch((err) => {

@@ -62,6 +62,7 @@ describe('DeviceKeyWorker Test Suite', () => {
       await expect(instanceUnderTest.generateKeyPair()).rejects.toStrictEqual(
         new InternalError('Could not generate public key pair'),
       )
+      verify(mockKeyManager.getPublicKey(anything())).once()
       verify(mockKeyManager.generateKeyPair(anything())).once()
     })
 
@@ -73,6 +74,30 @@ describe('DeviceKeyWorker Test Suite', () => {
         data: 'YmI=',
         format: DeviceKeyWorkerKeyFormat.RsaPublicKey,
       })
+    })
+  })
+
+  describe('getSingletonKeyPair', () => {
+    it('throws InternalError if public key returns undefined after generation', async () => {
+      when(mockKeyManager.getPublicKey(anything())).thenResolve(undefined)
+      await expect(
+        instanceUnderTest.getSingletonKeyPair(),
+      ).rejects.toStrictEqual(
+        new InternalError('Could not generate public key pair'),
+      )
+      verify(mockKeyManager.getPublicKey(anything())).once()
+    })
+
+    it('retrieves existing keyPair successfully', async () => {
+      when(mockKeyManager.getPassword(anything())).thenResolve(str2ab(v4()))
+      const deviceKey = await instanceUnderTest.getSingletonKeyPair()
+      expect(deviceKey).toMatchObject<DeviceKey>({
+        id: expect.stringMatching(EntityDataFactory.uuidV4Regex),
+        algorithm: 'RSAEncryptionOAEPAESCBC',
+        data: 'YmI=',
+        format: DeviceKeyWorkerKeyFormat.RsaPublicKey,
+      })
+      verify(mockKeyManager.getPublicKey(anything())).once()
     })
   })
 

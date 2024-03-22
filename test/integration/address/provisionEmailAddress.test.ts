@@ -30,7 +30,6 @@ import {
   generateSafeLocalPart,
   provisionEmailAddress,
 } from '../util/provisionEmailAddress'
-import { instance } from 'ts-mockito'
 import waitForExpect from 'wait-for-expect'
 
 describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
@@ -190,5 +189,75 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
     await expect(
       provisionEmailAddress(ownershipProofToken, instanceUnderTest),
     ).rejects.toThrow(InsufficientEntitlementsError)
+  })
+
+  describe('Singleton Public Key tests', () => {
+    let emailAddresses: EmailAddress[] = []
+
+    let instanceUnderTest: SudoEmailClient
+    let userClient: SudoUserClient
+    let entitlementsClient: SudoEntitlementsClient
+    let profilesClient: SudoProfilesClient
+    let sudo: Sudo
+    let ownershipProofToken: string
+
+    beforeEach(async () => {
+      const result = await setupEmailClient(log, {
+        enforceSingletonPublicKey: true,
+      })
+      instanceUnderTest = result.emailClient
+      userClient = result.userClient
+      entitlementsClient = result.entitlementsClient
+      profilesClient = result.profilesClient
+      sudo = result.sudo
+      ownershipProofToken = result.ownershipProofToken
+    })
+
+    afterEach(async () => {
+      await teardown(
+        { emailAddresses, sudos: [sudo] },
+        { emailClient: instanceUnderTest, profilesClient, userClient },
+      )
+      emailAddresses = []
+    })
+
+    it('provisions multiple email addresses with same Public Key', async () => {
+      const localParts = [generateSafeLocalPart(), generateSafeLocalPart()]
+      const aliases = ['Some Alias', 'Some Other Alias']
+      const provisioned = await Promise.all([
+        provisionEmailAddress(ownershipProofToken, instanceUnderTest, {
+          localPart: localParts[0],
+          alias: aliases[0],
+        }),
+        provisionEmailAddress(ownershipProofToken, instanceUnderTest, {
+          localPart: localParts[1],
+          alias: aliases[1],
+        }),
+      ])
+      emailAddresses.push(...provisioned)
+
+      expect(provisioned[0].id).not.toStrictEqual(provisioned[1].id)
+      expect(provisioned[0].owner).toStrictEqual(provisioned[1].owner)
+      expect(provisioned[0].owners[0].id).toStrictEqual(
+        provisioned[1].owners[0].id,
+      )
+
+      const sub = await userClient.getSubject()
+      for (const [i, emailAddress] of provisioned.entries()) {
+        expect(emailAddress.id).toBeDefined()
+        expect(emailAddress.emailAddress).toMatch(
+          new RegExp(`^${localParts[i]}@.+`),
+        )
+        expect(emailAddress.owner).toStrictEqual(sub)
+        expect(emailAddress.owners[0].id).toStrictEqual(sudo.id)
+        expect(emailAddress.owners[0].issuer).toStrictEqual(sudoIssuer)
+        expect(emailAddress.alias).toBeDefined()
+        expect(emailAddress.alias).toStrictEqual(aliases[i])
+        expect(emailAddress.folders).toHaveLength(4)
+        expect(emailAddress.folders.map((f) => f.folderName)).toEqual(
+          expect.arrayContaining(['INBOX', 'SENT', 'OUTBOX', 'TRASH']),
+        )
+      }
+    })
   })
 })

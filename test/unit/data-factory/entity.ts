@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import {
+  DeviceKey,
+  DeviceKeyWorkerKeyFormat,
+} from '../../../src/private/data/common/deviceKeyWorker'
 import { EmailAccountEntity } from '../../../src/private/domain/entities/account/emailAccountEntity'
 import { EmailAddressEntity } from '../../../src/private/domain/entities/account/emailAddressEntity'
 import { EmailAddressPublicInfoEntity } from '../../../src/private/domain/entities/account/emailAddressPublicInfoEntity'
@@ -149,4 +153,11 @@ export class EntityDataFactory {
   static readonly uuidV4Regex = new RegExp(
     /^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
   )
+
+  static readonly deviceKey: DeviceKey = {
+    id: 'dummyKeyId',
+    algorithm: 'dummyAlgorithm',
+    data: 'dummyPublicKey',
+    format: DeviceKeyWorkerKeyFormat.RsaPublicKey,
+  }
 }

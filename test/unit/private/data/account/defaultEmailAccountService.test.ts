@@ -23,7 +23,6 @@ import { DefaultEmailAccountService } from '../../../../../src/private/data/acco
 import { ApiClient } from '../../../../../src/private/data/common/apiClient'
 import {
   DeviceKeyWorker,
-  DeviceKeyWorkerKeyFormat,
   KeyType,
 } from '../../../../../src/private/data/common/deviceKeyWorker'
 import {
@@ -34,13 +33,14 @@ import {
 } from '../../../../../src/private/domain/entities/account/emailAccountService'
 import { EntityDataFactory } from '../../../data-factory/entity'
 import { GraphQLDataFactory } from '../../../data-factory/graphQL'
-import {
-  LookupEmailAddressesPublicInfoInput,
-  LookupEmailAddressesPublicInfoResponse,
-} from '../../../../../src/gen/graphqlTypes'
 import { EmailAddressPublicInfoEntity } from '../../../../../src/private/domain/entities/account/emailAddressPublicInfoEntity'
 
 describe('DefaultEmailAccountService Test Suite', () => {
+  const generatedPKDeviceKey = EntityDataFactory.deviceKey
+  const userPKDeviceKey = {
+    ...EntityDataFactory.deviceKey,
+    data: 'dummyUserPublicKey',
+  }
   const mockAppSync = mock<ApiClient>()
   const mockDeviceKeyWorker = mock<DeviceKeyWorker>()
   let instanceUnderTest: DefaultEmailAccountService
@@ -56,12 +56,12 @@ describe('DefaultEmailAccountService Test Suite', () => {
 
   describe('create', () => {
     beforeEach(() => {
-      when(mockDeviceKeyWorker.generateKeyPair()).thenResolve({
-        id: 'dummyKeyId',
-        algorithm: 'dummyAlgorithm',
-        data: 'dummyPublicKey',
-        format: DeviceKeyWorkerKeyFormat.RsaPublicKey,
-      })
+      when(mockDeviceKeyWorker.generateKeyPair()).thenResolve(
+        generatedPKDeviceKey,
+      )
+      when(mockDeviceKeyWorker.getSingletonKeyPair()).thenResolve(
+        userPKDeviceKey,
+      )
     })
 
     it('calls appSync correctly', async () => {
@@ -126,6 +126,39 @@ describe('DefaultEmailAccountService Test Suite', () => {
       verify(mockDeviceKeyWorker.sealString(anything())).once()
       verify(mockDeviceKeyWorker.unsealString(anything())).once()
     })
+
+    it('gets singleton Public Key from keychain when enforced', async () => {
+      when(mockAppSync.provisionEmailAddress(anything())).thenResolve(
+        GraphQLDataFactory.emailAddress,
+      )
+      const iat = new DefaultEmailAccountService(
+        instance(mockAppSync),
+        instance(mockDeviceKeyWorker),
+        { enforceSingletonPublicKey: true },
+      )
+      const createEmailAccountInput: CreateEmailAccountInput = {
+        emailAddressEntity: EntityDataFactory.emailAccount.emailAddress,
+        ownershipProofToken: EntityDataFactory.owner.id,
+      }
+      const provisionedEmailAccount = await iat.create(createEmailAccountInput)
+      expect(provisionedEmailAccount).toStrictEqual(
+        EntityDataFactory.emailAccount,
+      )
+
+      const [inputArgs] = capture(mockAppSync.provisionEmailAddress).first()
+      const expectedPublicKeyInput = {
+        ...GraphQLDataFactory.provisionKeyInput,
+        publicKey: userPKDeviceKey.data,
+      }
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        emailAddress: EntityDataFactory.emailAddress.emailAddress,
+        ownershipProofTokens: [EntityDataFactory.owner.id],
+        key: expectedPublicKeyInput,
+      })
+
+      verify(mockAppSync.provisionEmailAddress(anything())).once()
+      verify(mockDeviceKeyWorker.getSingletonKeyPair()).once()
+    })
   })
 
   it('Update alias', async () => {
@@ -187,6 +220,36 @@ describe('DefaultEmailAccountService Test Suite', () => {
         emailAddressId: EntityDataFactory.emailAccount.id,
       })
       verify(mockAppSync.deprovisionEmailAddress(anything())).once()
+    })
+
+    it('does not delete key id of deprovisioned email address if singleton public key is enforced', async () => {
+      const deletedKeyId = 'dummyKeyId'
+      when(mockAppSync.deprovisionEmailAddress(anything())).thenResolve({
+        ...GraphQLDataFactory.emailAddressWithoutFolders,
+        keyIds: [deletedKeyId],
+      })
+      const iat = new DefaultEmailAccountService(
+        instance(mockAppSync),
+        instance(mockDeviceKeyWorker),
+        { enforceSingletonPublicKey: true },
+      )
+
+      const input: DeleteEmailAccountInput = {
+        emailAddressId: EntityDataFactory.emailAccount.id,
+      }
+      const deprovisionedEmailAccount = await iat.delete(input)
+      expect(deprovisionedEmailAccount).toStrictEqual({
+        ...EntityDataFactory.emailAccount,
+        folders: [],
+      })
+
+      const [inputArgs] = capture(mockAppSync.deprovisionEmailAddress).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        emailAddressId: EntityDataFactory.emailAccount.id,
+      })
+
+      verify(mockAppSync.deprovisionEmailAddress(anything())).once()
+      verify(mockDeviceKeyWorker.removeKey(anything(), anything())).never()
     })
   })
 

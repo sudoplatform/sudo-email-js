@@ -10,6 +10,7 @@ import {
   EncryptionAlgorithm,
   KeyNotFoundError,
   Logger,
+  PublicKey,
   SudoKeyManager,
 } from '@sudoplatform/sudo-common'
 import { v4 } from 'uuid'
@@ -48,9 +49,12 @@ export interface SealInput {
 
 export const SYMMETRIC_KEY_ID = 'email-symmetric-key'
 const RSA_KEY_SIZE = 256
+const SINGLETON_PUBLIC_KEY_ID = 'singleton-key-id'
 
 export interface DeviceKeyWorker {
   generateKeyPair(): Promise<DeviceKey>
+
+  getSingletonKeyPair(): Promise<DeviceKey>
 
   generateCurrentSymmetricKey(): Promise<string>
 
@@ -75,20 +79,16 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
     this.log = new DefaultLogger(this.constructor.name)
   }
 
-  async generateKeyPair(): Promise<DeviceKey> {
-    const keyPairId = v4()
-
-    await this.keyManager.generateKeyPair(keyPairId)
-    const publicKey = await this.keyManager.getPublicKey(keyPairId)
-    if (publicKey === undefined) {
-      throw new InternalError('Could not generate public key pair')
-    }
+  private async formatDeviceKey(
+    keyPairId: string,
+    publicKey: PublicKey,
+  ): Promise<DeviceKey> {
     const publicKeyFormat =
       new PublicKeyFormatTransformer().toDeviceKeyWorkerKeyFormat(
-        publicKey?.keyFormat,
+        publicKey.keyFormat,
       )
     const publicKeyData = btoa(
-      String.fromCharCode(...new Uint8Array(publicKey?.keyData)),
+      String.fromCharCode(...new Uint8Array(publicKey.keyData)),
     )
     return {
       id: keyPairId,
@@ -96,6 +96,51 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
       data: publicKeyData,
       format: publicKeyFormat,
     }
+  }
+
+  /**
+   * Generates a new Public Key pair and returns as formatted Device Key.
+   */
+  async generateKeyPair(): Promise<DeviceKey> {
+    const keyId = v4()
+    await this.keyManager.generateKeyPair(keyId)
+
+    const publicKey = await this.keyManager.getPublicKey(keyId)
+    if (publicKey === undefined) {
+      throw new InternalError('Could not generate public key pair')
+    }
+
+    const deviceKey = await this.formatDeviceKey(keyId, publicKey)
+    return deviceKey
+  }
+
+  /**
+   * Returns the current singleton Public Key from Key Manager.
+   * A new key will be generated and returned if none exists.
+   */
+  async getSingletonKeyPair(): Promise<DeviceKey> {
+    let keyIdBits = await this.keyManager.getPassword(SINGLETON_PUBLIC_KEY_ID)
+    let keyId = new TextDecoder().decode(keyIdBits)
+
+    // If key id doesn't exist, generate new key and store
+    if (!keyId.length) {
+      keyId = v4()
+      keyIdBits = new TextEncoder().encode(keyId)
+      await this.keyManager.addPassword(
+        (keyIdBits as Uint8Array).buffer,
+        SINGLETON_PUBLIC_KEY_ID,
+      )
+      await this.keyManager.generateKeyPair(keyId)
+    }
+
+    // Get public key with singleton key id
+    const publicKey = await this.keyManager.getPublicKey(keyId)
+    if (publicKey === undefined) {
+      throw new InternalError('Could not generate public key pair')
+    }
+
+    const deviceKey = await this.formatDeviceKey(keyId, publicKey)
+    return deviceKey
   }
 
   async generateCurrentSymmetricKey(): Promise<string> {

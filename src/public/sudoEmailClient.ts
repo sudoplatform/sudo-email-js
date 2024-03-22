@@ -836,6 +836,10 @@ export interface SudoEmailClient {
   reset(): Promise<void>
 }
 
+export type SudoEmailClientConfig = {
+  enforceSingletonPublicKey?: boolean
+}
+
 export type SudoEmailClientOptions = {
   /** Sudo User client to use. No default */
   sudoUserClient: SudoUserClient
@@ -845,6 +849,9 @@ export type SudoEmailClientOptions = {
 
   /** SudoKeyManager to use. Default is to create a DefaultSudoKeyManager */
   sudoKeyManager?: SudoKeyManager
+
+  /** Client configuration to use. No default */
+  sudoEmailClientConfig?: SudoEmailClientConfig
 }
 
 export class DefaultSudoEmailClient implements SudoEmailClient {
@@ -896,6 +903,10 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     this.emailAccountService = new DefaultEmailAccountService(
       this.apiClient,
       deviceKeyWorker,
+      {
+        enforceSingletonPublicKey:
+          opts.sudoEmailClientConfig?.enforceSingletonPublicKey,
+      },
     )
     this.emailFolderService = new DefaultEmailFolderService(
       this.apiClient,

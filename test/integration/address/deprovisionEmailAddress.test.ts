@@ -7,6 +7,7 @@
 import {
   CachePolicy,
   DefaultLogger,
+  KeyData,
   SudoCryptoProvider,
 } from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
@@ -148,5 +149,65 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
         10000,
       )
     }
+  })
+
+  describe.only('Singleton Public Key tests', () => {
+    let instanceUnderTest: SudoEmailClient
+    let profilesClient: SudoProfilesClient
+    let userClient: SudoUserClient
+    let sudo: Sudo
+    let ownershipProofToken: string
+    let cryptoProvider: SudoCryptoProvider
+
+    beforeEach(async () => {
+      const result = await setupEmailClient(log, {
+        enforceSingletonPublicKey: true,
+      })
+      cryptoProvider = result.cryptoProviders.email
+      result.cryptoProviders
+      instanceUnderTest = result.emailClient
+      profilesClient = result.profilesClient
+      userClient = result.userClient
+      sudo = result.sudo
+      ownershipProofToken = result.ownershipProofToken
+    })
+
+    afterEach(async () => {
+      await teardown(
+        { emailAddresses: [], sudos: [sudo] },
+        { emailClient: instanceUnderTest, profilesClient, userClient },
+      )
+    })
+
+    it('correctly deprovisions email addresses', async () => {
+      // With `enforceSingletonPublicKey` enabled, these two emails will be provisioned
+      // with the same Public Key retrieved from the key manager.
+      const provisioned = await Promise.all([
+        provisionEmailAddress(ownershipProofToken, instanceUnderTest),
+        provisionEmailAddress(ownershipProofToken, instanceUnderTest),
+      ])
+
+      const keys = await cryptoProvider.exportKeys()
+      expect(keys.length).toEqual(6)
+
+      // Email addresses should be deprovisioned without issue
+      await Promise.all([
+        expect(
+          instanceUnderTest.deprovisionEmailAddress(provisioned[0].id),
+        ).resolves.toStrictEqual({
+          ...provisioned[0],
+          folders: [],
+        }),
+        expect(
+          instanceUnderTest.deprovisionEmailAddress(provisioned[1].id),
+        ).resolves.toStrictEqual({
+          ...provisioned[1],
+          folders: [],
+        }),
+      ])
+
+      // Deprovisioning addresses should delete anything from the keychain
+      await expect(cryptoProvider.exportKeys()).resolves.toStrictEqual(keys)
+    })
   })
 })
