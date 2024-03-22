@@ -12,6 +12,7 @@ import {
   Logger,
   PublicKey,
   SudoKeyManager,
+  SymmetricEncryptionOptions,
 } from '@sudoplatform/sudo-common'
 import { v4 } from 'uuid'
 import { InternalError } from '../../../public/errors'
@@ -40,11 +41,47 @@ export interface UnsealInput {
   algorithm?: EncryptionAlgorithm
 }
 
+/**
+ * Input used to seal a string with a cryptograhic key
+ * @property {ArrayBuffer} payload The payload to be sealed
+ * @property {string} keyId The id of the key to use in sealing
+ * @property {KeyType} keyType The type of key to use in sealing
+ * @property {EncryptionAlgorithm} algorithm The cryptographic algorithm to seal with (optional)
+ */
 export interface SealInput {
   payload: ArrayBuffer
   keyId: string
   keyType: KeyType
   algorithm?: EncryptionAlgorithm
+}
+
+/**
+ * Input used to seal a string with multiple KeyPair ids
+ * @property {ArrayBuffer} payload The payload to be sealed
+ * @property {string[]} keyIds An array of the KeyPair ids to seal with as strings
+ * @property {ArrayBuffer} iv The IV used to seal (optional)
+ */
+export interface SealWithKeyPairIdsInput {
+  payload: ArrayBuffer
+  keyIds: string[]
+  iv?: ArrayBuffer
+}
+
+/**
+ * The result of a `sealStringWithKeyPairIds` operation
+ * @property {ArrayBuffer} sealedPayload The sealed payload
+ * @property {ArrayBuffer[]} sealedCiperKeys An array containing the result of sealing the cipher key, used to seal the payload, with each KeyPair and the KeyPair id
+ */
+export interface SealWithKeyPairIdsOutput {
+  sealedPayload: ArrayBuffer
+  sealedCipherKeys: { sealedValue: ArrayBuffer; keyId: string }[]
+}
+
+export interface UnsealWithKeyPairIdInput {
+  sealedPayload: ArrayBuffer
+  sealedCipherKey: ArrayBuffer
+  keyPairId: string
+  iv?: ArrayBuffer
 }
 
 export const SYMMETRIC_KEY_ID = 'email-symmetric-key'
@@ -66,7 +103,20 @@ export interface DeviceKeyWorker {
 
   unsealString(input: UnsealInput): Promise<string>
 
+  /**
+   * Seals the given string using the provided key and algorithm.
+   * @param {SealInput} input
+   * @returns {string} The sealed string
+   */
   sealString(input: SealInput): Promise<string>
+
+  sealWithKeyPairIds(
+    input: SealWithKeyPairIdsInput,
+  ): Promise<SealWithKeyPairIdsOutput>
+
+  unsealWithKeyPairId(input: UnsealWithKeyPairIdInput): Promise<ArrayBuffer>
+
+  generateRandomData(size: number): Promise<ArrayBuffer>
 }
 
 export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
@@ -214,10 +264,15 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
   }: SealInput): Promise<string> {
     switch (keyType) {
       case KeyType.KeyPair:
-        return await this.sealWithKeyPairId({
-          keyPairId: keyId,
-          encrypted: payload,
-        })
+        const { sealedPayload, sealedCipherKeys } =
+          await this.sealWithKeyPairIds({
+            keyIds: [keyId],
+            payload,
+          })
+        return this.concatArrayBuffersToString(
+          sealedCipherKeys[0].sealedValue,
+          sealedPayload,
+        )
       case KeyType.SymmetricKey:
         return await this.sealWithSymmetricKeyId({
           keyId,
@@ -227,37 +282,99 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
     }
   }
 
-  private async sealWithKeyPairId({
-    keyPairId,
-    encrypted,
-  }: {
-    keyPairId: string
-    encrypted: ArrayBuffer
-  }): Promise<string> {
+  async sealWithKeyPairIds(
+    input: SealWithKeyPairIdsInput,
+  ): Promise<SealWithKeyPairIdsOutput> {
+    const cipherKey = await this.generateCipherKey()
+    const sealedPayload = await this.keyManager.encryptWithSymmetricKey(
+      cipherKey,
+      input.payload,
+      { algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding, iv: input.iv },
+    )
+    const sealedCipherKeys = await Promise.all(
+      input.keyIds.map(async (keyPairId) => {
+        const sealedValue = await this.keyManager.encryptWithPublicKey(
+          keyPairId,
+          cipherKey,
+          {
+            algorithm: EncryptionAlgorithm.RsaOaepSha1, // Same as default
+          },
+        )
+        return { sealedValue, keyId: keyPairId }
+      }),
+    )
+    return { sealedPayload, sealedCipherKeys }
+  }
+
+  async unsealWithKeyPairId(
+    input: UnsealWithKeyPairIdInput,
+  ): Promise<ArrayBuffer> {
+    try {
+      const unsealedCipherKey = await this.keyManager.decryptWithPrivateKey(
+        input.keyPairId,
+        input.sealedCipherKey,
+        { algorithm: EncryptionAlgorithm.RsaOaepSha1 },
+      )
+
+      if (!unsealedCipherKey) {
+        throw new DecodeError('Could not unseal cipher key')
+      }
+      console.debug({ iv: input.iv })
+      return await this.decryptWithSymmetricKey(
+        unsealedCipherKey,
+        input.sealedPayload,
+        { iv: input.iv },
+      )
+    } catch (e) {
+      console.error('error decrypting', { e })
+      throw e
+    }
+  }
+
+  async generateRandomData(size: number): Promise<ArrayBuffer> {
+    return await this.keyManager.generateRandomData(size)
+  }
+
+  private async decryptWithSymmetricKey(
+    key: ArrayBuffer,
+    data: ArrayBuffer,
+    options: SymmetricEncryptionOptions,
+  ): Promise<ArrayBuffer> {
+    return this.keyManager.decryptWithSymmetricKey(key, data, options)
+  }
+
+  /**
+   * Generates a new symmetric key (cipher) and returns its bytes. Does not store it in the
+   * device.
+   * @returns {ArrayBuffer} The cipher key
+   */
+  private async generateCipherKey(): Promise<ArrayBuffer> {
     const cipherKeyId = v4()
     await this.keyManager.generateSymmetricKey(cipherKeyId)
     const cipherKey = await this.keyManager.getSymmetricKey(cipherKeyId)
     if (!cipherKey) {
-      throw new InternalError('Failed to create cipher key for sealing payload')
+      throw new InternalError('Failed to create cipher key')
     }
     // Need to remove symmetric key as we don't want to save it on device
     await this.keyManager.deleteSymmetricKey(cipherKeyId)
-    const sealedPayload = await this.keyManager.encryptWithSymmetricKey(
-      cipherKey,
-      encrypted,
-    )
-    const encryptedCipherKey = await this.keyManager.encryptWithPublicKey(
-      keyPairId,
-      cipherKey,
-    )
+    return cipherKey
+  }
+
+  /**
+   * Appends `buffer2` to the end of `buffer1` and returns the result as a string
+   * @param {ArrayBuffer} buffer1
+   * @param {ArrayBuffer} buffer2
+   * @returns {string} The resulting string
+   */
+  private concatArrayBuffersToString(
+    buffer1: ArrayBuffer,
+    buffer2: ArrayBuffer,
+  ): string {
     const transitoryBuffer = new Uint8Array(
-      encryptedCipherKey.byteLength + sealedPayload.byteLength,
+      buffer1.byteLength + buffer2.byteLength,
     )
-    transitoryBuffer.set(new Uint8Array(encryptedCipherKey), 0)
-    transitoryBuffer.set(
-      new Uint8Array(sealedPayload),
-      encryptedCipherKey.byteLength,
-    )
+    transitoryBuffer.set(new Uint8Array(buffer1), 0)
+    transitoryBuffer.set(new Uint8Array(buffer2), buffer1.byteLength)
     let string = ''
     transitoryBuffer.forEach((b) => {
       const x = String.fromCharCode(b)

@@ -23,7 +23,7 @@ import {
   generateSafeLocalPart,
   provisionEmailAddress,
 } from '../util/provisionEmailAddress'
-import { str2ab } from '../../util/buffer'
+import { stringToArrayBuffer } from '../../../src/private/util/buffer'
 import waitForExpect from 'wait-for-expect'
 import { getFolderByName } from '../util/folder'
 import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'

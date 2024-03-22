@@ -17,6 +17,7 @@ import waitForExpect from 'wait-for-expect'
 import {
   EmailAddress,
   EmailFolder,
+  EncryptionStatus,
   InvalidEmailContentsError,
   SudoEmailClient,
   UnauthorizedAddressError,
@@ -28,7 +29,7 @@ import {
   EmailMessageDetails,
   Rfc822MessageParser,
 } from '../../../src/private/util/rfc822MessageParser'
-import { str2ab } from '../../util/buffer'
+import { stringToArrayBuffer } from '../../../src/private/util/buffer'
 
 describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   jest.setTimeout(240000)
@@ -43,12 +44,17 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   let sudo: Sudo
   let ownershipProofToken: string
 
-  let emailAddress: EmailAddress
+  let emailAddress1: EmailAddress
+  let emailAddress2: EmailAddress
   let inboxFolder: EmailFolder
   let draft: EmailMessageDetails
+  let encryptedDraft: EmailMessageDetails
   let draftWithAttachments: EmailMessageDetails
+  let encryptedDraftWithAttachments: EmailMessageDetails
   let draftString: string
+  let encryptedDraftString: string
   let draftWithAttachmentsString: string
+  let encryptedDraftWithAttachmentsString: string
 
   beforeEach(async () => {
     const result = await setupEmailClient(log)
@@ -58,20 +64,25 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     sudo = result.sudo
     ownershipProofToken = result.ownershipProofToken
 
-    emailAddress = await provisionEmailAddress(
+    emailAddress1 = await provisionEmailAddress(
       ownershipProofToken,
       instanceUnderTest,
     )
-    emailAddresses.push(emailAddress)
+    emailAddresses.push(emailAddress1)
+    emailAddress2 = await provisionEmailAddress(
+      ownershipProofToken,
+      instanceUnderTest,
+    )
+    emailAddresses.push(emailAddress2)
 
-    const folder = emailAddress.folders.find((f) => f.folderName === 'INBOX')
+    const folder = emailAddress1.folders.find((f) => f.folderName === 'INBOX')
     if (!folder) {
-      fail(`Could not find INBOX folder for ${emailAddress.id}`)
+      fail(`Could not find INBOX folder for ${emailAddress1.id}`)
     }
     inboxFolder = folder
 
     draft = {
-      from: [{ emailAddress: emailAddress.emailAddress }],
+      from: [{ emailAddress: emailAddress1.emailAddress }],
       to: [{ emailAddress: ootoSimulatorAddress }],
       cc: [],
       bcc: [],
@@ -80,6 +91,17 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       attachments: [],
     }
     draftString = Rfc822MessageParser.encodeToRfc822DataStr(draft)
+    encryptedDraft = {
+      from: [{ emailAddress: emailAddress1.emailAddress }],
+      to: [{ emailAddress: emailAddress2.emailAddress }],
+      cc: [],
+      bcc: [],
+      replyTo: [],
+      body: 'Hello, World',
+      attachments: [],
+    }
+    encryptedDraftString =
+      Rfc822MessageParser.encodeToRfc822DataStr(encryptedDraft)
     draftWithAttachments = {
       ...draft,
       attachments: [
@@ -101,6 +123,27 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     }
     draftWithAttachmentsString =
       Rfc822MessageParser.encodeToRfc822DataStr(draftWithAttachments)
+    encryptedDraftWithAttachments = {
+      ...encryptedDraft,
+      attachments: [
+        {
+          mimeType: 'application/pdf',
+          contentTransferEncoding: 'base64',
+          filename: 'attachment-1.pdf',
+          data: Buffer.from('Content of attachment 1').toString('base64'),
+          inlineAttachment: false,
+        },
+        {
+          mimeType: 'image/jpeg',
+          contentTransferEncoding: 'base64',
+          filename: 'attachment-2.jpeg',
+          data: Buffer.from('Content of attachment 2').toString('base64'),
+          inlineAttachment: false,
+        },
+      ],
+    }
+    encryptedDraftWithAttachmentsString =
+      Rfc822MessageParser.encodeToRfc822DataStr(encryptedDraftWithAttachments)
   })
 
   afterEach(async () => {
@@ -113,8 +156,8 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
   it('returns expected output', async () => {
     const sentId = await instanceUnderTest.sendEmailMessage({
-      rfc822Data: str2ab(draftString),
-      senderEmailAddressId: emailAddress.id,
+      rfc822Data: stringToArrayBuffer(draftString),
+      senderEmailAddressId: emailAddress1.id,
     })
 
     expect(sentId).toMatch(
@@ -138,7 +181,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
     const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
       id: sentId,
-      emailAddressId: emailAddress.id,
+      emailAddressId: emailAddress1.id,
     })
 
     expect(new TextDecoder().decode(sentRFC822Data?.rfc822Data)).toEqual(
@@ -148,8 +191,8 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
   it('returns expected output with attachments', async () => {
     const sentId = await instanceUnderTest.sendEmailMessage({
-      rfc822Data: str2ab(draftWithAttachmentsString),
-      senderEmailAddressId: emailAddress.id,
+      rfc822Data: stringToArrayBuffer(draftWithAttachmentsString),
+      senderEmailAddressId: emailAddress1.id,
     })
 
     expect(sentId).toMatch(
@@ -173,7 +216,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
     const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
       id: sentId,
-      emailAddressId: emailAddress.id,
+      emailAddressId: emailAddress1.id,
     })
 
     expect(new TextDecoder().decode(sentRFC822Data?.rfc822Data)).toEqual(
@@ -189,8 +232,8 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     }
     const ccDraftString = Rfc822MessageParser.encodeToRfc822DataStr(ccDraft)
     const sentId = await instanceUnderTest.sendEmailMessage({
-      rfc822Data: str2ab(ccDraftString),
-      senderEmailAddressId: emailAddress.id,
+      rfc822Data: stringToArrayBuffer(ccDraftString),
+      senderEmailAddressId: emailAddress1.id,
     })
 
     expect(sentId).toMatch(
@@ -213,7 +256,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
     const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
       id: sentId,
-      emailAddressId: emailAddress.id,
+      emailAddressId: emailAddress1.id,
     })
 
     expect(new TextDecoder().decode(sentRFC822Data?.rfc822Data)).toEqual(
@@ -244,8 +287,8 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     }
     const bccDraftString = Rfc822MessageParser.encodeToRfc822DataStr(bccDraft)
     const sentId = await instanceUnderTest.sendEmailMessage({
-      rfc822Data: str2ab(bccDraftString),
-      senderEmailAddressId: emailAddress.id,
+      rfc822Data: stringToArrayBuffer(bccDraftString),
+      senderEmailAddressId: emailAddress1.id,
     })
 
     expect(sentId).toMatch(
@@ -268,7 +311,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
     const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
       id: sentId,
-      emailAddressId: emailAddress.id,
+      emailAddressId: emailAddress1.id,
     })
 
     expect(new TextDecoder().decode(sentRFC822Data?.rfc822Data)).toEqual(
@@ -300,7 +343,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   it('throws an error if unknown address is used', async () => {
     await expect(
       instanceUnderTest.sendEmailMessage({
-        rfc822Data: str2ab(draftString),
+        rfc822Data: stringToArrayBuffer(draftString),
         senderEmailAddressId: v4(),
       }),
     ).rejects.toThrow(UnauthorizedAddressError)
@@ -309,15 +352,15 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   it('throws an InvalidEmailContentsError if rfc822 data is garbage', async () => {
     await expect(
       instanceUnderTest.sendEmailMessage({
-        rfc822Data: str2ab(v4()),
-        senderEmailAddressId: emailAddress.id,
+        rfc822Data: stringToArrayBuffer(v4()),
+        senderEmailAddressId: emailAddress1.id,
       }),
     ).rejects.toThrow(InvalidEmailContentsError)
   })
 
   it('throws an InvalidEmailContentsError if rfc822 data has no recipients', async () => {
     const badDraft = {
-      from: [{ emailAddress: emailAddress.emailAddress }],
+      from: [{ emailAddress: emailAddress1.emailAddress }],
       to: [],
       cc: [],
       bcc: [],
@@ -329,9 +372,174 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
     await expect(
       instanceUnderTest.sendEmailMessage({
-        rfc822Data: str2ab(badDraftString),
-        senderEmailAddressId: emailAddress.id,
+        rfc822Data: stringToArrayBuffer(badDraftString),
+        senderEmailAddressId: emailAddress1.id,
       }),
     ).rejects.toThrow(InvalidEmailContentsError)
+  })
+
+  describe('encrypted path', () => {
+    it('returns expected output', async () => {
+      const sentId = await instanceUnderTest.sendEmailMessage({
+        rfc822Data: stringToArrayBuffer(encryptedDraftString),
+        senderEmailAddressId: emailAddress1.id,
+      })
+
+      expect(sentId).toMatch(
+        /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
+      )
+
+      let sent
+      await waitForExpect(async () => {
+        sent = await instanceUnderTest.getEmailMessage({
+          id: sentId,
+          cachePolicy: CachePolicy.RemoteOnly,
+        })
+        expect(sent).toBeDefined()
+      })
+
+      expect(sent).toMatchObject({
+        ..._.omit(encryptedDraft, 'body', 'attachments'),
+        id: sentId,
+        hasAttachments: false,
+        encryptionStatus: EncryptionStatus.ENCRYPTED,
+      })
+    })
+
+    it('returns expected output with sender and receive swapped', async () => {
+      const replyDraft: EmailMessageDetails = {
+        ...encryptedDraft,
+        from: encryptedDraft.to!,
+        to: encryptedDraft.from,
+      }
+      const replyDraftBuf =
+        Rfc822MessageParser.encodeToRfc822DataBuffer(replyDraft)
+      const sentId = await instanceUnderTest.sendEmailMessage({
+        rfc822Data: replyDraftBuf,
+        senderEmailAddressId: emailAddress2.id,
+      })
+
+      expect(sentId).toMatch(
+        /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
+      )
+
+      let sent
+      await waitForExpect(async () => {
+        sent = await instanceUnderTest.getEmailMessage({
+          id: sentId,
+          cachePolicy: CachePolicy.RemoteOnly,
+        })
+        expect(sent).toBeDefined()
+      })
+
+      expect(sent).toMatchObject({
+        ..._.omit(replyDraft, 'body', 'attachments'),
+        id: sentId,
+        hasAttachments: false,
+        encryptionStatus: EncryptionStatus.ENCRYPTED,
+      })
+    })
+
+    it('returns expected output with attachments', async () => {
+      const sentId = await instanceUnderTest.sendEmailMessage({
+        rfc822Data: stringToArrayBuffer(encryptedDraftWithAttachmentsString),
+        senderEmailAddressId: emailAddress1.id,
+      })
+
+      expect(sentId).toMatch(
+        /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
+      )
+
+      let sent
+      await waitForExpect(async () => {
+        sent = await instanceUnderTest.getEmailMessage({
+          id: sentId,
+          cachePolicy: CachePolicy.RemoteOnly,
+        })
+        expect(sent).toBeDefined()
+      })
+
+      expect(sent).toMatchObject({
+        ..._.omit(encryptedDraftWithAttachments, 'body', 'attachments'),
+        id: sentId,
+        hasAttachments: true,
+        encryptionStatus: EncryptionStatus.ENCRYPTED,
+      })
+    })
+
+    it('returns expected output when sending to cc', async () => {
+      const ccDraft = {
+        ...encryptedDraft,
+        to: [],
+        cc: [{ emailAddress: emailAddress1.emailAddress }],
+      }
+      const ccDraftString = Rfc822MessageParser.encodeToRfc822DataStr(ccDraft)
+      const sentId = await instanceUnderTest.sendEmailMessage({
+        rfc822Data: stringToArrayBuffer(ccDraftString),
+        senderEmailAddressId: emailAddress1.id,
+      })
+
+      expect(sentId).toMatch(
+        /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
+      )
+
+      let sent
+      await waitForExpect(async () => {
+        sent = await instanceUnderTest.getEmailMessage({
+          id: sentId,
+          cachePolicy: CachePolicy.RemoteOnly,
+        })
+        expect(sent).toBeDefined()
+      })
+
+      expect(sent).toMatchObject({
+        ..._.omit(ccDraft, 'body', 'attachments'),
+        id: sentId,
+        hasAttachments: false,
+        encryptionStatus: EncryptionStatus.ENCRYPTED,
+      })
+    })
+
+    it('returns expected output when sending to bcc', async () => {
+      const bccDraft = {
+        ...encryptedDraft,
+        to: [],
+        bcc: [{ emailAddress: emailAddress1.emailAddress }],
+      }
+      const bccDraftString = Rfc822MessageParser.encodeToRfc822DataStr(bccDraft)
+      const sentId = await instanceUnderTest.sendEmailMessage({
+        rfc822Data: stringToArrayBuffer(bccDraftString),
+        senderEmailAddressId: emailAddress1.id,
+      })
+
+      expect(sentId).toMatch(
+        /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
+      )
+
+      let sent
+      await waitForExpect(async () => {
+        sent = await instanceUnderTest.getEmailMessage({
+          id: sentId,
+          cachePolicy: CachePolicy.RemoteOnly,
+        })
+        expect(sent).toBeDefined()
+      })
+
+      expect(sent).toMatchObject({
+        ..._.omit(bccDraft, 'body', 'attachments'),
+        id: sentId,
+        hasAttachments: false,
+        encryptionStatus: EncryptionStatus.ENCRYPTED,
+      })
+    })
+
+    it('throws an error if unknown address is used', async () => {
+      await expect(
+        instanceUnderTest.sendEmailMessage({
+          rfc822Data: stringToArrayBuffer(encryptedDraftString),
+          senderEmailAddressId: v4(),
+        }),
+      ).rejects.toThrow(UnauthorizedAddressError)
+    })
   })
 })

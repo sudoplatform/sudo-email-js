@@ -6,6 +6,9 @@
 
 import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
+import { Rfc822MessageParser } from '../../../util/rfc822MessageParser'
+import { arrayBufferToString } from '../../../util/buffer'
+import { EmailAccountService } from '../../entities/account/emailAccountService'
 
 /**
  * Input for `SendEmailMessageUseCase` use case.
@@ -25,7 +28,10 @@ interface SendEmailMessageUseCaseInput {
 export class SendEmailMessageUseCase {
   private readonly log: Logger
 
-  constructor(private readonly messageService: EmailMessageService) {
+  constructor(
+    private readonly messageService: EmailMessageService,
+    private readonly accountService: EmailAccountService,
+  ) {
     this.log = new DefaultLogger(this.constructor.name)
   }
 
@@ -34,9 +40,33 @@ export class SendEmailMessageUseCase {
     senderEmailAddressId,
   }: SendEmailMessageUseCaseInput): Promise<string> {
     this.log.debug(this.constructor.name, { rfc822Data, senderEmailAddressId })
-    return await this.messageService.sendMessage({
-      rfc822Data,
-      senderEmailAddressId,
+    const message = await Rfc822MessageParser.decodeRfc822Data(
+      arrayBufferToString(rfc822Data),
+    )
+    const recipients: string[] = []
+    message.to?.forEach((addr) => recipients.push(addr.emailAddress))
+    message.cc?.forEach((addr) => recipients.push(addr.emailAddress))
+    message.bcc?.forEach((addr) => recipients.push(addr.emailAddress))
+
+    const recipientsPublicInfo = await this.accountService.lookupPublicInfo({
+      emailAddresses: recipients,
     })
+
+    const allRecipientsHavePubKey = recipients.every((v) =>
+      recipientsPublicInfo.some((p) => p.emailAddress === v),
+    )
+
+    if (allRecipientsHavePubKey) {
+      return await this.messageService.sendEncryptedMessage({
+        message,
+        senderEmailAddressId,
+        recipientsPublicInfo,
+      })
+    } else {
+      return await this.messageService.sendMessage({
+        rfc822Data,
+        senderEmailAddressId,
+      })
+    }
   }
 }

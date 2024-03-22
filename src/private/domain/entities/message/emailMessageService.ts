@@ -12,6 +12,8 @@ import { DraftEmailMessageEntity } from './draftEmailMessageEntity'
 import { DraftEmailMessageMetadataEntity } from './draftEmailMessageMetadataEntity'
 import { EmailMessageEntity } from './emailMessageEntity'
 import { UpdateEmailMessagesStatus } from './updateEmailMessagesStatus'
+import { EmailAddressPublicInfoEntity } from '../account/emailAddressPublicInfoEntity'
+import { EmailMessageDetails } from '../../../util/rfc822MessageParser'
 
 /**
  * Input for `EmailMessageService.saveDraft` method.
@@ -71,6 +73,20 @@ export interface DeleteDraftInput {
 export interface SendMessageInput {
   rfc822Data: ArrayBuffer
   senderEmailAddressId: string
+}
+
+/**
+ * Input for `EmailMessageService.sendEncryptedMessage` method.
+ *
+ * @interface SendEncryptedMessageInput
+ * @property {ArrayBuffer} rfc822Data RFC 822 data of the email message to be sent.
+ * @property {string} senderEmailAddressId Identifier of the sender email address that is composing the email message.
+ * @property {EmailAddressPublicInfoEntity[]} recipientsPublicInfo The public info for each recipient of the email message.
+ */
+export interface SendEncryptedMessageInput {
+  message: EmailMessageDetails
+  senderEmailAddressId: string
+  recipientsPublicInfo: EmailAddressPublicInfoEntity[]
 }
 
 /**
@@ -306,6 +322,15 @@ export interface EmailMessageService {
    * @memberof EmailMessageService
    */
   sendMessage(input: SendMessageInput): Promise<string>
+
+  /**
+   * Send an E2E encrypted message.
+   *
+   * @param {SendEncryptedMessageInput} input Parameters used to send an E2E encrypted message.
+   * @returns {string} The identifier of the email message that was sent.
+   * @memberof EmailMessageService
+   */
+  sendEncryptedMessage(input: SendEncryptedMessageInput): Promise<string>
 
   /**
    * Update a list of email messages.

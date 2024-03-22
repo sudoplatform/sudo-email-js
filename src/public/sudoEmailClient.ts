@@ -100,6 +100,8 @@ import {
   ListEmailMessagesResult,
 } from './typings/listOperationResult'
 import { SortOrder } from './typings/sortOrder'
+import { EmailMessageCryptoService } from '../private/domain/entities/secure/emailMessageCryptoService'
+import { DefaultEmailMessageCryptoService } from '../private/data/secure/defaultEmailMessageCryptoService'
 
 /**
  * Pagination interface designed to be extended for list interfaces.
@@ -862,6 +864,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   private readonly emailFolderService: DefaultEmailFolderService
   private readonly emailMessageService: DefaultEmailMessageService
   private readonly emailAddressBlocklistService: EmailAddressBlocklistService
+  private readonly emailMessageCryptoService: EmailMessageCryptoService
   private readonly sudoCryptoProvider: SudoCryptoProvider
   private readonly keyManager: SudoKeyManager
   private readonly identityServiceConfig: SudoUserInternal.IdentityServiceConfig
@@ -912,12 +915,16 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       this.apiClient,
       deviceKeyWorker,
     )
+    this.emailMessageCryptoService = new DefaultEmailMessageCryptoService(
+      deviceKeyWorker,
+    )
     this.emailMessageService = new DefaultEmailMessageService(
       this.apiClient,
       this.userClient,
       s3Client,
       deviceKeyWorker,
       this.emailServiceConfig,
+      this.emailMessageCryptoService,
     )
     this.emailAddressBlocklistService = new DefaultEmailAddressBlocklistService(
       this.apiClient,
@@ -983,6 +990,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   }: SendEmailMessageInput): Promise<string> {
     const sendEmailMessageUseCase = new SendEmailMessageUseCase(
       this.emailMessageService,
+      this.emailAccountService,
     )
     return await sendEmailMessageUseCase.execute({
       rfc822Data,

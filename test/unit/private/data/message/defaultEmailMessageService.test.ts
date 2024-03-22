@@ -22,8 +22,10 @@ import {
 import { v4 } from 'uuid'
 import {
   ConnectionState,
+  EmailAttachment,
   EmailMessage,
   EmailMessageSubscriber,
+  EncryptionStatus,
 } from '../../../../../src'
 import {
   OnEmailMessageDeletedSubscription,
@@ -49,12 +51,23 @@ import { EmailMessageServiceDeleteDraftError } from '../../../../../src/private/
 import { InternalError } from '../../../../../src/public/errors'
 import { UpdateEmailMessagesInput } from '../../../../../src/public/sudoEmailClient'
 import { SortOrder } from '../../../../../src/public/typings/sortOrder'
-import { ab2str, str2ab } from '../../../../util/buffer'
+import {
+  arrayBufferToString,
+  stringToArrayBuffer,
+} from '../../../../../src/private/util/buffer'
 import { DraftEmailMessageDataFactory } from '../../../data-factory/draftEmailMessage'
 import { EmailMessageRfc822DataFactory } from '../../../data-factory/emailMessageRfc822Data'
 import { EntityDataFactory } from '../../../data-factory/entity'
 import { GraphQLDataFactory } from '../../../data-factory/graphQL'
 import * as zlibAsync from '../../../../../src/private/util/zlibAsync'
+import {
+  EmailMessageDetails,
+  Rfc822MessageParser,
+} from '../../../../../src/private/util/rfc822MessageParser'
+import { EmailAddressPublicInfoEntity } from '../../../../../src/private/domain/entities/account/emailAddressPublicInfoEntity'
+import { SecurePackage } from '../../../../../src/private/domain/entities/secure/securePackage'
+import { SecureEmailAttachmentType } from '../../../../../src/private/domain/entities/secure/secureEmailAttachmentType'
+import { EmailMessageCryptoService } from '../../../../../src/private/domain/entities/secure/emailMessageCryptoService'
 
 const identityServiceConfig = DraftEmailMessageDataFactory.identityServiceConfig
 
@@ -69,12 +82,16 @@ jest.mock('../../../../../src/private/data/common/subscriptionManager')
 const JestMockSubscriptionManager = SubscriptionManager as jest.MockedClass<
   typeof SubscriptionManager
 >
+jest.mock(
+  '../../../../../src/private/data/secure/defaultEmailMessageCryptoService',
+)
 
 describe('DefaultEmailMessageService Test Suite', () => {
   const mockAppSync = mock<ApiClient>()
   const mockUserClient = mock<SudoUserClient>()
   const mockDeviceKeyWorker = mock<DeviceKeyWorker>()
   const mockS3Client = mock<S3Client>()
+  const mockEmailMessageCryptoService = mock<EmailMessageCryptoService>()
   const mockSubscriptionManager =
     mock<
       SubscriptionManager<
@@ -83,6 +100,14 @@ describe('DefaultEmailMessageService Test Suite', () => {
       >
     >()
   const gunzipSpy = jest.spyOn(zlibAsync, 'gunzipAsync')
+  const encodeToRfc822DataBufferSpy = jest.spyOn(
+    Rfc822MessageParser,
+    'encodeToRfc822DataBuffer',
+  )
+  const decodeRfc822DataSpy = jest.spyOn(
+    Rfc822MessageParser,
+    'decodeRfc822Data',
+  )
   let instanceUnderTest: DefaultEmailMessageService
 
   beforeEach(() => {
@@ -90,12 +115,16 @@ describe('DefaultEmailMessageService Test Suite', () => {
     reset(mockUserClient)
     reset(mockDeviceKeyWorker)
     reset(mockS3Client)
+    reset(mockDeviceKeyWorker)
+    reset(mockEmailMessageCryptoService)
+    reset(mockSubscriptionManager)
     instanceUnderTest = new DefaultEmailMessageService(
       instance(mockAppSync),
       instance(mockUserClient),
       instance(mockS3Client),
       instance(mockDeviceKeyWorker),
       identityServiceConfig,
+      instance(mockEmailMessageCryptoService),
     )
     when(mockUserClient.getUserClaim(anything())).thenResolve('identityId')
     when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve(
@@ -119,7 +148,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     })
 
     it('calls s3 upload', async () => {
-      const rfc822Data = str2ab(v4())
+      const rfc822Data = stringToArrayBuffer(v4())
       const senderEmailAddressId = v4()
       await instanceUnderTest.sendMessage({
         rfc822Data,
@@ -133,12 +162,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
         key: expect.stringMatching(
           new RegExp(`^identityId\/email\/${senderEmailAddressId}\/.+`),
         ),
-        body: ab2str(rfc822Data),
+        body: arrayBufferToString(rfc822Data),
       })
     })
 
     it('calls appsync', async () => {
-      const rfc822Data = str2ab(v4())
+      const rfc822Data = stringToArrayBuffer(v4())
       const senderEmailAddressId = v4()
       await instanceUnderTest.sendMessage({
         rfc822Data,
@@ -163,8 +192,194 @@ describe('DefaultEmailMessageService Test Suite', () => {
       when(mockAppSync.sendEmailMessage(anything())).thenResolve(resultId)
       await expect(
         instanceUnderTest.sendMessage({
-          rfc822Data: str2ab(''),
+          rfc822Data: stringToArrayBuffer(''),
           senderEmailAddressId: '',
+        }),
+      ).resolves.toStrictEqual(resultId)
+    })
+  })
+
+  describe('sendEncryptedMessage', () => {
+    let message: EmailMessageDetails
+    let recipientsPublicInfo: EmailAddressPublicInfoEntity[]
+    let senderEmailAddressId: string
+    let resultId: string
+    let securePackage: SecurePackage
+    let encodedOriginalMessage: ArrayBuffer
+    let encodedEncryptedMessage: ArrayBuffer
+    beforeEach(() => {
+      encodedOriginalMessage = stringToArrayBuffer(v4())
+      encodedEncryptedMessage = stringToArrayBuffer(v4())
+      securePackage = new SecurePackage(
+        new Set<EmailAttachment>().add({
+          filename: 'encryptedKey',
+          data: v4(),
+          inlineAttachment: false,
+          contentTransferEncoding: 'base64',
+          mimeType: 'mimeType',
+        }),
+        {
+          filename: 'encryptedBody',
+          data: v4(),
+          inlineAttachment: false,
+          contentTransferEncoding: 'base64',
+          mimeType: 'mimeType',
+        },
+      )
+      encodeToRfc822DataBufferSpy
+        .mockImplementationOnce(() => encodedOriginalMessage) // First call
+        .mockImplementationOnce(() => encodedEncryptedMessage) // Second call
+      when(
+        mockEmailMessageCryptoService.encrypt(anything(), anything()),
+      ).thenResolve(securePackage)
+      when(mockS3Client.upload(anything())).thenResolve({
+        key: v4(),
+        lastModified: new Date(),
+      })
+      resultId = v4()
+      when(mockAppSync.sendEncryptedEmailMessage(anything())).thenResolve(
+        resultId,
+      )
+      message = {
+        from: [{ emailAddress: `from-${v4()}@example.com` }],
+      }
+      recipientsPublicInfo = [
+        {
+          emailAddress: `to-${v4()}`,
+          keyId: `keyID-${v4()}`,
+          publicKey: `keyData-${v4()}`,
+        },
+      ]
+      senderEmailAddressId = v4()
+    })
+
+    it('encodes the original message data', async () => {
+      await instanceUnderTest.sendEncryptedMessage({
+        message: message,
+        senderEmailAddressId: senderEmailAddressId,
+        recipientsPublicInfo,
+      })
+
+      // It'll get called twice but we are just checking the first call here
+      expect(encodeToRfc822DataBufferSpy).toHaveBeenCalledTimes(2)
+      expect(encodeToRfc822DataBufferSpy).toHaveBeenNthCalledWith(1, message)
+    })
+
+    it('encrypts the encoded message data', async () => {
+      await instanceUnderTest.sendEncryptedMessage({
+        message: message,
+        senderEmailAddressId: senderEmailAddressId,
+        recipientsPublicInfo,
+      })
+
+      verify(
+        mockEmailMessageCryptoService.encrypt(anything(), anything()),
+      ).once()
+      const [rfc822DataArg, recipientsPublicInfoArg] = capture(
+        mockEmailMessageCryptoService.encrypt,
+      ).first()
+      expect(rfc822DataArg).toEqual(encodedOriginalMessage)
+      expect(recipientsPublicInfoArg).toStrictEqual(
+        recipientsPublicInfo.map((v) => v.keyId),
+      )
+    })
+
+    it('filters out duplicate public keys', async () => {
+      const recipientsPublicInfoWithDupKey: EmailAddressPublicInfoEntity[] = [
+        ...recipientsPublicInfo,
+        recipientsPublicInfo[0],
+      ]
+      await instanceUnderTest.sendEncryptedMessage({
+        message: message,
+        senderEmailAddressId: senderEmailAddressId,
+        recipientsPublicInfo: recipientsPublicInfoWithDupKey,
+      })
+
+      verify(
+        mockEmailMessageCryptoService.encrypt(anything(), anything()),
+      ).once()
+      const [rfc822DataArg, recipientsPublicInfoArg] = capture(
+        mockEmailMessageCryptoService.encrypt,
+      ).first()
+      expect(rfc822DataArg).toEqual(encodedOriginalMessage)
+      expect(recipientsPublicInfoArg).toStrictEqual(
+        recipientsPublicInfo.map((v) => v.keyId),
+      )
+    })
+
+    it('encodes the encrypted message', async () => {
+      await instanceUnderTest.sendEncryptedMessage({
+        message: message,
+        senderEmailAddressId: senderEmailAddressId,
+        recipientsPublicInfo,
+      })
+
+      // Here we will check the second call to this
+      expect(encodeToRfc822DataBufferSpy).toHaveBeenCalledTimes(2)
+      expect(encodeToRfc822DataBufferSpy).toHaveBeenNthCalledWith(2, {
+        ...message,
+        attachments: securePackage.toArray(),
+        encryptionStatus: EncryptionStatus.ENCRYPTED,
+      })
+    })
+
+    it('uploads the encrypted message to s3', async () => {
+      await instanceUnderTest.sendEncryptedMessage({
+        message: message,
+        senderEmailAddressId: senderEmailAddressId,
+        recipientsPublicInfo,
+      })
+
+      verify(mockS3Client.upload(anything())).once()
+      const [s3Inputs] = capture(mockS3Client.upload).first()
+      expect(s3Inputs).toStrictEqual<typeof s3Inputs>({
+        bucket: identityServiceConfig.transientBucket,
+        region: identityServiceConfig.region,
+        key: expect.stringMatching(
+          new RegExp(`^identityId\/email\/${senderEmailAddressId}\/.+`),
+        ),
+        body: arrayBufferToString(encodedEncryptedMessage),
+      })
+    })
+
+    it('calls appSync to send the encrypted message', async () => {
+      await instanceUnderTest.sendEncryptedMessage({
+        message: message,
+        senderEmailAddressId: senderEmailAddressId,
+        recipientsPublicInfo,
+      })
+
+      verify(mockAppSync.sendEncryptedEmailMessage(anything())).once()
+      const [appSyncInput] = capture(
+        mockAppSync.sendEncryptedEmailMessage,
+      ).first()
+      expect(appSyncInput).toStrictEqual<typeof appSyncInput>({
+        emailAddressId: senderEmailAddressId,
+        message: {
+          key: expect.stringMatching(
+            new RegExp(`identityId/email/${senderEmailAddressId}/.+`),
+          ),
+          bucket: identityServiceConfig.transientBucket,
+          region: identityServiceConfig.region,
+        },
+        rfc822Header: {
+          from: message.from[0].emailAddress,
+          to: message.to?.map((a) => a.emailAddress) ?? [],
+          cc: message.cc?.map((a) => a.emailAddress) ?? [],
+          bcc: message.bcc?.map((a) => a.emailAddress) ?? [],
+          replyTo: message.replyTo?.map((a) => a.emailAddress) ?? [],
+          subject: message.subject,
+          hasAttachments: false,
+        },
+      })
+    })
+
+    it('returns the result of the appSync call', async () => {
+      await expect(
+        instanceUnderTest.sendEncryptedMessage({
+          message: message,
+          senderEmailAddressId: senderEmailAddressId,
+          recipientsPublicInfo,
         }),
       ).resolves.toStrictEqual(resultId)
     })
@@ -1096,7 +1311,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       )
       await expect(
         instanceUnderTest.saveDraft({
-          rfc822Data: str2ab(''),
+          rfc822Data: stringToArrayBuffer(''),
           senderEmailAddressId: '',
         }),
       ).rejects.toThrow(new KeyNotFoundError('Symmetric key not found'))
@@ -1112,7 +1327,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       when(mockUserClient.getUserClaim(anything())).thenResolve(claim)
       await expect(
         instanceUnderTest.saveDraft({
-          rfc822Data: str2ab(''),
+          rfc822Data: stringToArrayBuffer(''),
           senderEmailAddressId: '',
         }),
       ).rejects.toThrow(new InternalError('Unable to find identity id'))
@@ -1123,7 +1338,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         key: '',
         lastModified: new Date(),
       })
-      const rfc822Data = str2ab(v4())
+      const rfc822Data = stringToArrayBuffer(v4())
       const senderEmailAddressId = v4()
       await instanceUnderTest.saveDraft({
         rfc822Data,
@@ -1143,7 +1358,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         key: '',
         lastModified: new Date(),
       })
-      const rfc822Data = str2ab(v4())
+      const rfc822Data = stringToArrayBuffer(v4())
       const senderEmailAddressId = v4()
       await instanceUnderTest.saveDraft({
         rfc822Data,
@@ -1319,22 +1534,24 @@ describe('DefaultEmailMessageService Test Suite', () => {
   })
 
   describe('getEmailMessageRfc822Data', () => {
-    it('gets rfc822 data successfully', async () => {
+    const unsealedDraft = 'unsealedDraft'
+    beforeEach(() => {
       when(mockS3Client.download(anything())).thenResolve(
         EmailMessageRfc822DataFactory.s3ClientDownloadOutput,
       )
       when(mockAppSync.getEmailMessage(anything())).thenResolve(
         GraphQLDataFactory.sealedEmailMessage,
       )
-      const unsealedDraft = 'unsealedDraft'
       when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
         unsealedDraft,
       )
+    })
+    it('gets rfc822 data successfully', async () => {
       await expect(
         instanceUnderTest.getEmailMessageRfc822Data(
           EmailMessageRfc822DataFactory.getRfc822DataInput,
         ),
-      ).resolves.toStrictEqual(new TextEncoder().encode(unsealedDraft))
+      ).resolves.toStrictEqual(stringToArrayBuffer(unsealedDraft))
 
       const [s3DownloadArg] = capture(mockS3Client.download).first()
       expect(s3DownloadArg).toEqual({
@@ -1361,18 +1578,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
         contentEncoding:
           'sudoplatform-compression, sudoplatform-crypto, sudoplatform-binary-data',
       })
-      when(mockAppSync.getEmailMessage(anything())).thenResolve(
-        GraphQLDataFactory.sealedEmailMessage,
-      )
-      const unsealedDraft = 'unsealedDraft'
-      when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
-        unsealedDraft,
-      )
-      gunzipSpy.mockResolvedValueOnce(str2ab(unsealedDraft))
+      gunzipSpy.mockResolvedValueOnce(stringToArrayBuffer(unsealedDraft))
+
       const returnedValue = await instanceUnderTest.getEmailMessageRfc822Data(
         EmailMessageRfc822DataFactory.getRfc822DataInput,
       )
-      expect(ab2str(returnedValue!)).toEqual(unsealedDraft)
+      expect(arrayBufferToString(returnedValue!)).toEqual(unsealedDraft)
 
       const [s3DownloadArg] = capture(mockS3Client.download).first()
       expect(s3DownloadArg).toEqual({
@@ -1398,18 +1609,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
         ...EmailMessageRfc822DataFactory.s3ClientDownloadOutput,
         contentEncoding: 'sudoplatform-crypto, sudoplatform-binary-data',
       })
-      when(mockAppSync.getEmailMessage(anything())).thenResolve(
-        GraphQLDataFactory.sealedEmailMessage,
-      )
-      const unsealedDraft = 'unsealedDraft'
-      when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
-        unsealedDraft,
-      )
+
       await expect(
         instanceUnderTest.getEmailMessageRfc822Data(
           EmailMessageRfc822DataFactory.getRfc822DataInput,
         ),
-      ).resolves.toStrictEqual(new TextEncoder().encode(unsealedDraft))
+      ).resolves.toStrictEqual(stringToArrayBuffer(unsealedDraft))
 
       const [s3DownloadArg] = capture(mockS3Client.download).first()
       expect(s3DownloadArg).toEqual({
@@ -1430,18 +1635,73 @@ describe('DefaultEmailMessageService Test Suite', () => {
       expect(gunzipSpy).toHaveBeenCalledTimes(0)
     })
 
+    it('decrypts the messsage if the encrypted body id is found', async () => {
+      const message: EmailMessageDetails = {
+        from: [{ emailAddress: `from-${v4()}@example.com` }],
+        attachments: [
+          {
+            filename: 'encryptedKey',
+            data: v4(),
+            inlineAttachment: false,
+            contentTransferEncoding: 'base64',
+            mimeType: 'mimeType',
+            contentId: SecureEmailAttachmentType.KEY_EXCHANGE.contentId,
+          },
+          {
+            filename: 'encryptedBody',
+            data: v4(),
+            inlineAttachment: false,
+            contentTransferEncoding: 'base64',
+            mimeType: 'mimeType',
+            contentId: SecureEmailAttachmentType.BODY.contentId,
+          },
+        ],
+      }
+      when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
+        `${unsealedDraft}\n${SecureEmailAttachmentType.BODY.contentId}`,
+      )
+      decodeRfc822DataSpy.mockResolvedValueOnce(message)
+      when(mockEmailMessageCryptoService.decrypt(anything())).thenResolve(
+        stringToArrayBuffer(unsealedDraft),
+      )
+
+      await expect(
+        instanceUnderTest.getEmailMessageRfc822Data(
+          EmailMessageRfc822DataFactory.getRfc822DataInput,
+        ),
+      ).resolves.toStrictEqual(stringToArrayBuffer(unsealedDraft))
+
+      const [s3DownloadArg] = capture(mockS3Client.download).first()
+      expect(s3DownloadArg).toEqual({
+        bucket: 'bucket',
+        region: 'region',
+        key: 'identityId/email/testEmailAddressId/testId-testKeyId',
+      })
+      verify(mockS3Client.download(anything())).once()
+
+      const [idArg, fetchPolicyArg] = capture(
+        mockAppSync.getEmailMessage,
+      ).first()
+      expect(idArg).toStrictEqual(
+        EmailMessageRfc822DataFactory.getRfc822DataInput.id,
+      )
+      expect(fetchPolicyArg).toBeUndefined()
+      verify(mockAppSync.getEmailMessage(anything())).once()
+      expect(gunzipSpy).toHaveBeenCalledTimes(0)
+      expect(decodeRfc822DataSpy).toHaveBeenCalledTimes(1)
+      verify(mockEmailMessageCryptoService.decrypt(anything())).once()
+      const [securePackageArg] = capture(
+        mockEmailMessageCryptoService.decrypt,
+      ).first()
+      expect(securePackageArg).toBeInstanceOf(SecurePackage)
+    })
+
     it('throws if given an invalid contentEncoding value', async () => {
       when(mockS3Client.download(anything())).thenResolve({
         ...EmailMessageRfc822DataFactory.s3ClientDownloadOutput,
         contentEncoding: 'some-unknown-compression-system',
       })
-      when(mockAppSync.getEmailMessage(anything())).thenResolve(
-        GraphQLDataFactory.sealedEmailMessage,
-      )
-      const unsealedDraft = 'unsealedDraft'
-      when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
-        unsealedDraft,
-      )
+
       await expect(
         instanceUnderTest.getEmailMessageRfc822Data(
           EmailMessageRfc822DataFactory.getRfc822DataInput,
@@ -1456,9 +1716,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
           msg: 'test error',
           code: S3Error.NoSuchKey,
         }),
-      )
-      when(mockAppSync.getEmailMessage(anything())).thenResolve(
-        GraphQLDataFactory.sealedEmailMessage,
       )
 
       await expect(
@@ -1494,9 +1751,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
           code: S3Error.NoSuchKey + 1,
         }),
       )
-      when(mockAppSync.getEmailMessage(anything())).thenResolve(
-        GraphQLDataFactory.sealedEmailMessage,
-      )
 
       await expect(
         instanceUnderTest.getEmailMessageRfc822Data(
@@ -1524,12 +1778,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     })
 
     it('returns undefined if there is no message with supplied id', async () => {
-      when(mockS3Client.download(anything())).thenResolve(
-        EmailMessageRfc822DataFactory.s3ClientDownloadOutput,
-      )
-      when(mockAppSync.getEmailMessage(anything(), anything())).thenResolve(
-        undefined,
-      )
+      when(mockAppSync.getEmailMessage(anything())).thenResolve(undefined)
 
       await expect(
         instanceUnderTest.getEmailMessageRfc822Data(

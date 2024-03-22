@@ -18,7 +18,10 @@ import {
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
-import { ab2str, str2ab } from '../../util/buffer'
+import {
+  arrayBufferToString,
+  stringToArrayBuffer,
+} from '../../../src/private/util/buffer'
 
 describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
   jest.setTimeout(240000)
@@ -81,7 +84,7 @@ describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
       id: metadata.id,
       emailAddressId: emailAddress.id,
     })
-    const draftResDataStr = ab2str(draftRes!.rfc822Data)
+    const draftResDataStr = arrayBufferToString(draftRes!.rfc822Data)
 
     expect(draftRes).toEqual<DraftEmailMessage>({
       ...metadata,

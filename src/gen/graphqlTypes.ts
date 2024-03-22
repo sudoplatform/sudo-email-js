@@ -286,6 +286,7 @@ export type Mutation = {
   deprovisionEmailAddress: EmailAddress
   provisionEmailAddress: EmailAddress
   sendEmailMessage: Scalars['ID']['output']
+  sendEncryptedEmailMessage: Scalars['ID']['output']
   unblockEmailAddresses: BlockEmailAddressesBulkUpdateResult
   updateEmailAddressMetadata: Scalars['ID']['output']
   updateEmailMessages: UpdateEmailMessagesResult
@@ -321,6 +322,10 @@ export type MutationProvisionEmailAddressArgs = {
 
 export type MutationSendEmailMessageArgs = {
   input: SendEmailMessageInput
+}
+
+export type MutationSendEncryptedEmailMessageArgs = {
+  input: SendEncryptedEmailMessageInput
 }
 
 export type MutationUnblockEmailAddressesArgs = {
@@ -459,6 +464,16 @@ export type QueryLookupEmailAddressesPublicInfoArgs = {
   input: LookupEmailAddressesPublicInfoInput
 }
 
+export type Rfc822HeaderInput = {
+  bcc: Array<Scalars['String']['input']>
+  cc: Array<Scalars['String']['input']>
+  from: Scalars['String']['input']
+  hasAttachments?: InputMaybe<Scalars['Boolean']['input']>
+  replyTo: Array<Scalars['String']['input']>
+  subject?: InputMaybe<Scalars['String']['input']>
+  to: Array<Scalars['String']['input']>
+}
+
 export type S3EmailObjectInput = {
   bucket: Scalars['String']['input']
   key: Scalars['String']['input']
@@ -505,6 +520,13 @@ export type SendEmailMessageInput = {
   clientRefId?: InputMaybe<Scalars['String']['input']>
   emailAddressId: Scalars['ID']['input']
   message: S3EmailObjectInput
+}
+
+export type SendEncryptedEmailMessageInput = {
+  clientRefId?: InputMaybe<Scalars['String']['input']>
+  emailAddressId: Scalars['ID']['input']
+  message: S3EmailObjectInput
+  rfc822Header: Rfc822HeaderInput
 }
 
 export enum SortOrder {
@@ -885,6 +907,15 @@ export type SendEmailMessageMutationVariables = Exact<{
 export type SendEmailMessageMutation = {
   __typename?: 'Mutation'
   sendEmailMessage: string
+}
+
+export type SendEncryptedEmailMessageMutationVariables = Exact<{
+  input: SendEncryptedEmailMessageInput
+}>
+
+export type SendEncryptedEmailMessageMutation = {
+  __typename?: 'Mutation'
+  sendEncryptedEmailMessage: string
 }
 
 export type UpdateEmailMessagesMutationVariables = Exact<{
@@ -2743,6 +2774,54 @@ export const SendEmailMessageDocument = {
 } as unknown as DocumentNode<
   SendEmailMessageMutation,
   SendEmailMessageMutationVariables
+>
+export const SendEncryptedEmailMessageDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SendEncryptedEmailMessage' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'SendEncryptedEmailMessageInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sendEncryptedEmailMessage' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SendEncryptedEmailMessageMutation,
+  SendEncryptedEmailMessageMutationVariables
 >
 export const UpdateEmailMessagesDocument = {
   kind: 'Document',

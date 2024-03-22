@@ -9,7 +9,10 @@ import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import waitForExpect from 'wait-for-expect'
 import { EmailAddress, SudoEmailClient } from '../../../src'
-import { ab2str, str2ab } from '../../util/buffer'
+import {
+  arrayBufferToString,
+  stringToArrayBuffer,
+} from '../../../src/private/util/buffer'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
@@ -51,10 +54,13 @@ describe('getEmailMessageRfc822Data test suite', () => {
     emailAddresses = []
   })
 
-  function generateRfc822String(body: string): string {
+  function generateRfc822String(
+    body: string,
+    to = 'success@simulator.amazonses.com',
+  ): string {
     const str = Rfc822MessageParser.encodeToRfc822DataStr({
       from: [{ emailAddress: emailAddress.emailAddress }],
-      to: [{ emailAddress: 'success@simulator.amazonses.com' }],
+      to: [{ emailAddress: to }],
       cc: [],
       bcc: [],
       replyTo: [],
@@ -80,43 +86,92 @@ describe('getEmailMessageRfc822Data test suite', () => {
     )
   }
 
-  it('gets rfc822 data successfully for multiple sent messages', async () => {
-    const emailBodies = [
-      'Hello, World',
-      'I have come here to bury Caeser,\nNot to praise him.\nThe evil that men do lives after them.\nThe good is often interred with their bones.',
-      'Life is not meant to be easy, my child; but take courage: it can be delightful.',
-    ]
-    const rfc822Strings = emailBodies.map((body) => generateRfc822String(body))
-    const emailMessageIds = await Promise.all(
-      rfc822Strings.map(
-        async (string) =>
-          await instanceUnderTest.sendEmailMessage({
-            rfc822Data: str2ab(string),
-            senderEmailAddressId: emailAddress.id,
-          }),
-      ),
-    )
-    expect(emailMessageIds.length).toEqual(emailBodies.length)
+  describe('unencrypted path', () => {
+    it('gets rfc822 data successfully for multiple sent messages', async () => {
+      const emailBodies = [
+        'Hello, World',
+        'I have come here to bury Caeser,\nNot to praise him.\nThe evil that men do lives after them.\nThe good is often interred with their bones.',
+        'Life is not meant to be easy, my child; but take courage: it can be delightful.',
+      ]
+      const rfc822Strings = emailBodies.map((body) =>
+        generateRfc822String(body),
+      )
+      const emailMessageIds = await Promise.all(
+        rfc822Strings.map(
+          async (string) =>
+            await instanceUnderTest.sendEmailMessage({
+              rfc822Data: stringToArrayBuffer(string),
+              senderEmailAddressId: emailAddress.id,
+            }),
+        ),
+      )
+      expect(emailMessageIds.length).toEqual(emailBodies.length)
 
-    for (let index = 0; index < emailMessageIds.length; ++index) {
-      await waitForRfc822Data(emailMessageIds[index])
-      const rfc822Data = await instanceUnderTest.getEmailMessageRfc822Data({
-        id: emailMessageIds[index],
-        emailAddressId: emailAddress.id,
-      })
-      const arrBuf = rfc822Data?.rfc822Data
-      expect(rfc822Data?.id).toStrictEqual(emailMessageIds[index])
-      expect(arrBuf).toBeDefined()
-      if (arrBuf) {
-        const receivedRfc822String = ab2str(arrBuf)
+      for (let index = 0; index < emailMessageIds.length; ++index) {
+        await waitForRfc822Data(emailMessageIds[index])
+        const rfc822Data = await instanceUnderTest.getEmailMessageRfc822Data({
+          id: emailMessageIds[index],
+          emailAddressId: emailAddress.id,
+        })
+        const arrBuf = rfc822Data?.rfc822Data
+        expect(rfc822Data?.id).toStrictEqual(emailMessageIds[index])
+        expect(arrBuf).toBeDefined()
+        if (arrBuf) {
+          const receivedRfc822String = arrayBufferToString(arrBuf)
 
-        expect(receivedRfc822String).toContain(
-          'To: <success@simulator.amazonses.com>',
-        )
-        expect(receivedRfc822String).toContain('Subject: Testing rfc822Data')
-        expect(receivedRfc822String).toContain(emailBodies[index])
+          expect(receivedRfc822String).toContain(
+            'To: <success@simulator.amazonses.com>',
+          )
+          expect(receivedRfc822String).toContain('Subject: Testing rfc822Data')
+          expect(receivedRfc822String).toContain(emailBodies[index])
+        }
       }
-    }
+    })
+  })
+
+  describe('encrypted path', () => {
+    it('gets rfc822 data successfully for multiple sent messages', async () => {
+      const emailBodies = [
+        'Hello, World',
+        'I have come here to bury Caeser,\nNot to praise him.\nThe evil that men do lives after them.\nThe good is often interred with their bones.',
+        'Life is not meant to be easy, my child; but take courage: it can be delightful.',
+      ]
+      const rfc822Strings = emailBodies.map((body) =>
+        generateRfc822String(body, emailAddress.emailAddress),
+      )
+      const emailMessageIds = await Promise.all(
+        rfc822Strings.map(
+          async (string) =>
+            await instanceUnderTest.sendEmailMessage({
+              rfc822Data: stringToArrayBuffer(string),
+              senderEmailAddressId: emailAddress.id,
+            }),
+        ),
+      )
+      expect(emailMessageIds.length).toEqual(emailBodies.length)
+
+      for (let index = 0; index < emailMessageIds.length; ++index) {
+        await waitForRfc822Data(emailMessageIds[index])
+        const rfc822Data = await instanceUnderTest.getEmailMessageRfc822Data({
+          id: emailMessageIds[index],
+          emailAddressId: emailAddress.id,
+        })
+        const arrBuf = rfc822Data?.rfc822Data
+        expect(rfc822Data?.id).toStrictEqual(emailMessageIds[index])
+        expect(arrBuf).toBeDefined()
+        if (arrBuf) {
+          const receivedRfc822String = arrayBufferToString(arrBuf)
+
+          expect(receivedRfc822String).toContain(
+            `To: <${emailAddress.emailAddress}>`,
+          )
+          expect(receivedRfc822String).toContain('Subject: Testing rfc822Data')
+          expect(receivedRfc822String).toContain(emailBodies[index])
+        } else {
+          throw new Error('arrBuf not defined')
+        }
+      }
+    })
   })
 
   it('returns undefined for invalid email message ID', async () => {
@@ -132,7 +187,7 @@ describe('getEmailMessageRfc822Data test suite', () => {
     const rfc822String = generateRfc822String('Hello, World')
 
     const emailMessageId = await instanceUnderTest.sendEmailMessage({
-      rfc822Data: str2ab(rfc822String),
+      rfc822Data: stringToArrayBuffer(rfc822String),
       senderEmailAddressId: emailAddress.id,
     })
     expect(emailMessageId).toMatch(

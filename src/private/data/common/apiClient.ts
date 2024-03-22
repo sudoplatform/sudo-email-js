@@ -100,6 +100,9 @@ import {
   SendEmailMessageDocument,
   SendEmailMessageInput,
   SendEmailMessageMutation,
+  SendEncryptedEmailMessageDocument,
+  SendEncryptedEmailMessageInput,
+  SendEncryptedEmailMessageMutation,
   SortOrder,
   SupportedDomains,
   UnblockEmailAddressesDocument,
@@ -324,6 +327,17 @@ export class ApiClient {
       calleeName: this.sendEmailMessage.name,
     })
     return data.sendEmailMessage
+  }
+
+  public async sendEncryptedEmailMessage(
+    input: SendEncryptedEmailMessageInput,
+  ): Promise<string> {
+    const data = await this.performMutation<SendEncryptedEmailMessageMutation>({
+      mutation: SendEncryptedEmailMessageDocument,
+      variables: { input },
+      calleeName: this.sendEncryptedEmailMessage.name,
+    })
+    return data.sendEncryptedEmailMessage
   }
 
   public async deleteEmailMessages(

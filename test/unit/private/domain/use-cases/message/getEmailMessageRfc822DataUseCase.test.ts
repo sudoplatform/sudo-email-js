@@ -7,7 +7,7 @@
 import { anything, instance, mock, reset, when } from 'ts-mockito'
 import { EmailMessageService } from '../../../../../../src/private/domain/entities/message/emailMessageService'
 import { GetEmailMessageRfc822DataUseCase } from '../../../../../../src/private/domain/use-cases/message/getEmailMessageRfc822DataUseCase'
-import { str2ab } from '../../../../../util/buffer'
+import { stringToArrayBuffer } from '../../../../../../src/private/util/buffer'
 
 describe('GetEmailMessageRfc822DataUseCase', () => {
   const mockEmailMessageService = mock<EmailMessageService>()
@@ -34,12 +34,15 @@ describe('GetEmailMessageRfc822DataUseCase', () => {
   it('returns data from the service', async () => {
     when(
       mockEmailMessageService.getEmailMessageRfc822Data(anything()),
-    ).thenResolve(str2ab('test'))
+    ).thenResolve(stringToArrayBuffer('test'))
     await expect(
       implementationUnderTest.execute({
         id: 'messageToGet',
         emailAddressId: 'email-address-of-message',
       }),
-    ).resolves.toStrictEqual({ id: 'messageToGet', rfc822Data: str2ab('test') })
+    ).resolves.toStrictEqual({
+      id: 'messageToGet',
+      rfc822Data: stringToArrayBuffer('test'),
+    })
   })
 })

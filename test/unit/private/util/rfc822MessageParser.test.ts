@@ -12,7 +12,7 @@ import {
   EncryptionStatus,
 } from '../../../../src/public'
 import { Base64 } from '@sudoplatform/sudo-common'
-import { ab2str } from '../../../util/buffer'
+import { arrayBufferToString } from '../../../../src/private/util/buffer'
 
 const eol = '\r\n'
 describe('rfc822MessageParser unit tests', () => {
@@ -967,7 +967,7 @@ describe('rfc822MessageParser unit tests', () => {
         Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
 
       // We can't test for a match against another buffer because each message includes some randomly generated ids
-      const resultString = ab2str(resultBuffer)
+      const resultString = arrayBufferToString(resultBuffer)
       expect(resultString).toContain(
         `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
       )

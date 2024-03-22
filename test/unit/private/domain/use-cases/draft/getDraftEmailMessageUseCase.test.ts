@@ -19,7 +19,7 @@ import {
   GetDraftEmailMessageUseCase,
   GetDraftEmailMessageUseCaseOutput,
 } from '../../../../../../src/private/domain/use-cases/draft/getDraftEmailMessageUseCase'
-import { str2ab } from '../../../../../util/buffer'
+import { stringToArrayBuffer } from '../../../../../../src/private/util/buffer'
 
 describe('GetDraftEmailMessageUseCase Test Suite', () => {
   const mockEmailMessageService = mock<EmailMessageService>()
@@ -33,7 +33,7 @@ describe('GetDraftEmailMessageUseCase Test Suite', () => {
     when(mockEmailMessageService.getDraft(anything())).thenCall((id) =>
       Promise.resolve({
         id,
-        rfc822Data: str2ab('test'),
+        rfc822Data: stringToArrayBuffer('test'),
         updatedAt: new Date(),
       }),
     )
@@ -58,7 +58,7 @@ describe('GetDraftEmailMessageUseCase Test Suite', () => {
   it('returns the expected output', async () => {
     const id = v4()
     const emailAddressId = v4()
-    const rfc822Data = str2ab(v4())
+    const rfc822Data = stringToArrayBuffer(v4())
     const updatedAt = new Date()
 
     when(mockEmailMessageService.getDraft(anything())).thenResolve({

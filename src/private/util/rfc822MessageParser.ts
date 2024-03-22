@@ -4,13 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createMimeMessage } from 'mail-mime-builder'
+import { MIMETextError, createMimeMessage } from 'mail-mime-builder'
 import { simpleParser, AddressObject } from 'mailparser'
 import {
   EmailAddressDetail,
   EmailAttachment,
   EncryptionStatus,
   InternalError,
+  InvalidEmailContentsError,
 } from '../../public'
 import {
   AttachmentOptions,
@@ -18,6 +19,7 @@ import {
   ContentTransferEncoding,
 } from 'mail-mime-builder/umd/types'
 import { Base64 } from '@sudoplatform/sudo-common'
+import { arrayBufferToString } from './buffer'
 
 export interface EmailMessageDetails {
   from: EmailAddressDetail[]
@@ -128,9 +130,18 @@ export class Rfc822MessageParser {
       )
     })
 
-    const rawMsg = msg.asRaw()
-    // Decode and encoded words in the email i.e. Subject, display names
-    return Rfc822MessageParser.decodeEncodedWords(rawMsg)
+    try {
+      const rawMsg = msg.asRaw()
+      // Decode and encoded words in the email i.e. Subject, display names
+      return Rfc822MessageParser.decodeEncodedWords(rawMsg)
+    } catch (e) {
+      console.error('Error encoding rfc822 data', { e })
+      if (e instanceof MIMETextError) {
+        throw new InvalidEmailContentsError(e.message)
+      } else {
+        throw e
+      }
+    }
   }
 
   /**
@@ -141,80 +152,87 @@ export class Rfc822MessageParser {
   public static async decodeRfc822Data(
     data: string,
   ): Promise<EmailMessageDetails> {
-    const parsed = await simpleParser(data, { skipTextToHtml: true })
+    try {
+      const parsed = await simpleParser(data, { skipTextToHtml: true })
 
-    const from: EmailAddressDetail[] =
-      parsed.from?.value.map((addr) => ({
-        emailAddress: addr.address ?? '',
-        displayName: addr.name,
-      })) ?? []
-    const replyTo: EmailAddressDetail[] =
-      parsed.replyTo?.value.map((addr) => ({
-        emailAddress: addr.address ?? '',
-        displayName: addr.name,
-      })) ?? []
+      const from: EmailAddressDetail[] =
+        parsed.from?.value.map((addr) => ({
+          emailAddress: addr.address ?? '',
+          displayName: addr.name,
+        })) ?? []
+      const replyTo: EmailAddressDetail[] =
+        parsed.replyTo?.value.map((addr) => ({
+          emailAddress: addr.address ?? '',
+          displayName: addr.name,
+        })) ?? []
 
-    const to = Rfc822MessageParser.addressObjectToEmailAddressDetailArray(
-      parsed.to,
-    )
-    const cc = Rfc822MessageParser.addressObjectToEmailAddressDetailArray(
-      parsed.cc,
-    )
-    const bcc = Rfc822MessageParser.addressObjectToEmailAddressDetailArray(
-      parsed.bcc,
-    )
+      const to = Rfc822MessageParser.addressObjectToEmailAddressDetailArray(
+        parsed.to,
+      )
+      const cc = Rfc822MessageParser.addressObjectToEmailAddressDetailArray(
+        parsed.cc,
+      )
+      const bcc = Rfc822MessageParser.addressObjectToEmailAddressDetailArray(
+        parsed.bcc,
+      )
 
-    const body = parsed.text?.trim()
-    const subject = parsed.subject
+      const body = parsed.text?.trim()
+      const subject = parsed.subject
 
-    const encryptionHeader = parsed.headers.get(
-      EMAIL_HEADER_NAME_ENCRYPTION.toLowerCase(),
-    )
+      const encryptionHeader = parsed.headers.get(
+        EMAIL_HEADER_NAME_ENCRYPTION.toLowerCase(),
+      )
 
-    const encryptionStatus =
-      encryptionHeader?.valueOf() === PLATFORM_ENCRYPTION
-        ? EncryptionStatus.ENCRYPTED
-        : EncryptionStatus.UNENCRYPTED
+      const encryptionStatus =
+        encryptionHeader?.valueOf() === PLATFORM_ENCRYPTION
+          ? EncryptionStatus.ENCRYPTED
+          : EncryptionStatus.UNENCRYPTED
 
-    const attachments: EmailAttachment[] = []
-    const inlineAttachments: EmailAttachment[] = []
-    console.log({ parsAtt: parsed.attachments })
-    parsed.attachments.forEach((a) => {
-      const contentTransferEncoding =
-        a.headers.get(CONTENT_TRANSFER_ENCODING.toLowerCase())?.valueOf() ??
-        'base64'
+      const attachments: EmailAttachment[] = []
+      const inlineAttachments: EmailAttachment[] = []
+      parsed.attachments.forEach((a) => {
+        const contentTransferEncoding =
+          a.headers.get(CONTENT_TRANSFER_ENCODING.toLowerCase())?.valueOf() ??
+          'base64'
+        let decodedContent = arrayBufferToString(a.content)
+        if (contentTransferEncoding === 'base64') {
+          decodedContent = Base64.encodeString(decodedContent)
+        }
+        const attachment: EmailAttachment = {
+          data: decodedContent.trim(),
+          filename: a.filename ?? '',
+          contentTransferEncoding:
+            contentTransferEncoding as ContentTransferEncoding,
+          mimeType: a.contentType,
+          contentId: a.contentId?.replace(/(<|>)/g, ''),
+          inlineAttachment: a.contentDisposition === 'inline',
+        }
+        // This is necessary because inline attachments are included in the parsed object twice
+        if (
+          !attachments.some((a) => a.filename === attachment.filename) &&
+          !inlineAttachments.some((a) => a.filename === attachment.filename)
+        ) {
+          attachment.inlineAttachment
+            ? inlineAttachments.push(attachment)
+            : attachments.push(attachment)
+        }
+      })
 
-      const attachment: EmailAttachment = {
-        data: Base64.encodeString(new TextDecoder().decode(a.content)),
-        filename: a.filename ?? '',
-        contentTransferEncoding:
-          contentTransferEncoding as ContentTransferEncoding,
-        mimeType: a.contentType,
-        contentId: a.contentId?.replace(/(<|>)/g, ''),
-        inlineAttachment: a.contentDisposition === 'inline',
+      return {
+        from,
+        to,
+        cc,
+        bcc,
+        replyTo,
+        body,
+        subject,
+        encryptionStatus,
+        attachments,
+        inlineAttachments,
       }
-      // This is necessary because inline attachments are included in the parsed object twice
-      if (
-        !attachments.some((a) => a.filename === attachment.filename) &&
-        !inlineAttachments.some((a) => a.filename === attachment.filename)
-      ) {
-        attachment.inlineAttachment
-          ? inlineAttachments.push(attachment)
-          : attachments.push(attachment)
-      }
-    })
-
-    return {
-      from,
-      to,
-      cc,
-      bcc,
-      replyTo,
-      body,
-      subject,
-      encryptionStatus,
-      attachments,
-      inlineAttachments,
+    } catch (e) {
+      console.error('Error decoding Rfc822 data', { e })
+      throw e
     }
   }
 

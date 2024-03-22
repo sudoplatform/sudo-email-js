@@ -65,7 +65,7 @@ import { BatchOperationResultStatus } from '../../../src/public/typings/batchOpe
 import { DraftEmailMessage } from '../../../src/public/typings/draftEmailMessage'
 import { DraftEmailMessageMetadata } from '../../../src/public/typings/draftEmailMessageMetadata'
 import { SortOrder } from '../../../src/public/typings/sortOrder'
-import { str2ab } from '../../util/buffer'
+import { stringToArrayBuffer } from '../../../src/private/util/buffer'
 import { APIDataFactory } from '../data-factory/api'
 import { EntityDataFactory } from '../data-factory/entity'
 import {
@@ -1138,13 +1138,13 @@ describe('SudoEmailClient Test Suite', () => {
     })
     it('generates use case', async () => {
       await instanceUnderTest.sendEmailMessage({
-        rfc822Data: str2ab(''),
+        rfc822Data: stringToArrayBuffer(''),
         senderEmailAddressId: '',
       })
       expect(JestMockSendEmailMessageUseCase).toHaveBeenCalledTimes(1)
     })
     it('calls use case as expected', async () => {
-      const rfc822Data = str2ab(v4())
+      const rfc822Data = stringToArrayBuffer(v4())
       const senderEmailAddressId = v4()
       await instanceUnderTest.sendEmailMessage({
         rfc822Data,
@@ -1158,7 +1158,7 @@ describe('SudoEmailClient Test Suite', () => {
     it('returns expected result', async () => {
       await expect(
         instanceUnderTest.sendEmailMessage({
-          rfc822Data: str2ab(''),
+          rfc822Data: stringToArrayBuffer(''),
           senderEmailAddressId: '',
         }),
       ).resolves.toEqual('id')
@@ -1658,14 +1658,14 @@ describe('SudoEmailClient Test Suite', () => {
 
     it('generates use case', async () => {
       await instanceUnderTest.createDraftEmailMessage({
-        rfc822Data: str2ab(''),
+        rfc822Data: stringToArrayBuffer(''),
         senderEmailAddressId: '',
       })
       expect(JestMockSaveDraftEmailMessageUseCase).toHaveBeenCalledTimes(1)
     })
 
     it('calls use case as expected', async () => {
-      const rfc822Data = str2ab(v4())
+      const rfc822Data = stringToArrayBuffer(v4())
       const senderEmailAddressId = v4()
       await instanceUnderTest.createDraftEmailMessage({
         rfc822Data,
@@ -1684,7 +1684,7 @@ describe('SudoEmailClient Test Suite', () => {
     it('returns expected result', async () => {
       await expect(
         instanceUnderTest.createDraftEmailMessage({
-          rfc822Data: str2ab(''),
+          rfc822Data: stringToArrayBuffer(''),
           senderEmailAddressId: '',
         }),
       ).resolves.toEqual<DraftEmailMessageMetadata>({
@@ -1707,7 +1707,7 @@ describe('SudoEmailClient Test Suite', () => {
     it('generates use case', async () => {
       await instanceUnderTest.updateDraftEmailMessage({
         id: '',
-        rfc822Data: str2ab(''),
+        rfc822Data: stringToArrayBuffer(''),
         senderEmailAddressId: '',
       })
       expect(JestMockUpdateDraftEmailMessageUseCase).toHaveBeenCalledTimes(1)
@@ -1715,7 +1715,7 @@ describe('SudoEmailClient Test Suite', () => {
 
     it('calls use case as expected', async () => {
       const id = v4()
-      const rfc822Data = str2ab(v4())
+      const rfc822Data = stringToArrayBuffer(v4())
       const senderEmailAddressId = v4()
       await instanceUnderTest.updateDraftEmailMessage({
         id,
@@ -1737,7 +1737,7 @@ describe('SudoEmailClient Test Suite', () => {
       await expect(
         instanceUnderTest.updateDraftEmailMessage({
           id: '',
-          rfc822Data: str2ab(''),
+          rfc822Data: stringToArrayBuffer(''),
           senderEmailAddressId: '',
         }),
       ).resolves.toEqual({ id: 'draftId', updatedAt })
@@ -1823,7 +1823,7 @@ describe('SudoEmailClient Test Suite', () => {
 
   describe('getDraftEmailMessage', () => {
     const updatedAt = new Date()
-    const rfc822Data = str2ab('data')
+    const rfc822Data = stringToArrayBuffer('data')
 
     beforeEach(() => {
       when(mockGetDraftEmailMessageUseCase.execute(anything())).thenResolve({
@@ -1980,7 +1980,10 @@ describe('SudoEmailClient Test Suite', () => {
     beforeEach(() => {
       when(
         mockGetEmailMessageRfc822DataUseCase.execute(anything()),
-      ).thenResolve({ id: 'emailMessageId', rfc822Data: str2ab('data') })
+      ).thenResolve({
+        id: 'emailMessageId',
+        rfc822Data: stringToArrayBuffer('data'),
+      })
     })
     it('generates use case', async () => {
       await instanceUnderTest.getEmailMessageRfc822Data({
@@ -2023,7 +2026,7 @@ describe('SudoEmailClient Test Suite', () => {
         }),
       ).resolves.toEqual({
         id: 'emailMessageId',
-        rfc822Data: str2ab('data'),
+        rfc822Data: stringToArrayBuffer('data'),
       })
     })
   })

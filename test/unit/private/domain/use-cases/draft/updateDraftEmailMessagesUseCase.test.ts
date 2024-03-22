@@ -14,7 +14,7 @@ import {
   AddressNotFoundError,
   MessageNotFoundError,
 } from '../../../../../../src/public/errors'
-import { str2ab } from '../../../../../util/buffer'
+import { stringToArrayBuffer } from '../../../../../../src/private/util/buffer'
 import { EntityDataFactory } from '../../../../data-factory/entity'
 
 describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
@@ -39,7 +39,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
       Promise.resolve({
         id,
         updatedAt: new Date(),
-        rfc822Data: str2ab('test'),
+        rfc822Data: stringToArrayBuffer('test'),
       }),
     )
 
@@ -52,7 +52,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
   describe('execute', () => {
     it('completes successfully with expected draft id output', async () => {
       const id = v4()
-      const rfc822Data = str2ab(v4())
+      const rfc822Data = stringToArrayBuffer(v4())
       const senderEmailAddressId = v4()
       const updatedAt = new Date()
 
@@ -74,7 +74,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
 
     it('throws AddressNotFound error for non-existent email address input', async () => {
       const id = v4()
-      const rfc822Data = str2ab(v4())
+      const rfc822Data = stringToArrayBuffer(v4())
       const senderEmailAddressId = v4()
       when(mockEmailAccountService.get(anything())).thenThrow(
         new AddressNotFoundError(),
@@ -87,7 +87,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
 
     it('throws MessageNotFound error for non-existent draft email message input', async () => {
       const id = v4()
-      const rfc822Data = str2ab(v4())
+      const rfc822Data = stringToArrayBuffer(v4())
       const senderEmailAddressId = v4()
       when(mockEmailMessageService.getDraft(anything())).thenThrow(
         new MessageNotFoundError(),

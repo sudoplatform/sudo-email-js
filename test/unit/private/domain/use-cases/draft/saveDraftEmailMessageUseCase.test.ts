@@ -19,7 +19,7 @@ import { EmailAccountService } from '../../../../../../src/private/domain/entiti
 import { EmailMessageService } from '../../../../../../src/private/domain/entities/message/emailMessageService'
 import { SaveDraftEmailMessageUseCase } from '../../../../../../src/private/domain/use-cases/draft/saveDraftEmailMessageUseCase'
 import { AddressNotFoundError } from '../../../../../../src/public/errors'
-import { str2ab } from '../../../../../util/buffer'
+import { stringToArrayBuffer } from '../../../../../../src/private/util/buffer'
 import { EntityDataFactory } from '../../../../data-factory/entity'
 
 describe('SaveDraftEmailMessageUseCase Test Suite', () => {
@@ -47,7 +47,7 @@ describe('SaveDraftEmailMessageUseCase Test Suite', () => {
 
   it('calls EmailMessageService.saveDraft with inputs', async () => {
     const senderEmailAddressId = v4()
-    const rfc822Data = str2ab(v4())
+    const rfc822Data = stringToArrayBuffer(v4())
     await instanceUnderTest.execute({ senderEmailAddressId, rfc822Data })
     verify(mockEmailMessageService.saveDraft(anything())).once()
     const [actualArgs] = capture(mockEmailMessageService.saveDraft).first()
@@ -60,7 +60,7 @@ describe('SaveDraftEmailMessageUseCase Test Suite', () => {
   it('returns the expected output id', async () => {
     const id = v4()
     const updatedAt = new Date()
-    const rfc822Data = str2ab(v4())
+    const rfc822Data = stringToArrayBuffer(v4())
     when(mockEmailMessageService.saveDraft(anything())).thenResolve({
       id,
       updatedAt,
@@ -73,7 +73,7 @@ describe('SaveDraftEmailMessageUseCase Test Suite', () => {
   it('throws AddressNotFound for non-existent email address input', async () => {
     const id = v4()
     const updatedAt = new Date()
-    const rfc822Data = str2ab(v4())
+    const rfc822Data = stringToArrayBuffer(v4())
     when(mockEmailAccountService.get(anything())).thenThrow(
       new AddressNotFoundError(),
     )

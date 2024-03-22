@@ -21,6 +21,8 @@ import {
   EmailMessageDateRangeInput,
   OnEmailMessageCreatedSubscription,
   OnEmailMessageDeletedSubscription,
+  Rfc822HeaderInput,
+  S3EmailObjectInput,
   SealedEmailMessage,
 } from '../../../gen/graphqlTypes'
 import {
@@ -28,6 +30,7 @@ import {
   EmailMessage,
   EmailMessageDateRange,
   EmailMessageSubscriber,
+  EncryptionStatus,
 } from '../../../public'
 import { InternalError } from '../../../public/errors'
 import { DraftEmailMessageEntity } from '../../domain/entities/message/draftEmailMessageEntity'
@@ -51,6 +54,7 @@ import {
   ListEmailMessagesInput,
   ListEmailMessagesOutput,
   SaveDraftInput,
+  SendEncryptedMessageInput,
   SendMessageInput,
   UpdateEmailMessagesInput,
   UpdateEmailMessagesOutput,
@@ -75,6 +79,11 @@ import { gunzipAsync } from '../../util/zlibAsync'
 // eslint-disable-next-line tree-shaking/no-side-effects-in-initialization
 import { withDefault } from '../common/withDefault'
 import { SealedEmailMessageEntityTransformer } from './transformer/sealedEmailMessageEntityTransformer'
+import { Rfc822MessageParser } from '../../util/rfc822MessageParser'
+import { SecureEmailAttachmentType } from '../../domain/entities/secure/secureEmailAttachmentType'
+import { SecurePackage } from '../../domain/entities/secure/securePackage'
+import { stringToArrayBuffer } from '../../util/buffer'
+import { EmailMessageCryptoService } from '../../domain/entities/secure/emailMessageCryptoService'
 
 const EmailAddressEntityCodec = t.intersection(
   [t.type({ emailAddress: t.string }), t.partial({ displayName: t.string })],
@@ -123,6 +132,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     private readonly s3Client: S3Client,
     private readonly deviceKeyWorker: DeviceKeyWorker,
     private readonly emailServiceConfig: EmailServiceConfig,
+    private readonly emailMessageCryptoService: EmailMessageCryptoService,
   ) {
     this.log = new DefaultLogger(this.constructor.name)
     this.createSubscriptionManager = new SubscriptionManager<
@@ -281,31 +291,71 @@ export class DefaultEmailMessageService implements EmailMessageService {
       senderEmailAddressId,
       byteLength: rfc822Data.byteLength,
     })
-    const keyPrefix = await this.constructS3KeyForEmailAddressId(
+
+    const message = await this.uploadDataToTransientBucket(
       senderEmailAddressId,
+      rfc822Data,
     )
-    const id = v4()
-    const key = `${keyPrefix}/${id}`
-    const bucket = this.emailServiceConfig.transientBucket
-    const region = this.emailServiceConfig.region
-    let binary = ''
-    const bytes = new Uint8Array(rfc822Data)
-    for (const byte of bytes) {
-      binary += String.fromCharCode(byte)
-    }
-    await this.s3Client.upload({
-      bucket,
-      region,
-      key,
-      body: binary,
-    })
+
     return await this.appSync.sendEmailMessage({
       emailAddressId: senderEmailAddressId,
-      message: {
-        key,
-        bucket,
-        region,
-      },
+      message,
+    })
+  }
+
+  async sendEncryptedMessage({
+    message,
+    recipientsPublicInfo,
+    senderEmailAddressId,
+  }: SendEncryptedMessageInput): Promise<string> {
+    this.log.debug(this.sendEncryptedMessage.name, {
+      message,
+      recipientsPublicInfo,
+      senderEmailAddressId,
+    })
+    const rfc822Data = Rfc822MessageParser.encodeToRfc822DataBuffer(message)
+    const keyIds: string[] = []
+
+    recipientsPublicInfo.forEach((recip) => {
+      if (!keyIds.some((v) => v === recip.keyId)) {
+        keyIds.push(recip.keyId)
+      }
+    })
+
+    const securePackage = await this.emailMessageCryptoService.encrypt(
+      rfc822Data,
+      keyIds,
+    )
+
+    const encryptedRfc822Data = Rfc822MessageParser.encodeToRfc822DataBuffer({
+      ...message,
+      attachments: securePackage.toArray(),
+      encryptionStatus: EncryptionStatus.ENCRYPTED,
+    })
+
+    const s3EmailObjectInput = await this.uploadDataToTransientBucket(
+      senderEmailAddressId,
+      encryptedRfc822Data,
+    )
+
+    const rfc822Header: Rfc822HeaderInput = {
+      from: message.from[0].emailAddress,
+      to: message.to?.map((a) => a.emailAddress) ?? [],
+      cc: message.cc?.map((a) => a.emailAddress) ?? [],
+      bcc: message.bcc?.map((a) => a.emailAddress) ?? [],
+      replyTo: message.replyTo?.map((a) => a.emailAddress) ?? [],
+      subject: message.subject,
+      hasAttachments:
+        (message.attachments ? message.attachments.length > 0 : false) ||
+        (message.inlineAttachments
+          ? message.inlineAttachments.length > 0
+          : false),
+    }
+
+    return await this.appSync.sendEncryptedEmailMessage({
+      emailAddressId: senderEmailAddressId,
+      message: s3EmailObjectInput,
+      rfc822Header,
     })
   }
 
@@ -384,8 +434,40 @@ export class DefaultEmailMessageService implements EmailMessageService {
         }
       }
 
-      return new TextEncoder().encode(decodedString)
+      // Check for encrypted body attachment
+      if (decodedString.includes(SecureEmailAttachmentType.BODY.contentId)) {
+        const decodedEncrypedMessage =
+          await Rfc822MessageParser.decodeRfc822Data(decodedString)
+        if (
+          !decodedEncrypedMessage.attachments ||
+          decodedEncrypedMessage.attachments.length === 0
+        ) {
+          throw new DecodeError('Error decoding encrypted mesage')
+        }
+        const keyAttachments = new Set(
+          decodedEncrypedMessage.attachments?.filter(
+            (att) =>
+              att.contentId ===
+              SecureEmailAttachmentType.KEY_EXCHANGE.contentId,
+          ),
+        )
+        if (keyAttachments.size === 0) {
+          throw new DecodeError('Could not find key attachments')
+        }
+        const bodyAttachment = decodedEncrypedMessage.attachments.find(
+          (att) => att.contentId === SecureEmailAttachmentType.BODY.contentId,
+        )
+        if (!bodyAttachment) {
+          throw new DecodeError('Could not find body attachment')
+        }
+        const securePackage = new SecurePackage(keyAttachments, bodyAttachment)
+        const decodedUnencrypedMessage =
+          await this.emailMessageCryptoService.decrypt(securePackage)
+        return decodedUnencrypedMessage
+      }
+      return stringToArrayBuffer(decodedString)
     } catch (error: unknown) {
+      this.log.error('Error getting RFC822 data', { error })
       const s3DownloadError = error as S3DownloadError
       if (s3DownloadError.code === S3Error.NoSuchKey) {
         return undefined
@@ -873,5 +955,34 @@ export class DefaultEmailMessageService implements EmailMessageService {
         },
       })
     return subscription
+  }
+
+  private async uploadDataToTransientBucket(
+    senderEmailAddressId: string,
+    data: ArrayBuffer,
+  ): Promise<S3EmailObjectInput> {
+    const keyPrefix = await this.constructS3KeyForEmailAddressId(
+      senderEmailAddressId,
+    )
+    const id = v4()
+    const key = `${keyPrefix}/${id}`
+    const bucket = this.emailServiceConfig.transientBucket
+    const region = this.emailServiceConfig.region
+    let binary = ''
+    const bytes = new Uint8Array(data)
+    for (const byte of bytes) {
+      binary += String.fromCharCode(byte)
+    }
+    await this.s3Client.upload({
+      bucket,
+      region,
+      key,
+      body: binary,
+    })
+    return {
+      bucket,
+      key,
+      region,
+    }
   }
 }
