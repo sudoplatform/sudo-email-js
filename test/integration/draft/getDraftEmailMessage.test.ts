@@ -16,7 +16,7 @@ import {
 } from '../../../src'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
-import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
+import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 
 // Workaround for a bug in jest where `instanceof` does not return the
 // correct result when running  in `jsdom` test environment.
@@ -48,7 +48,7 @@ describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
       sudoOwnershipProofToken,
       instanceUnderTest,
     )
-    draftContents = Rfc822MessageParser.encodeToRfc822DataBuffer({
+    draftContents = Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [],
       cc: [],

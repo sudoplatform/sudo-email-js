@@ -27,9 +27,8 @@ import { readAllPages } from '../util/paginator'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import {
   EmailMessageDetails,
-  Rfc822MessageParser,
-} from '../../../src/private/util/rfc822MessageParser'
-import { stringToArrayBuffer } from '../../../src/private/util/buffer'
+  Rfc822MessageDataProcessor,
+} from '../../../src/private/util/rfc822MessageDataProcessor'
 
 describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   jest.setTimeout(240000)
@@ -89,8 +88,9 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       replyTo: [],
       body: 'Hello, World',
       attachments: [],
+      subject: 'Send Email Message Test',
     }
-    draftString = Rfc822MessageParser.encodeToRfc822DataStr(draft)
+    draftString = Rfc822MessageDataProcessor.encodeToInternetMessageStr(draft)
     encryptedDraft = {
       from: [{ emailAddress: emailAddress1.emailAddress }],
       to: [{ emailAddress: emailAddress2.emailAddress }],
@@ -101,7 +101,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       attachments: [],
     }
     encryptedDraftString =
-      Rfc822MessageParser.encodeToRfc822DataStr(encryptedDraft)
+      Rfc822MessageDataProcessor.encodeToInternetMessageStr(encryptedDraft)
     draftWithAttachments = {
       ...draft,
       attachments: [
@@ -122,7 +122,9 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       ],
     }
     draftWithAttachmentsString =
-      Rfc822MessageParser.encodeToRfc822DataStr(draftWithAttachments)
+      Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+        draftWithAttachments,
+      )
     encryptedDraftWithAttachments = {
       ...encryptedDraft,
       attachments: [
@@ -143,7 +145,9 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       ],
     }
     encryptedDraftWithAttachmentsString =
-      Rfc822MessageParser.encodeToRfc822DataStr(encryptedDraftWithAttachments)
+      Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+        encryptedDraftWithAttachments,
+      )
   })
 
   afterEach(async () => {
@@ -156,8 +160,18 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
   it('returns expected output', async () => {
     const sentId = await instanceUnderTest.sendEmailMessage({
-      rfc822Data: stringToArrayBuffer(draftString),
       senderEmailAddressId: emailAddress1.id,
+      emailMessageHeader: {
+        from: draft.from[0],
+        to: draft.to ?? [],
+        cc: draft.cc ?? [],
+        bcc: draft.bcc ?? [],
+        replyTo: draft.replyTo ?? [],
+        subject: draft.subject ?? '',
+      },
+      body: draft.body ?? '',
+      attachments: draft.attachments ?? [],
+      inlineAttachments: draft.inlineAttachments ?? [],
     })
 
     expect(sentId).toMatch(
@@ -184,15 +198,29 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       emailAddressId: emailAddress1.id,
     })
 
-    expect(new TextDecoder().decode(sentRFC822Data?.rfc822Data)).toEqual(
-      draftString,
+    const sentRfc822DataStr = new TextDecoder().decode(
+      sentRFC822Data?.rfc822Data,
     )
+    expect(sentRfc822DataStr).toContain(`From: <${draft.from[0].emailAddress}>`)
+    expect(sentRfc822DataStr).toContain(`To: <${draft.to![0].emailAddress}>`)
+    expect(sentRfc822DataStr).toContain(`Subject: ${draft.subject}`)
+    expect(sentRfc822DataStr).toContain(draft.body)
   })
 
   it('returns expected output with attachments', async () => {
     const sentId = await instanceUnderTest.sendEmailMessage({
-      rfc822Data: stringToArrayBuffer(draftWithAttachmentsString),
       senderEmailAddressId: emailAddress1.id,
+      emailMessageHeader: {
+        from: draftWithAttachments.from[0],
+        to: draftWithAttachments.to ?? [],
+        cc: draftWithAttachments.cc ?? [],
+        bcc: draftWithAttachments.bcc ?? [],
+        replyTo: draftWithAttachments.replyTo ?? [],
+        subject: draftWithAttachments.subject ?? '',
+      },
+      body: draftWithAttachments.body ?? '',
+      attachments: draftWithAttachments.attachments ?? [],
+      inlineAttachments: draftWithAttachments.inlineAttachments ?? [],
     })
 
     expect(sentId).toMatch(
@@ -219,9 +247,19 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       emailAddressId: emailAddress1.id,
     })
 
-    expect(new TextDecoder().decode(sentRFC822Data?.rfc822Data)).toEqual(
-      draftWithAttachmentsString,
+    const sentRfc822DataStr = new TextDecoder().decode(
+      sentRFC822Data?.rfc822Data,
     )
+    expect(sentRfc822DataStr).toContain(
+      `From: <${draftWithAttachments.from[0].emailAddress}>`,
+    )
+    expect(sentRfc822DataStr).toContain(
+      `To: <${draftWithAttachments.to![0].emailAddress}>`,
+    )
+    expect(sentRfc822DataStr).toContain(
+      `Subject: ${draftWithAttachments.subject}`,
+    )
+    expect(sentRfc822DataStr).toContain(draftWithAttachments.body)
   })
 
   it('returns expected output when sending to cc', async () => {
@@ -230,10 +268,21 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       to: [],
       cc: [{ emailAddress: ootoSimulatorAddress }],
     }
-    const ccDraftString = Rfc822MessageParser.encodeToRfc822DataStr(ccDraft)
+    const ccDraftString =
+      Rfc822MessageDataProcessor.encodeToInternetMessageStr(ccDraft)
     const sentId = await instanceUnderTest.sendEmailMessage({
-      rfc822Data: stringToArrayBuffer(ccDraftString),
       senderEmailAddressId: emailAddress1.id,
+      emailMessageHeader: {
+        from: ccDraft.from[0],
+        to: ccDraft.to ?? [],
+        cc: ccDraft.cc ?? [],
+        bcc: ccDraft.bcc ?? [],
+        replyTo: ccDraft.replyTo ?? [],
+        subject: ccDraft.subject ?? '',
+      },
+      body: ccDraft.body ?? '',
+      attachments: ccDraft.attachments ?? [],
+      inlineAttachments: ccDraft.inlineAttachments ?? [],
     })
 
     expect(sentId).toMatch(
@@ -259,9 +308,15 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       emailAddressId: emailAddress1.id,
     })
 
-    expect(new TextDecoder().decode(sentRFC822Data?.rfc822Data)).toEqual(
-      ccDraftString,
+    const sentRfc822DataStr = new TextDecoder().decode(
+      sentRFC822Data?.rfc822Data,
     )
+    expect(sentRfc822DataStr).toContain(
+      `From: <${ccDraft.from[0].emailAddress}>`,
+    )
+    expect(sentRfc822DataStr).toContain(`Cc: <${ccDraft.cc[0].emailAddress}>`)
+    expect(sentRfc822DataStr).toContain(`Subject: ${ccDraft.subject}`)
+    expect(sentRfc822DataStr).toContain(ccDraft.body)
 
     await waitForExpect(async () => {
       const result = await readAllPages((nextToken?: string) =>
@@ -285,10 +340,21 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       to: [],
       bcc: [{ emailAddress: ootoSimulatorAddress }],
     }
-    const bccDraftString = Rfc822MessageParser.encodeToRfc822DataStr(bccDraft)
+    const bccDraftString =
+      Rfc822MessageDataProcessor.encodeToInternetMessageStr(bccDraft)
     const sentId = await instanceUnderTest.sendEmailMessage({
-      rfc822Data: stringToArrayBuffer(bccDraftString),
       senderEmailAddressId: emailAddress1.id,
+      emailMessageHeader: {
+        from: bccDraft.from[0],
+        to: bccDraft.to ?? [],
+        cc: bccDraft.cc ?? [],
+        bcc: bccDraft.bcc ?? [],
+        replyTo: bccDraft.replyTo ?? [],
+        subject: bccDraft.subject ?? '',
+      },
+      body: bccDraft.body ?? '',
+      attachments: bccDraft.attachments ?? [],
+      inlineAttachments: bccDraft.inlineAttachments ?? [],
     })
 
     expect(sentId).toMatch(
@@ -314,9 +380,17 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       emailAddressId: emailAddress1.id,
     })
 
-    expect(new TextDecoder().decode(sentRFC822Data?.rfc822Data)).toEqual(
-      bccDraftString,
+    const sentRfc822DataStr = new TextDecoder().decode(
+      sentRFC822Data?.rfc822Data,
     )
+    expect(sentRfc822DataStr).toContain(
+      `From: <${bccDraft.from[0].emailAddress}>`,
+    )
+    expect(sentRfc822DataStr).toContain(
+      `Bcc: <${bccDraft.bcc[0].emailAddress}>`,
+    )
+    expect(sentRfc822DataStr).toContain(`Subject: ${bccDraft.subject}`)
+    expect(sentRfc822DataStr).toContain(bccDraft.body)
 
     await waitForExpect(
       async () => {
@@ -343,23 +417,25 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   it('throws an error if unknown address is used', async () => {
     await expect(
       instanceUnderTest.sendEmailMessage({
-        rfc822Data: stringToArrayBuffer(draftString),
         senderEmailAddressId: v4(),
+        emailMessageHeader: {
+          from: draft.from[0],
+          to: draft.to ?? [],
+          cc: draft.cc ?? [],
+          bcc: draft.bcc ?? [],
+          replyTo: draft.replyTo ?? [],
+          subject: draft.subject ?? '',
+        },
+        body: draft.body ?? '',
+        attachments: draft.attachments ?? [],
+        inlineAttachments: draft.inlineAttachments ?? [],
       }),
     ).rejects.toThrow(UnauthorizedAddressError)
   })
 
-  it('throws an InvalidEmailContentsError if rfc822 data is garbage', async () => {
-    await expect(
-      instanceUnderTest.sendEmailMessage({
-        rfc822Data: stringToArrayBuffer(v4()),
-        senderEmailAddressId: emailAddress1.id,
-      }),
-    ).rejects.toThrow(InvalidEmailContentsError)
-  })
-
   it('throws an InvalidEmailContentsError if rfc822 data has no recipients', async () => {
     const badDraft = {
+      ...draft,
       from: [{ emailAddress: emailAddress1.emailAddress }],
       to: [],
       cc: [],
@@ -368,12 +444,23 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       body: 'Hello, World',
       attachments: [],
     }
-    const badDraftString = Rfc822MessageParser.encodeToRfc822DataStr(badDraft)
+    const badDraftString =
+      Rfc822MessageDataProcessor.encodeToInternetMessageStr(badDraft)
 
     await expect(
       instanceUnderTest.sendEmailMessage({
-        rfc822Data: stringToArrayBuffer(badDraftString),
         senderEmailAddressId: emailAddress1.id,
+        emailMessageHeader: {
+          from: badDraft.from[0],
+          to: badDraft.to ?? [],
+          cc: badDraft.cc ?? [],
+          bcc: badDraft.bcc ?? [],
+          replyTo: badDraft.replyTo ?? [],
+          subject: badDraft.subject ?? '',
+        },
+        body: badDraft.body ?? '',
+        attachments: badDraft.attachments ?? [],
+        inlineAttachments: badDraft.inlineAttachments ?? [],
       }),
     ).rejects.toThrow(InvalidEmailContentsError)
   })
@@ -381,8 +468,18 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   describe('encrypted path', () => {
     it('returns expected output', async () => {
       const sentId = await instanceUnderTest.sendEmailMessage({
-        rfc822Data: stringToArrayBuffer(encryptedDraftString),
         senderEmailAddressId: emailAddress1.id,
+        emailMessageHeader: {
+          from: encryptedDraft.from[0],
+          to: encryptedDraft.to ?? [],
+          cc: encryptedDraft.cc ?? [],
+          bcc: encryptedDraft.bcc ?? [],
+          replyTo: encryptedDraft.replyTo ?? [],
+          subject: encryptedDraft.subject ?? '',
+        },
+        body: encryptedDraft.body ?? '',
+        attachments: encryptedDraft.attachments ?? [],
+        inlineAttachments: encryptedDraft.inlineAttachments ?? [],
       })
 
       expect(sentId).toMatch(
@@ -406,17 +503,25 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       })
     })
 
-    it('returns expected output with sender and receive swapped', async () => {
+    it('returns expected output with sender and receiver swapped', async () => {
       const replyDraft: EmailMessageDetails = {
         ...encryptedDraft,
         from: encryptedDraft.to!,
         to: encryptedDraft.from,
       }
-      const replyDraftBuf =
-        Rfc822MessageParser.encodeToRfc822DataBuffer(replyDraft)
       const sentId = await instanceUnderTest.sendEmailMessage({
-        rfc822Data: replyDraftBuf,
         senderEmailAddressId: emailAddress2.id,
+        emailMessageHeader: {
+          from: replyDraft.from[0],
+          to: replyDraft.to ?? [],
+          cc: replyDraft.cc ?? [],
+          bcc: replyDraft.bcc ?? [],
+          replyTo: replyDraft.replyTo ?? [],
+          subject: replyDraft.subject ?? '',
+        },
+        body: replyDraft.body ?? '',
+        attachments: replyDraft.attachments ?? [],
+        inlineAttachments: replyDraft.inlineAttachments ?? [],
       })
 
       expect(sentId).toMatch(
@@ -442,8 +547,19 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
     it('returns expected output with attachments', async () => {
       const sentId = await instanceUnderTest.sendEmailMessage({
-        rfc822Data: stringToArrayBuffer(encryptedDraftWithAttachmentsString),
         senderEmailAddressId: emailAddress1.id,
+        emailMessageHeader: {
+          from: encryptedDraftWithAttachments.from[0],
+          to: encryptedDraftWithAttachments.to ?? [],
+          cc: encryptedDraftWithAttachments.cc ?? [],
+          bcc: encryptedDraftWithAttachments.bcc ?? [],
+          replyTo: encryptedDraftWithAttachments.replyTo ?? [],
+          subject: encryptedDraftWithAttachments.subject ?? '',
+        },
+        body: encryptedDraftWithAttachments.body ?? '',
+        attachments: encryptedDraftWithAttachments.attachments ?? [],
+        inlineAttachments:
+          encryptedDraftWithAttachments.inlineAttachments ?? [],
       })
 
       expect(sentId).toMatch(
@@ -473,10 +589,21 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         to: [],
         cc: [{ emailAddress: emailAddress1.emailAddress }],
       }
-      const ccDraftString = Rfc822MessageParser.encodeToRfc822DataStr(ccDraft)
+      const ccDraftString =
+        Rfc822MessageDataProcessor.encodeToInternetMessageStr(ccDraft)
       const sentId = await instanceUnderTest.sendEmailMessage({
-        rfc822Data: stringToArrayBuffer(ccDraftString),
         senderEmailAddressId: emailAddress1.id,
+        emailMessageHeader: {
+          from: ccDraft.from[0],
+          to: ccDraft.to ?? [],
+          cc: ccDraft.cc ?? [],
+          bcc: ccDraft.bcc ?? [],
+          replyTo: ccDraft.replyTo ?? [],
+          subject: ccDraft.subject ?? '',
+        },
+        body: ccDraft.body ?? '',
+        attachments: ccDraft.attachments ?? [],
+        inlineAttachments: ccDraft.inlineAttachments ?? [],
       })
 
       expect(sentId).toMatch(
@@ -506,10 +633,21 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         to: [],
         bcc: [{ emailAddress: emailAddress1.emailAddress }],
       }
-      const bccDraftString = Rfc822MessageParser.encodeToRfc822DataStr(bccDraft)
+      const bccDraftString =
+        Rfc822MessageDataProcessor.encodeToInternetMessageStr(bccDraft)
       const sentId = await instanceUnderTest.sendEmailMessage({
-        rfc822Data: stringToArrayBuffer(bccDraftString),
         senderEmailAddressId: emailAddress1.id,
+        emailMessageHeader: {
+          from: bccDraft.from[0],
+          to: bccDraft.to ?? [],
+          cc: bccDraft.cc ?? [],
+          bcc: bccDraft.bcc ?? [],
+          replyTo: bccDraft.replyTo ?? [],
+          subject: bccDraft.subject ?? '',
+        },
+        body: bccDraft.body ?? '',
+        attachments: bccDraft.attachments ?? [],
+        inlineAttachments: bccDraft.inlineAttachments ?? [],
       })
 
       expect(sentId).toMatch(
@@ -536,8 +674,18 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     it('throws an error if unknown address is used', async () => {
       await expect(
         instanceUnderTest.sendEmailMessage({
-          rfc822Data: stringToArrayBuffer(encryptedDraftString),
           senderEmailAddressId: v4(),
+          emailMessageHeader: {
+            from: encryptedDraft.from[0],
+            to: encryptedDraft.to ?? [],
+            cc: encryptedDraft.cc ?? [],
+            bcc: encryptedDraft.bcc ?? [],
+            replyTo: encryptedDraft.replyTo ?? [],
+            subject: encryptedDraft.subject ?? '',
+          },
+          body: encryptedDraft.body ?? '',
+          attachments: encryptedDraft.attachments ?? [],
+          inlineAttachments: encryptedDraft.inlineAttachments ?? [],
         }),
       ).rejects.toThrow(UnauthorizedAddressError)
     })

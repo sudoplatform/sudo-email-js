@@ -89,7 +89,7 @@ import { UnsealedBlockedAddress } from './typings/blockedAddresses'
 import { ConfigurationData } from './typings/configurationData'
 import { DraftEmailMessage } from './typings/draftEmailMessage'
 import { DraftEmailMessageMetadata } from './typings/draftEmailMessageMetadata'
-import { EmailAddress } from './typings/emailAddress'
+import { EmailAddress, EmailAddressDetail } from './typings/emailAddress'
 import { EmailAddressPublicInfo } from './typings/emailAddressPublicInfo'
 import { EmailFolder } from './typings/emailFolder'
 import { EmailMessage, EmailMessageSubscriber } from './typings/emailMessage'
@@ -102,6 +102,9 @@ import {
 import { SortOrder } from './typings/sortOrder'
 import { EmailMessageCryptoService } from '../private/domain/entities/secure/emailMessageCryptoService'
 import { DefaultEmailMessageCryptoService } from '../private/data/secure/defaultEmailMessageCryptoService'
+import { EmailAttachment } from './typings'
+import { EmailMessageWithBody } from './typings/emailMessageWithBody'
+import { GetEmailMessageWithBodyUseCase } from '../private/domain/use-cases/message/getEmailMessageWithBodyUseCase'
 
 /**
  * Pagination interface designed to be extended for list interfaces.
@@ -373,25 +376,53 @@ export interface GetDraftEmailMessageInput {
 }
 
 /**
- * Input for `SudoEmailClient.sendEmailMessage`.
+ * Representation of the email headers formatted under the RFC-6854 (supersedes RFC 822).
+ * (https://tools.ietf.org/html/rfc6854) standard. Some further rules (beyond RFC 6854) must also be
+ * applied to the data:
+ *  - At least one recipient must exist (to, cc, bcc).
+ *  - For all email addresses:
+ *    - Total length (including both local part and domain) must not exceed 256 characters.
+ *    - Local part must not exceed more than 64 characters.
+ *    - Input domain parts (domain separated by `.`) must not exceed 63 characters.
+ *    - Address must match standard email address pattern:
+ *       `^[a-zA-Z0-9](\.?[-_a-zA-Z0-9])*@[a-zA-Z0-9](-*\.?[a-zA-Z0-9])*\.[a-zA-Z](-?[a-zA-Z0-9])+$`.
  *
- * @interface SendEmailMessageInput
- * @property {ArrayBuffer} rfc822Data Email message data formatted under the RFC 6854.
- *   Some further rules (beyond RFC 6854) must also be applied to the data:
- *     - At least one recipient must exist (to, cc, bcc).
- *     - For all email addresses:
- *       - Total length (including both local part and domain) must not exceed 256 characters.
- *       - Local part must not exceed more than 64 characters.
- *       - Input domain parts (domain separated by `.`) must not exceed 63 characters.
- *       - Address must match standard email address pattern:
- *         `^[a-zA-Z0-9](\.?[-_a-zA-Z0-9])*@[a-zA-Z0-9](-*\.?[a-zA-Z0-9])*\.[a-zA-Z](-?[a-zA-Z0-9])+$`.
+ * @interface InternetMessageFormatHeader
+ * @property {EmailAddressDetail} from The email address belonging to the sender.
+ * @property {EmailAddressDetail[]} to The email addresses belonging to the primary recipients.
+ * @property {EmailAddressDetail[]} cc The email addresses belonging to the secondary recipients.
+ * @property {EmailAddressDetail[]} bcc The email addresses belonging to additional recipients.
+ * @property {EmailAddressDetail[]} replyTo The email addresses in which responses are to be sent.
+ * @property {string} subject The subject line of the email message.
+ */
+export interface InternetMessageFormatHeader {
+  from: EmailAddressDetail
+  to: EmailAddressDetail[]
+  cc: EmailAddressDetail[]
+  bcc: EmailAddressDetail[]
+  replyTo: EmailAddressDetail[]
+  subject: string
+}
+
+/**
+ * Input object containing information required to send an email message.
  *
- * @property {string} senderEmailAddressId The identifier of the email address used to send the email. The identifier
- *  must match the identifier of the email address of the `from` field in the RFC 6854 data.
+ * @property {string} senderEmailAddressId [Identifier of the [EmailAddress] being used to
+ *  send the email. The identifier must match the identifier of the address of the `from` field
+ *  in the RFC 6854 data.
+ * @property {InternetMessageFormatHeader} emailMessageHeader The email message headers.
+ * @property {string} body The text body of the email message.
+ * @property {EmailAttachment[]} attachments List of attached files to be sent with the message.
+ *  Default is an empty list.
+ * @property {EmailAttachment[]} inlineAttachments List of inline attachments to be sent with the message.
+ *  Default is an empty list.
  */
 export interface SendEmailMessageInput {
-  rfc822Data: ArrayBuffer
   senderEmailAddressId: string
+  emailMessageHeader: InternetMessageFormatHeader
+  body: string
+  attachments: EmailAttachment[]
+  inlineAttachments: EmailAttachment[]
 }
 
 /**
@@ -415,6 +446,18 @@ export interface UpdateEmailMessagesInput {
  * @property {string} emailAddressId The identifier of the email address associated with the email message.
  */
 export interface GetEmailMessageRfc822DataInput {
+  id: string
+  emailAddressId: string
+}
+
+/**
+ * Input for `SudoEmailClient.getEmailMessageWithBody`.
+ *
+ * @interface GetEmailMessageWithBodyInput
+ * @property {string} id The identifier of the email message RFC 822 data to be retrieved.
+ * @property {string} emailAddressId The identifier of the email address associated with the email message.
+ */
+export interface GetEmailMessageWithBodyInput {
   id: string
   emailAddressId: string
 }
@@ -750,6 +793,16 @@ export interface SudoEmailClient {
   ): Promise<EmailMessage | undefined>
 
   /**
+   * Get the body and attachment data of an EmailMessage
+   *
+   * @param {GetEmailMessageWithBodyInput} input PArameters used to retrieve the data of the email message.
+   * @returns {EmailMessageWithBody | undefined} The data associated with the email message or undefined if not found
+   */
+  getEmailMessageWithBody(
+    input: GetEmailMessageWithBodyInput,
+  ): Promise<EmailMessageWithBody | undefined>
+
+  /**
    * Get the RFC 6854 (supersedes RFC 822) data of the email message.
    *
    * @param {GetEmailMessageRfc822DataInput} input Parameters used to retrieve the data of the email message.
@@ -985,16 +1038,22 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   }
 
   public async sendEmailMessage({
-    rfc822Data,
     senderEmailAddressId,
+    emailMessageHeader,
+    body,
+    attachments,
+    inlineAttachments,
   }: SendEmailMessageInput): Promise<string> {
     const sendEmailMessageUseCase = new SendEmailMessageUseCase(
       this.emailMessageService,
       this.emailAccountService,
     )
     return await sendEmailMessageUseCase.execute({
-      rfc822Data,
       senderEmailAddressId,
+      emailMessageHeader,
+      body,
+      attachments,
+      inlineAttachments,
     })
   }
 
@@ -1398,6 +1457,17 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     })
     const transformer = new EmailMessageAPITransformer()
     return result ? transformer.transformEntity(result) : undefined
+  }
+
+  public async getEmailMessageWithBody({
+    id,
+    emailAddressId,
+  }: GetEmailMessageWithBodyInput): Promise<EmailMessageWithBody | undefined> {
+    this.log.debug(this.getEmailMessageWithBody.name, { id, emailAddressId })
+    const getEmailMessageWithBodyUseCase = new GetEmailMessageWithBodyUseCase(
+      this.emailMessageService,
+    )
+    return await getEmailMessageWithBodyUseCase.execute({ id, emailAddressId })
   }
 
   public async getEmailMessageRfc822Data({

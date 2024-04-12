@@ -28,12 +28,12 @@ export class EmailMessageRfc822DataFactory {
       bucket: 'bucket',
     }
 
-  static readonly getRfc822DataInput = {
+  static readonly getEmailMessageInput = {
     id: 'testId',
     emailAddressId: 'testEmailAddressId',
   }
 
-  static listEmailMessagesRfc822DsataWithPrefix(
+  static listEmailMessagesRfc822DataWithPrefix(
     identityId: string,
     emailAddressId: string,
     emailMessageRfc822Data: string,

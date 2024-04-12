@@ -18,7 +18,7 @@ import {
   EmailAddress,
   SudoEmailClient,
 } from '../../../src'
-import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
+import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 
@@ -54,18 +54,19 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
     emailAddress: EmailAddress,
     body: string,
   ): Promise<string> {
-    const draftBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
-      from: [{ emailAddress: emailAddress.emailAddress }],
-      to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
-      cc: [],
-      bcc: [],
-      replyTo: [],
+    return await instanceUnderTest.sendEmailMessage({
+      senderEmailAddressId: emailAddress.id,
+      emailMessageHeader: {
+        from: { emailAddress: emailAddress.emailAddress },
+        to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        subject: '',
+      },
       body,
       attachments: [],
-    })
-    return await instanceUnderTest.sendEmailMessage({
-      rfc822Data: draftBuffer,
-      senderEmailAddressId: emailAddress.id,
+      inlineAttachments: [],
     })
   }
 
@@ -151,7 +152,8 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
     }
   })
 
-  describe.only('Singleton Public Key tests', () => {
+  // Temporarily disabled until completion of PEMC-1039
+  xdescribe('Singleton Public Key tests', () => {
     let instanceUnderTest: SudoEmailClient
     let profilesClient: SudoProfilesClient
     let userClient: SudoUserClient

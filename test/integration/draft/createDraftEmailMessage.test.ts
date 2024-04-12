@@ -17,7 +17,7 @@ import {
 } from '../../../src'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
-import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
+import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 import {
   arrayBufferToString,
   stringToArrayBuffer,
@@ -64,16 +64,17 @@ describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
   })
 
   it('creates a draft successfully', async () => {
-    const draftBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
-      from: [{ emailAddress: emailAddress.emailAddress }],
-      to: [],
-      cc: [],
-      bcc: [],
-      replyTo: [],
-      body: 'Hello, World',
-      attachments: [],
-      subject: 'draft subject',
-    })
+    const draftBuffer =
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body: 'Hello, World',
+        attachments: [],
+        subject: 'draft subject',
+      })
     const metadata = await instanceUnderTest.createDraftEmailMessage({
       rfc822Data: draftBuffer,
       senderEmailAddressId: emailAddress.id,
@@ -93,15 +94,16 @@ describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
   })
 
   it('throws an error if an non-existent email address id is given', async () => {
-    const draftBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
-      from: [{ emailAddress: emailAddress.emailAddress }],
-      to: [],
-      cc: [],
-      bcc: [],
-      replyTo: [],
-      body: 'Hello, World',
-      attachments: [],
-    })
+    const draftBuffer =
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body: 'Hello, World',
+        attachments: [],
+      })
     await expect(
       instanceUnderTest.createDraftEmailMessage({
         rfc822Data: draftBuffer,
@@ -111,7 +113,7 @@ describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
   })
   it('handles creation of a 1MB draft message', async () => {
     const oneMbBody = '0'.repeat(1 * 1024 * 1024)
-    const message = Rfc822MessageParser.encodeToRfc822DataBuffer({
+    const message = Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [],
       cc: [],

@@ -12,7 +12,7 @@ import { DraftEmailMessage, EmailAddress, SudoEmailClient } from '../../../src'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { delay } from '../../util/delay'
-import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
+import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 
 describe('SudoEmailClient listDraftEmailMessageMeatdata Test Suite', () => {
   jest.setTimeout(240000)
@@ -42,7 +42,7 @@ describe('SudoEmailClient listDraftEmailMessageMeatdata Test Suite', () => {
     )
 
     const draftDataArrays = _.range(NUMBER_DRAFTS).map(() =>
-      Rfc822MessageParser.encodeToRfc822DataBuffer({
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
         from: [{ emailAddress: emailAddress.emailAddress }],
         to: [],
         cc: [],

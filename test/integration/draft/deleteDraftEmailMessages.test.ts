@@ -19,7 +19,7 @@ import {
 import { delay } from '../../util/delay'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
-import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
+import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 
 describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
   jest.setTimeout(240000)
@@ -50,7 +50,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
 
   beforeEach(async () => {
     const draftEmailMessageBuffer =
-      Rfc822MessageParser.encodeToRfc822DataBuffer({
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
         from: [{ emailAddress: emailAddress.emailAddress }],
         to: [],
         cc: [],
@@ -115,7 +115,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
 
   it('deletes multiple drafts in one operation successfully', async () => {
     const draftBuffers = _.range(9).map(() =>
-      Rfc822MessageParser.encodeToRfc822DataBuffer({
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
         from: [{ emailAddress: emailAddress.emailAddress }],
         to: [],
         cc: [],

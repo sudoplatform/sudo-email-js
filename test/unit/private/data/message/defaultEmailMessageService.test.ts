@@ -62,8 +62,8 @@ import { GraphQLDataFactory } from '../../../data-factory/graphQL'
 import * as zlibAsync from '../../../../../src/private/util/zlibAsync'
 import {
   EmailMessageDetails,
-  Rfc822MessageParser,
-} from '../../../../../src/private/util/rfc822MessageParser'
+  Rfc822MessageDataProcessor,
+} from '../../../../../src/private/util/rfc822MessageDataProcessor'
 import { EmailAddressPublicInfoEntity } from '../../../../../src/private/domain/entities/account/emailAddressPublicInfoEntity'
 import { SecurePackage } from '../../../../../src/private/domain/entities/secure/securePackage'
 import { SecureEmailAttachmentType } from '../../../../../src/private/domain/entities/secure/secureEmailAttachmentType'
@@ -100,13 +100,13 @@ describe('DefaultEmailMessageService Test Suite', () => {
       >
     >()
   const gunzipSpy = jest.spyOn(zlibAsync, 'gunzipAsync')
-  const encodeToRfc822DataBufferSpy = jest.spyOn(
-    Rfc822MessageParser,
-    'encodeToRfc822DataBuffer',
+  const encodeToInternetMessageBufferSpy = jest.spyOn(
+    Rfc822MessageDataProcessor,
+    'encodeToInternetMessageBuffer',
   )
-  const decodeRfc822DataSpy = jest.spyOn(
-    Rfc822MessageParser,
-    'decodeRfc822Data',
+  const parseInternetMessageDataSpy = jest.spyOn(
+    Rfc822MessageDataProcessor,
+    'parseInternetMessageData',
   )
   let instanceUnderTest: DefaultEmailMessageService
 
@@ -226,7 +226,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           mimeType: 'mimeType',
         },
       )
-      encodeToRfc822DataBufferSpy
+      encodeToInternetMessageBufferSpy
         .mockImplementationOnce(() => encodedOriginalMessage) // First call
         .mockImplementationOnce(() => encodedEncryptedMessage) // Second call
       when(
@@ -261,8 +261,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
 
       // It'll get called twice but we are just checking the first call here
-      expect(encodeToRfc822DataBufferSpy).toHaveBeenCalledTimes(2)
-      expect(encodeToRfc822DataBufferSpy).toHaveBeenNthCalledWith(1, message)
+      expect(encodeToInternetMessageBufferSpy).toHaveBeenCalledTimes(2)
+      expect(encodeToInternetMessageBufferSpy).toHaveBeenNthCalledWith(
+        1,
+        message,
+      )
     })
 
     it('encrypts the encoded message data', async () => {
@@ -315,8 +318,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
 
       // Here we will check the second call to this
-      expect(encodeToRfc822DataBufferSpy).toHaveBeenCalledTimes(2)
-      expect(encodeToRfc822DataBufferSpy).toHaveBeenNthCalledWith(2, {
+      expect(encodeToInternetMessageBufferSpy).toHaveBeenCalledTimes(2)
+      expect(encodeToInternetMessageBufferSpy).toHaveBeenNthCalledWith(2, {
         ...message,
         attachments: securePackage.toArray(),
         encryptionStatus: EncryptionStatus.ENCRYPTED,
@@ -1533,6 +1536,55 @@ describe('DefaultEmailMessageService Test Suite', () => {
     })
   })
 
+  describe('getEmailMessageWithBody', () => {
+    it('calls getEmailMessageRfc822Data with the same arguments', async () => {
+      const mockEmailMessageRfc822Data = jest
+        .spyOn(instanceUnderTest, 'getEmailMessageRfc822Data')
+        .mockResolvedValue(stringToArrayBuffer('dummy-data'))
+      await instanceUnderTest.getEmailMessageWithBody(
+        EmailMessageRfc822DataFactory.getEmailMessageInput,
+      )
+
+      expect(mockEmailMessageRfc822Data).toHaveBeenCalledTimes(1)
+      expect(mockEmailMessageRfc822Data).toHaveBeenCalledWith(
+        EmailMessageRfc822DataFactory.getEmailMessageInput,
+      )
+    })
+
+    it('returns undefined if getEmailMessageRfc822Data returns undefined', async () => {
+      const mockEmailMessageRfc822Data = jest
+        .spyOn(instanceUnderTest, 'getEmailMessageRfc822Data')
+        .mockResolvedValue(undefined)
+      const result = await instanceUnderTest.getEmailMessageWithBody(
+        EmailMessageRfc822DataFactory.getEmailMessageInput,
+      )
+
+      expect(result).toBeUndefined()
+    })
+
+    it('passes result from getEmailMessageRfc822Data to parseInternetMessageData and returns proper values', async () => {
+      const mockEmailMessageRfc822Data = jest
+        .spyOn(instanceUnderTest, 'getEmailMessageRfc822Data')
+        .mockResolvedValue(stringToArrayBuffer('dummy-data'))
+      const body = 'mockBody'
+      parseInternetMessageDataSpy.mockResolvedValueOnce({
+        from: [{ emailAddress: 'example@example.com' }],
+        body,
+        attachments: [],
+        inlineAttachments: [],
+      })
+      const result = await instanceUnderTest.getEmailMessageWithBody(
+        EmailMessageRfc822DataFactory.getEmailMessageInput,
+      )
+      expect(result).toStrictEqual({
+        id: EmailMessageRfc822DataFactory.getEmailMessageInput.id,
+        body,
+        attachments: [],
+        inlineAttachments: [],
+      })
+    })
+  })
+
   describe('getEmailMessageRfc822Data', () => {
     const unsealedDraft = 'unsealedDraft'
     beforeEach(() => {
@@ -1549,7 +1601,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     it('gets rfc822 data successfully', async () => {
       await expect(
         instanceUnderTest.getEmailMessageRfc822Data(
-          EmailMessageRfc822DataFactory.getRfc822DataInput,
+          EmailMessageRfc822DataFactory.getEmailMessageInput,
         ),
       ).resolves.toStrictEqual(stringToArrayBuffer(unsealedDraft))
 
@@ -1565,7 +1617,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         mockAppSync.getEmailMessage,
       ).first()
       expect(idArg).toStrictEqual(
-        EmailMessageRfc822DataFactory.getRfc822DataInput.id,
+        EmailMessageRfc822DataFactory.getEmailMessageInput.id,
       )
       expect(fetchPolicyArg).toBeUndefined()
       verify(mockAppSync.getEmailMessage(anything())).once()
@@ -1581,7 +1633,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       gunzipSpy.mockResolvedValueOnce(stringToArrayBuffer(unsealedDraft))
 
       const returnedValue = await instanceUnderTest.getEmailMessageRfc822Data(
-        EmailMessageRfc822DataFactory.getRfc822DataInput,
+        EmailMessageRfc822DataFactory.getEmailMessageInput,
       )
       expect(arrayBufferToString(returnedValue!)).toEqual(unsealedDraft)
 
@@ -1597,7 +1649,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         mockAppSync.getEmailMessage,
       ).first()
       expect(idArg).toStrictEqual(
-        EmailMessageRfc822DataFactory.getRfc822DataInput.id,
+        EmailMessageRfc822DataFactory.getEmailMessageInput.id,
       )
       expect(fetchPolicyArg).toBeUndefined()
       verify(mockAppSync.getEmailMessage(anything())).once()
@@ -1612,7 +1664,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
       await expect(
         instanceUnderTest.getEmailMessageRfc822Data(
-          EmailMessageRfc822DataFactory.getRfc822DataInput,
+          EmailMessageRfc822DataFactory.getEmailMessageInput,
         ),
       ).resolves.toStrictEqual(stringToArrayBuffer(unsealedDraft))
 
@@ -1628,7 +1680,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         mockAppSync.getEmailMessage,
       ).first()
       expect(idArg).toStrictEqual(
-        EmailMessageRfc822DataFactory.getRfc822DataInput.id,
+        EmailMessageRfc822DataFactory.getEmailMessageInput.id,
       )
       expect(fetchPolicyArg).toBeUndefined()
       verify(mockAppSync.getEmailMessage(anything())).once()
@@ -1660,14 +1712,14 @@ describe('DefaultEmailMessageService Test Suite', () => {
       when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
         `${unsealedDraft}\n${SecureEmailAttachmentType.BODY.contentId}`,
       )
-      decodeRfc822DataSpy.mockResolvedValueOnce(message)
+      parseInternetMessageDataSpy.mockResolvedValueOnce(message)
       when(mockEmailMessageCryptoService.decrypt(anything())).thenResolve(
         stringToArrayBuffer(unsealedDraft),
       )
 
       await expect(
         instanceUnderTest.getEmailMessageRfc822Data(
-          EmailMessageRfc822DataFactory.getRfc822DataInput,
+          EmailMessageRfc822DataFactory.getEmailMessageInput,
         ),
       ).resolves.toStrictEqual(stringToArrayBuffer(unsealedDraft))
 
@@ -1683,12 +1735,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
         mockAppSync.getEmailMessage,
       ).first()
       expect(idArg).toStrictEqual(
-        EmailMessageRfc822DataFactory.getRfc822DataInput.id,
+        EmailMessageRfc822DataFactory.getEmailMessageInput.id,
       )
       expect(fetchPolicyArg).toBeUndefined()
       verify(mockAppSync.getEmailMessage(anything())).once()
       expect(gunzipSpy).toHaveBeenCalledTimes(0)
-      expect(decodeRfc822DataSpy).toHaveBeenCalledTimes(1)
+      expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(1)
       verify(mockEmailMessageCryptoService.decrypt(anything())).once()
       const [securePackageArg] = capture(
         mockEmailMessageCryptoService.decrypt,
@@ -1704,7 +1756,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
       await expect(
         instanceUnderTest.getEmailMessageRfc822Data(
-          EmailMessageRfc822DataFactory.getRfc822DataInput,
+          EmailMessageRfc822DataFactory.getEmailMessageInput,
         ),
       ).rejects.toThrow(DecodeError)
     })
@@ -1720,7 +1772,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
       await expect(
         instanceUnderTest.getEmailMessageRfc822Data(
-          EmailMessageRfc822DataFactory.getRfc822DataInput,
+          EmailMessageRfc822DataFactory.getEmailMessageInput,
         ),
       ).resolves.toBeUndefined()
 
@@ -1736,7 +1788,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         mockAppSync.getEmailMessage,
       ).first()
       expect(idArg).toStrictEqual(
-        EmailMessageRfc822DataFactory.getRfc822DataInput.id,
+        EmailMessageRfc822DataFactory.getEmailMessageInput.id,
       )
       expect(fetchPolicyArg).toBeUndefined()
       verify(mockAppSync.getEmailMessage(anything())).once()
@@ -1754,7 +1806,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
       await expect(
         instanceUnderTest.getEmailMessageRfc822Data(
-          EmailMessageRfc822DataFactory.getRfc822DataInput,
+          EmailMessageRfc822DataFactory.getEmailMessageInput,
         ),
       ).rejects.toThrow('test error')
 
@@ -1770,7 +1822,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         mockAppSync.getEmailMessage,
       ).first()
       expect(idArg).toStrictEqual(
-        EmailMessageRfc822DataFactory.getRfc822DataInput.id,
+        EmailMessageRfc822DataFactory.getEmailMessageInput.id,
       )
       expect(fetchPolicyArg).toBeUndefined()
       verify(mockAppSync.getEmailMessage(anything())).once()
@@ -1782,7 +1834,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
       await expect(
         instanceUnderTest.getEmailMessageRfc822Data(
-          EmailMessageRfc822DataFactory.getRfc822DataInput,
+          EmailMessageRfc822DataFactory.getEmailMessageInput,
         ),
       ).resolves.toBeUndefined()
 
@@ -1791,7 +1843,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         mockAppSync.getEmailMessage,
       ).first()
       expect(idArg).toStrictEqual(
-        EmailMessageRfc822DataFactory.getRfc822DataInput.id,
+        EmailMessageRfc822DataFactory.getEmailMessageInput.id,
       )
       expect(fetchPolicyArg).toBeUndefined()
       verify(mockAppSync.getEmailMessage(anything())).once()

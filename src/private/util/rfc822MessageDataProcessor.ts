@@ -50,17 +50,17 @@ const encodedStringRegex = RegExp(
 /**
  * A class which handler the encoding and parsing of the RFC822 compatible email message content
  */
-export class Rfc822MessageParser {
+export class Rfc822MessageDataProcessor {
   /**
    * Encodes the given email into an RFC822 compliant buffer
    *
    * @param {EmailMessageDetails} email The email to be encoded
    * @returns ArrayBuffer
    */
-  public static encodeToRfc822DataBuffer(
+  public static encodeToInternetMessageBuffer(
     email: EmailMessageDetails,
   ): ArrayBuffer {
-    const parsed = Rfc822MessageParser.encodeToRfc822DataStr(email)
+    const parsed = Rfc822MessageDataProcessor.encodeToInternetMessageStr(email)
     return new TextEncoder().encode(parsed)
   }
 
@@ -70,7 +70,7 @@ export class Rfc822MessageParser {
    * @param {EmailMessageDetails} email The email to be encoded
    * @returns string
    */
-  public static encodeToRfc822DataStr({
+  public static encodeToInternetMessageStr({
     from,
     to,
     cc,
@@ -85,21 +85,30 @@ export class Rfc822MessageParser {
     const msg = createMimeMessage()
     if (from && from.length > 0) {
       msg.setSender(
-        Rfc822MessageParser.emailAddressDetailToMailboxAddrObject(from[0]),
+        Rfc822MessageDataProcessor.emailAddressDetailToMailboxAddrObject(
+          from[0],
+        ),
       )
     }
     msg.setRecipients(
-      to?.map(Rfc822MessageParser.emailAddressDetailToMailboxAddrObject) ?? [],
+      to?.map(
+        Rfc822MessageDataProcessor.emailAddressDetailToMailboxAddrObject,
+      ) ?? [],
     )
     msg.setCc(
-      cc?.map(Rfc822MessageParser.emailAddressDetailToMailboxAddrObject) ?? [],
+      cc?.map(
+        Rfc822MessageDataProcessor.emailAddressDetailToMailboxAddrObject,
+      ) ?? [],
     )
     msg.setBcc(
-      bcc?.map(Rfc822MessageParser.emailAddressDetailToMailboxAddrObject) ?? [],
+      bcc?.map(
+        Rfc822MessageDataProcessor.emailAddressDetailToMailboxAddrObject,
+      ) ?? [],
     )
     msg.setReplyTo(
-      replyTo?.map(Rfc822MessageParser.emailAddressDetailToMailboxAddrObject) ??
-        [],
+      replyTo?.map(
+        Rfc822MessageDataProcessor.emailAddressDetailToMailboxAddrObject,
+      ) ?? [],
     )
     msg.setSubject(subject ?? '')
 
@@ -120,20 +129,24 @@ export class Rfc822MessageParser {
 
     attachments?.forEach((attachment) => {
       msg.addAttachment(
-        Rfc822MessageParser.emailAttachmentToAttachmentOptions(attachment),
+        Rfc822MessageDataProcessor.emailAttachmentToAttachmentOptions(
+          attachment,
+        ),
       )
     })
 
     inlineAttachments?.forEach((attachment) => {
       msg.addAttachment(
-        Rfc822MessageParser.emailAttachmentToAttachmentOptions(attachment),
+        Rfc822MessageDataProcessor.emailAttachmentToAttachmentOptions(
+          attachment,
+        ),
       )
     })
 
     try {
       const rawMsg = msg.asRaw()
       // Decode and encoded words in the email i.e. Subject, display names
-      return Rfc822MessageParser.decodeEncodedWords(rawMsg)
+      return Rfc822MessageDataProcessor.decodeEncodedWords(rawMsg)
     } catch (e) {
       console.error('Error encoding rfc822 data', { e })
       if (e instanceof MIMETextError) {
@@ -149,7 +162,7 @@ export class Rfc822MessageParser {
    * @param {string} data The message to be decoded
    * @returns EmailMessageDetails
    */
-  public static async decodeRfc822Data(
+  public static async parseInternetMessageData(
     data: string,
   ): Promise<EmailMessageDetails> {
     try {
@@ -166,15 +179,18 @@ export class Rfc822MessageParser {
           displayName: addr.name,
         })) ?? []
 
-      const to = Rfc822MessageParser.addressObjectToEmailAddressDetailArray(
-        parsed.to,
-      )
-      const cc = Rfc822MessageParser.addressObjectToEmailAddressDetailArray(
-        parsed.cc,
-      )
-      const bcc = Rfc822MessageParser.addressObjectToEmailAddressDetailArray(
-        parsed.bcc,
-      )
+      const to =
+        Rfc822MessageDataProcessor.addressObjectToEmailAddressDetailArray(
+          parsed.to,
+        )
+      const cc =
+        Rfc822MessageDataProcessor.addressObjectToEmailAddressDetailArray(
+          parsed.cc,
+        )
+      const bcc =
+        Rfc822MessageDataProcessor.addressObjectToEmailAddressDetailArray(
+          parsed.bcc,
+        )
 
       const body = parsed.text?.trim()
       const subject = parsed.subject

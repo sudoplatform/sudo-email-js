@@ -4,8 +4,8 @@ import {
   EMAIL_HEADER_NAME_ENCRYPTION,
   EmailMessageDetails,
   PLATFORM_ENCRYPTION,
-  Rfc822MessageParser,
-} from '../../../../src/private/util/rfc822MessageParser'
+  Rfc822MessageDataProcessor,
+} from '../../../../src/private/util/rfc822MessageDataProcessor'
 import {
   EmailAddressDetail,
   EmailAttachment,
@@ -15,7 +15,7 @@ import { Base64 } from '@sudoplatform/sudo-common'
 import { arrayBufferToString } from '../../../../src/private/util/buffer'
 
 const eol = '\r\n'
-describe('rfc822MessageParser unit tests', () => {
+describe('rfc822MessageDataProcessor unit tests', () => {
   const fromAddress: EmailAddressDetail = {
     emailAddress: 'from@example.com',
     displayName: 'Morf',
@@ -37,7 +37,7 @@ describe('rfc822MessageParser unit tests', () => {
     { emailAddress: 'replyTo2@example.com', displayName: '2OtYlper' },
   ]
 
-  describe('encodeToRfc822DataStr', () => {
+  describe('encodeToInternetMessageStr', () => {
     describe('from', () => {
       it('works with no display name', () => {
         const messageDetails: EmailMessageDetails = {
@@ -45,7 +45,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: <${fromAddress.emailAddress}>${eol}`,
@@ -66,7 +66,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
@@ -90,7 +90,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
@@ -117,7 +117,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
@@ -147,7 +147,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
@@ -173,7 +173,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
@@ -200,7 +200,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
@@ -230,7 +230,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
@@ -256,7 +256,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
@@ -283,7 +283,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
@@ -313,7 +313,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
@@ -339,7 +339,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
@@ -366,7 +366,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
@@ -396,7 +396,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
@@ -423,7 +423,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: <${fromAddress.emailAddress}>${eol}`,
@@ -446,7 +446,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: <${fromAddress.emailAddress}>${eol}`,
@@ -469,7 +469,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: <${fromAddress.emailAddress}>${eol}`,
@@ -494,7 +494,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: <${fromAddress.emailAddress}>${eol}`,
@@ -519,7 +519,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: <${fromAddress.emailAddress}>${eol}`,
@@ -543,7 +543,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: <${fromAddress.emailAddress}>${eol}`,
@@ -582,7 +582,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: <${fromAddress.emailAddress}>${eol}`,
@@ -617,7 +617,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: <${fromAddress.emailAddress}>${eol}`,
@@ -666,7 +666,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: <${fromAddress.emailAddress}>${eol}`,
@@ -717,7 +717,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: <${fromAddress.emailAddress}>${eol}`,
@@ -751,7 +751,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: <${fromAddress.emailAddress}>${eol}`,
@@ -845,7 +845,7 @@ describe('rfc822MessageParser unit tests', () => {
       }
 
       const resultString =
-        Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
       expect(resultString).toContain(
         `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
@@ -889,7 +889,7 @@ describe('rfc822MessageParser unit tests', () => {
     })
   })
 
-  describe('encodeToRfc822DataBuffer', () => {
+  describe('encodeToInternetMessageBuffer', () => {
     it('returns the correct buffer', () => {
       // Using the exact same message as the test above
       const contentId = v4()
@@ -964,7 +964,7 @@ describe('rfc822MessageParser unit tests', () => {
       }
 
       const resultBuffer =
-        Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
+        Rfc822MessageDataProcessor.encodeToInternetMessageBuffer(messageDetails)
 
       // We can't test for a match against another buffer because each message includes some randomly generated ids
       const resultString = arrayBufferToString(resultBuffer)
@@ -1010,16 +1010,18 @@ describe('rfc822MessageParser unit tests', () => {
     })
   })
 
-  describe('decodeRfc822Data', () => {
+  describe('parseInternetMessageData', () => {
     describe('from', () => {
       it('works with no display name', async () => {
         const messageDetails: EmailMessageDetails = {
           from: [{ emailAddress: fromAddress.emailAddress }],
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1040,9 +1042,11 @@ describe('rfc822MessageParser unit tests', () => {
           from: [fromAddress],
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1066,9 +1070,11 @@ describe('rfc822MessageParser unit tests', () => {
           to: [{ emailAddress: toAddresses[0].emailAddress }],
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1095,9 +1101,11 @@ describe('rfc822MessageParser unit tests', () => {
           ],
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1129,9 +1137,11 @@ describe('rfc822MessageParser unit tests', () => {
           ],
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1159,9 +1169,11 @@ describe('rfc822MessageParser unit tests', () => {
           cc: [{ emailAddress: ccAddresses[0].emailAddress }],
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1188,9 +1200,11 @@ describe('rfc822MessageParser unit tests', () => {
           ],
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1222,9 +1236,11 @@ describe('rfc822MessageParser unit tests', () => {
           ],
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1252,9 +1268,11 @@ describe('rfc822MessageParser unit tests', () => {
           bcc: [{ emailAddress: bccAddresses[0].emailAddress }],
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1283,9 +1301,11 @@ describe('rfc822MessageParser unit tests', () => {
           ],
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1321,9 +1341,11 @@ describe('rfc822MessageParser unit tests', () => {
           ],
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1355,9 +1377,11 @@ describe('rfc822MessageParser unit tests', () => {
           replyTo: [{ emailAddress: replyToAddresses[0].emailAddress }],
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1386,9 +1410,11 @@ describe('rfc822MessageParser unit tests', () => {
           ],
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1424,9 +1450,11 @@ describe('rfc822MessageParser unit tests', () => {
           ],
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1461,9 +1489,11 @@ describe('rfc822MessageParser unit tests', () => {
           subject,
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1486,9 +1516,11 @@ describe('rfc822MessageParser unit tests', () => {
           subject,
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1511,9 +1543,11 @@ describe('rfc822MessageParser unit tests', () => {
           subject,
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1538,9 +1572,11 @@ describe('rfc822MessageParser unit tests', () => {
           body,
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1564,9 +1600,11 @@ describe('rfc822MessageParser unit tests', () => {
           body,
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1589,9 +1627,11 @@ describe('rfc822MessageParser unit tests', () => {
           body,
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
         console.debug({ result })
         console.debug({ body: result.body })
         expect(result.from).toHaveLength(1)
@@ -1631,7 +1671,7 @@ describe('rfc822MessageParser unit tests', () => {
         }
 
         const resultString =
-          Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
           `From: <${fromAddress.emailAddress}>${eol}`,
@@ -1665,9 +1705,11 @@ describe('rfc822MessageParser unit tests', () => {
           attachments: [attachment],
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
         expect(result.from[0].displayName).toBeFalsy()
@@ -1717,9 +1759,11 @@ describe('rfc822MessageParser unit tests', () => {
           attachments,
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
         expect(result.from[0].displayName).toBeFalsy()
@@ -1774,9 +1818,11 @@ describe('rfc822MessageParser unit tests', () => {
           inlineAttachments: [attachment],
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
         expect(result.from[0].displayName).toBeFalsy()
@@ -1815,9 +1861,11 @@ describe('rfc822MessageParser unit tests', () => {
           body,
         }
 
-        const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        const msgStr =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
         expect(result.from).toHaveLength(1)
         expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1906,9 +1954,12 @@ describe('rfc822MessageParser unit tests', () => {
         inlineAttachments: [inlineAttachment],
       }
 
-      const msgStr = Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+      const msgStr =
+        Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-      const result = await Rfc822MessageParser.decodeRfc822Data(msgStr)
+      const result = await Rfc822MessageDataProcessor.parseInternetMessageData(
+        msgStr,
+      )
 
       expect(result.from).toHaveLength(1)
       expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
@@ -1978,7 +2029,7 @@ describe('rfc822MessageParser unit tests', () => {
   })
 
   describe('interoperability test', () => {
-    it('object going into encodeToRfc822DataStr matches object coming out of DecodeRfc822Data', async () => {
+    it('object going into encodeToInternetMessageStr matches object coming out of ParseInternetMessageData', async () => {
       const contentId = v4()
       const inlineAttachment: EmailAttachment = {
         filename: 'inlineAttachment1.jpg',
@@ -2051,11 +2102,12 @@ describe('rfc822MessageParser unit tests', () => {
       }
 
       const encodedRfc822String =
-        Rfc822MessageParser.encodeToRfc822DataStr(messageDetails)
+        Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-      const decodedRfc822Object = await Rfc822MessageParser.decodeRfc822Data(
-        encodedRfc822String,
-      )
+      const decodedRfc822Object =
+        await Rfc822MessageDataProcessor.parseInternetMessageData(
+          encodedRfc822String,
+        )
 
       expect(decodedRfc822Object).toMatchObject<EmailMessageDetails>(
         messageDetails,

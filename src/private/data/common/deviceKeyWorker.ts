@@ -319,7 +319,7 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
       if (!unsealedCipherKey) {
         throw new DecodeError('Could not unseal cipher key')
       }
-      console.debug({ iv: input.iv })
+
       return await this.decryptWithSymmetricKey(
         unsealedCipherKey,
         input.sealedPayload,

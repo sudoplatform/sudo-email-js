@@ -22,7 +22,7 @@ import { DefaultEmailMessageService } from '../../../src/private/data/message/de
 import { Observable } from 'apollo-client/util/Observable'
 import { EmailServiceConfig } from '../../../src/private/data/common/config'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
-import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
+import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 import { EmailMessageCryptoService } from '../../../src/private/domain/entities/secure/emailMessageCryptoService'
 
 describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
@@ -75,12 +75,21 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
       subject: `Test ${v4()}`,
       body: '',
       attachments: [],
+      inlineAttachments: [],
     }
-    const messageBuffer =
-      Rfc822MessageParser.encodeToRfc822DataBuffer(messageDetails)
     await instanceUnderTest.sendEmailMessage({
-      rfc822Data: messageBuffer,
       senderEmailAddressId: senderEmailAddress.id,
+      emailMessageHeader: {
+        from: messageDetails.from[0],
+        to: messageDetails.to ?? [],
+        cc: messageDetails.cc ?? [],
+        bcc: messageDetails.bcc ?? [],
+        replyTo: messageDetails.replyTo ?? [],
+        subject: messageDetails.subject ?? 'Important Subject',
+      },
+      body: messageDetails.body ?? 'Hello, World',
+      attachments: messageDetails.attachments ?? [],
+      inlineAttachments: messageDetails.inlineAttachments ?? [],
     })
   }
 

@@ -23,10 +23,8 @@ import {
   generateSafeLocalPart,
   provisionEmailAddress,
 } from '../util/provisionEmailAddress'
-import { stringToArrayBuffer } from '../../../src/private/util/buffer'
 import waitForExpect from 'wait-for-expect'
 import { getFolderByName } from '../util/folder'
-import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
 
 describe('SudoEmailClient Email Blocklist Integration Test Suite', () => {
   jest.setTimeout(240000)
@@ -73,21 +71,19 @@ describe('SudoEmailClient Email Blocklist Integration Test Suite', () => {
     receiverEmail: string = ootoSimulatorAddress,
     subject?: string,
   ) => {
-    const draft = {
-      from: [{ emailAddress: sender.emailAddress }],
-      to: [{ emailAddress: receiverEmail }],
-      cc: [],
-      bcc: [],
-      replyTo: [],
+    const sentId = await instanceUnderTest.sendEmailMessage({
+      senderEmailAddressId: sender.id,
+      emailMessageHeader: {
+        from: { emailAddress: emailAddress.emailAddress },
+        to: [{ emailAddress: receiverEmail }],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        subject: subject ?? '',
+      },
       body: 'Hello, World! This is spam!',
       attachments: [],
-      subject,
-    }
-    const draftBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer(draft)
-
-    const sentId = await instanceUnderTest.sendEmailMessage({
-      rfc822Data: draftBuffer,
-      senderEmailAddressId: sender.id,
+      inlineAttachments: [],
     })
 
     let sent

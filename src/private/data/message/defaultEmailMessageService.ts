@@ -46,6 +46,7 @@ import {
   GetDraftInput,
   GetEmailMessageInput,
   GetEmailMessageRfc822DataInput,
+  GetEmailMessageWithBodyInput,
   ListDraftsMetadataInput,
   ListEmailMessagesForEmailAddressIdInput,
   ListEmailMessagesForEmailAddressIdOutput,
@@ -79,11 +80,12 @@ import { gunzipAsync } from '../../util/zlibAsync'
 // eslint-disable-next-line tree-shaking/no-side-effects-in-initialization
 import { withDefault } from '../common/withDefault'
 import { SealedEmailMessageEntityTransformer } from './transformer/sealedEmailMessageEntityTransformer'
-import { Rfc822MessageParser } from '../../util/rfc822MessageParser'
+import { Rfc822MessageDataProcessor } from '../../util/rfc822MessageDataProcessor'
 import { SecureEmailAttachmentType } from '../../domain/entities/secure/secureEmailAttachmentType'
 import { SecurePackage } from '../../domain/entities/secure/securePackage'
-import { stringToArrayBuffer } from '../../util/buffer'
+import { arrayBufferToString, stringToArrayBuffer } from '../../util/buffer'
 import { EmailMessageCryptoService } from '../../domain/entities/secure/emailMessageCryptoService'
+import { EmailMessageWithBodyEntity } from '../../domain/entities/message/emailMessageWithBodyEntity'
 
 const EmailAddressEntityCodec = t.intersection(
   [t.type({ emailAddress: t.string }), t.partial({ displayName: t.string })],
@@ -313,7 +315,8 @@ export class DefaultEmailMessageService implements EmailMessageService {
       recipientsPublicInfo,
       senderEmailAddressId,
     })
-    const rfc822Data = Rfc822MessageParser.encodeToRfc822DataBuffer(message)
+    const rfc822Data =
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer(message)
     const keyIds: string[] = []
 
     recipientsPublicInfo.forEach((recip) => {
@@ -327,11 +330,12 @@ export class DefaultEmailMessageService implements EmailMessageService {
       keyIds,
     )
 
-    const encryptedRfc822Data = Rfc822MessageParser.encodeToRfc822DataBuffer({
-      ...message,
-      attachments: securePackage.toArray(),
-      encryptionStatus: EncryptionStatus.ENCRYPTED,
-    })
+    const encryptedRfc822Data =
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        ...message,
+        attachments: securePackage.toArray(),
+        encryptionStatus: EncryptionStatus.ENCRYPTED,
+      })
 
     const s3EmailObjectInput = await this.uploadDataToTransientBucket(
       senderEmailAddressId,
@@ -377,6 +381,29 @@ export class DefaultEmailMessageService implements EmailMessageService {
   async deleteMessages({ ids }: DeleteEmailMessagesInput): Promise<string[]> {
     const result = await this.appSync.deleteEmailMessages({ messageIds: ids })
     return result
+  }
+
+  async getEmailMessageWithBody({
+    id,
+    emailAddressId,
+  }: GetEmailMessageWithBodyInput): Promise<
+    EmailMessageWithBodyEntity | undefined
+  > {
+    this.log.debug(this.getEmailMessageWithBody.name, { id, emailAddressId })
+    const data = await this.getEmailMessageRfc822Data({ id, emailAddressId })
+    if (!data) {
+      return undefined
+    }
+
+    const message = await Rfc822MessageDataProcessor.parseInternetMessageData(
+      arrayBufferToString(data),
+    )
+    return {
+      id,
+      body: message.body ?? '',
+      attachments: message.attachments ?? [],
+      inlineAttachments: message.inlineAttachments ?? [],
+    }
   }
 
   async getEmailMessageRfc822Data({
@@ -437,7 +464,9 @@ export class DefaultEmailMessageService implements EmailMessageService {
       // Check for encrypted body attachment
       if (decodedString.includes(SecureEmailAttachmentType.BODY.contentId)) {
         const decodedEncrypedMessage =
-          await Rfc822MessageParser.decodeRfc822Data(decodedString)
+          await Rfc822MessageDataProcessor.parseInternetMessageData(
+            decodedString,
+          )
         if (
           !decodedEncrypedMessage.attachments ||
           decodedEncrypedMessage.attachments.length === 0

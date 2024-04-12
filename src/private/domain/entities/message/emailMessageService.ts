@@ -13,7 +13,8 @@ import { DraftEmailMessageMetadataEntity } from './draftEmailMessageMetadataEnti
 import { EmailMessageEntity } from './emailMessageEntity'
 import { UpdateEmailMessagesStatus } from './updateEmailMessagesStatus'
 import { EmailAddressPublicInfoEntity } from '../account/emailAddressPublicInfoEntity'
-import { EmailMessageDetails } from '../../../util/rfc822MessageParser'
+import { EmailMessageDetails } from '../../../util/rfc822MessageDataProcessor'
+import { EmailMessageWithBodyEntity } from './emailMessageWithBodyEntity'
 
 /**
  * Input for `EmailMessageService.saveDraft` method.
@@ -136,6 +137,19 @@ export interface GetEmailMessageRfc822DataInput {
   id: string
   emailAddressId: string
 }
+
+/**
+ * Input for `EmailMessageService.getEmailMessageWithBody` method.
+ *
+ * @interface GetEmailMessageWithBodyInput
+ * @property {string} id Identifier of the message to retrieve.
+ * @property {string} emailAddressId Identifier of the email address associated with the email message.
+ */
+export interface GetEmailMessageWithBodyInput {
+  id: string
+  emailAddressId: string
+}
+
 /**
  * Input for `EmailMessageService.getMessage` method.
  *
@@ -359,6 +373,16 @@ export interface EmailMessageService {
   getEmailMessageRfc822Data(
     input: GetEmailMessageRfc822DataInput,
   ): Promise<ArrayBuffer | undefined>
+
+  /**
+   * Get the body and attachments of an email message.
+   *
+   * @param {GetEmailMessageWithBodyInput} input Parameters used to get the body of an email message
+   * @returns {EmailMessageWithBodyEntity | undefined} The email message with the body and attachments or undefined if not found
+   */
+  getEmailMessageWithBody(
+    input: GetEmailMessageWithBodyInput,
+  ): Promise<EmailMessageWithBodyEntity | undefined>
 
   /**
    * Get an email message.

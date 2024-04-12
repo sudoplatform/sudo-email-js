@@ -18,21 +18,33 @@ import { EmailMessageService } from '../../../../../../src/private/domain/entiti
 import { SendEmailMessageUseCase } from '../../../../../../src/private/domain/use-cases/message/sendEmailMessageUseCase'
 import { stringToArrayBuffer } from '../../../../../../src/private/util/buffer'
 import { EmailAccountService } from '../../../../../../src/private/domain/entities/account/emailAccountService'
-import { Rfc822MessageParser } from '../../../../../../src/private/util/rfc822MessageParser'
+import { Rfc822MessageDataProcessor } from '../../../../../../src/private/util/rfc822MessageDataProcessor'
+import {
+  EmailAttachment,
+  EncryptionStatus,
+  InternetMessageFormatHeader,
+} from '../../../../../../src/public'
 
 describe('SendEmailMessageUseCase', () => {
+  let senderEmailAddressId: string
+  const emailMessageHeader = {
+    from: { emailAddress: 'from@example.com' },
+    to: [{ emailAddress: 'to@example.com' }],
+  } as unknown as InternetMessageFormatHeader
+  const body = 'Message body'
+  const attachments: EmailAttachment[] = []
+  const inlineAttachments: EmailAttachment[] = []
   const mockMessageService = mock<EmailMessageService>()
   const mockAccountService = mock<EmailAccountService>()
-  const decodeRfc822DataSpy = jest
-    .spyOn(Rfc822MessageParser, 'decodeRfc822Data')
-    .mockResolvedValue({
-      from: [{ emailAddress: 'from@example.com' }],
-      to: [{ emailAddress: 'to@example.com' }],
-    })
+  const mockRfc822Data = stringToArrayBuffer(v4())
+  const encodeToInternetMessageBufferSpy = jest
+    .spyOn(Rfc822MessageDataProcessor, 'encodeToInternetMessageBuffer')
+    .mockReturnValue(mockRfc822Data)
 
   let instanceUnderTest: SendEmailMessageUseCase
 
   beforeEach(() => {
+    senderEmailAddressId = v4()
     reset(mockMessageService)
     reset(mockAccountService)
 
@@ -46,8 +58,13 @@ describe('SendEmailMessageUseCase', () => {
   describe('unencrypted path', () => {
     it('calls the message service sendMessage method', async () => {
       const rfc822Data = stringToArrayBuffer(v4())
-      const senderEmailAddressId = v4()
-      await instanceUnderTest.execute({ rfc822Data, senderEmailAddressId })
+      await instanceUnderTest.execute({
+        senderEmailAddressId,
+        emailMessageHeader,
+        body,
+        attachments,
+        inlineAttachments,
+      })
       verify(mockAccountService.lookupPublicInfo(anything())).once()
       verify(mockMessageService.sendMessage(anything())).once()
       const [actualSendInput] = capture(mockMessageService.sendMessage).first()
@@ -55,15 +72,18 @@ describe('SendEmailMessageUseCase', () => {
         rfc822Data,
         senderEmailAddressId,
       })
-      expect(decodeRfc822DataSpy).toHaveBeenCalledTimes(1)
+      expect(encodeToInternetMessageBufferSpy).toHaveBeenCalledTimes(1)
     })
     it('returns result of service', async () => {
       const idResult = v4()
       when(mockMessageService.sendMessage(anything())).thenResolve(idResult)
       await expect(
         instanceUnderTest.execute({
-          rfc822Data: stringToArrayBuffer(''),
-          senderEmailAddressId: '',
+          senderEmailAddressId,
+          emailMessageHeader,
+          body,
+          attachments,
+          inlineAttachments,
         }),
       ).resolves.toStrictEqual(idResult)
     })
@@ -81,8 +101,13 @@ describe('SendEmailMessageUseCase', () => {
     })
     it('calls the message service sendMessage method', async () => {
       const rfc822Data = stringToArrayBuffer(v4())
-      const senderEmailAddressId = v4()
-      await instanceUnderTest.execute({ rfc822Data, senderEmailAddressId })
+      await instanceUnderTest.execute({
+        senderEmailAddressId,
+        emailMessageHeader,
+        body,
+        attachments,
+        inlineAttachments,
+      })
       verify(mockAccountService.lookupPublicInfo(anything())).once()
       verify(mockMessageService.sendEncryptedMessage(anything())).once()
       const [actualSendInput] = capture(
@@ -92,6 +117,13 @@ describe('SendEmailMessageUseCase', () => {
         message: {
           from: [{ emailAddress: 'from@example.com' }],
           to: [{ emailAddress: 'to@example.com' }],
+          cc: undefined,
+          bcc: undefined,
+          replyTo: undefined,
+          subject: undefined,
+          body,
+          attachments,
+          inlineAttachments,
         },
         senderEmailAddressId,
         recipientsPublicInfo: [
@@ -102,7 +134,6 @@ describe('SendEmailMessageUseCase', () => {
           },
         ],
       })
-      expect(decodeRfc822DataSpy).toHaveBeenCalledTimes(1)
     })
     it('returns result of service', async () => {
       const idResult = v4()
@@ -111,8 +142,11 @@ describe('SendEmailMessageUseCase', () => {
       )
       await expect(
         instanceUnderTest.execute({
-          rfc822Data: stringToArrayBuffer(''),
-          senderEmailAddressId: '',
+          senderEmailAddressId,
+          emailMessageHeader,
+          body,
+          attachments,
+          inlineAttachments,
         }),
       ).resolves.toStrictEqual(idResult)
     })

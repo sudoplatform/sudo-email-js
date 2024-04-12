@@ -6,20 +6,36 @@
 
 import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
-import { Rfc822MessageParser } from '../../../util/rfc822MessageParser'
-import { arrayBufferToString } from '../../../util/buffer'
+import {
+  EmailMessageDetails,
+  Rfc822MessageDataProcessor,
+} from '../../../util/rfc822MessageDataProcessor'
 import { EmailAccountService } from '../../entities/account/emailAccountService'
+import {
+  EmailAttachment,
+  EncryptionStatus,
+  InternetMessageFormatHeader,
+} from '../../../../public'
 
 /**
- * Input for `SendEmailMessageUseCase` use case.
+ * Input object containing information required to send an email message.
  *
- * @interface SendEmailMessageUseCaseInput
- * @property {ArrayBuffer} rfc822Data RFC 822 formatted email message data.
- * @property {string} senderEmailAddressId The identifier of the email address used to send the email.
+ * @property {string} senderEmailAddressId [Identifier of the [EmailAddress] being used to
+ *  send the email. The identifier must match the identifier of the address of the `from` field
+ *  in the RFC 6854 data.
+ * @property {InternetMessageFormatHeader} emailMessageHeader The email message headers.
+ * @property {string} body The text body of the email message.
+ * @property {EmailAttachment[]} attachments List of attached files to be sent with the message.
+ *  Default is an empty list.
+ * @property {EmailAttachment[]} inlineAttachments List of inline attachments to be sent with the message.
+ *  Default is an empty list.
  */
 interface SendEmailMessageUseCaseInput {
-  rfc822Data: ArrayBuffer
   senderEmailAddressId: string
+  emailMessageHeader: InternetMessageFormatHeader
+  body: string
+  attachments: EmailAttachment[]
+  inlineAttachments: EmailAttachment[]
 }
 
 /**
@@ -36,17 +52,24 @@ export class SendEmailMessageUseCase {
   }
 
   async execute({
-    rfc822Data,
     senderEmailAddressId,
+    emailMessageHeader,
+    body,
+    attachments,
+    inlineAttachments,
   }: SendEmailMessageUseCaseInput): Promise<string> {
-    this.log.debug(this.constructor.name, { rfc822Data, senderEmailAddressId })
-    const message = await Rfc822MessageParser.decodeRfc822Data(
-      arrayBufferToString(rfc822Data),
-    )
+    this.log.debug(this.constructor.name, {
+      senderEmailAddressId,
+      emailMessageHeader,
+      body,
+      attachments,
+      inlineAttachments,
+    })
+    const { from, to, cc, bcc, replyTo, subject } = emailMessageHeader
     const recipients: string[] = []
-    message.to?.forEach((addr) => recipients.push(addr.emailAddress))
-    message.cc?.forEach((addr) => recipients.push(addr.emailAddress))
-    message.bcc?.forEach((addr) => recipients.push(addr.emailAddress))
+    to?.forEach((addr) => recipients.push(addr.emailAddress))
+    cc?.forEach((addr) => recipients.push(addr.emailAddress))
+    bcc?.forEach((addr) => recipients.push(addr.emailAddress))
 
     const recipientsPublicInfo = await this.accountService.lookupPublicInfo({
       emailAddresses: recipients,
@@ -57,12 +80,36 @@ export class SendEmailMessageUseCase {
     )
 
     if (allRecipientsHavePubKey) {
+      const message: EmailMessageDetails = {
+        from: [from],
+        to,
+        cc,
+        bcc,
+        replyTo,
+        subject,
+        body,
+        attachments,
+        inlineAttachments,
+      }
       return await this.messageService.sendEncryptedMessage({
         message,
         senderEmailAddressId,
         recipientsPublicInfo,
       })
     } else {
+      const rfc822Data =
+        Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+          from: [from],
+          to,
+          cc,
+          bcc,
+          replyTo,
+          subject,
+          body,
+          attachments,
+          inlineAttachments,
+          encryptionStatus: EncryptionStatus.UNENCRYPTED,
+        })
       return await this.messageService.sendMessage({
         rfc822Data,
         senderEmailAddressId,

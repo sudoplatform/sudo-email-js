@@ -18,7 +18,7 @@ import {
 import { delay } from '../../util/delay'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
-import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
+import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 
 describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
   jest.setTimeout(240000)
@@ -61,15 +61,16 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
   })
 
   it('updates a draft successfully', async () => {
-    const draftBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
-      from: [{ emailAddress: emailAddress.emailAddress }],
-      to: [],
-      cc: [],
-      bcc: [],
-      replyTo: [],
-      body: 'Hello, World',
-      attachments: [],
-    })
+    const draftBuffer =
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body: 'Hello, World',
+        attachments: [],
+      })
     const metadata = await instanceUnderTest.createDraftEmailMessage({
       rfc822Data: draftBuffer,
       senderEmailAddressId: emailAddress.id,
@@ -78,15 +79,16 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
     await delay(1000)
 
     draftMetadata.push(metadata)
-    const updatedDraftBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
-      from: [{ emailAddress: emailAddress.emailAddress }],
-      to: [],
-      cc: [],
-      bcc: [],
-      replyTo: [],
-      body: 'Goodbye, World',
-      attachments: [],
-    })
+    const updatedDraftBuffer =
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body: 'Goodbye, World',
+        attachments: [],
+      })
     const updatedMetadata = await instanceUnderTest.updateDraftEmailMessage({
       id: metadata.id,
       rfc822Data: updatedDraftBuffer,
@@ -109,15 +111,16 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
   })
 
   it('throws an error if a non-existent draft message id is given', async () => {
-    const draftBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
-      from: [{ emailAddress: emailAddress.emailAddress }],
-      to: [],
-      cc: [],
-      bcc: [],
-      replyTo: [],
-      body: 'Hello, World',
-      attachments: [],
-    })
+    const draftBuffer =
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body: 'Hello, World',
+        attachments: [],
+      })
     await expect(
       instanceUnderTest.updateDraftEmailMessage({
         id: v4(),
@@ -127,30 +130,32 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
     ).rejects.toThrow(MessageNotFoundError)
   })
   it('throws an error if an non-existent email address id is given', async () => {
-    const draftBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
-      from: [{ emailAddress: emailAddress.emailAddress }],
-      to: [],
-      cc: [],
-      bcc: [],
-      replyTo: [],
-      body: 'Hello, World',
-      attachments: [],
-    })
+    const draftBuffer =
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body: 'Hello, World',
+        attachments: [],
+      })
     const metadata = await instanceUnderTest.createDraftEmailMessage({
       rfc822Data: draftBuffer,
       senderEmailAddressId: emailAddress.id,
     })
     draftMetadata.push(metadata)
 
-    const updatedDraftBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
-      from: [{ emailAddress: emailAddress.emailAddress }],
-      to: [],
-      cc: [],
-      bcc: [],
-      replyTo: [],
-      body: 'Goodbye, World',
-      attachments: [],
-    })
+    const updatedDraftBuffer =
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body: 'Goodbye, World',
+        attachments: [],
+      })
     await expect(
       instanceUnderTest.updateDraftEmailMessage({
         id: metadata.id,

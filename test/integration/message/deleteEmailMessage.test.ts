@@ -11,7 +11,6 @@ import waitForExpect from 'wait-for-expect'
 import { EmailAddress, SudoEmailClient } from '../../../src'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
-import { Rfc822MessageParser } from '../../../src/private/util/rfc822MessageParser'
 
 describe('SudoEmailClient DeleteEmailMessage Test Suite', () => {
   jest.setTimeout(240000)
@@ -56,18 +55,19 @@ describe('SudoEmailClient DeleteEmailMessage Test Suite', () => {
     ).resolves.toBeUndefined()
   })
   it('deletes a single existing email message', async () => {
-    const messageBuffer = Rfc822MessageParser.encodeToRfc822DataBuffer({
-      from: [{ emailAddress: emailAddress.emailAddress }],
-      to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
-      cc: [],
-      bcc: [],
-      replyTo: [],
+    const messageId = await instanceUnderTest.sendEmailMessage({
+      senderEmailAddressId: emailAddress.id,
+      emailMessageHeader: {
+        from: { emailAddress: emailAddress.emailAddress },
+        to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        subject: 'Test',
+      },
       body: 'Hello, World',
       attachments: [],
-    })
-    const messageId = await instanceUnderTest.sendEmailMessage({
-      rfc822Data: messageBuffer,
-      senderEmailAddressId: emailAddress.id,
+      inlineAttachments: [],
     })
     await waitForExpect(
       async () =>

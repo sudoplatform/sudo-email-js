@@ -59,6 +59,7 @@ import { SubscribeToEmailMessagesUseCase } from '../../../src/private/domain/use
 import { UnsubscribeFromEmailMessagesUseCase } from '../../../src/private/domain/use-cases/message/unsubscribeFromEmailMessagesUseCase'
 import {
   DefaultSudoEmailClient,
+  InternetMessageFormatHeader,
   SudoEmailClient,
 } from '../../../src/public/sudoEmailClient'
 import { BatchOperationResultStatus } from '../../../src/public/typings/batchOperationResult'
@@ -92,6 +93,7 @@ import {
   UnblockEmailAddressesByHashedValueUseCaseInput,
 } from '../../../src/private/domain/use-cases/blocklist/unblockEmailAddressesByHashedValue'
 import { ListEmailMessagesUseCase } from '../../../src/private/domain/use-cases/message/listEmailMessagesUseCase'
+import { GetEmailMessageWithBodyUseCase } from '../../../src/private/domain/use-cases/message/getEmailMessageWithBodyUseCase'
 
 // Constructor mocks
 
@@ -301,6 +303,13 @@ const JestMockListEmailMessagesForEmailFolderIdUseCase =
 jest.mock(
   '../../../src/private/domain/use-cases/message/listEmailMessagesForEmailFolderIdUseCase',
 )
+const JestMockGetEmailMessageWithBodyUseCase =
+  GetEmailMessageWithBodyUseCase as jest.MockedClass<
+    typeof GetEmailMessageWithBodyUseCase
+  >
+jest.mock(
+  '../../../src/private/domain/use-cases/message/getEmailMessageWithBodyUseCase',
+)
 const JestMockGetEmailMessageRfc822DataUseCase =
   GetEmailMessageRfc822DataUseCase as jest.MockedClass<
     typeof GetEmailMessageRfc822DataUseCase
@@ -403,6 +412,8 @@ describe('SudoEmailClient Test Suite', () => {
     mock<ListEmailMessagesForEmailAddressIdUseCase>()
   const mockListEmailMessagesForEmailFolderIdUseCase =
     mock<ListEmailMessagesForEmailFolderIdUseCase>()
+  const mockGetEmailMessageWithBodyUseCase =
+    mock<GetEmailMessageWithBodyUseCase>()
   const mockGetEmailMessageRfc822DataUseCase =
     mock<GetEmailMessageRfc822DataUseCase>()
   const mockSubscribeToEmailMessagesUseCase =
@@ -471,6 +482,7 @@ describe('SudoEmailClient Test Suite', () => {
     reset(mockListEmailMessagesUseCase)
     reset(mockListEmailMessagesForEmailAddressIdUseCase)
     reset(mockListEmailMessagesForEmailFolderIdUseCase)
+    reset(mockGetEmailMessageWithBodyUseCase)
     reset(mockGetEmailMessageRfc822DataUseCase)
     reset(mockSubscribeToEmailMessagesUseCase)
     reset(mockUnsubscribeFromEmailMessagesUseCase)
@@ -612,6 +624,9 @@ describe('SudoEmailClient Test Suite', () => {
     )
     JestMockListEmailMessagesForEmailFolderIdUseCase.mockImplementation(() =>
       instance(mockListEmailMessagesForEmailFolderIdUseCase),
+    )
+    JestMockGetEmailMessageWithBodyUseCase.mockImplementation(() =>
+      instance(mockGetEmailMessageWithBodyUseCase),
     )
     JestMockGetEmailMessageRfc822DataUseCase.mockImplementation(() =>
       instance(mockGetEmailMessageRfc822DataUseCase),
@@ -1138,28 +1153,35 @@ describe('SudoEmailClient Test Suite', () => {
     })
     it('generates use case', async () => {
       await instanceUnderTest.sendEmailMessage({
-        rfc822Data: stringToArrayBuffer(''),
         senderEmailAddressId: '',
+        emailMessageHeader: {} as unknown as InternetMessageFormatHeader,
+        body: '',
+        attachments: [],
+        inlineAttachments: [],
       })
       expect(JestMockSendEmailMessageUseCase).toHaveBeenCalledTimes(1)
     })
     it('calls use case as expected', async () => {
-      const rfc822Data = stringToArrayBuffer(v4())
       const senderEmailAddressId = v4()
       await instanceUnderTest.sendEmailMessage({
-        rfc822Data,
         senderEmailAddressId,
+        emailMessageHeader: {} as unknown as InternetMessageFormatHeader,
+        body: '',
+        attachments: [],
+        inlineAttachments: [],
       })
       verify(mockSendEmailMessageUseCase.execute(anything())).once()
       const [actualInput] = capture(mockSendEmailMessageUseCase.execute).first()
-      expect(actualInput.rfc822Data).toEqual(rfc822Data)
       expect(actualInput.senderEmailAddressId).toEqual(senderEmailAddressId)
     })
     it('returns expected result', async () => {
       await expect(
         instanceUnderTest.sendEmailMessage({
-          rfc822Data: stringToArrayBuffer(''),
           senderEmailAddressId: '',
+          emailMessageHeader: {} as unknown as InternetMessageFormatHeader,
+          body: '',
+          attachments: [],
+          inlineAttachments: [],
         }),
       ).resolves.toEqual('id')
     })
@@ -1973,6 +1995,65 @@ describe('SudoEmailClient Test Suite', () => {
           cachePolicy: CachePolicy.CacheOnly,
         }),
       ).resolves.toEqual(APIDataFactory.emailMessage)
+    })
+  })
+
+  describe('getEmailMessageWithBody', () => {
+    const id = 'mockId'
+    const body = 'mockBody'
+    beforeEach(() => {
+      when(mockGetEmailMessageWithBodyUseCase.execute(anything())).thenResolve({
+        id,
+        body,
+        attachments: [],
+        inlineAttachments: [],
+      })
+    })
+    it('generates use case', async () => {
+      await instanceUnderTest.getEmailMessageWithBody({
+        id: '',
+        emailAddressId: 'emailAddressId',
+      })
+      expect(JestMockGetEmailMessageWithBodyUseCase).toHaveBeenCalledTimes(1)
+    })
+    it('calls use case as expected', async () => {
+      const id = v4()
+      await instanceUnderTest.getEmailMessageWithBody({
+        id,
+        emailAddressId: 'emailAddressId',
+      })
+      verify(mockGetEmailMessageWithBodyUseCase.execute(anything())).once()
+      const [actualArgs] = capture(
+        mockGetEmailMessageWithBodyUseCase.execute,
+      ).first()
+      expect(actualArgs).toEqual<typeof actualArgs>({
+        id,
+        emailAddressId: 'emailAddressId',
+      })
+    })
+    it('returns undefined if use case returns undefined', async () => {
+      when(mockGetEmailMessageWithBodyUseCase.execute(anything())).thenResolve(
+        undefined,
+      )
+      await expect(
+        instanceUnderTest.getEmailMessageWithBody({
+          id: '',
+          emailAddressId: 'emailAddressId',
+        }),
+      ).resolves.toBeUndefined()
+    })
+    it('returns expected result', async () => {
+      await expect(
+        instanceUnderTest.getEmailMessageWithBody({
+          id: 'emailMessageId',
+          emailAddressId: 'emailAddressId',
+        }),
+      ).resolves.toEqual({
+        id,
+        body,
+        attachments: [],
+        inlineAttachments: [],
+      })
     })
   })
 
