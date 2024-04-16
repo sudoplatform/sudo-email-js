@@ -42,6 +42,8 @@ import {
 import { EmailAddress } from '../../../src/public/typings/emailAddress'
 import { createSudo } from './createSudo'
 import { EntitlementsBuilder } from './entitlements'
+import { EmailConfigurationDataService } from '../../../src/private/domain/entities/configuration/configurationDataService'
+import { DefaultConfigurationDataService } from '../../../src/private/data/configuration/defaultConfigurationDataService'
 
 // [START] - Polyfills
 global.fetch = require('node-fetch')
@@ -91,6 +93,7 @@ export interface SetupEmailClientOutput {
     profiles: SudoCryptoProvider
     email: SudoCryptoProvider
   }
+  configurationDataService: EmailConfigurationDataService
 }
 
 export const setupEmailClient = async (
@@ -192,6 +195,9 @@ export const setupEmailClient = async (
       console.log('Error resetting email client', { err })
       throw err
     })
+    const configurationDataService = new DefaultConfigurationDataService(
+      apiClient,
+    )
 
     return {
       ownershipProofToken,
@@ -210,6 +216,7 @@ export const setupEmailClient = async (
         profiles: profilesCryptoProvider,
         email: emailCryptoProvider,
       },
+      configurationDataService,
     }
   } catch (err) {
     log.error(`${setupEmailClient.name} FAILED`)

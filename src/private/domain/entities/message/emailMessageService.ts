@@ -88,6 +88,7 @@ export interface SendEncryptedMessageInput {
   message: EmailMessageDetails
   senderEmailAddressId: string
   recipientsPublicInfo: EmailAddressPublicInfoEntity[]
+  emailMessageMaxOutboundMessageSize: number
 }
 
 /**

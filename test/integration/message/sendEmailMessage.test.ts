@@ -19,6 +19,7 @@ import {
   EmailFolder,
   EncryptionStatus,
   InvalidEmailContentsError,
+  MessageSizeLimitExceededError,
   SudoEmailClient,
   UnauthorizedAddressError,
 } from '../../../src'
@@ -29,6 +30,9 @@ import {
   EmailMessageDetails,
   Rfc822MessageDataProcessor,
 } from '../../../src/private/util/rfc822MessageDataProcessor'
+import { EmailConfigurationDataService } from '../../../src/private/domain/entities/configuration/configurationDataService'
+import { DefaultConfigurationDataService } from '../../../src/private/data/configuration/defaultConfigurationDataService'
+import { arrayBufferToString } from '../../../src/private/util/buffer'
 
 describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   jest.setTimeout(240000)
@@ -50,10 +54,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   let encryptedDraft: EmailMessageDetails
   let draftWithAttachments: EmailMessageDetails
   let encryptedDraftWithAttachments: EmailMessageDetails
-  let draftString: string
-  let encryptedDraftString: string
-  let draftWithAttachmentsString: string
-  let encryptedDraftWithAttachmentsString: string
+  let configurationDataService: EmailConfigurationDataService
 
   beforeEach(async () => {
     const result = await setupEmailClient(log)
@@ -62,6 +63,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     userClient = result.userClient
     sudo = result.sudo
     ownershipProofToken = result.ownershipProofToken
+    configurationDataService = result.configurationDataService
 
     emailAddress1 = await provisionEmailAddress(
       ownershipProofToken,
@@ -90,7 +92,6 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       attachments: [],
       subject: 'Send Email Message Test',
     }
-    draftString = Rfc822MessageDataProcessor.encodeToInternetMessageStr(draft)
     encryptedDraft = {
       from: [{ emailAddress: emailAddress1.emailAddress }],
       to: [{ emailAddress: emailAddress2.emailAddress }],
@@ -100,8 +101,6 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       body: 'Hello, World',
       attachments: [],
     }
-    encryptedDraftString =
-      Rfc822MessageDataProcessor.encodeToInternetMessageStr(encryptedDraft)
     draftWithAttachments = {
       ...draft,
       attachments: [
@@ -121,10 +120,6 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         },
       ],
     }
-    draftWithAttachmentsString =
-      Rfc822MessageDataProcessor.encodeToInternetMessageStr(
-        draftWithAttachments,
-      )
     encryptedDraftWithAttachments = {
       ...encryptedDraft,
       attachments: [
@@ -144,10 +139,6 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         },
       ],
     }
-    encryptedDraftWithAttachmentsString =
-      Rfc822MessageDataProcessor.encodeToInternetMessageStr(
-        encryptedDraftWithAttachments,
-      )
   })
 
   afterEach(async () => {
@@ -433,6 +424,37 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     ).rejects.toThrow(UnauthorizedAddressError)
   })
 
+  it('respects the outgoing email message size limit', async () => {
+    const { emailMessageMaxOutboundMessageSize } =
+      await configurationDataService.getConfigurationData()
+
+    const largeAttachment = Buffer.alloc(emailMessageMaxOutboundMessageSize)
+    await expect(
+      instanceUnderTest.sendEmailMessage({
+        senderEmailAddressId: emailAddress1.id,
+        emailMessageHeader: {
+          from: draft.from[0],
+          to: draft.to ?? [],
+          cc: draft.cc ?? [],
+          bcc: draft.bcc ?? [],
+          replyTo: draft.replyTo ?? [],
+          subject: draft.subject ?? '',
+        },
+        body: encryptedDraft.body ?? '',
+        attachments: [
+          {
+            contentTransferEncoding: '7bit',
+            data: arrayBufferToString(largeAttachment),
+            filename: 'large-attachment.txt',
+            inlineAttachment: false,
+            mimeType: 'text/plain',
+          },
+        ],
+        inlineAttachments: encryptedDraft.inlineAttachments ?? [],
+      }),
+    ).rejects.toThrow(MessageSizeLimitExceededError)
+  })
+
   it('throws an InvalidEmailContentsError if rfc822 data has no recipients', async () => {
     const badDraft = {
       ...draft,
@@ -444,8 +466,6 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       body: 'Hello, World',
       attachments: [],
     }
-    const badDraftString =
-      Rfc822MessageDataProcessor.encodeToInternetMessageStr(badDraft)
 
     await expect(
       instanceUnderTest.sendEmailMessage({
@@ -669,6 +689,37 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         hasAttachments: false,
         encryptionStatus: EncryptionStatus.ENCRYPTED,
       })
+    })
+
+    it('respects the outgoing email message size limit', async () => {
+      const { emailMessageMaxOutboundMessageSize } =
+        await configurationDataService.getConfigurationData()
+
+      const largeAttachment = Buffer.alloc(emailMessageMaxOutboundMessageSize)
+      await expect(
+        instanceUnderTest.sendEmailMessage({
+          senderEmailAddressId: emailAddress1.id,
+          emailMessageHeader: {
+            from: encryptedDraft.from[0],
+            to: encryptedDraft.to ?? [],
+            cc: encryptedDraft.cc ?? [],
+            bcc: encryptedDraft.bcc ?? [],
+            replyTo: encryptedDraft.replyTo ?? [],
+            subject: encryptedDraft.subject ?? '',
+          },
+          body: encryptedDraft.body ?? '',
+          attachments: [
+            {
+              contentTransferEncoding: '7bit',
+              data: arrayBufferToString(largeAttachment),
+              filename: 'large-attachment.txt',
+              inlineAttachment: false,
+              mimeType: 'text/plain',
+            },
+          ],
+          inlineAttachments: encryptedDraft.inlineAttachments ?? [],
+        }),
+      ).rejects.toThrow(MessageSizeLimitExceededError)
     })
 
     it('throws an error if unknown address is used', async () => {

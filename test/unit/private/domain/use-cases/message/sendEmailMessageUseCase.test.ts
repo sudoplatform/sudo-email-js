@@ -21,11 +21,14 @@ import { EmailAccountService } from '../../../../../../src/private/domain/entiti
 import { Rfc822MessageDataProcessor } from '../../../../../../src/private/util/rfc822MessageDataProcessor'
 import {
   EmailAttachment,
-  EncryptionStatus,
   InternetMessageFormatHeader,
+  MessageSizeLimitExceededError,
 } from '../../../../../../src/public'
+import { EmailConfigurationDataService } from '../../../../../../src/private/domain/entities/configuration/configurationDataService'
+import { EmailConfigurationDataEntity } from '../../../../../../src/private/domain/entities/configuration/emailConfigurationDataEntity'
 
 describe('SendEmailMessageUseCase', () => {
+  const emailMessageMaxOutboundMessageSize = 9999999
   let senderEmailAddressId: string
   const emailMessageHeader = {
     from: { emailAddress: 'from@example.com' },
@@ -36,6 +39,8 @@ describe('SendEmailMessageUseCase', () => {
   const inlineAttachments: EmailAttachment[] = []
   const mockMessageService = mock<EmailMessageService>()
   const mockAccountService = mock<EmailAccountService>()
+  const mockEmailConfigurationDataService =
+    mock<EmailConfigurationDataService>()
   const mockRfc822Data = stringToArrayBuffer(v4())
   const encodeToInternetMessageBufferSpy = jest
     .spyOn(Rfc822MessageDataProcessor, 'encodeToInternetMessageBuffer')
@@ -47,11 +52,16 @@ describe('SendEmailMessageUseCase', () => {
     senderEmailAddressId = v4()
     reset(mockMessageService)
     reset(mockAccountService)
+    reset(mockEmailConfigurationDataService)
 
     when(mockAccountService.lookupPublicInfo(anything())).thenResolve([])
+    when(mockEmailConfigurationDataService.getConfigurationData()).thenResolve({
+      emailMessageMaxOutboundMessageSize,
+    } as unknown as EmailConfigurationDataEntity)
     instanceUnderTest = new SendEmailMessageUseCase(
       instance(mockMessageService),
       instance(mockAccountService),
+      instance(mockEmailConfigurationDataService),
     )
   })
 
@@ -86,6 +96,26 @@ describe('SendEmailMessageUseCase', () => {
           inlineAttachments,
         }),
       ).resolves.toStrictEqual(idResult)
+    })
+
+    it('respect email message size limit', async () => {
+      const limit = 10485760 // 10mb
+      when(
+        mockEmailConfigurationDataService.getConfigurationData(),
+      ).thenResolve({
+        emailMessageMaxOutboundMessageSize: limit,
+      } as unknown as EmailConfigurationDataEntity)
+      encodeToInternetMessageBufferSpy.mockReturnValue(Buffer.alloc(limit + 1))
+
+      await expect(
+        instanceUnderTest.execute({
+          senderEmailAddressId,
+          emailMessageHeader,
+          body,
+          attachments,
+          inlineAttachments,
+        }),
+      ).rejects.toThrow(MessageSizeLimitExceededError)
     })
   })
 
@@ -133,6 +163,7 @@ describe('SendEmailMessageUseCase', () => {
             publicKey: 'mockPublicKey',
           },
         ],
+        emailMessageMaxOutboundMessageSize,
       })
     })
     it('returns result of service', async () => {

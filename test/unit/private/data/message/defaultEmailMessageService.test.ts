@@ -48,7 +48,10 @@ import { DefaultEmailMessageService } from '../../../../../src/private/data/mess
 import { DraftEmailMessageEntity } from '../../../../../src/private/domain/entities/message/draftEmailMessageEntity'
 import { DraftEmailMessageMetadataEntity } from '../../../../../src/private/domain/entities/message/draftEmailMessageMetadataEntity'
 import { EmailMessageServiceDeleteDraftError } from '../../../../../src/private/domain/entities/message/emailMessageService'
-import { InternalError } from '../../../../../src/public/errors'
+import {
+  InternalError,
+  MessageSizeLimitExceededError,
+} from '../../../../../src/public/errors'
 import { UpdateEmailMessagesInput } from '../../../../../src/public/sudoEmailClient'
 import { SortOrder } from '../../../../../src/public/typings/sortOrder'
 import {
@@ -100,10 +103,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
       >
     >()
   const gunzipSpy = jest.spyOn(zlibAsync, 'gunzipAsync')
-  const encodeToInternetMessageBufferSpy = jest.spyOn(
-    Rfc822MessageDataProcessor,
-    'encodeToInternetMessageBuffer',
-  )
   const parseInternetMessageDataSpy = jest.spyOn(
     Rfc822MessageDataProcessor,
     'parseInternetMessageData',
@@ -200,6 +199,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
   })
 
   describe('sendEncryptedMessage', () => {
+    const emailMessageMaxOutboundMessageSize = 9999999
+    const encodeToInternetMessageBufferSpy = jest.spyOn(
+      Rfc822MessageDataProcessor,
+      'encodeToInternetMessageBuffer',
+    )
     let message: EmailMessageDetails
     let recipientsPublicInfo: EmailAddressPublicInfoEntity[]
     let senderEmailAddressId: string
@@ -227,8 +231,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
         },
       )
       encodeToInternetMessageBufferSpy
-        .mockImplementationOnce(() => encodedOriginalMessage) // First call
-        .mockImplementationOnce(() => encodedEncryptedMessage) // Second call
+        .mockReturnValueOnce(encodedOriginalMessage) // First call
+        .mockReturnValue(encodedEncryptedMessage) // Second call
       when(
         mockEmailMessageCryptoService.encrypt(anything(), anything()),
       ).thenResolve(securePackage)
@@ -258,6 +262,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         message: message,
         senderEmailAddressId: senderEmailAddressId,
         recipientsPublicInfo,
+        emailMessageMaxOutboundMessageSize,
       })
 
       // It'll get called twice but we are just checking the first call here
@@ -273,6 +278,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         message: message,
         senderEmailAddressId: senderEmailAddressId,
         recipientsPublicInfo,
+        emailMessageMaxOutboundMessageSize,
       })
 
       verify(
@@ -296,6 +302,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         message: message,
         senderEmailAddressId: senderEmailAddressId,
         recipientsPublicInfo: recipientsPublicInfoWithDupKey,
+        emailMessageMaxOutboundMessageSize,
       })
 
       verify(
@@ -315,6 +322,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         message: message,
         senderEmailAddressId: senderEmailAddressId,
         recipientsPublicInfo,
+        emailMessageMaxOutboundMessageSize,
       })
 
       // Here we will check the second call to this
@@ -331,6 +339,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         message: message,
         senderEmailAddressId: senderEmailAddressId,
         recipientsPublicInfo,
+        emailMessageMaxOutboundMessageSize,
       })
 
       verify(mockS3Client.upload(anything())).once()
@@ -350,6 +359,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         message: message,
         senderEmailAddressId: senderEmailAddressId,
         recipientsPublicInfo,
+        emailMessageMaxOutboundMessageSize,
       })
 
       verify(mockAppSync.sendEncryptedEmailMessage(anything())).once()
@@ -383,8 +393,26 @@ describe('DefaultEmailMessageService Test Suite', () => {
           message: message,
           senderEmailAddressId: senderEmailAddressId,
           recipientsPublicInfo,
+          emailMessageMaxOutboundMessageSize,
         }),
       ).resolves.toStrictEqual(resultId)
+    })
+
+    it('respects outgoing message size limit', async () => {
+      const limit = 10485769 // 10mb
+      encodeToInternetMessageBufferSpy
+        .mockReset()
+        .mockReturnValueOnce(encodedOriginalMessage) // First call
+        .mockReturnValueOnce(Buffer.alloc(limit + 1)) // Second call
+
+      await expect(
+        instanceUnderTest.sendEncryptedMessage({
+          message,
+          senderEmailAddressId: senderEmailAddressId,
+          recipientsPublicInfo,
+          emailMessageMaxOutboundMessageSize: limit,
+        }),
+      ).rejects.toThrow(MessageSizeLimitExceededError)
     })
   })
 

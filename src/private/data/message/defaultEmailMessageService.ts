@@ -32,7 +32,10 @@ import {
   EmailMessageSubscriber,
   EncryptionStatus,
 } from '../../../public'
-import { InternalError } from '../../../public/errors'
+import {
+  InternalError,
+  MessageSizeLimitExceededError,
+} from '../../../public/errors'
 import { DraftEmailMessageEntity } from '../../domain/entities/message/draftEmailMessageEntity'
 import { DraftEmailMessageMetadataEntity } from '../../domain/entities/message/draftEmailMessageMetadataEntity'
 import { EmailMessageEntity } from '../../domain/entities/message/emailMessageEntity'
@@ -309,6 +312,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     message,
     recipientsPublicInfo,
     senderEmailAddressId,
+    emailMessageMaxOutboundMessageSize,
   }: SendEncryptedMessageInput): Promise<string> {
     this.log.debug(this.sendEncryptedMessage.name, {
       message,
@@ -336,6 +340,12 @@ export class DefaultEmailMessageService implements EmailMessageService {
         attachments: securePackage.toArray(),
         encryptionStatus: EncryptionStatus.ENCRYPTED,
       })
+
+    if (encryptedRfc822Data.byteLength > emailMessageMaxOutboundMessageSize) {
+      throw new MessageSizeLimitExceededError(
+        `Email message size exceeded. Limit: ${emailMessageMaxOutboundMessageSize} bytes`,
+      )
+    }
 
     const s3EmailObjectInput = await this.uploadDataToTransientBucket(
       senderEmailAddressId,

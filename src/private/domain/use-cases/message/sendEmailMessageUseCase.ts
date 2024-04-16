@@ -15,7 +15,9 @@ import {
   EmailAttachment,
   EncryptionStatus,
   InternetMessageFormatHeader,
+  MessageSizeLimitExceededError,
 } from '../../../../public'
+import { EmailConfigurationDataService } from '../../entities/configuration/configurationDataService'
 
 /**
  * Input object containing information required to send an email message.
@@ -47,6 +49,7 @@ export class SendEmailMessageUseCase {
   constructor(
     private readonly messageService: EmailMessageService,
     private readonly accountService: EmailAccountService,
+    private readonly configurationDataService: EmailConfigurationDataService,
   ) {
     this.log = new DefaultLogger(this.constructor.name)
   }
@@ -65,6 +68,8 @@ export class SendEmailMessageUseCase {
       attachments,
       inlineAttachments,
     })
+    const { emailMessageMaxOutboundMessageSize } =
+      await this.configurationDataService.getConfigurationData()
     const { from, to, cc, bcc, replyTo, subject } = emailMessageHeader
     const recipients: string[] = []
     to?.forEach((addr) => recipients.push(addr.emailAddress))
@@ -95,6 +100,7 @@ export class SendEmailMessageUseCase {
         message,
         senderEmailAddressId,
         recipientsPublicInfo,
+        emailMessageMaxOutboundMessageSize,
       })
     } else {
       const rfc822Data =
@@ -110,6 +116,13 @@ export class SendEmailMessageUseCase {
           inlineAttachments,
           encryptionStatus: EncryptionStatus.UNENCRYPTED,
         })
+
+      if (rfc822Data.byteLength > emailMessageMaxOutboundMessageSize) {
+        throw new MessageSizeLimitExceededError(
+          `Email message size exceeded. Limit: ${emailMessageMaxOutboundMessageSize} bytes`,
+        )
+      }
+
       return await this.messageService.sendMessage({
         rfc822Data,
         senderEmailAddressId,

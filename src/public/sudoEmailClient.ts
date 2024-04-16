@@ -1047,6 +1047,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const sendEmailMessageUseCase = new SendEmailMessageUseCase(
       this.emailMessageService,
       this.emailAccountService,
+      this.configurationDataService,
     )
     return await sendEmailMessageUseCase.execute({
       senderEmailAddressId,

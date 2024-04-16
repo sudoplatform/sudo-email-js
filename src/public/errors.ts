@@ -62,6 +62,12 @@ export class LimitExceededError extends EmailError {
   }
 }
 
+export class MessageSizeLimitExceededError extends EmailError {
+  constructor(msg?: string) {
+    super(msg)
+  }
+}
+
 export class InvalidArgumentError extends EmailError {
   constructor(msg?: string) {
     super(msg)
