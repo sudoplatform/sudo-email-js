@@ -46,9 +46,11 @@ import { EmailFolderAPITransformer } from '../private/data/folder/transformer/em
 import { DefaultEmailMessageService } from '../private/data/message/defaultEmailMessageService'
 import { EmailMessageAPITransformer } from '../private/data/message/transformer/emailMessageAPITransformer'
 import { ListEmailMessagesAPITransformer } from '../private/data/message/transformer/listEmailMessagesAPITransformer'
+import { DefaultEmailMessageCryptoService } from '../private/data/secure/defaultEmailMessageCryptoService'
 import { EmailDomainEntity } from '../private/domain/entities/account/emailDomainEntity'
 import { EmailAddressBlocklistService } from '../private/domain/entities/blocklist/emailAddressBlocklistService'
 import { UpdateEmailMessagesStatus } from '../private/domain/entities/message/updateEmailMessagesStatus'
+import { EmailMessageCryptoService } from '../private/domain/entities/secure/emailMessageCryptoService'
 import { CheckEmailAddressAvailabilityUseCase } from '../private/domain/use-cases/account/checkEmailAddressAvailabilityUseCase'
 import { DeprovisionEmailAccountUseCase } from '../private/domain/use-cases/account/deprovisionEmailAccountUseCase'
 import { GetEmailAccountUseCase } from '../private/domain/use-cases/account/getEmailAccountUseCase'
@@ -65,7 +67,9 @@ import { UnblockEmailAddressesByHashedValueUseCase } from '../private/domain/use
 import { GetConfigurationDataUseCase } from '../private/domain/use-cases/configuration/getConfigurationDataUseCase'
 import { DeleteDraftEmailMessagesUseCase } from '../private/domain/use-cases/draft/deleteDraftEmailMessagesUseCase'
 import { GetDraftEmailMessageUseCase } from '../private/domain/use-cases/draft/getDraftEmailMessageUseCase'
+import { ListDraftEmailMessageMetadataForEmailAddressIdUseCase } from '../private/domain/use-cases/draft/listDraftEmailMessageMetadataForEmailAddressIdUseCase'
 import { ListDraftEmailMessageMetadataUseCase } from '../private/domain/use-cases/draft/listDraftEmailMessageMetadataUseCase'
+import { ListDraftEmailMessagesForEmailAddressIdUseCase } from '../private/domain/use-cases/draft/listDraftEmailMessagesForEmailAddressIdUseCase'
 import { SaveDraftEmailMessageUseCase } from '../private/domain/use-cases/draft/saveDraftEmailMessageUseCase'
 import { UpdateDraftEmailMessageUseCase } from '../private/domain/use-cases/draft/updateDraftEmailMessageUseCase'
 import { CreateCustomEmailFolderUseCase } from '../private/domain/use-cases/folder/createCustomEmailFolderUseCase'
@@ -73,6 +77,7 @@ import { ListEmailFoldersForEmailAddressIdUseCase } from '../private/domain/use-
 import { DeleteEmailMessagesUseCase } from '../private/domain/use-cases/message/deleteEmailMessagesUseCase'
 import { GetEmailMessageRfc822DataUseCase } from '../private/domain/use-cases/message/getEmailMessageRfc822DataUseCase'
 import { GetEmailMessageUseCase } from '../private/domain/use-cases/message/getEmailMessageUseCase'
+import { GetEmailMessageWithBodyUseCase } from '../private/domain/use-cases/message/getEmailMessageWithBodyUseCase'
 import { ListEmailMessagesForEmailAddressIdUseCase } from '../private/domain/use-cases/message/listEmailMessagesForEmailAddressIdUseCase'
 import { ListEmailMessagesForEmailFolderIdUseCase } from '../private/domain/use-cases/message/listEmailMessagesForEmailFolderIdUseCase'
 import { ListEmailMessagesUseCase } from '../private/domain/use-cases/message/listEmailMessagesUseCase'
@@ -81,6 +86,7 @@ import { SubscribeToEmailMessagesUseCase } from '../private/domain/use-cases/mes
 import { UnsubscribeFromEmailMessagesUseCase } from '../private/domain/use-cases/message/unsubscribeFromEmailMessagesUseCase'
 import { UpdateEmailMessagesUseCase } from '../private/domain/use-cases/message/updateEmailMessagesUseCase'
 import { InvalidArgumentError } from './errors'
+import { EmailAttachment } from './typings'
 import {
   BatchOperationResult,
   BatchOperationResultStatus,
@@ -95,16 +101,13 @@ import { EmailFolder } from './typings/emailFolder'
 import { EmailMessage, EmailMessageSubscriber } from './typings/emailMessage'
 import { EmailMessageDateRange } from './typings/emailMessageDateRange'
 import { EmailMessageRfc822Data } from './typings/emailMessageRfc822Data'
+import { EmailMessageWithBody } from './typings/emailMessageWithBody'
 import {
   ListEmailAddressesResult,
   ListEmailMessagesResult,
 } from './typings/listOperationResult'
 import { SortOrder } from './typings/sortOrder'
-import { EmailMessageCryptoService } from '../private/domain/entities/secure/emailMessageCryptoService'
-import { DefaultEmailMessageCryptoService } from '../private/data/secure/defaultEmailMessageCryptoService'
-import { EmailAttachment } from './typings'
-import { EmailMessageWithBody } from './typings/emailMessageWithBody'
-import { GetEmailMessageWithBodyUseCase } from '../private/domain/use-cases/message/getEmailMessageWithBodyUseCase'
+import { ListDraftEmailMessagesUseCase } from '../private/domain/use-cases/draft/listDraftEmailMessagesUseCase'
 
 /**
  * Pagination interface designed to be extended for list interfaces.
@@ -702,13 +705,40 @@ export interface SudoEmailClient {
   ): Promise<DraftEmailMessage | undefined>
 
   /**
-   * Get the list of draft email message metadata for the specified email address.
+   * Lists the metadata and content of all draft email messages for the user.
+   *
+   * @returns {DraftEmailMessage[]} An array of draft email messages or an empty array if no
+   *  matching draft email messages can be found.
+   */
+  listDraftEmailMessages(): Promise<DraftEmailMessage[]>
+
+  /**
+   * Lists the metadata and content of all draft messages for the specified email address identifier.
    *
    * @param {string} emailAddressId The identifier of the email address associated with the draft email messages.
-   * @returns {DraftEmailMessageMetadata[]} An array of draft email message metadata or an empty array if no matching draft email messages
-   *  can be found.
+   * @returns {DraftEmailMessage[]} An array of draft email messages or an empty array if no
+   *  matching draft email messages can be found.
    */
-  listDraftEmailMessageMetadata(
+  listDraftEmailMessagesForEmailAddressId(
+    emailAddressId: string,
+  ): Promise<DraftEmailMessage[]>
+
+  /**
+   * Lists the metadata of all draft email messages for the user.
+   *
+   * @returns {DraftEmailMessageMetadata[]} An array of draft email message metadata or an empty array if no
+   *  matching draft email messages can be found.
+   */
+  listDraftEmailMessageMetadata(): Promise<DraftEmailMessageMetadata[]>
+
+  /**
+   * Lists the metadata of all draft email messages for the specified email address identifier.
+   *
+   * @param {string} emailAddressId The identifier of the email address associated with the draft email messages.
+   * @returns {DraftEmailMessageMetadata[]} An array of draft email message metadata or an empty array if no
+   *  matching draft email messages can be found.
+   */
+  listDraftEmailMessageMetadataForEmailAddressId(
     emailAddressId: string,
   ): Promise<DraftEmailMessageMetadata[]>
 
@@ -1430,12 +1460,55 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     return await useCase.execute({ id, emailAddressId })
   }
 
-  public async listDraftEmailMessageMetadata(
+  public async listDraftEmailMessages(): Promise<DraftEmailMessage[]> {
+    this.log.debug(this.listDraftEmailMessages.name)
+
+    const useCase = new ListDraftEmailMessagesUseCase(
+      this.emailAccountService,
+      this.emailMessageService,
+    )
+    const { draftMessages } = await useCase.execute()
+
+    return draftMessages
+  }
+
+  public async listDraftEmailMessagesForEmailAddressId(
     emailAddressId: string,
-  ): Promise<DraftEmailMessageMetadata[]> {
-    this.log.debug(this.listDraftEmailMessageMetadata.name, { emailAddressId })
+  ): Promise<DraftEmailMessage[]> {
+    this.log.debug(this.listDraftEmailMessagesForEmailAddressId.name, {
+      emailAddressId,
+    })
+
+    const useCase = new ListDraftEmailMessagesForEmailAddressIdUseCase(
+      this.emailMessageService,
+    )
+    const { draftMessages } = await useCase.execute({ emailAddressId })
+
+    return draftMessages
+  }
+
+  public async listDraftEmailMessageMetadata(): Promise<
+    DraftEmailMessageMetadata[]
+  > {
+    this.log.debug(this.listDraftEmailMessageMetadata.name)
 
     const useCase = new ListDraftEmailMessageMetadataUseCase(
+      this.emailAccountService,
+      this.emailMessageService,
+    )
+    const { metadata } = await useCase.execute()
+
+    return metadata
+  }
+
+  public async listDraftEmailMessageMetadataForEmailAddressId(
+    emailAddressId: string,
+  ): Promise<DraftEmailMessageMetadata[]> {
+    this.log.debug(this.listDraftEmailMessageMetadataForEmailAddressId.name, {
+      emailAddressId,
+    })
+
+    const useCase = new ListDraftEmailMessageMetadataForEmailAddressIdUseCase(
       this.emailMessageService,
     )
     const { metadata } = await useCase.execute({ emailAddressId })

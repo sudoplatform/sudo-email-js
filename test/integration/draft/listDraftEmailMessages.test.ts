@@ -14,7 +14,7 @@ import { delay } from '../../util/delay'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 
-describe('SudoEmailClient listDraftEmailMessageMetadata Test Suite', () => {
+describe('SudoEmailClient listDraftEmailMessages Test Suite', () => {
   jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
 
@@ -56,7 +56,7 @@ describe('SudoEmailClient listDraftEmailMessageMetadata Test Suite', () => {
     )
   })
 
-  it('lists multiple draft metadata across a user', async () => {
+  it('lists multiple draft messages across a user', async () => {
     const draftDataArrays = _.range(NUMBER_DRAFTS).map(() =>
       Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
         from: [{ emailAddress: emailAddress.emailAddress }],
@@ -79,22 +79,22 @@ describe('SudoEmailClient listDraftEmailMessageMetadata Test Suite', () => {
       await delay(10)
     }
 
-    const metadata = await instanceUnderTest.listDraftEmailMessageMetadata()
+    const draftMessages = await instanceUnderTest.listDraftEmailMessages()
 
-    metadata.forEach((m) => {
+    draftMessages.forEach((d) => {
       expect(draftData).toContainEqual({
-        ...m,
-        id: m.id,
-        updatedAt: m.updatedAt,
+        ...d,
+        id: d.id,
+        updatedAt: d.updatedAt,
         rfc822Data: expect.anything(),
       })
     })
   })
 
   it('should return an empty list if no drafts found', async () => {
-    const metadata = await instanceUnderTest.listDraftEmailMessageMetadata()
+    const draftMessages = await instanceUnderTest.listDraftEmailMessages()
 
-    expect(metadata).toHaveLength(0)
+    expect(draftMessages).toHaveLength(0)
   })
 
   it('should list draft metadata for each address', async () => {
@@ -140,7 +140,7 @@ describe('SudoEmailClient listDraftEmailMessageMetadata Test Suite', () => {
     })
     draftData.push({ ...metadata2, rfc822Data: draft })
 
-    const result = await instanceUnderTest.listDraftEmailMessageMetadata()
+    const result = await instanceUnderTest.listDraftEmailMessages()
     expect(result).toHaveLength(10)
   })
 })

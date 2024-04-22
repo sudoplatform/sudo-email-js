@@ -18,6 +18,9 @@ export class ConfigurationDataAPITransformer {
         entity.emailMessageMaxInboundMessageSize,
       emailMessageMaxOutboundMessageSize:
         entity.emailMessageMaxOutboundMessageSize,
+      emailMessageRecipientsLimit: entity.emailMessageRecipientsLimit,
+      encryptedEmailMessageRecipientsLimit:
+        entity.encryptedEmailMessageRecipientsLimit,
     }
 
     return transformed
@@ -30,6 +33,9 @@ export class ConfigurationDataAPITransformer {
       emailMessageMaxInboundMessageSize: data.emailMessageMaxInboundMessageSize,
       emailMessageMaxOutboundMessageSize:
         data.emailMessageMaxOutboundMessageSize,
+      emailMessageRecipientsLimit: data.emailMessageRecipientsLimit,
+      encryptedEmailMessageRecipientsLimit:
+        data.encryptedEmailMessageRecipientsLimit,
     }
   }
 }

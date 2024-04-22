@@ -153,6 +153,8 @@ export type EmailConfigurationData = {
   deleteEmailMessagesLimit: Scalars['Int']['output']
   emailMessageMaxInboundMessageSize: Scalars['Int']['output']
   emailMessageMaxOutboundMessageSize: Scalars['Int']['output']
+  emailMessageRecipientsLimit: Scalars['Int']['output']
+  encryptedEmailMessageRecipientsLimit: Scalars['Int']['output']
   updateEmailMessagesLimit: Scalars['Int']['output']
 }
 
@@ -701,6 +703,8 @@ export type EmailConfigurationDataFragment = {
   updateEmailMessagesLimit: number
   emailMessageMaxInboundMessageSize: number
   emailMessageMaxOutboundMessageSize: number
+  emailMessageRecipientsLimit: number
+  encryptedEmailMessageRecipientsLimit: number
 }
 
 export type EmailFolderFragment = {
@@ -1029,6 +1033,8 @@ export type GetEmailConfigQuery = {
     updateEmailMessagesLimit: number
     emailMessageMaxInboundMessageSize: number
     emailMessageMaxOutboundMessageSize: number
+    emailMessageRecipientsLimit: number
+    encryptedEmailMessageRecipientsLimit: number
   }
 }
 
@@ -2105,6 +2111,17 @@ export const EmailConfigurationDataFragmentDoc = {
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'emailMessageMaxOutboundMessageSize' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'emailMessageRecipientsLimit' },
+          },
+          {
+            kind: 'Field',
+            name: {
+              kind: 'Name',
+              value: 'encryptedEmailMessageRecipientsLimit',
+            },
           },
         ],
       },
@@ -3345,6 +3362,17 @@ export const GetEmailConfigDocument = {
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'emailMessageMaxOutboundMessageSize' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'emailMessageRecipientsLimit' },
+          },
+          {
+            kind: 'Field',
+            name: {
+              kind: 'Name',
+              value: 'encryptedEmailMessageRecipientsLimit',
+            },
           },
         ],
       },

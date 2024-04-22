@@ -6,24 +6,24 @@
 
 import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { EmailAccountService } from '../../entities/account/emailAccountService'
-import { DraftEmailMessageMetadataEntity } from '../../entities/message/draftEmailMessageMetadataEntity'
+import { DraftEmailMessageEntity } from '../../entities/message/draftEmailMessageEntity'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
 
 /**
- * Output for `ListDraftEmailMessageMetadataUseCase` use case.
+ * Output for `ListDraftEmailMessagesUseCase` use case.
  *
- * @interface ListDraftEmailMessagesMetadataUseCaseOutput
- * @property {DraftEmailMessageMetadataEntity[]} metadata List of draft email message metadata.
+ * @interface ListDraftEmailMessagesUseCaseOutput
+ * @property {DraftEmailMessageEntity[]} draftMessages List of draft email messages.
  */
-interface ListDraftEmailMessageMetadataUseCaseOutput {
-  metadata: DraftEmailMessageMetadataEntity[]
+interface ListDraftEmailMessagesUseCaseOutput {
+  draftMessages: DraftEmailMessageEntity[]
 }
 
 /**
  * Application business logic for retrieving a list of draft email message metadata
- * for the user.
+ * and content for the user.
  */
-export class ListDraftEmailMessageMetadataUseCase {
+export class ListDraftEmailMessagesUseCase {
   private readonly log: Logger
   constructor(
     private readonly emailAccountService: EmailAccountService,
@@ -32,10 +32,10 @@ export class ListDraftEmailMessageMetadataUseCase {
     this.log = new DefaultLogger(this.constructor.name)
   }
 
-  async execute(): Promise<ListDraftEmailMessageMetadataUseCaseOutput> {
+  async execute(): Promise<ListDraftEmailMessagesUseCaseOutput> {
     this.log.debug(this.constructor.name)
 
-    const result: DraftEmailMessageMetadataEntity[] = []
+    const result: DraftEmailMessageEntity[] = []
 
     let nextToken: string | undefined = undefined
     do {
@@ -48,11 +48,23 @@ export class ListDraftEmailMessageMetadataUseCase {
             await this.emailMessageService.listDraftsMetadataForEmailAddressId({
               emailAddressId: account.id,
             })
-          result.push(...metadata)
+          const draftContent = await Promise.all(
+            metadata.map(async (m) => {
+              return this.emailMessageService.getDraft({
+                id: m.id,
+                emailAddressId: account.id,
+              })
+            }),
+          )
+          const draftMessages = draftContent.filter(
+            (draft) => draft !== undefined,
+          ) as DraftEmailMessageEntity[]
+
+          result.push(...draftMessages)
         }),
       )
     } while (nextToken)
 
-    return { metadata: result }
+    return { draftMessages: result }
   }
 }

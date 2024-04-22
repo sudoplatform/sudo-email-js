@@ -50,7 +50,7 @@ import {
   GetEmailMessageInput,
   GetEmailMessageRfc822DataInput,
   GetEmailMessageWithBodyInput,
-  ListDraftsMetadataInput,
+  ListDraftsMetadataForEmailAddressIdInput,
   ListEmailMessagesForEmailAddressIdInput,
   ListEmailMessagesForEmailAddressIdOutput,
   ListEmailMessagesForEmailFolderIdInput,
@@ -64,6 +64,7 @@ import {
   UpdateEmailMessagesOutput,
 } from '../../domain/entities/message/emailMessageService'
 import { SealedEmailMessageEntity } from '../../domain/entities/message/sealedEmailMessageEntity'
+import { gunzipAsync } from '../../util/zlibAsync'
 import { ApiClient } from '../common/apiClient'
 import { EmailServiceConfig } from '../common/config'
 import { DeviceKeyWorker, KeyType } from '../common/deviceKeyWorker'
@@ -79,16 +80,15 @@ import {
 } from '../common/subscriptionManager'
 import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransformer'
 import { SortOrderTransformer } from '../common/transformer/sortOrderTransformer'
-import { gunzipAsync } from '../../util/zlibAsync'
 // eslint-disable-next-line tree-shaking/no-side-effects-in-initialization
 import { withDefault } from '../common/withDefault'
-import { SealedEmailMessageEntityTransformer } from './transformer/sealedEmailMessageEntityTransformer'
-import { Rfc822MessageDataProcessor } from '../../util/rfc822MessageDataProcessor'
+import { EmailMessageWithBodyEntity } from '../../domain/entities/message/emailMessageWithBodyEntity'
+import { EmailMessageCryptoService } from '../../domain/entities/secure/emailMessageCryptoService'
 import { SecureEmailAttachmentType } from '../../domain/entities/secure/secureEmailAttachmentType'
 import { SecurePackage } from '../../domain/entities/secure/securePackage'
 import { arrayBufferToString, stringToArrayBuffer } from '../../util/buffer'
-import { EmailMessageCryptoService } from '../../domain/entities/secure/emailMessageCryptoService'
-import { EmailMessageWithBodyEntity } from '../../domain/entities/message/emailMessageWithBodyEntity'
+import { Rfc822MessageDataProcessor } from '../../util/rfc822MessageDataProcessor'
+import { SealedEmailMessageEntityTransformer } from './transformer/sealedEmailMessageEntityTransformer'
 
 const EmailAddressEntityCodec = t.intersection(
   [t.type({ emailAddress: t.string }), t.partial({ displayName: t.string })],
@@ -271,9 +271,11 @@ export class DefaultEmailMessageService implements EmailMessageService {
     }
   }
 
-  async listDraftsMetadata({
+  async listDraftsMetadataForEmailAddressId({
     emailAddressId,
-  }: ListDraftsMetadataInput): Promise<DraftEmailMessageMetadataEntity[]> {
+  }: ListDraftsMetadataForEmailAddressIdInput): Promise<
+    DraftEmailMessageMetadataEntity[]
+  > {
     const keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
     const draftPrefix = `${keyPrefix}/draft/`
     const result = await this.s3Client.list({

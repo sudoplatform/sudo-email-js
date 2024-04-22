@@ -39,6 +39,8 @@ export class EntityDataFactory {
     updateEmailMessagesLimit: 100,
     emailMessageMaxInboundMessageSize: 10485760,
     emailMessageMaxOutboundMessageSize: 10485760,
+    emailMessageRecipientsLimit: 10,
+    encryptedEmailMessageRecipientsLimit: 10,
   }
 
   static readonly emailAddress: EmailAddressEntity = {

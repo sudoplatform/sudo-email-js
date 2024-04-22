@@ -1488,7 +1488,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     })
   })
 
-  describe('listDrafts', () => {
+  describe('listDraftsMetadataForEmailAddressId', () => {
     it('lists drafts successfully', async () => {
       const drafts: S3ClientListOutput[] = [
         { key: 'draft1', lastModified: new Date(1) },
@@ -1497,7 +1497,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       ]
       when(mockS3Client.list(anything())).thenResolve(drafts)
       await expect(
-        instanceUnderTest.listDraftsMetadata({
+        instanceUnderTest.listDraftsMetadataForEmailAddressId({
           emailAddressId: 'emailAddressId',
         }),
       ).resolves.toEqual<DraftEmailMessageMetadataEntity[]>(
@@ -1517,9 +1517,10 @@ describe('DefaultEmailMessageService Test Suite', () => {
         3,
       )
       when(mockS3Client.list(anything())).thenResolve(drafts)
-      const listOfDrafts = await instanceUnderTest.listDraftsMetadata({
-        emailAddressId: 'emailAddressId',
-      })
+      const listOfDrafts =
+        await instanceUnderTest.listDraftsMetadataForEmailAddressId({
+          emailAddressId: 'emailAddressId',
+        })
 
       listOfDrafts.forEach((draft, i) => {
         expect(draft.id).toStrictEqual(`${draftEmailMessage}${i}`)

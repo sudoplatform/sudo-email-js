@@ -14,7 +14,7 @@ import { delay } from '../../util/delay'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 
-describe('SudoEmailClient listDraftEmailMessageMetadata Test Suite', () => {
+describe('SudoEmailClient listDraftEmailMessageMetadataForEmailAddressId Test Suite', () => {
   jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
 
@@ -56,7 +56,7 @@ describe('SudoEmailClient listDraftEmailMessageMetadata Test Suite', () => {
     )
   })
 
-  it('lists multiple draft metadata across a user', async () => {
+  it('lists multiple draft metadata across an email address', async () => {
     const draftDataArrays = _.range(NUMBER_DRAFTS).map(() =>
       Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
         from: [{ emailAddress: emailAddress.emailAddress }],
@@ -79,7 +79,10 @@ describe('SudoEmailClient listDraftEmailMessageMetadata Test Suite', () => {
       await delay(10)
     }
 
-    const metadata = await instanceUnderTest.listDraftEmailMessageMetadata()
+    const metadata =
+      await instanceUnderTest.listDraftEmailMessageMetadataForEmailAddressId(
+        emailAddress.id,
+      )
 
     metadata.forEach((m) => {
       expect(draftData).toContainEqual({
@@ -92,12 +95,15 @@ describe('SudoEmailClient listDraftEmailMessageMetadata Test Suite', () => {
   })
 
   it('should return an empty list if no drafts found', async () => {
-    const metadata = await instanceUnderTest.listDraftEmailMessageMetadata()
+    const metadata =
+      await instanceUnderTest.listDraftEmailMessageMetadataForEmailAddressId(
+        emailAddress.id,
+      )
 
     expect(metadata).toHaveLength(0)
   })
 
-  it('should list draft metadata for each address', async () => {
+  it('should not return a list of draft metadata from other accounts', async () => {
     const emailAddress2 = await provisionEmailAddress(
       sudoOwnershipProofToken,
       instanceUnderTest,
@@ -140,7 +146,10 @@ describe('SudoEmailClient listDraftEmailMessageMetadata Test Suite', () => {
     })
     draftData.push({ ...metadata2, rfc822Data: draft })
 
-    const result = await instanceUnderTest.listDraftEmailMessageMetadata()
-    expect(result).toHaveLength(10)
+    const result =
+      await instanceUnderTest.listDraftEmailMessageMetadataForEmailAddressId(
+        emailAddress.id,
+      )
+    expect(result).toHaveLength(NUMBER_DRAFTS)
   })
 })

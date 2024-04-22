@@ -43,12 +43,12 @@ export interface GetDraftInput {
 }
 
 /**
- * Input for `EmailMessageService.listDraftsMetadata` method.
+ * Input for `EmailMessageService.listDraftsMetadataForEmailAddressId` method.
  *
- * @interface ListDraftsMetadataInput
+ * @interface ListDraftsMetadataForEmailAddressIdInput
  * @property {string} emailAddressId Identifier of the email address associated with the draft email messages.
  */
-export interface ListDraftsMetadataInput {
+export interface ListDraftsMetadataForEmailAddressIdInput {
   emailAddressId: string
 }
 
@@ -320,13 +320,13 @@ export interface EmailMessageService {
   getDraft(input: GetDraftInput): Promise<DraftEmailMessageEntity | undefined>
 
   /**
-   * List draft email message identifiers.
+   * List draft email message metadata for the specified email address identifier.
    *
-   * @param {ListDraftsMetadataInput} input Parameters used to list draft email messages.
-   * @returns {string[]} A list of draft email message identifiers. Can be empty if no draft messages found.
+   * @param {ListDraftsMetadataForEmailAddressIdInput} input Parameters used to list draft email message metadata.
+   * @returns {DraftEmailMessageMetadataEntity[]} A list of draft email message metadata. Can be empty if no draft messages found.
    */
-  listDraftsMetadata(
-    input: ListDraftsMetadataInput,
+  listDraftsMetadataForEmailAddressId(
+    input: ListDraftsMetadataForEmailAddressIdInput,
   ): Promise<DraftEmailMessageMetadataEntity[]>
 
   /**
