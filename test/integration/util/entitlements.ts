@@ -20,6 +20,9 @@ export const emailStorageMaxPerEmailAddressEntitlement =
 export const emailStorageMaxPerUserEntitlement =
   'sudoplatform.email.emailStorageMaxPerUser'
 
+export const emailAddressMaxProvisionsExpendableEntitlement =
+  'sudoplatform.email.emailAddressMaxProvisionsExpendable'
+
 export const emailAddressMaxPerSudoEntitlement =
   'sudoplatform.email.emailAddressMaxPerSudo'
 
@@ -59,6 +62,12 @@ export class EntitlementsBuilder {
       name: emailStorageMaxPerUserEntitlement,
       description: 'Test Max Storage Per User Entitlement',
       value: 500000,
+    },
+    {
+      name: 'sudoplatform.email.emailAddressMaxProvisionsExpendable',
+      description:
+        'Maximum number of email addresses a user can provision over lifetime of their account',
+      value: 60,
     },
     {
       name: emailMessageSendUserEntitledEntitlement,
