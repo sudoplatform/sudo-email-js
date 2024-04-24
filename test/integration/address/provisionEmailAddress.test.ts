@@ -80,6 +80,7 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
     expect(emailAddress.owners[0].issuer).toStrictEqual(sudoIssuer)
     expect(emailAddress.alias).toBeDefined()
     expect(emailAddress.alias).toStrictEqual(emailAddressAlias)
+    expect(emailAddress.numberOfEmailMessages).toStrictEqual(0)
     expect(emailAddress.folders).toHaveLength(4)
     expect(emailAddress.folders.map((f) => f.folderName)).toEqual(
       expect.arrayContaining(['INBOX', 'SENT', 'OUTBOX', 'TRASH']),
@@ -104,6 +105,7 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
     expect(emailAddress.owners[0].issuer).toStrictEqual(sudoIssuer)
     expect(emailAddress.alias).toBeDefined()
     expect(emailAddress.alias).toStrictEqual(emailAddressAlias)
+    expect(emailAddress.numberOfEmailMessages).toStrictEqual(0)
     expect(emailAddress.folders).toHaveLength(4)
     expect(emailAddress.folders.map((f) => f.folderName)).toEqual(
       expect.arrayContaining(['INBOX', 'SENT', 'OUTBOX', 'TRASH']),

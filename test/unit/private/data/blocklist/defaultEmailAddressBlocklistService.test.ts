@@ -241,9 +241,8 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         unblockedAddresses: [emailAddress],
       }
 
-      const result = await instanceUnderTest.unblockEmailAddressesForOwner(
-        input,
-      )
+      const result =
+        await instanceUnderTest.unblockEmailAddressesForOwner(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
         status: UpdateEmailMessagesStatus.Success,
       })
@@ -261,9 +260,8 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         unblockedAddresses,
       }
 
-      const result = await instanceUnderTest.unblockEmailAddressesForOwner(
-        input,
-      )
+      const result =
+        await instanceUnderTest.unblockEmailAddressesForOwner(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
         status: UpdateEmailMessagesStatus.Success,
       })
@@ -284,9 +282,8 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         unblockedAddresses,
       }
 
-      const result = await instanceUnderTest.unblockEmailAddressesForOwner(
-        input,
-      )
+      const result =
+        await instanceUnderTest.unblockEmailAddressesForOwner(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
         status: UpdateEmailMessagesStatus.Failed,
       })
@@ -314,9 +311,8 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         unblockedAddresses,
       }
 
-      const result = await instanceUnderTest.unblockEmailAddressesForOwner(
-        input,
-      )
+      const result =
+        await instanceUnderTest.unblockEmailAddressesForOwner(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
         status: UpdateEmailMessagesStatus.Partial,
         failedAddresses: [unblockedAddresses[0]],
@@ -359,9 +355,8 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         hashedValues: [hashedValue],
       }
 
-      const result = await instanceUnderTest.unblockEmailAddressesByHashedValue(
-        input,
-      )
+      const result =
+        await instanceUnderTest.unblockEmailAddressesByHashedValue(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
         status: UpdateEmailMessagesStatus.Success,
       })
@@ -379,9 +374,8 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         hashedValues,
       }
 
-      const result = await instanceUnderTest.unblockEmailAddressesByHashedValue(
-        input,
-      )
+      const result =
+        await instanceUnderTest.unblockEmailAddressesByHashedValue(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
         status: UpdateEmailMessagesStatus.Success,
       })
@@ -401,9 +395,8 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         owner: mockOwner,
         hashedValues,
       }
-      const result = await instanceUnderTest.unblockEmailAddressesByHashedValue(
-        input,
-      )
+      const result =
+        await instanceUnderTest.unblockEmailAddressesByHashedValue(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
         status: UpdateEmailMessagesStatus.Failed,
       })
@@ -430,9 +423,8 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         owner: mockOwner,
         hashedValues,
       }
-      const result = await instanceUnderTest.unblockEmailAddressesByHashedValue(
-        input,
-      )
+      const result =
+        await instanceUnderTest.unblockEmailAddressesByHashedValue(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
         status: UpdateEmailMessagesStatus.Partial,
         failedAddresses: [hashedValues[0]],
@@ -448,17 +440,15 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         blockedAddresses: [],
       })
 
-      const result = await instanceUnderTest.getEmailAddressBlocklistForOwner(
-        mockOwner,
-      )
+      const result =
+        await instanceUnderTest.getEmailAddressBlocklistForOwner(mockOwner)
 
       expect(result).toHaveLength(0)
     })
 
     it('Returns the unsealed list of addresses', async () => {
-      const result = await instanceUnderTest.getEmailAddressBlocklistForOwner(
-        mockOwner,
-      )
+      const result =
+        await instanceUnderTest.getEmailAddressBlocklistForOwner(mockOwner)
 
       verify(mockAppSync.getEmailAddressBlocklist(anything())).once()
       verify(mockDeviceKeyWorker.keyExists(anything(), anything())).times(
@@ -488,9 +478,8 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         false,
         true,
       ) // First will be false, second true
-      const result = await instanceUnderTest.getEmailAddressBlocklistForOwner(
-        mockOwner,
-      )
+      const result =
+        await instanceUnderTest.getEmailAddressBlocklistForOwner(mockOwner)
 
       verify(mockAppSync.getEmailAddressBlocklist(anything())).once()
       verify(mockDeviceKeyWorker.keyExists(anything(), anything())).times(
@@ -523,9 +512,8 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       when(mockDeviceKeyWorker.unsealString(anything()))
         .thenThrow(new DecodeError())
         .thenResolve(mockUnsealedAddress)
-      const result = await instanceUnderTest.getEmailAddressBlocklistForOwner(
-        mockOwner,
-      )
+      const result =
+        await instanceUnderTest.getEmailAddressBlocklistForOwner(mockOwner)
 
       verify(mockAppSync.getEmailAddressBlocklist(anything())).once()
       verify(mockDeviceKeyWorker.keyExists(anything(), anything())).times(

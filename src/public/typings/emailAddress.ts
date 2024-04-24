@@ -16,6 +16,7 @@ import { EmailFolder } from './emailFolder'
  * @property {OwnerEntity[]} owners List of identifiers of user/accounts associated with this email address.
  * @property {string} emailAddress Address in format 'local-part@domain' of the email address.
  * @property {number} size The total size of all email messages assigned to the email address.
+ * @property {number} numberOfEmailMessages The total number of email messages assigned to the email address.
  * @property {number} version Version of this entity, increments on update.
  * @property {Date} createdAt Date when the email address was created.
  * @property {Date} updatedAt Date when the email address was last updated.
@@ -33,6 +34,7 @@ export interface EmailAddressProps {
   identityId: string
   emailAddress: string
   size: number
+  numberOfEmailMessages: number
   version: number
   createdAt: Date
   updatedAt: Date

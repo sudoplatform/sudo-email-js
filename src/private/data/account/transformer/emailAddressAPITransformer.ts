@@ -18,6 +18,7 @@ export class EmailAddressAPITransformer {
       identityId: entity.identityId,
       emailAddress: entity.emailAddress.emailAddress,
       size: entity.size,
+      numberOfEmailMessages: entity.numberOfEmailMessages,
       version: entity.version,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,

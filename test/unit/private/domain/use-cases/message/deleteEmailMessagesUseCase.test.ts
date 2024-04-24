@@ -52,9 +52,8 @@ describe('DeleteEmailMessageUseCase tests', () => {
     when(mockEmailMessageService.deleteMessages(anything())).thenResolve([
       idsTodeleteArr[3],
     ])
-    const { successIds, failureIds } = await instanceUnderTest.execute(
-      idsTodeleteSet,
-    )
+    const { successIds, failureIds } =
+      await instanceUnderTest.execute(idsTodeleteSet)
     expect(successIds.length).toEqual(idsTodeleteSet.size - 1)
     expect(successIds.includes(idsTodeleteArr[3])).toBeFalsy()
     expect(failureIds.length).toEqual(1)
@@ -69,9 +68,8 @@ describe('DeleteEmailMessageUseCase tests', () => {
       idsTodeleteArr[3],
       idsTodeleteArr[7],
     ])
-    const { successIds, failureIds } = await instanceUnderTest.execute(
-      idsTodeleteSet,
-    )
+    const { successIds, failureIds } =
+      await instanceUnderTest.execute(idsTodeleteSet)
     expect(successIds.length).toEqual(idsTodeleteSet.size - 2)
     expect(successIds.includes(idsTodeleteArr[3])).toBeFalsy()
     expect(successIds.includes(idsTodeleteArr[7])).toBeFalsy()

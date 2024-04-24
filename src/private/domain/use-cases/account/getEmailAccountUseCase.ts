@@ -28,6 +28,7 @@ interface GetEmailAccountUseCaseOutput {
   keyRingId: string
   emailAddress: { emailAddress: string }
   size: number
+  numberOfEmailMessages: number
   version: number
   createdAt: Date
   updatedAt: Date

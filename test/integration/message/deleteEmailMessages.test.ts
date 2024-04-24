@@ -82,7 +82,8 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
     )
   })
   it('deletes multiple email messages successfully', async () => {
-    const inputs = _.range(2).map((i) => ({
+    const numberEmailsSent = 2
+    const inputs = _.range(numberEmailsSent).map((i) => ({
       senderEmailAddressId: emailAddress.id,
       emailMessageHeader: {
         from: { emailAddress: emailAddress.emailAddress },
@@ -102,9 +103,36 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
       ),
     )
     await delay(2000)
+    let updatedEmailAddress = await instanceUnderTest.getEmailAddress({
+      id: emailAddress.id,
+    })
+    for (let i = 0; i < 5; i++) {
+      if (updatedEmailAddress!.numberOfEmailMessages === numberEmailsSent * 2) {
+        break
+      }
+      await delay(1000)
+      updatedEmailAddress = await instanceUnderTest.getEmailAddress({
+        id: emailAddress.id,
+      })
+    }
+    expect(updatedEmailAddress!.numberOfEmailMessages).toStrictEqual(
+      numberEmailsSent * 2,
+    )
     await expect(
       instanceUnderTest.deleteEmailMessages(ids),
     ).resolves.toStrictEqual({ status: BatchOperationResultStatus.Success })
+    for (let i = 0; i < 5; i++) {
+      if (updatedEmailAddress!.numberOfEmailMessages === numberEmailsSent) {
+        break
+      }
+      await delay(1000)
+      updatedEmailAddress = await instanceUnderTest.getEmailAddress({
+        id: emailAddress.id,
+      })
+    }
+    expect(updatedEmailAddress!.numberOfEmailMessages).toStrictEqual(
+      numberEmailsSent,
+    )
   })
   it("returns partial result when deleting messages that do and don't exist simultaneously", async () => {
     const messageId = await instanceUnderTest.sendEmailMessage({

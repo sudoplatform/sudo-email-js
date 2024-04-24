@@ -169,9 +169,8 @@ export class DefaultEmailMessageService implements EmailMessageService {
     if (!keyId) {
       throw new KeyNotFoundError('Symmetric key not found')
     }
-    const keyPrefix = await this.constructS3KeyForEmailAddressId(
-      senderEmailAddressId,
-    )
+    const keyPrefix =
+      await this.constructS3KeyForEmailAddressId(senderEmailAddressId)
     const draftId = id ?? v4()
     const key = `${keyPrefix}/draft/${draftId}`
     const sealed = await this.deviceKeyWorker.sealString({
@@ -529,9 +528,8 @@ export class DefaultEmailMessageService implements EmailMessageService {
     }
     const transformer = new SealedEmailMessageEntityTransformer()
     const sealedEmailMessage = transformer.transformGraphQL(result)
-    const unsealedEmailMessage = await this.unsealEmailMessage(
-      sealedEmailMessage,
-    )
+    const unsealedEmailMessage =
+      await this.unsealEmailMessage(sealedEmailMessage)
     return unsealedEmailMessage
   }
 
@@ -690,9 +688,8 @@ export class DefaultEmailMessageService implements EmailMessageService {
     emailMessageId: string,
     publicKeyId: string,
   ): Promise<string> {
-    const keyForAddress = await this.constructS3KeyForEmailAddressId(
-      emailAddressId,
-    )
+    const keyForAddress =
+      await this.constructS3KeyForEmailAddressId(emailAddressId)
     return `${keyForAddress}/${emailMessageId}-${publicKeyId}`
   }
 
@@ -1002,9 +999,8 @@ export class DefaultEmailMessageService implements EmailMessageService {
     senderEmailAddressId: string,
     data: ArrayBuffer,
   ): Promise<S3EmailObjectInput> {
-    const keyPrefix = await this.constructS3KeyForEmailAddressId(
-      senderEmailAddressId,
-    )
+    const keyPrefix =
+      await this.constructS3KeyForEmailAddressId(senderEmailAddressId)
     const id = v4()
     const key = `${keyPrefix}/${id}`
     const bucket = this.emailServiceConfig.transientBucket

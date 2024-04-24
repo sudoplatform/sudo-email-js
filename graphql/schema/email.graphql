@@ -244,6 +244,7 @@ type EmailAddress {
   lastReceivedAtEpochMs: Float
   emailAddress: String!
   size: Float!
+  numberOfEmailMessages: Int!
   alias: SealedAttribute
   folders: [EmailFolder!]!
 }

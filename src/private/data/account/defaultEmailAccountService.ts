@@ -204,9 +204,8 @@ export class DefaultEmailAccountService implements EmailAccountService {
   }: LookupEmailAddressesPublicInfoInput): Promise<
     EmailAddressPublicInfoEntity[]
   > {
-    const result = await this.appSync.lookupEmailAddressesPublicInfo(
-      emailAddresses,
-    )
+    const result =
+      await this.appSync.lookupEmailAddressesPublicInfo(emailAddresses)
 
     return result.items.map((publicInfo) =>
       EmailAddressPublicInfoTransformer.transformGraphQL(publicInfo),

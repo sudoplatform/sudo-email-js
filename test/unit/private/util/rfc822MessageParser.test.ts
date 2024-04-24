@@ -1957,9 +1957,8 @@ describe('rfc822MessageDataProcessor unit tests', () => {
       const msgStr =
         Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-      const result = await Rfc822MessageDataProcessor.parseInternetMessageData(
-        msgStr,
-      )
+      const result =
+        await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
 
       expect(result.from).toHaveLength(1)
       expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)

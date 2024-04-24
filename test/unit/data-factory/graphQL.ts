@@ -90,6 +90,7 @@ export class GraphQLDataFactory {
       emailAddress: 'testie@unittest.org',
       lastReceivedAtEpochMs: 3.0,
       size: 0,
+      numberOfEmailMessages: 0,
     }
 
   static readonly emailAddress: EmailAddress = {

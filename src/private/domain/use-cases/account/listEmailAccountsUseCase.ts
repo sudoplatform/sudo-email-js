@@ -38,6 +38,7 @@ interface ListEmailAccountsUseCaseOutput {
     keyRingId: string
     emailAddress: { emailAddress: string; alias?: string }
     size: number
+    numberOfEmailMessages: number
     version: number
     createdAt: Date
     updatedAt: Date

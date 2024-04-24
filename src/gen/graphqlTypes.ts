@@ -124,6 +124,7 @@ export type EmailAddress = {
   keyIds: Array<Scalars['String']['output']>
   keyRingId: Scalars['ID']['output']
   lastReceivedAtEpochMs?: Maybe<Scalars['Float']['output']>
+  numberOfEmailMessages: Scalars['Int']['output']
   owner: Scalars['ID']['output']
   owners: Array<Owner>
   size: Scalars['Float']['output']
@@ -636,6 +637,7 @@ export type EmailAddressWithoutFoldersFragment = {
   lastReceivedAtEpochMs?: number | null
   emailAddress: string
   size: number
+  numberOfEmailMessages: number
   owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
   alias?: {
     __typename?: 'SealedAttribute'
@@ -659,6 +661,7 @@ export type EmailAddressFragment = {
   lastReceivedAtEpochMs?: number | null
   emailAddress: string
   size: number
+  numberOfEmailMessages: number
   folders: Array<{
     __typename?: 'EmailFolder'
     id: string
@@ -833,6 +836,7 @@ export type ProvisionEmailAddressMutation = {
     lastReceivedAtEpochMs?: number | null
     emailAddress: string
     size: number
+    numberOfEmailMessages: number
     folders: Array<{
       __typename?: 'EmailFolder'
       id: string
@@ -884,6 +888,7 @@ export type DeprovisionEmailAddressMutation = {
     lastReceivedAtEpochMs?: number | null
     emailAddress: string
     size: number
+    numberOfEmailMessages: number
     owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
     alias?: {
       __typename?: 'SealedAttribute'
@@ -1076,6 +1081,7 @@ export type GetEmailAddressQuery = {
     lastReceivedAtEpochMs?: number | null
     emailAddress: string
     size: number
+    numberOfEmailMessages: number
     folders: Array<{
       __typename?: 'EmailFolder'
       id: string
@@ -1130,6 +1136,7 @@ export type ListEmailAddressesQuery = {
       lastReceivedAtEpochMs?: number | null
       emailAddress: string
       size: number
+      numberOfEmailMessages: number
       folders: Array<{
         __typename?: 'EmailFolder'
         id: string
@@ -1185,6 +1192,7 @@ export type ListEmailAddressesForSudoIdQuery = {
       lastReceivedAtEpochMs?: number | null
       emailAddress: string
       size: number
+      numberOfEmailMessages: number
       folders: Array<{
         __typename?: 'EmailFolder'
         id: string
@@ -1801,6 +1809,10 @@ export const EmailAddressWithoutFoldersFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           {
             kind: 'Field',
+            name: { kind: 'Name', value: 'numberOfEmailMessages' },
+          },
+          {
+            kind: 'Field',
             name: { kind: 'Name', value: 'alias' },
             selectionSet: {
               kind: 'SelectionSet',
@@ -1997,6 +2009,10 @@ export const EmailAddressFragmentDoc = {
           },
           { kind: 'Field', name: { kind: 'Name', value: 'emailAddress' } },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'numberOfEmailMessages' },
+          },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'alias' },
@@ -2472,6 +2488,10 @@ export const ProvisionEmailAddressDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           {
             kind: 'Field',
+            name: { kind: 'Name', value: 'numberOfEmailMessages' },
+          },
+          {
+            kind: 'Field',
             name: { kind: 'Name', value: 'alias' },
             selectionSet: {
               kind: 'SelectionSet',
@@ -2675,6 +2695,10 @@ export const DeprovisionEmailAddressDocument = {
           },
           { kind: 'Field', name: { kind: 'Name', value: 'emailAddress' } },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'numberOfEmailMessages' },
+          },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'alias' },
@@ -3570,6 +3594,10 @@ export const GetEmailAddressDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           {
             kind: 'Field',
+            name: { kind: 'Name', value: 'numberOfEmailMessages' },
+          },
+          {
+            kind: 'Field',
             name: { kind: 'Name', value: 'alias' },
             selectionSet: {
               kind: 'SelectionSet',
@@ -3785,6 +3813,10 @@ export const ListEmailAddressesDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           {
             kind: 'Field',
+            name: { kind: 'Name', value: 'numberOfEmailMessages' },
+          },
+          {
+            kind: 'Field',
             name: { kind: 'Name', value: 'alias' },
             selectionSet: {
               kind: 'SelectionSet',
@@ -3998,6 +4030,10 @@ export const ListEmailAddressesForSudoIdDocument = {
           },
           { kind: 'Field', name: { kind: 'Name', value: 'emailAddress' } },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'numberOfEmailMessages' },
+          },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'alias' },

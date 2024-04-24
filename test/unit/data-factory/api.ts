@@ -61,6 +61,7 @@ export class APIDataFactory {
     identityId: 'testIdentityId',
     emailAddress: 'testie@unittest.org',
     size: 0,
+    numberOfEmailMessages: 0,
     folders: [{ ...APIDataFactory.emailFolder }],
   }
 

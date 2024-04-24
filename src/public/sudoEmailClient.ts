@@ -1128,9 +1128,8 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const deleteEmailMessageUseCase = new DeleteEmailMessagesUseCase(
       this.emailMessageService,
     )
-    const { successIds, failureIds } = await deleteEmailMessageUseCase.execute(
-      idSet,
-    )
+    const { successIds, failureIds } =
+      await deleteEmailMessageUseCase.execute(idSet)
     if (successIds.length === idSet.size) {
       return { status: BatchOperationResultStatus.Success }
     }

@@ -21,6 +21,7 @@ export class EmailAccountEntityTransformer {
       keyRingId: data.keyRingId,
       emailAddress: emailAddressTransformer.transform(data.emailAddress),
       size: data.size,
+      numberOfEmailMessages: data.numberOfEmailMessages,
       version: data.version,
       createdAt: new Date(data.createdAtEpochMs),
       updatedAt: new Date(data.updatedAtEpochMs),

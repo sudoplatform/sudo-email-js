@@ -54,6 +54,7 @@ describe('SudoEmailClient GetEmailAddress Test Suite', () => {
 
   describe('GetEmailAddress', () => {
     it('returns expected result', async () => {
+      expect(emailAddresses[0].numberOfEmailMessages).toStrictEqual(0)
       await expect(
         instanceUnderTest.getEmailAddress({
           id: emailAddresses[0].id,

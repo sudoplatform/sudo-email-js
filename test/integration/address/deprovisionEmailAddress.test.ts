@@ -75,6 +75,7 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
       ownershipProofToken,
       instanceUnderTest,
     )
+    expect(emailAddress.numberOfEmailMessages).toStrictEqual(0)
 
     const toBeDeletedKeys = await cryptoProvider.exportKeys()
     expect(toBeDeletedKeys.length).toBe(5)
