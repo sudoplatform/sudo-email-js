@@ -9,9 +9,12 @@
  *
  * @interface DraftEmailMessageMetadata
  * @property {string} id Unique identifier of the draft email message.
+ * @property {string} emailAddressId Unique identifier of the email address associated with the draft
+ *  email message.
  * @property {Date} updatedAt Time at which the draft was last updated
  */
 export interface DraftEmailMessageMetadata {
   id: string
+  emailAddressId: string
   updatedAt: Date
 }

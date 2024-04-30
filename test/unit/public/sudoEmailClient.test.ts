@@ -1192,8 +1192,13 @@ describe('SudoEmailClient Test Suite', () => {
   })
 
   describe('sendEmailMessage', () => {
+    let timestamp: Date
     beforeEach(() => {
-      when(mockSendEmailMessageUseCase.execute(anything())).thenResolve('id')
+      timestamp = new Date()
+      when(mockSendEmailMessageUseCase.execute(anything())).thenResolve({
+        id: 'id',
+        createdAt: timestamp,
+      })
     })
     it('generates use case', async () => {
       await instanceUnderTest.sendEmailMessage({
@@ -1227,7 +1232,7 @@ describe('SudoEmailClient Test Suite', () => {
           attachments: [],
           inlineAttachments: [],
         }),
-      ).resolves.toEqual('id')
+      ).resolves.toEqual({ id: 'id', createdAt: timestamp })
     })
   })
 
@@ -1718,6 +1723,7 @@ describe('SudoEmailClient Test Suite', () => {
     beforeEach(() => {
       when(mockSaveDraftEmailMessageUseCase.execute(anything())).thenResolve({
         id: 'draftId',
+        emailAddressId: 'emailAddressId',
         updatedAt,
       })
     })
@@ -1755,6 +1761,7 @@ describe('SudoEmailClient Test Suite', () => {
         }),
       ).resolves.toEqual<DraftEmailMessageMetadata>({
         id: 'draftId',
+        emailAddressId: 'emailAddressId',
         updatedAt,
       })
     })
@@ -1766,6 +1773,7 @@ describe('SudoEmailClient Test Suite', () => {
     beforeEach(() => {
       when(mockUpdateDraftEmailMessageUseCase.execute(anything())).thenResolve({
         id: 'draftId',
+        emailAddressId: 'emailAddressId',
         updatedAt,
       })
     })
@@ -1806,7 +1814,11 @@ describe('SudoEmailClient Test Suite', () => {
           rfc822Data: stringToArrayBuffer(''),
           senderEmailAddressId: '',
         }),
-      ).resolves.toEqual({ id: 'draftId', updatedAt })
+      ).resolves.toEqual({
+        id: 'draftId',
+        emailAddressId: 'emailAddressId',
+        updatedAt,
+      })
     })
   })
 
@@ -1894,6 +1906,7 @@ describe('SudoEmailClient Test Suite', () => {
     beforeEach(() => {
       when(mockGetDraftEmailMessageUseCase.execute(anything())).thenResolve({
         id: 'id',
+        emailAddressId: 'emailAddressId',
         updatedAt,
         rfc822Data,
       })
@@ -1941,6 +1954,7 @@ describe('SudoEmailClient Test Suite', () => {
         }),
       ).resolves.toEqual<DraftEmailMessage>({
         id: 'id',
+        emailAddressId: 'emailAddressId',
         updatedAt,
         rfc822Data,
       })
@@ -1953,7 +1967,9 @@ describe('SudoEmailClient Test Suite', () => {
 
     beforeEach(() => {
       when(mockListDraftEmailMessagesUseCase.execute()).thenResolve({
-        draftMessages: [{ id: 'id', updatedAt, rfc822Data }],
+        draftMessages: [
+          { id: 'id', emailAddressId: 'emailAddressId', updatedAt, rfc822Data },
+        ],
       })
     })
 
@@ -1979,7 +1995,7 @@ describe('SudoEmailClient Test Suite', () => {
     it('returns expected result', async () => {
       await expect(instanceUnderTest.listDraftEmailMessages()).resolves.toEqual<
         DraftEmailMessage[]
-      >([{ id: 'id', updatedAt, rfc822Data }])
+      >([{ id: 'id', emailAddressId: 'emailAddressId', updatedAt, rfc822Data }])
     })
   })
 
@@ -1991,7 +2007,9 @@ describe('SudoEmailClient Test Suite', () => {
       when(
         mockListDraftEmailMessagesForEmailAddressIdUseCase.execute(anything()),
       ).thenResolve({
-        draftMessages: [{ id: 'id', updatedAt, rfc822Data }],
+        draftMessages: [
+          { id: 'id', emailAddressId: 'emailAddressId', updatedAt, rfc822Data },
+        ],
       })
     })
 
@@ -2033,7 +2051,7 @@ describe('SudoEmailClient Test Suite', () => {
       await expect(
         instanceUnderTest.listDraftEmailMessagesForEmailAddressId(''),
       ).resolves.toEqual<DraftEmailMessage[]>([
-        { id: 'id', updatedAt, rfc822Data },
+        { id: 'id', emailAddressId: 'emailAddressId', updatedAt, rfc822Data },
       ])
     })
   })
@@ -2042,7 +2060,7 @@ describe('SudoEmailClient Test Suite', () => {
     const updatedAt = new Date()
     beforeEach(() => {
       when(mockListDraftEmailMessageMetadataUseCase.execute()).thenResolve({
-        metadata: [{ id: 'id', updatedAt }],
+        metadata: [{ id: 'id', emailAddressId: 'emailAddressId', updatedAt }],
       })
     })
 
@@ -2071,7 +2089,9 @@ describe('SudoEmailClient Test Suite', () => {
     it('returns expected result', async () => {
       await expect(
         instanceUnderTest.listDraftEmailMessageMetadata(),
-      ).resolves.toEqual<DraftEmailMessageMetadata[]>([{ id: 'id', updatedAt }])
+      ).resolves.toEqual<DraftEmailMessageMetadata[]>([
+        { id: 'id', emailAddressId: 'emailAddressId', updatedAt },
+      ])
     })
   })
 
@@ -2083,7 +2103,7 @@ describe('SudoEmailClient Test Suite', () => {
           anything(),
         ),
       ).thenResolve({
-        metadata: [{ id: 'id', updatedAt }],
+        metadata: [{ id: 'id', emailAddressId: 'emailAddressId', updatedAt }],
       })
     })
 
@@ -2128,7 +2148,9 @@ describe('SudoEmailClient Test Suite', () => {
     it('returns expected result', async () => {
       await expect(
         instanceUnderTest.listDraftEmailMessageMetadataForEmailAddressId(''),
-      ).resolves.toEqual<DraftEmailMessageMetadata[]>([{ id: 'id', updatedAt }])
+      ).resolves.toEqual<DraftEmailMessageMetadata[]>([
+        { id: 'id', emailAddressId: 'emailAddressId', updatedAt },
+      ])
     })
   })
 

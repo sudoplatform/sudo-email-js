@@ -96,11 +96,12 @@ describe('getEmailMessageRfc822Data test suite', () => {
         'Life is not meant to be easy, my child; but take courage: it can be delightful.',
       ]
       const inputs = emailBodies.map((body) => generateSendInput(body))
-      const emailMessageIds = await Promise.all(
+      const results = await Promise.all(
         inputs.map(
           async (input) => await instanceUnderTest.sendEmailMessage(input),
         ),
       )
+      const emailMessageIds = results.map((r) => r.id)
       expect(emailMessageIds.length).toEqual(emailBodies.length)
 
       for (let index = 0; index < emailMessageIds.length; ++index) {
@@ -135,11 +136,12 @@ describe('getEmailMessageRfc822Data test suite', () => {
       const inputs = emailBodies.map((body) =>
         generateSendInput(body, [{ emailAddress: emailAddress.emailAddress }]),
       )
-      const emailMessageIds = await Promise.all(
+      const results = await Promise.all(
         inputs.map(
           async (input) => await instanceUnderTest.sendEmailMessage(input),
         ),
       )
+      const emailMessageIds = results.map((r) => r.id)
       expect(emailMessageIds.length).toEqual(emailBodies.length)
 
       for (let index = 0; index < emailMessageIds.length; ++index) {
@@ -178,14 +180,14 @@ describe('getEmailMessageRfc822Data test suite', () => {
   it('returns undefined for invalid email address ID', async () => {
     const input = generateSendInput('Hello, World')
 
-    const emailMessageId = await instanceUnderTest.sendEmailMessage(input)
-    expect(emailMessageId).toMatch(
+    const result = await instanceUnderTest.sendEmailMessage(input)
+    expect(result.id).toMatch(
       /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
     )
-    await waitForRfc822Data(emailMessageId)
+    await waitForRfc822Data(result.id)
     await expect(
       instanceUnderTest.getEmailMessageRfc822Data({
-        id: emailMessageId,
+        id: result.id,
         emailAddressId: 'invalidEmailAddressId',
       }),
     ).resolves.toBeUndefined()

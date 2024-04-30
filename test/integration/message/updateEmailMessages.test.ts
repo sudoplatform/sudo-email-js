@@ -71,7 +71,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
         body: 'Hello, World',
         attachments: [],
       })
-    const messageId = await instanceUnderTest.sendEmailMessage({
+    const result = await instanceUnderTest.sendEmailMessage({
       senderEmailAddressId: emailAddress.id,
       emailMessageHeader: {
         from: { emailAddress: emailAddress.emailAddress },
@@ -88,7 +88,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
     await waitForExpect(async () => {
       await expect(
         instanceUnderTest.updateEmailMessages({
-          ids: [messageId],
+          ids: [result.id],
           values: { seen: false },
         }),
       ).resolves.toMatchObject({ status: BatchOperationResultStatus.Success })
@@ -123,11 +123,12 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
       attachments: [],
       inlineAttachments: [],
     }))
-    const ids = await Promise.all(
+    const results = await Promise.all(
       messageInputs.map(
         async (input) => await instanceUnderTest.sendEmailMessage(input),
       ),
     )
+    const ids = results.map((r) => r.id)
     await waitForExpect(async () => {
       await expect(
         instanceUnderTest.updateEmailMessages({
@@ -167,11 +168,12 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
       attachments: [],
       inlineAttachments: [],
     }))
-    const ids = await Promise.all(
+    const results = await Promise.all(
       messageInputs.map(
         async (input) => await instanceUnderTest.sendEmailMessage(input),
       ),
     )
+    const ids = results.map((r) => r.id)
     const trashFolder = await getFolderByName({
       emailClient: instanceUnderTest,
       emailAddressId: emailAddress.id,
@@ -208,7 +210,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
   })
 
   test('previousFolderId does not change when message is moved to same folder', async () => {
-    const id = await instanceUnderTest.sendEmailMessage({
+    const result = await instanceUnderTest.sendEmailMessage({
       senderEmailAddressId: emailAddress.id,
       emailMessageHeader: {
         from: { emailAddress: emailAddress.emailAddress },
@@ -228,7 +230,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
     await waitForExpect(async () => {
       await expect(
         instanceUnderTest.updateEmailMessages({
-          ids: [id],
+          ids: [result.id],
           values: { folderId: sentFolder?.id ?? '' },
         }),
       ).resolves.toMatchObject({ status: BatchOperationResultStatus.Success })
@@ -270,7 +272,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
   })
 
   test('update email messages with mixture of failed and successful updates should return partial status', async () => {
-    const messageId = await instanceUnderTest.sendEmailMessage({
+    const result = await instanceUnderTest.sendEmailMessage({
       senderEmailAddressId: emailAddress.id,
       emailMessageHeader: {
         from: { emailAddress: emailAddress.emailAddress },
@@ -288,12 +290,12 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
     await waitForExpect(async () => {
       await expect(
         instanceUnderTest.updateEmailMessages({
-          ids: [messageId, nonExistentId],
+          ids: [result.id, nonExistentId],
           values: { seen: false },
         }),
       ).resolves.toStrictEqual({
         status: BatchOperationResultStatus.Partial,
-        successValues: [messageId],
+        successValues: [result.id],
         failureValues: [nonExistentId],
       })
     })

@@ -31,8 +31,8 @@ describe('ListDraftEmailMessagesForEmailAddressIdUseCase Test Suite', () => {
 
   it('calls EmailMessageService methods with correct inputs', async () => {
     const result = [
-      { id: v4(), size: 1, updatedAt: new Date() },
-      { id: v4(), size: 2, updatedAt: new Date() },
+      { id: v4(), emailAddressId: v4(), size: 1, updatedAt: new Date() },
+      { id: v4(), emailAddressId: v4(), size: 2, updatedAt: new Date() },
     ]
     when(
       mockEmailMessageService.listDraftsMetadataForEmailAddressId(anything()),
@@ -56,21 +56,25 @@ describe('ListDraftEmailMessagesForEmailAddressIdUseCase Test Suite', () => {
 
   it('returns results', async () => {
     const id = v4()
+    const emailAddressId = v4()
     const rfc822Data = stringToArrayBuffer(v4())
-    const listResult = [{ id, size: 1, updatedAt: new Date() }]
+    const listResult = [{ id, emailAddressId, size: 1, updatedAt: new Date() }]
     const getResult = {
       id,
+      emailAddressId,
       size: 1,
       updatedAt: new Date(),
       rfc822Data,
     }
-    const result = [{ id, size: 1, updatedAt: new Date(), rfc822Data }]
+    const result = [
+      { id, emailAddressId, size: 1, updatedAt: new Date(), rfc822Data },
+    ]
     when(
       mockEmailMessageService.listDraftsMetadataForEmailAddressId(anything()),
     ).thenResolve(listResult)
     when(mockEmailMessageService.getDraft(anything())).thenResolve(getResult)
     await expect(
-      instanceUnderTest.execute({ emailAddressId: v4() }),
+      instanceUnderTest.execute({ emailAddressId }),
     ).resolves.toStrictEqual({ draftMessages: result })
   })
 })

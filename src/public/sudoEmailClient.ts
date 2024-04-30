@@ -98,7 +98,11 @@ import { DraftEmailMessageMetadata } from './typings/draftEmailMessageMetadata'
 import { EmailAddress, EmailAddressDetail } from './typings/emailAddress'
 import { EmailAddressPublicInfo } from './typings/emailAddressPublicInfo'
 import { EmailFolder } from './typings/emailFolder'
-import { EmailMessage, EmailMessageSubscriber } from './typings/emailMessage'
+import {
+  EmailMessage,
+  EmailMessageSubscriber,
+  SendEmailMessageResult,
+} from './typings/emailMessage'
 import { EmailMessageDateRange } from './typings/emailMessageDateRange'
 import { EmailMessageRfc822Data } from './typings/emailMessageRfc822Data'
 import { EmailMessageWithBody } from './typings/emailMessageWithBody'
@@ -755,7 +759,9 @@ export interface SudoEmailClient {
    * @throws LimitExceededError
    * @throws InsufficientEntitlementsError
    */
-  sendEmailMessage(input: SendEmailMessageInput): Promise<string>
+  sendEmailMessage(
+    input: SendEmailMessageInput,
+  ): Promise<SendEmailMessageResult>
 
   /**
    * Update the email messages identified by the list of ids.
@@ -1073,7 +1079,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     body,
     attachments,
     inlineAttachments,
-  }: SendEmailMessageInput): Promise<string> {
+  }: SendEmailMessageInput): Promise<SendEmailMessageResult> {
     const sendEmailMessageUseCase = new SendEmailMessageUseCase(
       this.emailMessageService,
       this.emailAccountService,

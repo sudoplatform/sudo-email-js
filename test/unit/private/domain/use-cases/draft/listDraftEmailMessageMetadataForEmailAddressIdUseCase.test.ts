@@ -43,8 +43,8 @@ describe('ListDraftEmailMessageMetadataForEmailAddressIdUseCase Test Suite', () 
 
   it('returns results', async () => {
     const result = [
-      { id: v4(), size: 1, updatedAt: new Date() },
-      { id: v4(), size: 2, updatedAt: new Date() },
+      { id: v4(), emailAddressId: v4(), size: 1, updatedAt: new Date() },
+      { id: v4(), emailAddressId: v4(), size: 2, updatedAt: new Date() },
     ]
     when(
       mockEmailMessageService.listDraftsMetadataForEmailAddressId(anything()),

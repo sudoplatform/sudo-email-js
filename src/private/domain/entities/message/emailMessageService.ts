@@ -91,6 +91,11 @@ export interface SendEncryptedMessageInput {
   emailMessageMaxOutboundMessageSize: number
 }
 
+export interface SendEmailMessageOutput {
+  id: string
+  createdAt: Date
+}
+
 /**
  * Input for `EmailMessageService.updateMessages` method.
  *
@@ -336,7 +341,7 @@ export interface EmailMessageService {
    * @returns {string} The identifier of the email message that was sent.
    * @memberof EmailMessageService
    */
-  sendMessage(input: SendMessageInput): Promise<string>
+  sendMessage(input: SendMessageInput): Promise<SendEmailMessageOutput>
 
   /**
    * Send an E2E encrypted message.
@@ -345,7 +350,9 @@ export interface EmailMessageService {
    * @returns {string} The identifier of the email message that was sent.
    * @memberof EmailMessageService
    */
-  sendEncryptedMessage(input: SendEncryptedMessageInput): Promise<string>
+  sendEncryptedMessage(
+    input: SendEncryptedMessageInput,
+  ): Promise<SendEmailMessageOutput>
 
   /**
    * Update a list of email messages.

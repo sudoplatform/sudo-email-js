@@ -97,11 +97,12 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
       attachments: [],
       inlineAttachments: [],
     }))
-    const ids = await Promise.all(
+    const results = await Promise.all(
       inputs.map(
         async (input) => await instanceUnderTest.sendEmailMessage(input),
       ),
     )
+    const ids = results.map((r) => r.id)
     await delay(2000)
     let updatedEmailAddress = await instanceUnderTest.getEmailAddress({
       id: emailAddress.id,
@@ -135,7 +136,7 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
     )
   })
   it("returns partial result when deleting messages that do and don't exist simultaneously", async () => {
-    const messageId = await instanceUnderTest.sendEmailMessage({
+    const result = await instanceUnderTest.sendEmailMessage({
       senderEmailAddressId: emailAddress.id,
       emailMessageHeader: {
         from: { emailAddress: emailAddress.emailAddress },
@@ -152,17 +153,17 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
     await waitForExpect(async () => {
       await expect(
         instanceUnderTest.getEmailMessage({
-          id: messageId,
+          id: result.id,
           cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).resolves.toBeDefined()
     })
     const nonExistentId = v4()
     await expect(
-      instanceUnderTest.deleteEmailMessages([messageId, nonExistentId]),
+      instanceUnderTest.deleteEmailMessages([result.id, nonExistentId]),
     ).resolves.toStrictEqual({
       status: BatchOperationResultStatus.Partial,
-      successValues: [messageId],
+      successValues: [result.id],
       failureValues: [nonExistentId],
     })
   })

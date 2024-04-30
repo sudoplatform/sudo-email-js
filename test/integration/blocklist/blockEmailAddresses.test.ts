@@ -71,7 +71,7 @@ describe('SudoEmailClient Email Blocklist Integration Test Suite', () => {
     receiverEmail: string = ootoSimulatorAddress,
     subject?: string,
   ) => {
-    const sentId = await instanceUnderTest.sendEmailMessage({
+    const result = await instanceUnderTest.sendEmailMessage({
       senderEmailAddressId: sender.id,
       emailMessageHeader: {
         from: { emailAddress: emailAddress.emailAddress },
@@ -89,7 +89,7 @@ describe('SudoEmailClient Email Blocklist Integration Test Suite', () => {
     let sent
     await waitForExpect(async () => {
       sent = await instanceUnderTest.getEmailMessage({
-        id: sentId,
+        id: result.id,
         cachePolicy: CachePolicy.RemoteOnly,
       })
       expect(sent).toBeDefined()

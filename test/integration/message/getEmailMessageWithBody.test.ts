@@ -96,11 +96,12 @@ describe('getEmailMessageWithBody test suite', () => {
         'Life is not meant to be easy, my child; but take courage: it can be delightful.',
       ]
       const inputs = emailBodies.map((body) => generateSendInput(body))
-      const emailMessageIds = await Promise.all(
+      const results = await Promise.all(
         inputs.map(
           async (input) => await instanceUnderTest.sendEmailMessage(input),
         ),
       )
+      const emailMessageIds = results.map((r) => r.id)
       expect(emailMessageIds.length).toEqual(emailBodies.length)
 
       for (let index = 0; index < emailMessageIds.length; ++index) {
@@ -132,11 +133,12 @@ describe('getEmailMessageWithBody test suite', () => {
       const inputs = emailBodies.map((body) =>
         generateSendInput(body, [{ emailAddress: emailAddress.emailAddress }]),
       )
-      const emailMessageIds = await Promise.all(
+      const results = await Promise.all(
         inputs.map(
           async (input) => await instanceUnderTest.sendEmailMessage(input),
         ),
       )
+      const emailMessageIds = results.map((r) => r.id)
       expect(emailMessageIds.length).toEqual(emailBodies.length)
 
       for (let index = 0; index < emailMessageIds.length; ++index) {

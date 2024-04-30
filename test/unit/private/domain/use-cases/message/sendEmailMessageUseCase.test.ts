@@ -30,6 +30,7 @@ import { EmailConfigurationDataEntity } from '../../../../../../src/private/doma
 describe('SendEmailMessageUseCase', () => {
   const emailMessageMaxOutboundMessageSize = 9999999
   let senderEmailAddressId: string
+  let timestamp: Date
   const emailMessageHeader = {
     from: { emailAddress: 'from@example.com' },
     to: [{ emailAddress: 'to@example.com' }],
@@ -50,6 +51,7 @@ describe('SendEmailMessageUseCase', () => {
 
   beforeEach(() => {
     senderEmailAddressId = v4()
+    timestamp = new Date()
     reset(mockMessageService)
     reset(mockAccountService)
     reset(mockEmailConfigurationDataService)
@@ -86,7 +88,10 @@ describe('SendEmailMessageUseCase', () => {
     })
     it('returns result of service', async () => {
       const idResult = v4()
-      when(mockMessageService.sendMessage(anything())).thenResolve(idResult)
+      when(mockMessageService.sendMessage(anything())).thenResolve({
+        id: idResult,
+        createdAt: timestamp,
+      })
       await expect(
         instanceUnderTest.execute({
           senderEmailAddressId,
@@ -95,7 +100,7 @@ describe('SendEmailMessageUseCase', () => {
           attachments,
           inlineAttachments,
         }),
-      ).resolves.toStrictEqual(idResult)
+      ).resolves.toStrictEqual({ id: idResult, createdAt: timestamp })
     })
 
     it('respect email message size limit', async () => {
@@ -168,9 +173,10 @@ describe('SendEmailMessageUseCase', () => {
     })
     it('returns result of service', async () => {
       const idResult = v4()
-      when(mockMessageService.sendEncryptedMessage(anything())).thenResolve(
-        idResult,
-      )
+      when(mockMessageService.sendEncryptedMessage(anything())).thenResolve({
+        id: idResult,
+        createdAt: timestamp,
+      })
       await expect(
         instanceUnderTest.execute({
           senderEmailAddressId,
@@ -179,7 +185,7 @@ describe('SendEmailMessageUseCase', () => {
           attachments,
           inlineAttachments,
         }),
-      ).resolves.toStrictEqual(idResult)
+      ).resolves.toStrictEqual({ id: idResult, createdAt: timestamp })
     })
   })
 })

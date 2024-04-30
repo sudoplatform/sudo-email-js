@@ -58,6 +58,7 @@ import {
   ListEmailMessagesInput,
   ListEmailMessagesOutput,
   SaveDraftInput,
+  SendEmailMessageOutput,
   SendEncryptedMessageInput,
   SendMessageInput,
   UpdateEmailMessagesInput,
@@ -89,6 +90,7 @@ import { SecurePackage } from '../../domain/entities/secure/securePackage'
 import { arrayBufferToString, stringToArrayBuffer } from '../../util/buffer'
 import { Rfc822MessageDataProcessor } from '../../util/rfc822MessageDataProcessor'
 import { SealedEmailMessageEntityTransformer } from './transformer/sealedEmailMessageEntityTransformer'
+import { SendEmailMessageResultTransformer } from './transformer/sendEmailMessageResultTransformer'
 
 const EmailAddressEntityCodec = t.intersection(
   [t.type({ emailAddress: t.string }), t.partial({ displayName: t.string })],
@@ -196,6 +198,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
 
     return {
       id: draftId,
+      emailAddressId: senderEmailAddressId,
       updatedAt: draft.lastModified,
     }
   }
@@ -264,7 +267,8 @@ export class DefaultEmailMessageService implements EmailMessageService {
     })
 
     return {
-      id: id,
+      id,
+      emailAddressId,
       updatedAt,
       rfc822Data: new TextEncoder().encode(unsealedData),
     }
@@ -284,6 +288,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     })
     return result.map((r) => ({
       id: r.key.replace(draftPrefix, ''),
+      emailAddressId,
       updatedAt: r.lastModified,
     }))
   }
@@ -291,7 +296,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
   async sendMessage({
     rfc822Data,
     senderEmailAddressId,
-  }: SendMessageInput): Promise<string> {
+  }: SendMessageInput): Promise<SendEmailMessageOutput> {
     this.log.debug(this.sendMessage.name, {
       rfc822Data,
       senderEmailAddressId,
@@ -303,10 +308,12 @@ export class DefaultEmailMessageService implements EmailMessageService {
       rfc822Data,
     )
 
-    return await this.appSync.sendEmailMessage({
+    const result = await this.appSync.sendEmailMessage({
       emailAddressId: senderEmailAddressId,
       message,
     })
+    const resultTransformer = new SendEmailMessageResultTransformer()
+    return resultTransformer.transformGraphQL(result)
   }
 
   async sendEncryptedMessage({
@@ -314,7 +321,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     recipientsPublicInfo,
     senderEmailAddressId,
     emailMessageMaxOutboundMessageSize,
-  }: SendEncryptedMessageInput): Promise<string> {
+  }: SendEncryptedMessageInput): Promise<SendEmailMessageOutput> {
     this.log.debug(this.sendEncryptedMessage.name, {
       message,
       recipientsPublicInfo,
@@ -367,11 +374,13 @@ export class DefaultEmailMessageService implements EmailMessageService {
           : false),
     }
 
-    return await this.appSync.sendEncryptedEmailMessage({
+    const result = await this.appSync.sendEncryptedEmailMessage({
       emailAddressId: senderEmailAddressId,
       message: s3EmailObjectInput,
       rfc822Header,
     })
+    const resultTransformer = new SendEmailMessageResultTransformer()
+    return resultTransformer.transformGraphQL(result)
   }
 
   async updateMessages({
@@ -487,8 +496,11 @@ export class DefaultEmailMessageService implements EmailMessageService {
         const keyAttachments = new Set(
           decodedEncrypedMessage.attachments?.filter(
             (att) =>
-              att.contentId ===
-              SecureEmailAttachmentType.KEY_EXCHANGE.contentId,
+              att.contentId?.includes(
+                SecureEmailAttachmentType.KEY_EXCHANGE.contentId,
+              ) ||
+              // Work around spelling error in legacy apps.
+              att.contentId?.includes('securekeyexhangedata@sudomail.com'),
           ),
         )
         if (keyAttachments.size === 0) {

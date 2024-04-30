@@ -45,6 +45,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
 
     when(mockEmailMessageService.saveDraft(anything())).thenResolve({
       id: '',
+      emailAddressId: '',
       updatedAt: new Date(),
     })
   })
@@ -58,18 +59,24 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
 
       when(mockEmailMessageService.getDraft(anything())).thenResolve({
         id,
+        emailAddressId: senderEmailAddressId,
         updatedAt: new Date(),
         rfc822Data,
       })
 
       when(mockEmailMessageService.saveDraft(anything())).thenResolve({
         id,
+        emailAddressId: senderEmailAddressId,
         updatedAt,
       })
 
       await expect(
         instanceUnderTest.execute({ id, senderEmailAddressId, rfc822Data }),
-      ).resolves.toStrictEqual({ id, updatedAt })
+      ).resolves.toStrictEqual({
+        id,
+        emailAddressId: senderEmailAddressId,
+        updatedAt,
+      })
     })
 
     it('throws AddressNotFound error for non-existent email address input', async () => {

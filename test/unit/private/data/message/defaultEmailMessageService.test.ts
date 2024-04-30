@@ -108,6 +108,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
     'parseInternetMessageData',
   )
   let instanceUnderTest: DefaultEmailMessageService
+  let timestamp: Date
+  let mockMesageId: string
 
   beforeEach(() => {
     reset(mockAppSync)
@@ -117,6 +119,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
     reset(mockDeviceKeyWorker)
     reset(mockEmailMessageCryptoService)
     reset(mockSubscriptionManager)
+    timestamp = new Date(1)
+    mockMesageId = v4()
     instanceUnderTest = new DefaultEmailMessageService(
       instance(mockAppSync),
       instance(mockUserClient),
@@ -133,6 +137,10 @@ describe('DefaultEmailMessageService Test Suite', () => {
     when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
       true,
     )
+    when(mockAppSync.sendEmailMessage(anything())).thenResolve({
+      id: mockMesageId,
+      createdAtEpochMs: timestamp.getMilliseconds(),
+    })
     JestMockSubscriptionManager.mockImplementation(() =>
       instance(mockSubscriptionManager),
     )
@@ -188,13 +196,16 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
     it('returns result of appsync', async () => {
       const resultId = v4()
-      when(mockAppSync.sendEmailMessage(anything())).thenResolve(resultId)
+      when(mockAppSync.sendEmailMessage(anything())).thenResolve({
+        id: resultId,
+        createdAtEpochMs: timestamp.getMilliseconds(),
+      })
       await expect(
         instanceUnderTest.sendMessage({
           rfc822Data: stringToArrayBuffer(''),
           senderEmailAddressId: '',
         }),
-      ).resolves.toStrictEqual(resultId)
+      ).resolves.toStrictEqual({ id: resultId, createdAt: timestamp })
     })
   })
 
@@ -241,9 +252,10 @@ describe('DefaultEmailMessageService Test Suite', () => {
         lastModified: new Date(),
       })
       resultId = v4()
-      when(mockAppSync.sendEncryptedEmailMessage(anything())).thenResolve(
-        resultId,
-      )
+      when(mockAppSync.sendEncryptedEmailMessage(anything())).thenResolve({
+        id: resultId,
+        createdAtEpochMs: timestamp.getMilliseconds(),
+      })
       message = {
         from: [{ emailAddress: `from-${v4()}@example.com` }],
       }
@@ -395,7 +407,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           recipientsPublicInfo,
           emailMessageMaxOutboundMessageSize,
         }),
-      ).resolves.toStrictEqual(resultId)
+      ).resolves.toStrictEqual({ id: resultId, createdAt: timestamp })
     })
 
     it('respects outgoing message size limit', async () => {
@@ -1430,6 +1442,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
         instanceUnderTest.getDraft(DraftEmailMessageDataFactory.getDraftInput),
       ).resolves.toEqual<DraftEmailMessageEntity>({
         id: DraftEmailMessageDataFactory.getDraftInput.id,
+        emailAddressId:
+          DraftEmailMessageDataFactory.getDraftInput.emailAddressId,
         updatedAt:
           DraftEmailMessageDataFactory.s3ClientDownloadOutput.lastModified,
         rfc822Data: new TextEncoder().encode(unsealedDraft),
@@ -1490,6 +1504,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
   describe('listDraftsMetadataForEmailAddressId', () => {
     it('lists drafts successfully', async () => {
+      const emailAddressId = 'emailAddressId'
       const drafts: S3ClientListOutput[] = [
         { key: 'draft1', lastModified: new Date(1) },
         { key: 'draft2', lastModified: new Date(2) },
@@ -1498,11 +1513,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
       when(mockS3Client.list(anything())).thenResolve(drafts)
       await expect(
         instanceUnderTest.listDraftsMetadataForEmailAddressId({
-          emailAddressId: 'emailAddressId',
+          emailAddressId,
         }),
       ).resolves.toEqual<DraftEmailMessageMetadataEntity[]>(
         drafts.map((s3) => ({
           id: s3.key,
+          emailAddressId,
           updatedAt: s3.lastModified,
         })),
       )

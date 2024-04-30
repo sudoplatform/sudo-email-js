@@ -288,8 +288,8 @@ export type Mutation = {
   deleteEmailMessages: Array<Scalars['ID']['output']>
   deprovisionEmailAddress: EmailAddress
   provisionEmailAddress: EmailAddress
-  sendEmailMessage: Scalars['ID']['output']
-  sendEncryptedEmailMessage: Scalars['ID']['output']
+  sendEmailMessageV2: SendEmailMessageResult
+  sendEncryptedEmailMessage: SendEmailMessageResult
   unblockEmailAddresses: BlockEmailAddressesBulkUpdateResult
   updateEmailAddressMetadata: Scalars['ID']['output']
   updateEmailMessages: UpdateEmailMessagesResult
@@ -323,7 +323,7 @@ export type MutationProvisionEmailAddressArgs = {
   input: ProvisionEmailAddressInput
 }
 
-export type MutationSendEmailMessageArgs = {
+export type MutationSendEmailMessageV2Args = {
   input: SendEmailMessageInput
 }
 
@@ -523,6 +523,12 @@ export type SendEmailMessageInput = {
   clientRefId?: InputMaybe<Scalars['String']['input']>
   emailAddressId: Scalars['ID']['input']
   message: S3EmailObjectInput
+}
+
+export type SendEmailMessageResult = {
+  __typename?: 'SendEmailMessageResult'
+  createdAtEpochMs: Scalars['Float']['output']
+  id: Scalars['ID']['output']
 }
 
 export type SendEncryptedEmailMessageInput = {
@@ -801,6 +807,12 @@ export type SealedEmailMessageFragment = {
   }
 }
 
+export type SendEmailMessageResultFragment = {
+  __typename?: 'SendEmailMessageResult'
+  id: string
+  createdAtEpochMs: number
+}
+
 export type UpdateEmailMessagesResultFragment = {
   __typename?: 'UpdateEmailMessagesResult'
   status: UpdateEmailMessagesStatus
@@ -915,7 +927,11 @@ export type SendEmailMessageMutationVariables = Exact<{
 
 export type SendEmailMessageMutation = {
   __typename?: 'Mutation'
-  sendEmailMessage: string
+  sendEmailMessageV2: {
+    __typename?: 'SendEmailMessageResult'
+    id: string
+    createdAtEpochMs: number
+  }
 }
 
 export type SendEncryptedEmailMessageMutationVariables = Exact<{
@@ -924,7 +940,11 @@ export type SendEncryptedEmailMessageMutationVariables = Exact<{
 
 export type SendEncryptedEmailMessageMutation = {
   __typename?: 'Mutation'
-  sendEncryptedEmailMessage: string
+  sendEncryptedEmailMessage: {
+    __typename?: 'SendEmailMessageResult'
+    id: string
+    createdAtEpochMs: number
+  }
 }
 
 export type UpdateEmailMessagesMutationVariables = Exact<{
@@ -2310,6 +2330,26 @@ export const SealedEmailMessageFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<SealedEmailMessageFragment, unknown>
+export const SendEmailMessageResultFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SendEmailMessageResult' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SendEmailMessageResult' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SendEmailMessageResultFragment, unknown>
 export const UpdateEmailMessagesResultFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -2796,7 +2836,7 @@ export const SendEmailMessageDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'sendEmailMessage' },
+            name: { kind: 'Name', value: 'sendEmailMessageV2' },
             arguments: [
               {
                 kind: 'Argument',
@@ -2807,7 +2847,31 @@ export const SendEmailMessageDocument = {
                 },
               },
             ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SendEmailMessageResult' },
+                },
+              ],
+            },
           },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SendEmailMessageResult' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SendEmailMessageResult' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
         ],
       },
     },
@@ -2855,7 +2919,31 @@ export const SendEncryptedEmailMessageDocument = {
                 },
               },
             ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SendEmailMessageResult' },
+                },
+              ],
+            },
           },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SendEmailMessageResult' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SendEmailMessageResult' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
         ],
       },
     },

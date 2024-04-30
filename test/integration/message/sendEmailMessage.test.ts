@@ -150,7 +150,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   })
 
   it('returns expected output', async () => {
-    const sentId = await instanceUnderTest.sendEmailMessage({
+    const result = await instanceUnderTest.sendEmailMessage({
       senderEmailAddressId: emailAddress1.id,
       emailMessageHeader: {
         from: draft.from[0],
@@ -164,6 +164,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       attachments: draft.attachments ?? [],
       inlineAttachments: draft.inlineAttachments ?? [],
     })
+    const { id: sentId } = result
 
     expect(sentId).toMatch(
       /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
@@ -199,7 +200,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   })
 
   it('returns expected output with attachments', async () => {
-    const sentId = await instanceUnderTest.sendEmailMessage({
+    const result = await instanceUnderTest.sendEmailMessage({
       senderEmailAddressId: emailAddress1.id,
       emailMessageHeader: {
         from: draftWithAttachments.from[0],
@@ -213,6 +214,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       attachments: draftWithAttachments.attachments ?? [],
       inlineAttachments: draftWithAttachments.inlineAttachments ?? [],
     })
+    const { id: sentId } = result
 
     expect(sentId).toMatch(
       /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
@@ -259,9 +261,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       to: [],
       cc: [{ emailAddress: ootoSimulatorAddress }],
     }
-    const ccDraftString =
-      Rfc822MessageDataProcessor.encodeToInternetMessageStr(ccDraft)
-    const sentId = await instanceUnderTest.sendEmailMessage({
+    const result = await instanceUnderTest.sendEmailMessage({
       senderEmailAddressId: emailAddress1.id,
       emailMessageHeader: {
         from: ccDraft.from[0],
@@ -275,6 +275,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       attachments: ccDraft.attachments ?? [],
       inlineAttachments: ccDraft.inlineAttachments ?? [],
     })
+    const { id: sentId } = result
 
     expect(sentId).toMatch(
       /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
@@ -331,9 +332,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       to: [],
       bcc: [{ emailAddress: ootoSimulatorAddress }],
     }
-    const bccDraftString =
-      Rfc822MessageDataProcessor.encodeToInternetMessageStr(bccDraft)
-    const sentId = await instanceUnderTest.sendEmailMessage({
+    const result = await instanceUnderTest.sendEmailMessage({
       senderEmailAddressId: emailAddress1.id,
       emailMessageHeader: {
         from: bccDraft.from[0],
@@ -347,6 +346,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       attachments: bccDraft.attachments ?? [],
       inlineAttachments: bccDraft.inlineAttachments ?? [],
     })
+    const { id: sentId } = result
 
     expect(sentId).toMatch(
       /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
@@ -487,7 +487,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
   describe('encrypted path', () => {
     it('returns expected output', async () => {
-      const sentId = await instanceUnderTest.sendEmailMessage({
+      const result = await instanceUnderTest.sendEmailMessage({
         senderEmailAddressId: emailAddress1.id,
         emailMessageHeader: {
           from: encryptedDraft.from[0],
@@ -501,6 +501,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         attachments: encryptedDraft.attachments ?? [],
         inlineAttachments: encryptedDraft.inlineAttachments ?? [],
       })
+      const { id: sentId } = result
 
       expect(sentId).toMatch(
         /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
@@ -529,7 +530,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         from: encryptedDraft.to!,
         to: encryptedDraft.from,
       }
-      const sentId = await instanceUnderTest.sendEmailMessage({
+      const result = await instanceUnderTest.sendEmailMessage({
         senderEmailAddressId: emailAddress2.id,
         emailMessageHeader: {
           from: replyDraft.from[0],
@@ -543,6 +544,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         attachments: replyDraft.attachments ?? [],
         inlineAttachments: replyDraft.inlineAttachments ?? [],
       })
+      const { id: sentId } = result
 
       expect(sentId).toMatch(
         /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
@@ -566,7 +568,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     })
 
     it('returns expected output with attachments', async () => {
-      const sentId = await instanceUnderTest.sendEmailMessage({
+      const result = await instanceUnderTest.sendEmailMessage({
         senderEmailAddressId: emailAddress1.id,
         emailMessageHeader: {
           from: encryptedDraftWithAttachments.from[0],
@@ -581,6 +583,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         inlineAttachments:
           encryptedDraftWithAttachments.inlineAttachments ?? [],
       })
+      const { id: sentId } = result
 
       expect(sentId).toMatch(
         /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
@@ -609,9 +612,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         to: [],
         cc: [{ emailAddress: emailAddress1.emailAddress }],
       }
-      const ccDraftString =
-        Rfc822MessageDataProcessor.encodeToInternetMessageStr(ccDraft)
-      const sentId = await instanceUnderTest.sendEmailMessage({
+      const result = await instanceUnderTest.sendEmailMessage({
         senderEmailAddressId: emailAddress1.id,
         emailMessageHeader: {
           from: ccDraft.from[0],
@@ -625,6 +626,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         attachments: ccDraft.attachments ?? [],
         inlineAttachments: ccDraft.inlineAttachments ?? [],
       })
+      const { id: sentId } = result
 
       expect(sentId).toMatch(
         /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
@@ -653,9 +655,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         to: [],
         bcc: [{ emailAddress: emailAddress1.emailAddress }],
       }
-      const bccDraftString =
-        Rfc822MessageDataProcessor.encodeToInternetMessageStr(bccDraft)
-      const sentId = await instanceUnderTest.sendEmailMessage({
+      const result = await instanceUnderTest.sendEmailMessage({
         senderEmailAddressId: emailAddress1.id,
         emailMessageHeader: {
           from: bccDraft.from[0],
@@ -669,6 +669,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         attachments: bccDraft.attachments ?? [],
         inlineAttachments: bccDraft.inlineAttachments ?? [],
       })
+      const { id: sentId } = result
 
       expect(sentId).toMatch(
         /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,

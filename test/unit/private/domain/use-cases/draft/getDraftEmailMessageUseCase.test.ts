@@ -63,6 +63,7 @@ describe('GetDraftEmailMessageUseCase Test Suite', () => {
 
     when(mockEmailMessageService.getDraft(anything())).thenResolve({
       id,
+      emailAddressId,
       updatedAt,
       rfc822Data,
     })
@@ -71,6 +72,7 @@ describe('GetDraftEmailMessageUseCase Test Suite', () => {
       instanceUnderTest.execute({ id, emailAddressId }),
     ).resolves.toEqual<GetDraftEmailMessageUseCaseOutput>({
       id,
+      emailAddressId,
       updatedAt,
       rfc822Data,
     })

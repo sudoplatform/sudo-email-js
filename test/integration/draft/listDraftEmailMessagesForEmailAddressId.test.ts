@@ -88,6 +88,7 @@ describe('SudoEmailClient listDraftEmailMessagesForEmailAddressId Test Suite', (
       expect(draftData).toContainEqual({
         ...d,
         id: d.id,
+        emailAddressId: d.emailAddressId,
         updatedAt: d.updatedAt,
         rfc822Data: expect.anything(),
       })

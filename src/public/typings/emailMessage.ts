@@ -135,3 +135,8 @@ export interface EmailMessageSubscriber {
    */
   connectionStatusChanged?(state: ConnectionState): void
 }
+
+export interface SendEmailMessageResult {
+  id: string
+  createdAt: Date
+}

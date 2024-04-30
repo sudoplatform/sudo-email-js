@@ -40,6 +40,11 @@ interface SendEmailMessageUseCaseInput {
   inlineAttachments: EmailAttachment[]
 }
 
+interface SendEmailMessageUseCaseOutput {
+  id: string
+  createdAt: Date
+}
+
 /**
  * Application business logic for sending an email message.
  */
@@ -60,7 +65,7 @@ export class SendEmailMessageUseCase {
     body,
     attachments,
     inlineAttachments,
-  }: SendEmailMessageUseCaseInput): Promise<string> {
+  }: SendEmailMessageUseCaseInput): Promise<SendEmailMessageUseCaseOutput> {
     this.log.debug(this.constructor.name, {
       senderEmailAddressId,
       emailMessageHeader,

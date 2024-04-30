@@ -41,6 +41,7 @@ describe('SaveDraftEmailMessageUseCase Test Suite', () => {
     )
     when(mockEmailMessageService.saveDraft(anything())).thenResolve({
       id: '',
+      emailAddressId: '',
       updatedAt: new Date(),
     })
   })
@@ -59,19 +60,25 @@ describe('SaveDraftEmailMessageUseCase Test Suite', () => {
 
   it('returns the expected output id', async () => {
     const id = v4()
+    const emailAddressId = v4()
     const updatedAt = new Date()
     const rfc822Data = stringToArrayBuffer(v4())
     when(mockEmailMessageService.saveDraft(anything())).thenResolve({
       id,
+      emailAddressId,
       updatedAt,
     })
     await expect(
-      instanceUnderTest.execute({ senderEmailAddressId: id, rfc822Data }),
-    ).resolves.toStrictEqual({ id, updatedAt })
+      instanceUnderTest.execute({
+        senderEmailAddressId: emailAddressId,
+        rfc822Data,
+      }),
+    ).resolves.toStrictEqual({ id, emailAddressId, updatedAt })
   })
 
   it('throws AddressNotFound for non-existent email address input', async () => {
     const id = v4()
+    const emailAddressId = v4()
     const updatedAt = new Date()
     const rfc822Data = stringToArrayBuffer(v4())
     when(mockEmailAccountService.get(anything())).thenThrow(
@@ -79,6 +86,7 @@ describe('SaveDraftEmailMessageUseCase Test Suite', () => {
     )
     when(mockEmailMessageService.saveDraft(anything())).thenResolve({
       id,
+      emailAddressId,
       updatedAt,
     })
     await expect(

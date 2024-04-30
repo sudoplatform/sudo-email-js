@@ -54,7 +54,7 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
     emailAddress: EmailAddress,
     body: string,
   ): Promise<string> {
-    return await instanceUnderTest.sendEmailMessage({
+    const result = await instanceUnderTest.sendEmailMessage({
       senderEmailAddressId: emailAddress.id,
       emailMessageHeader: {
         from: { emailAddress: emailAddress.emailAddress },
@@ -68,6 +68,8 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
       attachments: [],
       inlineAttachments: [],
     })
+
+    return result.id
   }
 
   it('returns expected output and clean up keys', async () => {

@@ -23,6 +23,7 @@ interface SaveDraftEmailMessageUseCaseInput {
 
 interface SaveDraftEmailMessageUseCaseOutput {
   id: string
+  emailAddressId: string
   updatedAt: Date
 }
 /**

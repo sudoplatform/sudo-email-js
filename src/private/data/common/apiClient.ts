@@ -97,8 +97,9 @@ import {
   ProvisionEmailAddressMutation,
   PublicKey,
   SealedEmailMessage,
-  SendEmailMessageDocument,
   SendEmailMessageInput,
+  SendEmailMessageResult,
+  SendEmailMessageDocument,
   SendEmailMessageMutation,
   SendEncryptedEmailMessageDocument,
   SendEncryptedEmailMessageInput,
@@ -320,18 +321,20 @@ export class ApiClient {
     return data.listEmailFoldersForEmailAddressId
   }
 
-  public async sendEmailMessage(input: SendEmailMessageInput): Promise<string> {
+  public async sendEmailMessage(
+    input: SendEmailMessageInput,
+  ): Promise<SendEmailMessageResult> {
     const data = await this.performMutation<SendEmailMessageMutation>({
       mutation: SendEmailMessageDocument,
       variables: { input },
       calleeName: this.sendEmailMessage.name,
     })
-    return data.sendEmailMessage
+    return data.sendEmailMessageV2
   }
 
   public async sendEncryptedEmailMessage(
     input: SendEncryptedEmailMessageInput,
-  ): Promise<string> {
+  ): Promise<SendEmailMessageResult> {
     const data = await this.performMutation<SendEncryptedEmailMessageMutation>({
       mutation: SendEncryptedEmailMessageDocument,
       variables: { input },

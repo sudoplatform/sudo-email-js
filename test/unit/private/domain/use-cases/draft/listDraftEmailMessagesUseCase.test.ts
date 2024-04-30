@@ -30,10 +30,12 @@ describe('ListDraftEmailMessagesUseCase Test Suite', () => {
     nextToken: undefined,
   }
   const id = v4()
-  const metadata = [{ id, size: 1, updatedAt: new Date() }]
+  const emailAddressId = v4()
+  const metadata = [{ id, emailAddressId, size: 1, updatedAt: new Date() }]
   const rfc822Data = stringToArrayBuffer('test')
   const draftMessage = {
     id,
+    emailAddressId,
     size: 1,
     updatedAt: new Date(),
     rfc822Data,

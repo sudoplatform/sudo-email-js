@@ -1,0 +1,4 @@
+fragment SendEmailMessageResult on SendEmailMessageResult {
+  id
+  createdAtEpochMs
+}

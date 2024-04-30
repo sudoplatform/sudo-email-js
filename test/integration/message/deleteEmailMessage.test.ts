@@ -55,7 +55,7 @@ describe('SudoEmailClient DeleteEmailMessage Test Suite', () => {
     ).resolves.toBeUndefined()
   })
   it('deletes a single existing email message', async () => {
-    const messageId = await instanceUnderTest.sendEmailMessage({
+    const result = await instanceUnderTest.sendEmailMessage({
       senderEmailAddressId: emailAddress.id,
       emailMessageHeader: {
         from: { emailAddress: emailAddress.emailAddress },
@@ -72,8 +72,8 @@ describe('SudoEmailClient DeleteEmailMessage Test Suite', () => {
     await waitForExpect(
       async () =>
         await expect(
-          instanceUnderTest.deleteEmailMessage(messageId),
-        ).resolves.toStrictEqual(messageId),
+          instanceUnderTest.deleteEmailMessage(result.id),
+        ).resolves.toStrictEqual(result.id),
       30000,
       1000,
     )

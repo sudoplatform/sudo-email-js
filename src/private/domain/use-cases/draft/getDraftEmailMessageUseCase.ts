@@ -24,10 +24,13 @@ interface GetDraftEmailMessageUseCaseInput {
  *
  * @interface GetDraftEmailMessageUseCaseOutput
  * @property {string} id Identifier of the draft email message.
+ * @property {string} emailAddressId Unique identifier of the email address associated with the draft
+ *  email message.
  * @property {ArrayBuffer} rfc822Data RFC 822 formatted data of the draft email message.
  */
 export interface GetDraftEmailMessageUseCaseOutput {
   id: string
+  emailAddressId: string
   updatedAt: Date
   rfc822Data: ArrayBuffer
 }
@@ -56,6 +59,7 @@ export class GetDraftEmailMessageUseCase {
     if (message) {
       return {
         id,
+        emailAddressId,
         updatedAt: message.updatedAt,
         rfc822Data: message.rfc822Data,
       }

@@ -29,8 +29,8 @@ describe('ListDraftEmailMessageMetadataUseCase Test Suite', () => {
     nextToken: undefined,
   }
   const metadata = [
-    { id: v4(), size: 1, updatedAt: new Date() },
-    { id: v4(), size: 2, updatedAt: new Date() },
+    { id: v4(), emailAddressId: v4(), size: 1, updatedAt: new Date() },
+    { id: v4(), emailAddressId: v4(), size: 2, updatedAt: new Date() },
   ]
 
   beforeEach(() => {
