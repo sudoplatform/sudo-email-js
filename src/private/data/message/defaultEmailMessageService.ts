@@ -85,7 +85,11 @@ import { SortOrderTransformer } from '../common/transformer/sortOrderTransformer
 import { withDefault } from '../common/withDefault'
 import { EmailMessageWithBodyEntity } from '../../domain/entities/message/emailMessageWithBodyEntity'
 import { EmailMessageCryptoService } from '../../domain/entities/secure/emailMessageCryptoService'
-import { SecureEmailAttachmentType } from '../../domain/entities/secure/secureEmailAttachmentType'
+import {
+  LEGACY_BODY_CONTENT_ID,
+  LEGACY_KEY_EXCHANGE_CONTENT_ID,
+  SecureEmailAttachmentType,
+} from '../../domain/entities/secure/secureEmailAttachmentType'
 import { SecurePackage } from '../../domain/entities/secure/securePackage'
 import { arrayBufferToString, stringToArrayBuffer } from '../../util/buffer'
 import { Rfc822MessageDataProcessor } from '../../util/rfc822MessageDataProcessor'
@@ -498,16 +502,16 @@ export class DefaultEmailMessageService implements EmailMessageService {
             (att) =>
               att.contentId?.includes(
                 SecureEmailAttachmentType.KEY_EXCHANGE.contentId,
-              ) ||
-              // Work around spelling error in legacy apps.
-              att.contentId?.includes('securekeyexhangedata@sudomail.com'),
+              ) || att.contentId?.includes(LEGACY_KEY_EXCHANGE_CONTENT_ID),
           ),
         )
         if (keyAttachments.size === 0) {
           throw new DecodeError('Could not find key attachments')
         }
         const bodyAttachment = decodedEncrypedMessage.attachments.find(
-          (att) => att.contentId === SecureEmailAttachmentType.BODY.contentId,
+          (att) =>
+            att.contentId === SecureEmailAttachmentType.BODY.contentId ||
+            att.contentId === LEGACY_BODY_CONTENT_ID,
         )
         if (!bodyAttachment) {
           throw new DecodeError('Could not find body attachment')

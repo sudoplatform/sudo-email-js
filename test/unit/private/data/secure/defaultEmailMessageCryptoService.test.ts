@@ -108,7 +108,7 @@ describe('DefaultEmailMessageCryptoService Test Suite', () => {
       const resultArray = result.toArray()
       const mockSecureData: SecureData = {
         encryptedData: mockEncryptedData,
-        initVectorData: mockIv,
+        initVectorKeyID: mockIv,
       }
 
       // Number of recipients plus 1 for the body
@@ -151,7 +151,7 @@ describe('DefaultEmailMessageCryptoService Test Suite', () => {
     beforeEach(() => {
       const mockSecureData: SecureData = {
         encryptedData: mockEncryptedData,
-        initVectorData: mockIv,
+        initVectorKeyID: mockIv,
       }
       mockBodyAttachment = {
         contentTransferEncoding: 'binary',

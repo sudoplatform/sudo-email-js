@@ -18,6 +18,7 @@ import { SecureData } from '../../domain/entities/secure/secureData'
 import { SecurePackage } from '../../domain/entities/secure/securePackage'
 import { EmailAttachment, InvalidEmailContentsError } from '../../../public'
 import {
+  LEGACY_BODY_CONTENT_ID,
   SecureEmailAttachmentType,
   SecureEmailAttachmentTypeInterface,
 } from '../../domain/entities/secure/secureEmailAttachmentType'
@@ -55,7 +56,7 @@ export class DefaultEmailMessageCryptoService
 
       const secureEmailData: SecureData = {
         encryptedData: sealingResults.sealedPayload,
-        initVectorData: iv,
+        initVectorKeyID: iv,
       }
       const serializedEmailData = stringToArrayBuffer(
         SecureDataTransformer.toJson(secureEmailData),
@@ -97,13 +98,18 @@ export class DefaultEmailMessageCryptoService
     try {
       const keyExistPromises = await Promise.all(
         keyAttachments.map(async (keyAttachment) => {
-          const keyData = SealedKeyTransformer.fromJson(keyAttachment.data)
+          let keyData = keyAttachment.data
+          if (keyAttachment.contentId === LEGACY_BODY_CONTENT_ID) {
+            // Legacy system base64 encodes the data, so decode here
+            keyData = Base64.decodeString(keyData)
+          }
+          const keyDataJson = SealedKeyTransformer.fromJson(keyData)
           return {
             exists: await this.deviceKeyWorker.keyExists(
-              keyData.publicKeyId,
+              keyDataJson.publicKeyId,
               KeyType.KeyPair,
             ),
-            keyData,
+            keyData: keyDataJson,
           }
         }),
       )
@@ -112,13 +118,19 @@ export class DefaultEmailMessageCryptoService
       if (!sealedKey) {
         throw new DecodeError('No public key for this user found')
       }
-      const secureData = SecureDataTransformer.fromJson(bodyAttachment.data)
+      let bodyData = bodyAttachment.data
 
+      if (bodyAttachment.contentId === LEGACY_BODY_CONTENT_ID) {
+        // Legacy system base64 encodes the data, so decode here
+        bodyData = Base64.decodeString(bodyData)
+      }
+
+      const secureData = SecureDataTransformer.fromJson(bodyData)
       const decryptedBody = await this.deviceKeyWorker.unsealWithKeyPairId({
         keyPairId: sealedKey.publicKeyId,
         sealedCipherKey: Base64.decode(sealedKey.encryptedKey),
         sealedPayload: secureData.encryptedData,
-        iv: secureData.initVectorData,
+        iv: secureData.initVectorKeyID,
       })
       return decryptedBody
     } catch (error) {

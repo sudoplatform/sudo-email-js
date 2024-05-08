@@ -9,13 +9,13 @@ import { SecureData } from '../../../domain/entities/secure/secureData'
 
 // JSON element names
 const ENCRYPTED_DATA_JSON = 'encryptedData'
-const INIT_VECTOR_DATA_JSON = 'initVectorData'
+const INIT_VECTOR_KEY_ID_JSON = 'initVectorKeyID'
 
 export class SecureDataTransformer {
   static toJson(secureData: SecureData): string {
     return JSON.stringify({
       [ENCRYPTED_DATA_JSON]: Base64.encode(secureData.encryptedData),
-      [INIT_VECTOR_DATA_JSON]: Base64.encode(secureData.initVectorData),
+      [INIT_VECTOR_KEY_ID_JSON]: Base64.encode(secureData.initVectorKeyID),
     })
   }
 
@@ -23,7 +23,7 @@ export class SecureDataTransformer {
     const encoded = JSON.parse(json)
     return {
       encryptedData: Base64.decode(encoded.encryptedData),
-      initVectorData: Base64.decode(encoded.initVectorData),
+      initVectorKeyID: Base64.decode(encoded.initVectorKeyID),
     }
   }
 }

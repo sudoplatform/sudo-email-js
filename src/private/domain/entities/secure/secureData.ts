@@ -10,9 +10,9 @@
  *
  * @interface SecureData
  * @property {ArrayBuffer} encryptedData The secure encrypted base64 encoded data.
- * @property {ArrayBuffer} initVectorData The base64 encoded initialization vector.
+ * @property {ArrayBuffer} initVectorKeyID The base64 encoded initialization vector.
  */
 export interface SecureData {
   encryptedData: ArrayBuffer
-  initVectorData: ArrayBuffer
+  initVectorKeyID: ArrayBuffer
 }
