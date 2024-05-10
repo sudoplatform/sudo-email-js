@@ -19,6 +19,7 @@ import { SecurePackage } from '../../domain/entities/secure/securePackage'
 import { EmailAttachment, InvalidEmailContentsError } from '../../../public'
 import {
   LEGACY_BODY_CONTENT_ID,
+  LEGACY_KEY_EXCHANGE_CONTENT_ID,
   SecureEmailAttachmentType,
   SecureEmailAttachmentTypeInterface,
 } from '../../domain/entities/secure/secureEmailAttachmentType'
@@ -99,7 +100,7 @@ export class DefaultEmailMessageCryptoService
       const keyExistPromises = await Promise.all(
         keyAttachments.map(async (keyAttachment) => {
           let keyData = keyAttachment.data
-          if (keyAttachment.contentId === LEGACY_BODY_CONTENT_ID) {
+          if (keyAttachment.contentId === LEGACY_KEY_EXCHANGE_CONTENT_ID) {
             // Legacy system base64 encodes the data, so decode here
             keyData = Base64.decodeString(keyData)
           }
