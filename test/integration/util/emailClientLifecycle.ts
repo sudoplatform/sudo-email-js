@@ -94,6 +94,7 @@ export interface SetupEmailClientOutput {
     email: SudoCryptoProvider
   }
   configurationDataService: EmailConfigurationDataService
+  apiClient: ApiClient
 }
 
 export const setupEmailClient = async (
@@ -217,6 +218,7 @@ export const setupEmailClient = async (
         email: emailCryptoProvider,
       },
       configurationDataService,
+      apiClient,
     }
   } catch (err) {
     log.error(`${setupEmailClient.name} FAILED`)

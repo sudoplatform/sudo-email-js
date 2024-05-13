@@ -486,19 +486,22 @@ export class DefaultEmailMessageService implements EmailMessageService {
       }
 
       // Check for encrypted body attachment
-      if (decodedString.includes(SecureEmailAttachmentType.BODY.contentId)) {
-        const decodedEncrypedMessage =
+      if (
+        decodedString.includes(SecureEmailAttachmentType.BODY.contentId) ||
+        decodedString.includes(LEGACY_BODY_CONTENT_ID)
+      ) {
+        const decodedEncryptedMessage =
           await Rfc822MessageDataProcessor.parseInternetMessageData(
             decodedString,
           )
         if (
-          !decodedEncrypedMessage.attachments ||
-          decodedEncrypedMessage.attachments.length === 0
+          !decodedEncryptedMessage.attachments ||
+          decodedEncryptedMessage.attachments.length === 0
         ) {
           throw new DecodeError('Error decoding encrypted mesage')
         }
         const keyAttachments = new Set(
-          decodedEncrypedMessage.attachments?.filter(
+          decodedEncryptedMessage.attachments?.filter(
             (att) =>
               att.contentId?.includes(
                 SecureEmailAttachmentType.KEY_EXCHANGE.contentId,
@@ -508,7 +511,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
         if (keyAttachments.size === 0) {
           throw new DecodeError('Could not find key attachments')
         }
-        const bodyAttachment = decodedEncrypedMessage.attachments.find(
+        const bodyAttachment = decodedEncryptedMessage.attachments.find(
           (att) =>
             att.contentId === SecureEmailAttachmentType.BODY.contentId ||
             att.contentId === LEGACY_BODY_CONTENT_ID,
@@ -517,9 +520,9 @@ export class DefaultEmailMessageService implements EmailMessageService {
           throw new DecodeError('Could not find body attachment')
         }
         const securePackage = new SecurePackage(keyAttachments, bodyAttachment)
-        const decodedUnencrypedMessage =
+        const decodedUnencryptedMessage =
           await this.emailMessageCryptoService.decrypt(securePackage)
-        return decodedUnencrypedMessage
+        return decodedUnencryptedMessage
       }
       return stringToArrayBuffer(decodedString)
     } catch (error: unknown) {
