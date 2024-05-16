@@ -395,10 +395,15 @@ export class DefaultEmailMessageService implements EmailMessageService {
       messageIds: ids,
       values,
     })
+
     return {
       status: result.status,
-      successIds: result.successMessageIds ?? undefined,
-      failureIds: result.failedMessageIds ?? undefined,
+      successMessages: result.successMessages?.map((m) => ({
+        id: m.id,
+        createdAt: new Date(m.createdAtEpochMs),
+        updatedAt: new Date(m.updatedAtEpochMs),
+      })),
+      failureMessages: result.failedMessages ?? undefined,
     }
   }
 

@@ -5,7 +5,11 @@
  */
 
 import { CachePolicy } from '@sudoplatform/sudo-common'
-import { EmailMessageSubscriber } from '../../../../public'
+import {
+  EmailMessageSubscriber,
+  UpdatedEmailMessageFailure,
+  UpdatedEmailMessageSuccess,
+} from '../../../../public'
 import { EmailMessageDateRange } from '../../../../public/typings/emailMessageDateRange'
 import { SortOrder } from '../../../../public/typings/sortOrder'
 import { DraftEmailMessageEntity } from './draftEmailMessageEntity'
@@ -113,13 +117,13 @@ export interface UpdateEmailMessagesInput {
  *
  * @interface UpdateEmailMessagesOutput
  * @property {UpdateEmailMessagesStatus} status The status of the email message update operation.
- * @property {string[]} successIds List of email message ids that succeeded to update, if any.
- * @property {string[]} failedIds List of email message ids that failed to update, if any.
+ * @property {UpdatedEmailMessageSuccess[]} successMessages List of email messages that updated and their timestamps.
+ * @property {UpdatedEmailMessageFailure[]} failureMessages List of email messages that failed and their error type.
  */
 export interface UpdateEmailMessagesOutput {
   status: UpdateEmailMessagesStatus
-  successIds?: string[]
-  failureIds?: string[]
+  successMessages?: UpdatedEmailMessageSuccess[]
+  failureMessages?: UpdatedEmailMessageFailure[]
 }
 
 /**

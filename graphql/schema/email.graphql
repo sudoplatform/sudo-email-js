@@ -284,10 +284,21 @@ type SealedEmailMessage {
   encryptionStatus: EmailMessageEncryptionStatus
 }
 
-type UpdateEmailMessagesResult {
+type UpdatedEmailMessageSuccess {
+  id: ID!
+  createdAtEpochMs: Float!
+  updatedAtEpochMs: Float!
+}
+
+type UpdatedEmailMessageFailure {
+  id: ID!
+  errorType: String!
+}
+
+type UpdateEmailMessagesV2Result {
   status: UpdateEmailMessagesStatus!
-  failedMessageIds: [ID!]
-  successMessageIds: [ID!]
+  failedMessages: [UpdatedEmailMessageFailure!]
+  successMessages: [UpdatedEmailMessageSuccess!]
 }
 
 # Array of email domains.
@@ -421,9 +432,10 @@ type Mutation {
 
   deleteEmailMessages(input: DeleteEmailMessagesInput!): [ID!]!
 
-  updateEmailMessages(
+  # Update a list of email messages.
+  updateEmailMessagesV2(
     input: UpdateEmailMessagesInput!
-  ): UpdateEmailMessagesResult!
+  ): UpdateEmailMessagesV2Result!
 
   deleteEmailMessage(input: DeleteEmailMessageInput!): ID!
 

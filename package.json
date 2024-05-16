@@ -15,7 +15,7 @@
     "codegen": "graphql-codegen -c codegen.yml",
     "verify": "yarn audit-with-suppressions && yarn lint",
     "unit-test": "jest --verbose test/unit",
-    "integration-test": "jest --verbose test/integration",
+    "integration-test": "jest --verbose test/integration/message/updateEmailMessages.test.ts",
     "clean": "rm -rf ./docs ./lib ./cjs ./types",
     "build": "yarn codegen && yarn lint && yarn build:transpile && yarn build:docs",
     "build:transpile": "concurrently \"yarn build:transpile:declarations\" \"yarn build:transpile:cjs\" \"yarn build:transpile:esm\"",

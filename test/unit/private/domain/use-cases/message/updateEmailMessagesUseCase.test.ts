@@ -61,8 +61,6 @@ describe('UpdateEmailMessagesUseCase Test Suite', () => {
         instanceUnderTest.execute({ ids: new Set(), values: {} }),
       ).resolves.toStrictEqual({
         status: UpdateEmailMessagesStatus.Success,
-        successIds: [],
-        failureIds: [],
       })
     })
 

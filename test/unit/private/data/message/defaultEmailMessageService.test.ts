@@ -442,8 +442,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
       const updateEmailMessages = await instanceUnderTest.updateMessages(input)
       expect(updateEmailMessages).toStrictEqual({
         status: UpdateEmailMessagesStatus.Success,
-        successIds: undefined,
-        failureIds: undefined,
+        successMessages: undefined,
+        failureMessages: undefined,
       })
       const [inputArgs] = capture(mockAppSync.updateEmailMessages).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
@@ -466,8 +466,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
       const updateEmailMessages = await instanceUnderTest.updateMessages(input)
       expect(updateEmailMessages).toStrictEqual({
         status: UpdateEmailMessagesStatus.Success,
-        successIds: undefined,
-        failureIds: undefined,
+        successMessages: undefined,
+        failureMessages: undefined,
       })
       const [inputArgs] = capture(mockAppSync.updateEmailMessages).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({

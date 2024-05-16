@@ -22,4 +22,4 @@ export * from './emailUserPolicy'
 export * from './encryptionStatus'
 export * from './listOperationResult'
 export * from './sortOrder'
-
+export * from './updatedEmailMessage'

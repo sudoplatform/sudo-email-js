@@ -60,17 +60,6 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
   })
 
   test('update seen status of single email message should return success status', async () => {
-    const messageBuffer =
-      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
-        from: [{ emailAddress: emailAddress.emailAddress }],
-        to: [{ emailAddress: ootoSimulatorAddress }],
-        cc: [],
-        bcc: [],
-        replyTo: [],
-        subject: 'Important Subject',
-        body: 'Hello, World',
-        attachments: [],
-      })
     const result = await instanceUnderTest.sendEmailMessage({
       senderEmailAddressId: emailAddress.id,
       emailMessageHeader: {
@@ -91,7 +80,16 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
           ids: [result.id],
           values: { seen: false },
         }),
-      ).resolves.toMatchObject({ status: BatchOperationResultStatus.Success })
+      ).resolves.toMatchObject({
+        status: BatchOperationResultStatus.Success,
+        failureValues: [],
+        successValues: [
+          expect.objectContaining({
+            id: result.id,
+            createdAt: result.createdAt,
+          }),
+        ],
+      })
     })
     const messages = await instanceUnderTest.listEmailMessagesForEmailAddressId(
       {
@@ -259,7 +257,17 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
       ids: nonExistentId,
       values: { seen: true },
     })
-    expect(result.status).toStrictEqual(BatchOperationResultStatus.Failure)
+    console.debug({ result })
+    expect(result).toStrictEqual({
+      status: BatchOperationResultStatus.Failure,
+      failureValues: [
+        expect.objectContaining({
+          id: nonExistentId[0],
+          errorType: 'MessageNotFound',
+        }),
+      ],
+      successValues: [],
+    })
   })
 
   test('update list of non-existent email messages should return failed status', async () => {
@@ -268,7 +276,24 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
       ids: nonExistentIds,
       values: { seen: true },
     })
-    expect(result.status).toStrictEqual(BatchOperationResultStatus.Failure)
+    expect(result).toStrictEqual({
+      status: BatchOperationResultStatus.Failure,
+      failureValues: [
+        expect.objectContaining({
+          id: nonExistentIds[0],
+          errorType: 'MessageNotFound',
+        }),
+        expect.objectContaining({
+          id: nonExistentIds[1],
+          errorType: 'MessageNotFound',
+        }),
+        expect.objectContaining({
+          id: nonExistentIds[2],
+          errorType: 'MessageNotFound',
+        }),
+      ],
+      successValues: [],
+    })
   })
 
   test('update email messages with mixture of failed and successful updates should return partial status', async () => {
@@ -293,10 +318,19 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
           ids: [result.id, nonExistentId],
           values: { seen: false },
         }),
-      ).resolves.toStrictEqual({
+      ).resolves.toEqual({
         status: BatchOperationResultStatus.Partial,
-        successValues: [result.id],
-        failureValues: [nonExistentId],
+        successValues: [
+          expect.objectContaining({
+            id: result.id,
+          }),
+        ],
+        failureValues: [
+          expect.objectContaining({
+            id: nonExistentId,
+            errorType: 'MessageNotFound',
+          }),
+        ],
       })
     })
   })

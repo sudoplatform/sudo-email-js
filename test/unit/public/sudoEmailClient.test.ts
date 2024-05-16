@@ -1240,8 +1240,14 @@ describe('SudoEmailClient Test Suite', () => {
     beforeEach(() => {
       when(mockUpdateEmailMessagesUseCase.execute(anything())).thenResolve({
         status: UpdateEmailMessagesStatus.Partial,
-        successIds: ['successId'],
-        failureIds: ['failureId'],
+        successMessages: [
+          {
+            id: 'successId',
+            createdAt: new Date(1.0),
+            updatedAt: new Date(2.0),
+          },
+        ],
+        failureMessages: [{ id: 'failureId', errorType: 'UnknownError' }],
       })
     })
     it('generates use case', async () => {
@@ -1274,7 +1280,11 @@ describe('SudoEmailClient Test Suite', () => {
           ids: inputArray,
           values: { seen: true },
         }),
-      ).resolves.toEqual({ status: BatchOperationResultStatus.Success })
+      ).resolves.toEqual({
+        status: BatchOperationResultStatus.Success,
+        successValues: [],
+        failureValues: [],
+      })
     })
     it('returns failure when use case returns failure update status', async () => {
       const inputArray = ['id1', 'id1', 'id2', 'id3', 'id2']
@@ -1286,14 +1296,27 @@ describe('SudoEmailClient Test Suite', () => {
           ids: inputArray,
           values: { seen: true },
         }),
-      ).resolves.toEqual({ status: BatchOperationResultStatus.Failure })
+      ).resolves.toEqual({
+        status: BatchOperationResultStatus.Failure,
+        successValues: [],
+        failureValues: [],
+      })
     })
     it('returns partial success when use case returns partial update status', async () => {
       const duplicateInputArray = ['id1', 'id1', 'id2', 'id3', 'id2']
       when(mockUpdateEmailMessagesUseCase.execute(anything())).thenResolve({
         status: UpdateEmailMessagesStatus.Partial,
-        successIds: ['id1'],
-        failureIds: ['id2', 'id3'],
+        successMessages: [
+          {
+            id: 'id1',
+            createdAt: new Date(1.0),
+            updatedAt: new Date(2.0),
+          },
+        ],
+        failureMessages: [
+          { id: 'id2', errorType: 'UnknownError' },
+          { id: 'id3', errorType: 'UnknownError' },
+        ],
       })
       await expect(
         instanceUnderTest.updateEmailMessages({
@@ -1302,8 +1325,17 @@ describe('SudoEmailClient Test Suite', () => {
         }),
       ).resolves.toEqual({
         status: BatchOperationResultStatus.Partial,
-        failureValues: ['id2', 'id3'],
-        successValues: ['id1'],
+        successValues: [
+          {
+            id: 'id1',
+            createdAt: new Date(1.0),
+            updatedAt: new Date(2.0),
+          },
+        ],
+        failureValues: [
+          { id: 'id2', errorType: 'UnknownError' },
+          { id: 'id3', errorType: 'UnknownError' },
+        ],
       })
     })
   })

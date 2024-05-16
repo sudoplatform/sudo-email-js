@@ -1,5 +1,12 @@
-fragment UpdateEmailMessagesResult on UpdateEmailMessagesResult {
+fragment UpdateEmailMessagesResult on UpdateEmailMessagesV2Result {
   status
-  successMessageIds
-  failedMessageIds
+  failedMessages {
+    id
+    errorType
+  }
+  successMessages {
+    id
+    createdAtEpochMs
+    updatedAtEpochMs
+  }
 }

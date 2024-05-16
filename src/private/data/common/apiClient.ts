@@ -115,7 +115,7 @@ import {
   UpdateEmailMessagesDocument,
   UpdateEmailMessagesInput,
   UpdateEmailMessagesMutation,
-  UpdateEmailMessagesResult,
+  UpdateEmailMessagesV2Result,
 } from '../../../gen/graphqlTypes'
 import { ErrorTransformer } from './transformer/errorTransformer'
 
@@ -356,13 +356,14 @@ export class ApiClient {
 
   public async updateEmailMessages(
     input: UpdateEmailMessagesInput,
-  ): Promise<UpdateEmailMessagesResult> {
+  ): Promise<UpdateEmailMessagesV2Result> {
     const data = await this.performMutation<UpdateEmailMessagesMutation>({
       mutation: UpdateEmailMessagesDocument,
       variables: { input },
       calleeName: this.updateEmailMessages.name,
     })
-    return data.updateEmailMessages
+
+    return data.updateEmailMessagesV2
   }
 
   public async getEmailMessage(

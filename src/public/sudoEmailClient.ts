@@ -86,7 +86,11 @@ import { SubscribeToEmailMessagesUseCase } from '../private/domain/use-cases/mes
 import { UnsubscribeFromEmailMessagesUseCase } from '../private/domain/use-cases/message/unsubscribeFromEmailMessagesUseCase'
 import { UpdateEmailMessagesUseCase } from '../private/domain/use-cases/message/updateEmailMessagesUseCase'
 import { InvalidArgumentError } from './errors'
-import { EmailAttachment } from './typings'
+import {
+  EmailAttachment,
+  UpdatedEmailMessageFailure,
+  UpdatedEmailMessageSuccess,
+} from './typings'
 import {
   BatchOperationResult,
   BatchOperationResultStatus,
@@ -112,6 +116,7 @@ import {
 } from './typings/listOperationResult'
 import { SortOrder } from './typings/sortOrder'
 import { ListDraftEmailMessagesUseCase } from '../private/domain/use-cases/draft/listDraftEmailMessagesUseCase'
+import { UpdateEmailMessagesResultTransformer } from '../private/data/message/transformer/updateEmailMessagesResultTransformer'
 
 /**
  * Pagination interface designed to be extended for list interfaces.
@@ -781,7 +786,9 @@ export interface SudoEmailClient {
    */
   updateEmailMessages(
     input: UpdateEmailMessagesInput,
-  ): Promise<BatchOperationResult<string>>
+  ): Promise<
+    BatchOperationResult<UpdatedEmailMessageSuccess, UpdatedEmailMessageFailure>
+  >
 
   /**
    * Delete the email messages identified by the list of ids.
@@ -1097,25 +1104,19 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async updateEmailMessages({
     ids,
     values,
-  }: UpdateEmailMessagesInput): Promise<BatchOperationResult<string>> {
+  }: UpdateEmailMessagesInput): Promise<
+    BatchOperationResult<UpdatedEmailMessageSuccess, UpdatedEmailMessageFailure>
+  > {
     this.log.debug(this.provisionEmailAddress.name, { ids, values })
     const idSet = new Set(ids)
     const useCase = new UpdateEmailMessagesUseCase(this.emailMessageService)
-    const { status, successIds, failureIds } = await useCase.execute({
+    const useCaseResult = await useCase.execute({
       ids: idSet,
       values,
     })
-    if (status === UpdateEmailMessagesStatus.Success) {
-      return { status: BatchOperationResultStatus.Success }
-    }
-    if (status === UpdateEmailMessagesStatus.Failed) {
-      return { status: BatchOperationResultStatus.Failure }
-    }
-    return {
-      status: BatchOperationResultStatus.Partial,
-      failureValues: failureIds ?? [],
-      successValues: successIds ?? [],
-    }
+
+    const transformer = new UpdateEmailMessagesResultTransformer()
+    return transformer.fromAPItoGraphQL(useCaseResult)
   }
 
   public async deleteEmailMessage(id: string): Promise<string | undefined> {

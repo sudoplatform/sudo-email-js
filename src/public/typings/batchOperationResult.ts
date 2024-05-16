@@ -5,29 +5,17 @@
  */
 
 /**
- * The Sudo Platform SDK representation of the success or failure result from a batch operation.
+ * The Sudo Platform SDK representation of the result from a batch operation.
  *
- * @interface BatchOperationSuccessOrFailureResult
+ * @interface BatchOperationPartialResult<S,F=S>
  * @property {BatchOperationResultStatus} status Status of the batch operation result.
+ * @property {S[]} successValues List of the values that were successful.
+ * @property {F[]} failureValues List of the values that failed.
  */
-export interface BatchOperationSuccessOrFailureResult {
-  status:
-    | BatchOperationResultStatus.Success
-    | BatchOperationResultStatus.Failure
-}
-
-/**
- * The Sudo Platform SDK representation of the partial result from a batch operation.
- *
- * @interface BatchOperationPartialResult
- * @property {BatchOperationResultStatus} status Status of the batch operation result.
- * @property {T[]} successValues List of the values that were successful.
- * @property {T[]} failureValues List of the values that failed.
- */
-export interface BatchOperationPartialResult<T> {
-  status: BatchOperationResultStatus.Partial
-  successValues: T[]
-  failureValues: T[]
+export interface BatchOperationResult<S, F=S> {
+  status: BatchOperationResultStatus
+  successValues?: S[]
+  failureValues?: F[]
 }
 
 /**
@@ -38,10 +26,3 @@ export enum BatchOperationResultStatus {
   Partial,
   Failure,
 }
-
-/**
- * Result of a Batch Operation.
- */
-export type BatchOperationResult<T> =
-  | BatchOperationSuccessOrFailureResult
-  | BatchOperationPartialResult<T>

@@ -8,6 +8,10 @@ import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { LimitExceededError } from '../../../../public/errors'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
 import { UpdateEmailMessagesStatus } from '../../entities/message/updateEmailMessagesStatus'
+import {
+  UpdatedEmailMessageFailure,
+  UpdatedEmailMessageSuccess,
+} from '../../../../public'
 
 /**
  * Input for `UpdateEmailMessagesUseCase` use case.
@@ -29,10 +33,10 @@ interface UpdateEmailMessagesUseCaseInput {
  * @property {string[]} successIds Identifiers of email messages that were successfully updated.
  * @property {string[]} failureIds Identifiers of email messages that failed to update.
  */
-interface UpdateEmailMessagesUseCaseOutput {
+export interface UpdateEmailMessagesUseCaseOutput {
   status: UpdateEmailMessagesStatus
-  successIds?: string[]
-  failureIds?: string[]
+  successMessages?: UpdatedEmailMessageSuccess[]
+  failureMessages?: UpdatedEmailMessageFailure[]
 }
 
 /**
@@ -60,8 +64,6 @@ export class UpdateEmailMessagesUseCase {
     if (!ids.size) {
       return {
         status: UpdateEmailMessagesStatus.Success,
-        successIds: [],
-        failureIds: [],
       }
     }
     if (ids.size > this.Defaults.IdsSizeLimit) {
@@ -69,9 +71,10 @@ export class UpdateEmailMessagesUseCase {
         `Input cannot exceed ${this.Defaults.IdsSizeLimit}`,
       )
     }
-    return await this.emailMessageService.updateMessages({
+    const res = await this.emailMessageService.updateMessages({
       ids: Array.from(ids),
       values,
     })
+    return res
   }
 }

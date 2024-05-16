@@ -292,7 +292,7 @@ export type Mutation = {
   sendEncryptedEmailMessage: SendEmailMessageResult
   unblockEmailAddresses: BlockEmailAddressesBulkUpdateResult
   updateEmailAddressMetadata: Scalars['ID']['output']
-  updateEmailMessages: UpdateEmailMessagesResult
+  updateEmailMessagesV2: UpdateEmailMessagesV2Result
 }
 
 export type MutationBlockEmailAddressesArgs = {
@@ -339,7 +339,7 @@ export type MutationUpdateEmailAddressMetadataArgs = {
   input: UpdateEmailAddressMetadataInput
 }
 
-export type MutationUpdateEmailMessagesArgs = {
+export type MutationUpdateEmailMessagesV2Args = {
   input: UpdateEmailMessagesInput
 }
 
@@ -577,17 +577,30 @@ export type UpdateEmailMessagesInput = {
   values: EmailMessageUpdateValuesInput
 }
 
-export type UpdateEmailMessagesResult = {
-  __typename?: 'UpdateEmailMessagesResult'
-  failedMessageIds?: Maybe<Array<Scalars['ID']['output']>>
-  status: UpdateEmailMessagesStatus
-  successMessageIds?: Maybe<Array<Scalars['ID']['output']>>
-}
-
 export enum UpdateEmailMessagesStatus {
   Failed = 'FAILED',
   Partial = 'PARTIAL',
   Success = 'SUCCESS',
+}
+
+export type UpdateEmailMessagesV2Result = {
+  __typename?: 'UpdateEmailMessagesV2Result'
+  failedMessages?: Maybe<Array<UpdatedEmailMessageFailure>>
+  status: UpdateEmailMessagesStatus
+  successMessages?: Maybe<Array<UpdatedEmailMessageSuccess>>
+}
+
+export type UpdatedEmailMessageFailure = {
+  __typename?: 'UpdatedEmailMessageFailure'
+  errorType: Scalars['String']['output']
+  id: Scalars['ID']['output']
+}
+
+export type UpdatedEmailMessageSuccess = {
+  __typename?: 'UpdatedEmailMessageSuccess'
+  createdAtEpochMs: Scalars['Float']['output']
+  id: Scalars['ID']['output']
+  updatedAtEpochMs: Scalars['Float']['output']
 }
 
 export type BlockedAddressFragment = {
@@ -814,10 +827,19 @@ export type SendEmailMessageResultFragment = {
 }
 
 export type UpdateEmailMessagesResultFragment = {
-  __typename?: 'UpdateEmailMessagesResult'
+  __typename?: 'UpdateEmailMessagesV2Result'
   status: UpdateEmailMessagesStatus
-  successMessageIds?: Array<string> | null
-  failedMessageIds?: Array<string> | null
+  failedMessages?: Array<{
+    __typename?: 'UpdatedEmailMessageFailure'
+    id: string
+    errorType: string
+  }> | null
+  successMessages?: Array<{
+    __typename?: 'UpdatedEmailMessageSuccess'
+    id: string
+    createdAtEpochMs: number
+    updatedAtEpochMs: number
+  }> | null
 }
 
 export type DeleteEmailMessagesMutationVariables = Exact<{
@@ -953,11 +975,20 @@ export type UpdateEmailMessagesMutationVariables = Exact<{
 
 export type UpdateEmailMessagesMutation = {
   __typename?: 'Mutation'
-  updateEmailMessages: {
-    __typename?: 'UpdateEmailMessagesResult'
+  updateEmailMessagesV2: {
+    __typename?: 'UpdateEmailMessagesV2Result'
     status: UpdateEmailMessagesStatus
-    successMessageIds?: Array<string> | null
-    failedMessageIds?: Array<string> | null
+    failedMessages?: Array<{
+      __typename?: 'UpdatedEmailMessageFailure'
+      id: string
+      errorType: string
+    }> | null
+    successMessages?: Array<{
+      __typename?: 'UpdatedEmailMessageSuccess'
+      id: string
+      createdAtEpochMs: number
+      updatedAtEpochMs: number
+    }> | null
   }
 }
 
@@ -2358,14 +2389,41 @@ export const UpdateEmailMessagesResultFragmentDoc = {
       name: { kind: 'Name', value: 'UpdateEmailMessagesResult' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'UpdateEmailMessagesResult' },
+        name: { kind: 'Name', value: 'UpdateEmailMessagesV2Result' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'status' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'successMessageIds' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'failedMessageIds' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'failedMessages' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'errorType' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'successMessages' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'createdAtEpochMs' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'updatedAtEpochMs' },
+                },
+              ],
+            },
+          },
         ],
       },
     },
@@ -2980,7 +3038,7 @@ export const UpdateEmailMessagesDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'updateEmailMessages' },
+            name: { kind: 'Name', value: 'updateEmailMessagesV2' },
             arguments: [
               {
                 kind: 'Argument',
@@ -3009,14 +3067,41 @@ export const UpdateEmailMessagesDocument = {
       name: { kind: 'Name', value: 'UpdateEmailMessagesResult' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'UpdateEmailMessagesResult' },
+        name: { kind: 'Name', value: 'UpdateEmailMessagesV2Result' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'status' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'successMessageIds' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'failedMessageIds' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'failedMessages' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'errorType' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'successMessages' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'createdAtEpochMs' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'updatedAtEpochMs' },
+                },
+              ],
+            },
+          },
         ],
       },
     },
