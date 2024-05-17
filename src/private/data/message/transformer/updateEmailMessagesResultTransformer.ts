@@ -7,7 +7,7 @@
 import {
   BatchOperationResult,
   BatchOperationResultStatus,
-  UpdatedEmailMessageFailure,
+  EmailMessageOperationFailureResult,
   UpdatedEmailMessageSuccess,
 } from '../../../../public'
 import { UpdateEmailMessagesStatus } from '../../../domain/entities/message/updateEmailMessagesStatus'
@@ -18,7 +18,7 @@ export class UpdateEmailMessagesResultTransformer {
     data: UpdateEmailMessagesUseCaseOutput,
   ): BatchOperationResult<
     UpdatedEmailMessageSuccess,
-    UpdatedEmailMessageFailure
+    EmailMessageOperationFailureResult
   > {
     let status: BatchOperationResultStatus
     switch (data.status) {

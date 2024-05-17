@@ -76,16 +76,6 @@ describe('DeleteDraftEmailMessagesUseCase Test Suite', () => {
     verify(mockEmailAccountService.get(anything())).once()
   })
 
-  it.each([11, 12, 15, 20, 100, 1000])(
-    'throws LimitExceeded for over 10 (num=%p)',
-    async (num) => {
-      const ids = _.range(num).map(() => v4())
-      await expect(
-        instanceUnderTest.execute({ ids: new Set(ids), emailAddressId: '' }),
-      ).rejects.toThrow(new LimitExceededError(`Input cannot exceed ${10}`))
-    },
-  )
-
   it.each([1, 2, 4, 8, 9, 10])(
     'calls repo as many times as there are ids (%p times) as long as not greater than 10',
     async (num) => {
@@ -107,7 +97,7 @@ describe('DeleteDraftEmailMessagesUseCase Test Suite', () => {
       mockEmailMessageService.deleteDraft(
         deepEqual({ id: 'bad-id1', emailAddressId }),
       ),
-    ).thenReject(new EmailMessageServiceDeleteDraftError('bad-id1'))
+    ).thenReject(new EmailMessageServiceDeleteDraftError('bad-id1', 'error'))
     when(
       mockEmailMessageService.deleteDraft(
         deepEqual({ id: 'good-id2', emailAddressId }),
@@ -117,7 +107,7 @@ describe('DeleteDraftEmailMessagesUseCase Test Suite', () => {
       mockEmailMessageService.deleteDraft(
         deepEqual({ id: 'bad-id2', emailAddressId }),
       ),
-    ).thenReject(new EmailMessageServiceDeleteDraftError('bad-id2'))
+    ).thenReject(new EmailMessageServiceDeleteDraftError('bad-id2', 'error'))
     const result = await instanceUnderTest.execute({
       ids: new Set(ids),
       emailAddressId,
@@ -127,7 +117,9 @@ describe('DeleteDraftEmailMessagesUseCase Test Suite', () => {
 
     expect(result.successIds).toContain('good-id1')
     expect(result.successIds).toContain('good-id2')
-    expect(result.failureIds).toContain('bad-id1')
-    expect(result.failureIds).toContain('bad-id2')
+    expect(result.failureIds).toEqual([
+      { id: 'bad-id1', errorType: 'error' },
+      { id: 'bad-id2', errorType: 'error' },
+    ])
   })
 })

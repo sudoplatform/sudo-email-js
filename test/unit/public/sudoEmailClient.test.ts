@@ -1898,25 +1898,46 @@ describe('SudoEmailClient Test Suite', () => {
           ids: duplicateInputArray,
           emailAddressId: '',
         }),
-      ).resolves.toEqual({ status: BatchOperationResultStatus.Success })
+      ).resolves.toEqual({
+        status: BatchOperationResultStatus.Success,
+        successValues: ['id1', 'id2', 'id3'],
+        failureValues: [],
+      })
     })
     it('returns failure when all failure ids equal the unique set of input ids', async () => {
       const duplicateInputArray = ['id1', 'id1', 'id2', 'id3', 'id2']
       const uniqueArray = Array.from(new Set(duplicateInputArray))
       when(mockDeleteDraftEmailMessagesUseCase.execute(anything())).thenResolve(
-        { successIds: [], failureIds: uniqueArray },
+        {
+          successIds: [],
+          failureIds: uniqueArray.map((id) => ({ id, errorType: 'error' })),
+        },
       )
       await expect(
         instanceUnderTest.deleteDraftEmailMessages({
           ids: duplicateInputArray,
           emailAddressId: '',
         }),
-      ).resolves.toEqual({ status: BatchOperationResultStatus.Failure })
+      ).resolves.toEqual({
+        status: BatchOperationResultStatus.Failure,
+        failureValues: [
+          { id: 'id1', errorType: 'error' },
+          { id: 'id2', errorType: 'error' },
+          { id: 'id3', errorType: 'error' },
+        ],
+        successValues: [],
+      })
     })
     it('returns partial success when there is a mix of success and failure ids', async () => {
       const duplicateInputArray = ['id1', 'id1', 'id2', 'id3', 'id2']
       when(mockDeleteDraftEmailMessagesUseCase.execute(anything())).thenResolve(
-        { successIds: ['id1'], failureIds: ['id2', 'id3'] },
+        {
+          successIds: ['id1'],
+          failureIds: [
+            { id: 'id2', errorType: 'error' },
+            { id: 'id3', errorType: 'error' },
+          ],
+        },
       )
       await expect(
         instanceUnderTest.deleteDraftEmailMessages({
@@ -1925,7 +1946,10 @@ describe('SudoEmailClient Test Suite', () => {
         }),
       ).resolves.toEqual({
         status: BatchOperationResultStatus.Partial,
-        failureValues: ['id2', 'id3'],
+        failureValues: [
+          { id: 'id2', errorType: 'error' },
+          { id: 'id3', errorType: 'error' },
+        ],
         successValues: ['id1'],
       })
     })

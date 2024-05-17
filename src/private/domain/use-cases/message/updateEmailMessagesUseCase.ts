@@ -9,7 +9,7 @@ import { LimitExceededError } from '../../../../public/errors'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
 import { UpdateEmailMessagesStatus } from '../../entities/message/updateEmailMessagesStatus'
 import {
-  UpdatedEmailMessageFailure,
+  EmailMessageOperationFailureResult,
   UpdatedEmailMessageSuccess,
 } from '../../../../public'
 
@@ -30,13 +30,13 @@ interface UpdateEmailMessagesUseCaseInput {
  *
  * @interface UpdateEmailMessagesUseCaseOutput
  * @property {UpdateEmailMessagesStatus} status Status of the email messages update operation.
- * @property {string[]} successIds Identifiers of email messages that were successfully updated.
- * @property {string[]} failureIds Identifiers of email messages that failed to update.
+ * @property {UpdatedEmailMessageSuccess[]} successIds Identifiers of email messages that were successfully updated.
+ * @property {EmailMessageOperationFailureResult[]} failureIds Identifiers of email messages that failed to update.
  */
 export interface UpdateEmailMessagesUseCaseOutput {
   status: UpdateEmailMessagesStatus
   successMessages?: UpdatedEmailMessageSuccess[]
-  failureMessages?: UpdatedEmailMessageFailure[]
+  failureMessages?: EmailMessageOperationFailureResult[]
 }
 
 /**

@@ -86,14 +86,11 @@ import { SubscribeToEmailMessagesUseCase } from '../private/domain/use-cases/mes
 import { UnsubscribeFromEmailMessagesUseCase } from '../private/domain/use-cases/message/unsubscribeFromEmailMessagesUseCase'
 import { UpdateEmailMessagesUseCase } from '../private/domain/use-cases/message/updateEmailMessagesUseCase'
 import { InvalidArgumentError } from './errors'
-import {
-  EmailAttachment,
-  UpdatedEmailMessageFailure,
-  UpdatedEmailMessageSuccess,
-} from './typings'
+import { EmailAttachment, UpdatedEmailMessageSuccess } from './typings'
 import {
   BatchOperationResult,
   BatchOperationResultStatus,
+  EmailMessageOperationFailureResult,
 } from './typings/batchOperationResult'
 import { UnsealedBlockedAddress } from './typings/blockedAddresses'
 import { ConfigurationData } from './typings/configurationData'
@@ -701,7 +698,7 @@ export interface SudoEmailClient {
    */
   deleteDraftEmailMessages(
     input: DeleteDraftEmailMessagesInput,
-  ): Promise<BatchOperationResult<string>>
+  ): Promise<BatchOperationResult<string, EmailMessageOperationFailureResult>>
 
   /**
    * Get a draft email message that has been previously saved.
@@ -787,7 +784,10 @@ export interface SudoEmailClient {
   updateEmailMessages(
     input: UpdateEmailMessagesInput,
   ): Promise<
-    BatchOperationResult<UpdatedEmailMessageSuccess, UpdatedEmailMessageFailure>
+    BatchOperationResult<
+      UpdatedEmailMessageSuccess,
+      EmailMessageOperationFailureResult
+    >
   >
 
   /**
@@ -1105,7 +1105,10 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     ids,
     values,
   }: UpdateEmailMessagesInput): Promise<
-    BatchOperationResult<UpdatedEmailMessageSuccess, UpdatedEmailMessageFailure>
+    BatchOperationResult<
+      UpdatedEmailMessageSuccess,
+      EmailMessageOperationFailureResult
+    >
   > {
     this.log.debug(this.provisionEmailAddress.name, { ids, values })
     const idSet = new Set(ids)
@@ -1434,7 +1437,9 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async deleteDraftEmailMessages({
     ids,
     emailAddressId,
-  }: DeleteDraftEmailMessagesInput): Promise<BatchOperationResult<string>> {
+  }: DeleteDraftEmailMessagesInput): Promise<
+    BatchOperationResult<string, EmailMessageOperationFailureResult>
+  > {
     const idSet = new Set(ids)
     const useCase = new DeleteDraftEmailMessagesUseCase(
       this.emailAccountService,
@@ -1445,10 +1450,18 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       emailAddressId,
     })
     if (successIds.length == idSet.size) {
-      return { status: BatchOperationResultStatus.Success }
+      return {
+        status: BatchOperationResultStatus.Success,
+        failureValues: failureIds,
+        successValues: successIds,
+      }
     }
     if (failureIds.length == idSet.size) {
-      return { status: BatchOperationResultStatus.Failure }
+      return {
+        status: BatchOperationResultStatus.Failure,
+        failureValues: failureIds,
+        successValues: successIds,
+      }
     }
     return {
       status: BatchOperationResultStatus.Partial,

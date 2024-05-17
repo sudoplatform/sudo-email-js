@@ -26,3 +26,15 @@ export enum BatchOperationResultStatus {
   Partial,
   Failure,
 }
+
+/**
+ * The Sudo Platform SDK representation of the result of a failed update to an email message.
+ *
+ * @interface EmailMessageOperationFailureResult
+ * @property {string} id The unique id of the message.
+ * @property {string} errorType A description of the error that cause the update to fail
+ */
+export interface EmailMessageOperationFailureResult {
+  id: string
+  errorType: string
+}

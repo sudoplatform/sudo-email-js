@@ -1565,7 +1565,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
           id: 'draftIdToDelete',
           emailAddressId: 'emailAddressId',
         }),
-      ).rejects.toThrow(new EmailMessageServiceDeleteDraftError('deleteKey'))
+      ).rejects.toThrow(
+        new EmailMessageServiceDeleteDraftError(
+          'deleteKey',
+          'Failed to delete Key: deleteKey',
+        ),
+      )
     })
 
     it('rethrows error if s3 delete throws other than S3DeleteError', async () => {

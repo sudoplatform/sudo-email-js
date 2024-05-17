@@ -218,7 +218,10 @@ export class DefaultEmailMessageService implements EmailMessageService {
       })
     } catch (error) {
       if (error instanceof S3DeleteError) {
-        throw new EmailMessageServiceDeleteDraftError(error.key)
+        throw new EmailMessageServiceDeleteDraftError(
+          id,
+          error.msg ?? error.message ?? 'Unknown error',
+        )
       }
       throw error
     }

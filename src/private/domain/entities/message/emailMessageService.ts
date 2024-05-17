@@ -7,7 +7,7 @@
 import { CachePolicy } from '@sudoplatform/sudo-common'
 import {
   EmailMessageSubscriber,
-  UpdatedEmailMessageFailure,
+  EmailMessageOperationFailureResult,
   UpdatedEmailMessageSuccess,
 } from '../../../../public'
 import { EmailMessageDateRange } from '../../../../public/typings/emailMessageDateRange'
@@ -118,12 +118,12 @@ export interface UpdateEmailMessagesInput {
  * @interface UpdateEmailMessagesOutput
  * @property {UpdateEmailMessagesStatus} status The status of the email message update operation.
  * @property {UpdatedEmailMessageSuccess[]} successMessages List of email messages that updated and their timestamps.
- * @property {UpdatedEmailMessageFailure[]} failureMessages List of email messages that failed and their error type.
+ * @property {EmailMessageOperationFailureResult[]} failureMessages List of email messages that failed and their error type.
  */
 export interface UpdateEmailMessagesOutput {
   status: UpdateEmailMessagesStatus
   successMessages?: UpdatedEmailMessageSuccess[]
-  failureMessages?: UpdatedEmailMessageFailure[]
+  failureMessages?: EmailMessageOperationFailureResult[]
 }
 
 /**
@@ -268,9 +268,11 @@ export interface ListEmailMessagesForEmailFolderIdOutput {
 
 export class EmailMessageServiceDeleteDraftError extends Error {
   readonly id: string
-  constructor(id: string) {
+  readonly message: string
+  constructor(id: string, message: string) {
     super(id)
     this.id = id
+    this.message = message
   }
 }
 

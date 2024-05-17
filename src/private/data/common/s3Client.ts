@@ -77,9 +77,11 @@ interface S3ErrorOptions {
 }
 export class S3DeleteError extends Error {
   readonly key: string
-  constructor({ key }: S3ErrorOptions) {
+  readonly msg?: string
+  constructor({ key, msg }: S3ErrorOptions) {
     super(`Failed to delete Key: ${key}`)
     this.key = key
+    this.msg = msg
   }
 }
 
@@ -279,8 +281,9 @@ export class S3Client {
       return key
     } catch (err: unknown) {
       const error = err as Error
+
       this.log.error(`${error.name}: ${error.message}`)
-      throw new S3DeleteError({ key: key })
+      throw new S3DeleteError({ key: key, msg: error.message })
     }
   }
 }

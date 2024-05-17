@@ -5,15 +5,14 @@
  */
 
 import { CachePolicy, DefaultLogger, Logger } from '@sudoplatform/sudo-common'
-import {
-  AddressNotFoundError,
-  LimitExceededError,
-} from '../../../../public/errors'
+import { AddressNotFoundError } from '../../../../public/errors'
 import { EmailAccountService } from '../../entities/account/emailAccountService'
 import {
   EmailMessageService,
   EmailMessageServiceDeleteDraftError,
 } from '../../entities/message/emailMessageService'
+import { EmailMessageOperationFailureResult } from '../../../../public'
+import { divideArray } from '../../../util/array'
 
 /**
  * Input for `DeleteDraftEmailMessagesUseCase` use case.
@@ -32,11 +31,11 @@ interface DeleteDraftEmailMessagesUseCaseInput {
  *
  * @interface DeleteDraftEmailMessageUseCaseOutput
  * @property {string[]} successIds Identifiers of draft email messages that were successfully deleted.
- * @property {string[]} failureIds Identifiers of draft email messages that failed to delete.
+ * @property {EmailMessageOperationFailureResult[]} failureIds Identifiers of draft email messages that failed to delete.
  */
 interface DeleteDraftEmailMessagesUseCaseOutput {
   successIds: string[]
-  failureIds: string[]
+  failureIds: EmailMessageOperationFailureResult[]
 }
 
 /**
@@ -71,32 +70,35 @@ export class DeleteDraftEmailMessagesUseCase {
     if (!ids.size) {
       return { successIds: [], failureIds: [] }
     }
-    if (ids.size > 10) {
-      throw new LimitExceededError(
-        `Input cannot exceed ${this.Configuration.IdsSizeLimit}`,
-      )
-    }
-    const results = await Promise.allSettled(
-      [...ids].map((id) =>
-        this.emailMessageService.deleteDraft({ id, emailAddressId }),
-      ),
-    )
+    const batches = divideArray([...ids], 10)
+
     const successIds: string[] = []
-    const failureIds: string[] = []
-    results.forEach((r) => {
-      if (r.status === 'fulfilled') {
-        successIds.push(r.value)
-      } else {
-        if (r.reason instanceof EmailMessageServiceDeleteDraftError) {
-          failureIds.push(r.reason.id)
-        } else {
-          this.log.error(
-            'Unexpected error received while deleting draft message',
-            { error: r.reason },
-          )
-        }
+    const failureIds: EmailMessageOperationFailureResult[] = []
+    while (batches.length > 0) {
+      const batch = batches.pop()
+      if (batch && batch.length) {
+        const results = await Promise.allSettled(
+          batch?.map((id) =>
+            this.emailMessageService.deleteDraft({ id, emailAddressId }),
+          ),
+        )
+        results.forEach((r) => {
+          if (r.status === 'fulfilled') {
+            successIds.push(r.value)
+          } else {
+            if (r.reason instanceof EmailMessageServiceDeleteDraftError) {
+              failureIds.push({ id: r.reason.id, errorType: r.reason.message })
+            } else {
+              this.log.error(
+                'Unexpected error received while deleting draft message',
+                { error: r.reason },
+              )
+            }
+          }
+        })
       }
-    })
+    }
+
     return { failureIds, successIds }
   }
 }
