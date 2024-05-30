@@ -56,6 +56,12 @@ export class AddressNotFoundError extends EmailError {
   }
 }
 
+export class InNetworkAddressNotFoundError extends EmailError {
+  constructor(msg?: string) {
+    super(msg)
+  }
+}
+
 export class LimitExceededError extends EmailError {
   constructor(msg?: string) {
     super(msg)

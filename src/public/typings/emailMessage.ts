@@ -74,6 +74,11 @@ export interface SealedEmailMessageProps {
   encryptionStatus: EncryptionStatus
 }
 
+export type EmailMessageAddress = {
+  emailAddress: string
+  displayName?: string
+}
+
 export enum Direction {
   Inbound = 'INBOUND',
   Outbound = 'OUTBOUND',
@@ -88,14 +93,21 @@ export enum State {
   Received = 'RECEIVED',
 }
 
+/**
+ * Output for `SudoEmailClient.sendEmailMessage` method.
+ *
+ * @interface SendEmailMessageResult
+ * @property {string} id The unique identifier of the message.
+ * @property {Date} createdAt The timestamp in which the message was created.
+ */
+export type  SendEmailMessageResult = {
+  id: string
+  createdAt: Date
+}
+
 export type UpdateEmailMessagesResult = {
   result: boolean
   failedMessageIds: [string]
-}
-
-export type EmailMessageAddress = {
-  emailAddress: string
-  displayName?: string
 }
 
 export enum ConnectionState {
@@ -134,9 +146,4 @@ export interface EmailMessageSubscriber {
    * @param state connection state.
    */
   connectionStatusChanged?(state: ConnectionState): void
-}
-
-export interface SendEmailMessageResult {
-  id: string
-  createdAt: Date
 }

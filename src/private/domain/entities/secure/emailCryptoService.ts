@@ -7,12 +7,12 @@
 import { SecurePackage } from './securePackage'
 
 /**
- * Core entity representation of an email message crypto service used for encryption
+ * Core entity representation of an email crypto service used for encryption
  * and decryption of in-network email messages
  *
- * @interface EmailMessageCryptoService
+ * @interface EmailCryptoService
  */
-export interface EmailMessageCryptoService {
+export interface EmailCryptoService {
   /**
    * Encrypt email data that can be decrypted by all the recipients.
    *

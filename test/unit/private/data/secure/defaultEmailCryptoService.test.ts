@@ -1,4 +1,9 @@
 import {
+  Base64,
+  DecodeError,
+  EncryptionAlgorithm,
+} from '@sudoplatform/sudo-common'
+import {
   anything,
   capture,
   instance,
@@ -7,34 +12,25 @@ import {
   verify,
   when,
 } from 'ts-mockito'
-import {
-  DeviceKeyWorker,
-  KeyType,
-} from '../../../../../src/private/data/common/deviceKeyWorker'
-import { EmailAddressPublicInfoEntity } from '../../../../../src/private/domain/entities/account/emailAddressPublicInfoEntity'
+import { v4 } from 'uuid'
+import { EmailAttachment, InvalidArgumentError } from '../../../../../src'
+import { DeviceKeyWorker } from '../../../../../src/private/data/common/deviceKeyWorker'
+import { DefaultEmailCryptoService } from '../../../../../src/private/data/secure/defaultEmailCryptoService'
+import { SealedKeyTransformer } from '../../../../../src/private/data/secure/transformer/sealedKeyTransformer'
+import { SecureDataTransformer } from '../../../../../src/private/data/secure/transformer/secureDataTransformer'
+import { EmailCryptoService } from '../../../../../src/private/domain/entities/secure/emailCryptoService'
+import { SecureData } from '../../../../../src/private/domain/entities/secure/secureData'
+import { SecureEmailAttachmentType } from '../../../../../src/private/domain/entities/secure/secureEmailAttachmentType'
+import { SecurePackage } from '../../../../../src/private/domain/entities/secure/securePackage'
 import {
   arrayBufferToString,
   stringToArrayBuffer,
 } from '../../../../../src/private/util/buffer'
-import { v4 } from 'uuid'
-import {
-  Base64,
-  DecodeError,
-  EncryptionAlgorithm,
-} from '@sudoplatform/sudo-common'
-import { EmailAttachment, InvalidEmailContentsError } from '../../../../../src'
-import { EmailMessageCryptoService } from '../../../../../src/private/domain/entities/secure/emailMessageCryptoService'
-import { DefaultEmailMessageCryptoService } from '../../../../../src/private/data/secure/defaultEmailMessageCryptoService'
-import { SecureData } from '../../../../../src/private/domain/entities/secure/secureData'
-import { SecureEmailAttachmentType } from '../../../../../src/private/domain/entities/secure/secureEmailAttachmentType'
-import { SecurePackage } from '../../../../../src/private/domain/entities/secure/securePackage'
-import { SecureDataTransformer } from '../../../../../src/private/data/secure/transformer/secureDataTransformer'
-import { SealedKeyTransformer } from '../../../../../src/private/data/secure/transformer/sealedKeyTransformer'
 
-describe('DefaultEmailMessageCryptoService Test Suite', () => {
+describe('DefaultEmailCryptoService Test Suite', () => {
   const mockDeviceKeyWorker = mock<DeviceKeyWorker>()
 
-  let instanceUnderTest: EmailMessageCryptoService
+  let instanceUnderTest: EmailCryptoService
 
   let mockEncryptedData: ArrayBuffer
   let mockIv: ArrayBuffer
@@ -45,7 +41,7 @@ describe('DefaultEmailMessageCryptoService Test Suite', () => {
   beforeEach(() => {
     reset(mockDeviceKeyWorker)
 
-    instanceUnderTest = new DefaultEmailMessageCryptoService(
+    instanceUnderTest = new DefaultEmailCryptoService(
       instance(mockDeviceKeyWorker),
     )
 
@@ -76,13 +72,13 @@ describe('DefaultEmailMessageCryptoService Test Suite', () => {
       const data = new ArrayBuffer(0)
 
       await expect(instanceUnderTest.encrypt(data, mockKeyIds)).rejects.toThrow(
-        InvalidEmailContentsError,
+        InvalidArgumentError,
       )
     })
 
     it('throws if no addresses passed', async () => {
       await expect(instanceUnderTest.encrypt(mockData, [])).rejects.toThrow(
-        InvalidEmailContentsError,
+        InvalidArgumentError,
       )
     })
 

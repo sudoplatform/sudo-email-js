@@ -11,27 +11,25 @@ import {
   EncryptionAlgorithm,
   Logger,
 } from '@sudoplatform/sudo-common'
-import { DeviceKeyWorker, KeyType } from '../common/deviceKeyWorker'
-import { arrayBufferToString, stringToArrayBuffer } from '../../util/buffer'
+import { EmailAttachment, InvalidArgumentError } from '../../../public'
+import { EmailCryptoService } from '../../domain/entities/secure/emailCryptoService'
 import { SealedKey } from '../../domain/entities/secure/sealedKey'
 import { SecureData } from '../../domain/entities/secure/secureData'
-import { SecurePackage } from '../../domain/entities/secure/securePackage'
-import { EmailAttachment, InvalidEmailContentsError } from '../../../public'
 import {
   LEGACY_BODY_CONTENT_ID,
   LEGACY_KEY_EXCHANGE_CONTENT_ID,
   SecureEmailAttachmentType,
   SecureEmailAttachmentTypeInterface,
 } from '../../domain/entities/secure/secureEmailAttachmentType'
-import { EmailMessageCryptoService } from '../../domain/entities/secure/emailMessageCryptoService'
-import { SecureDataTransformer } from './transformer/secureDataTransformer'
+import { SecurePackage } from '../../domain/entities/secure/securePackage'
+import { arrayBufferToString, stringToArrayBuffer } from '../../util/buffer'
+import { DeviceKeyWorker, KeyType } from '../common/deviceKeyWorker'
 import { SealedKeyTransformer } from './transformer/sealedKeyTransformer'
+import { SecureDataTransformer } from './transformer/secureDataTransformer'
 
 const IV_BYTES_SIZE = 16
 
-export class DefaultEmailMessageCryptoService
-  implements EmailMessageCryptoService
-{
+export class DefaultEmailCryptoService implements EmailCryptoService {
   private readonly log: Logger
 
   constructor(private readonly deviceKeyWorker: DeviceKeyWorker) {
@@ -39,12 +37,8 @@ export class DefaultEmailMessageCryptoService
   }
 
   async encrypt(data: ArrayBuffer, keyIds: string[]): Promise<SecurePackage> {
-    if (data.byteLength === 0) {
-      throw new InvalidEmailContentsError('Encrypted email data empty')
-    }
-
-    if (keyIds.length === 0) {
-      throw new InvalidEmailContentsError('No recipients for encrypted email')
+    if (data.byteLength === 0 || keyIds.length === 0) {
+      throw new InvalidArgumentError()
     }
 
     try {

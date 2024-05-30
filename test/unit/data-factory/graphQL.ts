@@ -125,7 +125,7 @@ export class GraphQLDataFactory {
   }
 
   static readonly supportedEmailDomains: SupportedDomains = {
-    domains: ['testDomain'],
+    domains: ['unittest.org'],
   }
 
   static readonly emailFolderConnection: EmailFolderConnection = {

@@ -23,7 +23,7 @@ import { Observable } from 'apollo-client/util/Observable'
 import { EmailServiceConfig } from '../../../src/private/data/common/config'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
-import { EmailMessageCryptoService } from '../../../src/private/domain/entities/secure/emailMessageCryptoService'
+import { EmailCryptoService } from '../../../src/private/domain/entities/secure/emailCryptoService'
 
 describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
   jest.setTimeout(240000)
@@ -344,7 +344,7 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
         transientBucket: 'transientBucket',
         bucket: 'bucket',
       }
-      const mockEmailMessageCryptoService = mock<EmailMessageCryptoService>()
+      const mockEmailCryptoService = mock<EmailCryptoService>()
 
       const emailMessageService = new DefaultEmailMessageService(
         instance(mockAppSync),
@@ -352,7 +352,7 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
         instance(mockS3Client),
         instance(mockDeviceKeyWorker),
         mockEmailServiceConfig,
-        instance(mockEmailMessageCryptoService),
+        instance(mockEmailCryptoService),
       )
 
       const networkError = {

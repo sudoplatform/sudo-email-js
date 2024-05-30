@@ -108,7 +108,7 @@ export class EntityDataFactory {
   }
 
   static readonly emailDomain: EmailDomainEntity = {
-    domain: 'testDomain',
+    domain: 'unittest.org',
   }
 
   static readonly emailMessage: EmailMessageEntity = {

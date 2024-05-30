@@ -70,7 +70,7 @@ import {
 import { EmailAddressPublicInfoEntity } from '../../../../../src/private/domain/entities/account/emailAddressPublicInfoEntity'
 import { SecurePackage } from '../../../../../src/private/domain/entities/secure/securePackage'
 import { SecureEmailAttachmentType } from '../../../../../src/private/domain/entities/secure/secureEmailAttachmentType'
-import { EmailMessageCryptoService } from '../../../../../src/private/domain/entities/secure/emailMessageCryptoService'
+import { EmailCryptoService } from '../../../../../src/private/domain/entities/secure/emailCryptoService'
 
 const identityServiceConfig = DraftEmailMessageDataFactory.identityServiceConfig
 
@@ -85,16 +85,14 @@ jest.mock('../../../../../src/private/data/common/subscriptionManager')
 const JestMockSubscriptionManager = SubscriptionManager as jest.MockedClass<
   typeof SubscriptionManager
 >
-jest.mock(
-  '../../../../../src/private/data/secure/defaultEmailMessageCryptoService',
-)
+jest.mock('../../../../../src/private/data/secure/defaultEmailCryptoService')
 
 describe('DefaultEmailMessageService Test Suite', () => {
   const mockAppSync = mock<ApiClient>()
   const mockUserClient = mock<SudoUserClient>()
   const mockDeviceKeyWorker = mock<DeviceKeyWorker>()
   const mockS3Client = mock<S3Client>()
-  const mockEmailMessageCryptoService = mock<EmailMessageCryptoService>()
+  const mockEmailCryptoService = mock<EmailCryptoService>()
   const mockSubscriptionManager =
     mock<
       SubscriptionManager<
@@ -117,7 +115,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     reset(mockDeviceKeyWorker)
     reset(mockS3Client)
     reset(mockDeviceKeyWorker)
-    reset(mockEmailMessageCryptoService)
+    reset(mockEmailCryptoService)
     reset(mockSubscriptionManager)
     timestamp = new Date(1)
     mockMesageId = v4()
@@ -127,7 +125,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       instance(mockS3Client),
       instance(mockDeviceKeyWorker),
       identityServiceConfig,
-      instance(mockEmailMessageCryptoService),
+      instance(mockEmailCryptoService),
     )
     when(mockUserClient.getUserClaim(anything())).thenResolve('identityId')
     when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve(
@@ -147,20 +145,32 @@ describe('DefaultEmailMessageService Test Suite', () => {
   })
 
   describe('sendMessage', () => {
+    const emailMessageMaxOutboundMessageSize = 9999999
+    const encodedOriginalMessage = stringToArrayBuffer(v4())
+    const encodeToInternetMessageBufferSpy = jest.spyOn(
+      Rfc822MessageDataProcessor,
+      'encodeToInternetMessageBuffer',
+    )
+    encodeToInternetMessageBufferSpy.mockReturnValueOnce(encodedOriginalMessage)
+    let message: EmailMessageDetails
     beforeEach(() => {
       when(mockS3Client.upload(anything())).thenResolve({
         key: v4(),
         lastModified: new Date(),
       })
+      message = {
+        from: [{ emailAddress: `from-${v4()}@example.com` }],
+      }
     })
 
     it('calls s3 upload', async () => {
-      const rfc822Data = stringToArrayBuffer(v4())
       const senderEmailAddressId = v4()
       await instanceUnderTest.sendMessage({
-        rfc822Data,
+        message,
         senderEmailAddressId,
+        emailMessageMaxOutboundMessageSize,
       })
+
       verify(mockS3Client.upload(anything())).once()
       const [s3Inputs] = capture(mockS3Client.upload).first()
       expect(s3Inputs).toStrictEqual<typeof s3Inputs>({
@@ -169,16 +179,16 @@ describe('DefaultEmailMessageService Test Suite', () => {
         key: expect.stringMatching(
           new RegExp(`^identityId\/email\/${senderEmailAddressId}\/.+`),
         ),
-        body: arrayBufferToString(rfc822Data),
+        body: arrayBufferToString(encodedOriginalMessage),
       })
     })
 
     it('calls appsync', async () => {
-      const rfc822Data = stringToArrayBuffer(v4())
       const senderEmailAddressId = v4()
       await instanceUnderTest.sendMessage({
-        rfc822Data,
+        message,
         senderEmailAddressId,
+        emailMessageMaxOutboundMessageSize,
       })
       verify(mockAppSync.sendEmailMessage(anything())).once()
       const [appSyncInput] = capture(mockAppSync.sendEmailMessage).first()
@@ -202,10 +212,26 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       await expect(
         instanceUnderTest.sendMessage({
-          rfc822Data: stringToArrayBuffer(''),
+          message,
           senderEmailAddressId: '',
+          emailMessageMaxOutboundMessageSize,
         }),
       ).resolves.toStrictEqual({ id: resultId, createdAt: timestamp })
+    })
+
+    it('respects outgoing message size limit', async () => {
+      const limit = 10485769 // 10mb
+      encodeToInternetMessageBufferSpy
+        .mockReset()
+        .mockReturnValueOnce(Buffer.alloc(limit + 1))
+
+      await expect(
+        instanceUnderTest.sendMessage({
+          message,
+          senderEmailAddressId: v4(),
+          emailMessageMaxOutboundMessageSize: limit,
+        }),
+      ).rejects.toThrow(MessageSizeLimitExceededError)
     })
   })
 
@@ -244,9 +270,9 @@ describe('DefaultEmailMessageService Test Suite', () => {
       encodeToInternetMessageBufferSpy
         .mockReturnValueOnce(encodedOriginalMessage) // First call
         .mockReturnValue(encodedEncryptedMessage) // Second call
-      when(
-        mockEmailMessageCryptoService.encrypt(anything(), anything()),
-      ).thenResolve(securePackage)
+      when(mockEmailCryptoService.encrypt(anything(), anything())).thenResolve(
+        securePackage,
+      )
       when(mockS3Client.upload(anything())).thenResolve({
         key: v4(),
         lastModified: new Date(),
@@ -293,11 +319,9 @@ describe('DefaultEmailMessageService Test Suite', () => {
         emailMessageMaxOutboundMessageSize,
       })
 
-      verify(
-        mockEmailMessageCryptoService.encrypt(anything(), anything()),
-      ).once()
+      verify(mockEmailCryptoService.encrypt(anything(), anything())).once()
       const [rfc822DataArg, recipientsPublicInfoArg] = capture(
-        mockEmailMessageCryptoService.encrypt,
+        mockEmailCryptoService.encrypt,
       ).first()
       expect(rfc822DataArg).toEqual(encodedOriginalMessage)
       expect(recipientsPublicInfoArg).toStrictEqual(
@@ -317,11 +341,9 @@ describe('DefaultEmailMessageService Test Suite', () => {
         emailMessageMaxOutboundMessageSize,
       })
 
-      verify(
-        mockEmailMessageCryptoService.encrypt(anything(), anything()),
-      ).once()
+      verify(mockEmailCryptoService.encrypt(anything(), anything())).once()
       const [rfc822DataArg, recipientsPublicInfoArg] = capture(
-        mockEmailMessageCryptoService.encrypt,
+        mockEmailCryptoService.encrypt,
       ).first()
       expect(rfc822DataArg).toEqual(encodedOriginalMessage)
       expect(recipientsPublicInfoArg).toStrictEqual(
@@ -1763,7 +1785,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         `${unsealedDraft}\n${SecureEmailAttachmentType.BODY.contentId}`,
       )
       parseInternetMessageDataSpy.mockResolvedValueOnce(message)
-      when(mockEmailMessageCryptoService.decrypt(anything())).thenResolve(
+      when(mockEmailCryptoService.decrypt(anything())).thenResolve(
         stringToArrayBuffer(unsealedDraft),
       )
 
@@ -1791,10 +1813,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
       verify(mockAppSync.getEmailMessage(anything())).once()
       expect(gunzipSpy).toHaveBeenCalledTimes(0)
       expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(1)
-      verify(mockEmailMessageCryptoService.decrypt(anything())).once()
-      const [securePackageArg] = capture(
-        mockEmailMessageCryptoService.decrypt,
-      ).first()
+      verify(mockEmailCryptoService.decrypt(anything())).once()
+      const [securePackageArg] = capture(mockEmailCryptoService.decrypt).first()
       expect(securePackageArg).toBeInstanceOf(SecurePackage)
     })
 

@@ -18,21 +18,18 @@ import {
   EmailAddress,
   EmailFolder,
   EncryptionStatus,
+  InNetworkAddressNotFoundError,
   InvalidEmailContentsError,
   MessageSizeLimitExceededError,
   SudoEmailClient,
   UnauthorizedAddressError,
 } from '../../../src'
+import { EmailConfigurationDataService } from '../../../src/private/domain/entities/configuration/configurationDataService'
+import { arrayBufferToString } from '../../../src/private/util/buffer'
+import { EmailMessageDetails } from '../../../src/private/util/rfc822MessageDataProcessor'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { readAllPages } from '../util/paginator'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
-import {
-  EmailMessageDetails,
-  Rfc822MessageDataProcessor,
-} from '../../../src/private/util/rfc822MessageDataProcessor'
-import { EmailConfigurationDataService } from '../../../src/private/domain/entities/configuration/configurationDataService'
-import { DefaultConfigurationDataService } from '../../../src/private/data/configuration/defaultConfigurationDataService'
-import { arrayBufferToString } from '../../../src/private/util/buffer'
 
 describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   jest.setTimeout(240000)
@@ -405,6 +402,58 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     )
   })
 
+  it('returns unencrypted status when sending with mixture of recipients', async () => {
+    const result = await instanceUnderTest.sendEmailMessage({
+      senderEmailAddressId: emailAddress1.id,
+      emailMessageHeader: {
+        from: draft.from[0],
+        to: [...(draft.to ?? []), ...(encryptedDraft.to ?? [])],
+        cc: draft.cc ?? [],
+        bcc: draft.bcc ?? [],
+        replyTo: draft.replyTo ?? [],
+        subject: draft.subject ?? '',
+      },
+      body: draft.body ?? '',
+      attachments: draft.attachments ?? [],
+      inlineAttachments: draft.inlineAttachments ?? [],
+    })
+    const { id: sentId } = result
+
+    expect(sentId).toMatch(
+      /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
+    )
+
+    let sent
+    await waitForExpect(async () => {
+      sent = await instanceUnderTest.getEmailMessage({
+        id: sentId,
+        cachePolicy: CachePolicy.RemoteOnly,
+      })
+      expect(sent).toBeDefined()
+    })
+
+    expect(sent).toMatchObject({
+      ..._.omit(draft, 'body', 'attachments'),
+      id: sentId,
+      to: [...(draft.to ?? []), ...(encryptedDraft.to ?? [])],
+      hasAttachments: false,
+      encryptionStatus: EncryptionStatus.UNENCRYPTED,
+    })
+
+    const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
+      id: sentId,
+      emailAddressId: emailAddress1.id,
+    })
+
+    const sentRfc822DataStr = new TextDecoder().decode(
+      sentRFC822Data?.rfc822Data,
+    )
+    expect(sentRfc822DataStr).toContain(`From: <${draft.from[0].emailAddress}>`)
+    expect(sentRfc822DataStr).toContain(`To: <${draft.to![0].emailAddress}>`)
+    expect(sentRfc822DataStr).toContain(`Subject: ${draft.subject}`)
+    expect(sentRfc822DataStr).toContain(draft.body)
+  })
+
   it('throws an error if unknown address is used', async () => {
     await expect(
       instanceUnderTest.sendEmailMessage({
@@ -690,6 +739,30 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         hasAttachments: false,
         encryptionStatus: EncryptionStatus.ENCRYPTED,
       })
+    })
+
+    it('throws an error if internal recipient is not found', async () => {
+      const domains = await instanceUnderTest.getSupportedEmailDomains()
+      const inNetworkNotFoundAddress = `notfoundaddress@${domains[0]}`
+      await expect(
+        instanceUnderTest.sendEmailMessage({
+          senderEmailAddressId: emailAddress1.id,
+          emailMessageHeader: {
+            from: draft.from[0],
+            to: [
+              ...(draft.to ?? []),
+              { emailAddress: inNetworkNotFoundAddress },
+            ],
+            cc: draft.cc ?? [],
+            bcc: draft.bcc ?? [],
+            replyTo: draft.replyTo ?? [],
+            subject: draft.subject ?? '',
+          },
+          body: draft.body ?? '',
+          attachments: draft.attachments ?? [],
+          inlineAttachments: draft.inlineAttachments ?? [],
+        }),
+      ).rejects.toThrow(InNetworkAddressNotFoundError)
     })
 
     it('respects the outgoing email message size limit', async () => {

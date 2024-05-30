@@ -6,19 +6,19 @@
 
 import { CachePolicy } from '@sudoplatform/sudo-common'
 import {
-  EmailMessageSubscriber,
   EmailMessageOperationFailureResult,
+  EmailMessageSubscriber,
   UpdatedEmailMessageSuccess,
 } from '../../../../public'
 import { EmailMessageDateRange } from '../../../../public/typings/emailMessageDateRange'
 import { SortOrder } from '../../../../public/typings/sortOrder'
+import { EmailMessageDetails } from '../../../util/rfc822MessageDataProcessor'
+import { EmailAddressPublicInfoEntity } from '../account/emailAddressPublicInfoEntity'
 import { DraftEmailMessageEntity } from './draftEmailMessageEntity'
 import { DraftEmailMessageMetadataEntity } from './draftEmailMessageMetadataEntity'
 import { EmailMessageEntity } from './emailMessageEntity'
-import { UpdateEmailMessagesStatus } from './updateEmailMessagesStatus'
-import { EmailAddressPublicInfoEntity } from '../account/emailAddressPublicInfoEntity'
-import { EmailMessageDetails } from '../../../util/rfc822MessageDataProcessor'
 import { EmailMessageWithBodyEntity } from './emailMessageWithBodyEntity'
+import { UpdateEmailMessagesStatus } from './updateEmailMessagesStatus'
 
 /**
  * Input for `EmailMessageService.saveDraft` method.
@@ -72,21 +72,24 @@ export interface DeleteDraftInput {
  * Input for `EmailMessageService.sendMessage` method.
  *
  * @interface SendMessageInput
- * @property {ArrayBuffer} rfc822Data RFC 822 data of the email message to be sent.
+ * @property {EmailMessageDetails} message The email message header and contents to be sent.
  * @property {string} senderEmailAddressId Identifier of the sender email address that is composing the email message.
+ * @property {number} emailMessageMaxOutboundMessageSize The maximum size of an outbound email message.
  */
 export interface SendMessageInput {
-  rfc822Data: ArrayBuffer
+  message: EmailMessageDetails
   senderEmailAddressId: string
+  emailMessageMaxOutboundMessageSize: number
 }
 
 /**
  * Input for `EmailMessageService.sendEncryptedMessage` method.
  *
  * @interface SendEncryptedMessageInput
- * @property {ArrayBuffer} rfc822Data RFC 822 data of the email message to be sent.
+ * @property {EmailMessageDetails} message The email message header and contents to be sent.
  * @property {string} senderEmailAddressId Identifier of the sender email address that is composing the email message.
- * @property {EmailAddressPublicInfoEntity[]} recipientsPublicInfo The public info for each recipient of the email message.
+ * @property {EmailAddressPublicInfoEntity[]} recipientsPublicInfo The public key information for each recipient of the email message.
+ * @property {number} emailMessageMaxOutboundMessageSize The maximum size of an outbound email message.
  */
 export interface SendEncryptedMessageInput {
   message: EmailMessageDetails
@@ -95,6 +98,13 @@ export interface SendEncryptedMessageInput {
   emailMessageMaxOutboundMessageSize: number
 }
 
+/**
+ * Output for `EmailMessageService.sendEmailMessage` method.
+ *
+ * @interface SendEmailMessageOutput
+ * @property {string} id The unique identifier of the message.
+ * @property {Date} createdAt The timestamp in which the message was created.
+ */
 export interface SendEmailMessageOutput {
   id: string
   createdAt: Date
@@ -266,16 +276,6 @@ export interface ListEmailMessagesForEmailFolderIdOutput {
   nextToken?: string
 }
 
-export class EmailMessageServiceDeleteDraftError extends Error {
-  readonly id: string
-  readonly message: string
-  constructor(id: string, message: string) {
-    super(id)
-    this.id = id
-    this.message = message
-  }
-}
-
 /**
  * Input for `EmailMessageService.subscribeToEmailMessages` method.
  *
@@ -298,6 +298,16 @@ export interface EmailMessageServiceSubscribeToEmailMessagesInput {
  */
 export interface EmailMessageServiceUnsubscribeFromEmailMessagesInput {
   subscriptionId: string
+}
+
+export class EmailMessageServiceDeleteDraftError extends Error {
+  readonly id: string
+  readonly message: string
+  constructor(id: string, message: string) {
+    super(id)
+    this.id = id
+    this.message = message
+  }
 }
 
 /**

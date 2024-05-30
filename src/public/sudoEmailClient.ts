@@ -46,11 +46,11 @@ import { EmailFolderAPITransformer } from '../private/data/folder/transformer/em
 import { DefaultEmailMessageService } from '../private/data/message/defaultEmailMessageService'
 import { EmailMessageAPITransformer } from '../private/data/message/transformer/emailMessageAPITransformer'
 import { ListEmailMessagesAPITransformer } from '../private/data/message/transformer/listEmailMessagesAPITransformer'
-import { DefaultEmailMessageCryptoService } from '../private/data/secure/defaultEmailMessageCryptoService'
+import { UpdateEmailMessagesResultTransformer } from '../private/data/message/transformer/updateEmailMessagesResultTransformer'
 import { EmailDomainEntity } from '../private/domain/entities/account/emailDomainEntity'
 import { EmailAddressBlocklistService } from '../private/domain/entities/blocklist/emailAddressBlocklistService'
 import { UpdateEmailMessagesStatus } from '../private/domain/entities/message/updateEmailMessagesStatus'
-import { EmailMessageCryptoService } from '../private/domain/entities/secure/emailMessageCryptoService'
+import { EmailCryptoService } from '../private/domain/entities/secure/emailCryptoService'
 import { CheckEmailAddressAvailabilityUseCase } from '../private/domain/use-cases/account/checkEmailAddressAvailabilityUseCase'
 import { DeprovisionEmailAccountUseCase } from '../private/domain/use-cases/account/deprovisionEmailAccountUseCase'
 import { GetEmailAccountUseCase } from '../private/domain/use-cases/account/getEmailAccountUseCase'
@@ -70,6 +70,7 @@ import { GetDraftEmailMessageUseCase } from '../private/domain/use-cases/draft/g
 import { ListDraftEmailMessageMetadataForEmailAddressIdUseCase } from '../private/domain/use-cases/draft/listDraftEmailMessageMetadataForEmailAddressIdUseCase'
 import { ListDraftEmailMessageMetadataUseCase } from '../private/domain/use-cases/draft/listDraftEmailMessageMetadataUseCase'
 import { ListDraftEmailMessagesForEmailAddressIdUseCase } from '../private/domain/use-cases/draft/listDraftEmailMessagesForEmailAddressIdUseCase'
+import { ListDraftEmailMessagesUseCase } from '../private/domain/use-cases/draft/listDraftEmailMessagesUseCase'
 import { SaveDraftEmailMessageUseCase } from '../private/domain/use-cases/draft/saveDraftEmailMessageUseCase'
 import { UpdateDraftEmailMessageUseCase } from '../private/domain/use-cases/draft/updateDraftEmailMessageUseCase'
 import { CreateCustomEmailFolderUseCase } from '../private/domain/use-cases/folder/createCustomEmailFolderUseCase'
@@ -112,8 +113,7 @@ import {
   ListEmailMessagesResult,
 } from './typings/listOperationResult'
 import { SortOrder } from './typings/sortOrder'
-import { ListDraftEmailMessagesUseCase } from '../private/domain/use-cases/draft/listDraftEmailMessagesUseCase'
-import { UpdateEmailMessagesResultTransformer } from '../private/data/message/transformer/updateEmailMessagesResultTransformer'
+import { DefaultEmailCryptoService } from '../private/data/secure/defaultEmailCryptoService'
 
 /**
  * Pagination interface designed to be extended for list interfaces.
@@ -416,7 +416,7 @@ export interface InternetMessageFormatHeader {
 /**
  * Input object containing information required to send an email message.
  *
- * @property {string} senderEmailAddressId [Identifier of the [EmailAddress] being used to
+ * @property {string} senderEmailAddressId Identifier of the email address being used to
  *  send the email. The identifier must match the identifier of the address of the `from` field
  *  in the RFC 6854 data.
  * @property {InternetMessageFormatHeader} emailMessageHeader The email message headers.
@@ -751,6 +751,9 @@ export interface SudoEmailClient {
   /**
    * Send an email message using RFC 6854 (supersedes RFC 822)(https://tools.ietf.org/html/rfc6854) data.
    *
+   * Email messages sent to in-network recipients (i.e. email addresses that exist within the Sudo Platform)
+   * will be sent end-to-end encrypted.
+   *
    * @param {SendEmailMessageInput} input Parameters used to send an email message.
    * @returns {string} The identifier of the email message that is being sent.
    *
@@ -960,7 +963,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   private readonly emailFolderService: DefaultEmailFolderService
   private readonly emailMessageService: DefaultEmailMessageService
   private readonly emailAddressBlocklistService: EmailAddressBlocklistService
-  private readonly emailMessageCryptoService: EmailMessageCryptoService
+  private readonly emailCryptoService: EmailCryptoService
   private readonly sudoCryptoProvider: SudoCryptoProvider
   private readonly keyManager: SudoKeyManager
   private readonly identityServiceConfig: SudoUserInternal.IdentityServiceConfig
@@ -1011,16 +1014,14 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       this.apiClient,
       deviceKeyWorker,
     )
-    this.emailMessageCryptoService = new DefaultEmailMessageCryptoService(
-      deviceKeyWorker,
-    )
+    this.emailCryptoService = new DefaultEmailCryptoService(deviceKeyWorker)
     this.emailMessageService = new DefaultEmailMessageService(
       this.apiClient,
       this.userClient,
       s3Client,
       deviceKeyWorker,
       this.emailServiceConfig,
-      this.emailMessageCryptoService,
+      this.emailCryptoService,
     )
     this.emailAddressBlocklistService = new DefaultEmailAddressBlocklistService(
       this.apiClient,

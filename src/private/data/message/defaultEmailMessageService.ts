@@ -64,7 +64,17 @@ import {
   UpdateEmailMessagesInput,
   UpdateEmailMessagesOutput,
 } from '../../domain/entities/message/emailMessageService'
+import { EmailMessageWithBodyEntity } from '../../domain/entities/message/emailMessageWithBodyEntity'
 import { SealedEmailMessageEntity } from '../../domain/entities/message/sealedEmailMessageEntity'
+import { EmailCryptoService } from '../../domain/entities/secure/emailCryptoService'
+import {
+  LEGACY_BODY_CONTENT_ID,
+  LEGACY_KEY_EXCHANGE_CONTENT_ID,
+  SecureEmailAttachmentType,
+} from '../../domain/entities/secure/secureEmailAttachmentType'
+import { SecurePackage } from '../../domain/entities/secure/securePackage'
+import { arrayBufferToString, stringToArrayBuffer } from '../../util/buffer'
+import { Rfc822MessageDataProcessor } from '../../util/rfc822MessageDataProcessor'
 import { gunzipAsync } from '../../util/zlibAsync'
 import { ApiClient } from '../common/apiClient'
 import { EmailServiceConfig } from '../common/config'
@@ -83,16 +93,6 @@ import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransfo
 import { SortOrderTransformer } from '../common/transformer/sortOrderTransformer'
 // eslint-disable-next-line tree-shaking/no-side-effects-in-initialization
 import { withDefault } from '../common/withDefault'
-import { EmailMessageWithBodyEntity } from '../../domain/entities/message/emailMessageWithBodyEntity'
-import { EmailMessageCryptoService } from '../../domain/entities/secure/emailMessageCryptoService'
-import {
-  LEGACY_BODY_CONTENT_ID,
-  LEGACY_KEY_EXCHANGE_CONTENT_ID,
-  SecureEmailAttachmentType,
-} from '../../domain/entities/secure/secureEmailAttachmentType'
-import { SecurePackage } from '../../domain/entities/secure/securePackage'
-import { arrayBufferToString, stringToArrayBuffer } from '../../util/buffer'
-import { Rfc822MessageDataProcessor } from '../../util/rfc822MessageDataProcessor'
 import { SealedEmailMessageEntityTransformer } from './transformer/sealedEmailMessageEntityTransformer'
 import { SendEmailMessageResultTransformer } from './transformer/sendEmailMessageResultTransformer'
 
@@ -143,7 +143,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     private readonly s3Client: S3Client,
     private readonly deviceKeyWorker: DeviceKeyWorker,
     private readonly emailServiceConfig: EmailServiceConfig,
-    private readonly emailMessageCryptoService: EmailMessageCryptoService,
+    private readonly emailCryptoService: EmailCryptoService,
   ) {
     this.log = new DefaultLogger(this.constructor.name)
     this.createSubscriptionManager = new SubscriptionManager<
@@ -301,23 +301,35 @@ export class DefaultEmailMessageService implements EmailMessageService {
   }
 
   async sendMessage({
-    rfc822Data,
+    message,
     senderEmailAddressId,
+    emailMessageMaxOutboundMessageSize,
   }: SendMessageInput): Promise<SendEmailMessageOutput> {
     this.log.debug(this.sendMessage.name, {
-      rfc822Data,
+      message,
       senderEmailAddressId,
-      byteLength: rfc822Data.byteLength,
+      emailMessageMaxOutboundMessageSize,
     })
+    const rfc822Data = Rfc822MessageDataProcessor.encodeToInternetMessageBuffer(
+      {
+        ...message,
+        encryptionStatus: EncryptionStatus.UNENCRYPTED,
+      },
+    )
+    if (rfc822Data.byteLength > emailMessageMaxOutboundMessageSize) {
+      throw new MessageSizeLimitExceededError(
+        `Email message size exceeded. Limit: ${emailMessageMaxOutboundMessageSize} bytes`,
+      )
+    }
 
-    const message = await this.uploadDataToTransientBucket(
+    const s3MessageObject = await this.uploadDataToTransientBucket(
       senderEmailAddressId,
       rfc822Data,
     )
 
     const result = await this.appSync.sendEmailMessage({
       emailAddressId: senderEmailAddressId,
-      message,
+      message: s3MessageObject,
     })
     const resultTransformer = new SendEmailMessageResultTransformer()
     return resultTransformer.transformGraphQL(result)
@@ -344,7 +356,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       }
     })
 
-    const securePackage = await this.emailMessageCryptoService.encrypt(
+    const securePackage = await this.emailCryptoService.encrypt(
       rfc822Data,
       keyIds,
     )
@@ -362,7 +374,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       )
     }
 
-    const s3EmailObjectInput = await this.uploadDataToTransientBucket(
+    const s3MessageObject = await this.uploadDataToTransientBucket(
       senderEmailAddressId,
       encryptedRfc822Data,
     )
@@ -383,7 +395,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
 
     const result = await this.appSync.sendEncryptedEmailMessage({
       emailAddressId: senderEmailAddressId,
-      message: s3EmailObjectInput,
+      message: s3MessageObject,
       rfc822Header,
     })
     const resultTransformer = new SendEmailMessageResultTransformer()
@@ -529,7 +541,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
         }
         const securePackage = new SecurePackage(keyAttachments, bodyAttachment)
         const decodedUnencryptedMessage =
-          await this.emailMessageCryptoService.decrypt(securePackage)
+          await this.emailCryptoService.decrypt(securePackage)
         return decodedUnencryptedMessage
       }
       return stringToArrayBuffer(decodedString)

@@ -14,18 +14,17 @@ import {
   when,
 } from 'ts-mockito'
 import { v4 } from 'uuid'
-import { EmailMessageService } from '../../../../../../src/private/domain/entities/message/emailMessageService'
-import { SendEmailMessageUseCase } from '../../../../../../src/private/domain/use-cases/message/sendEmailMessageUseCase'
-import { stringToArrayBuffer } from '../../../../../../src/private/util/buffer'
 import { EmailAccountService } from '../../../../../../src/private/domain/entities/account/emailAccountService'
-import { Rfc822MessageDataProcessor } from '../../../../../../src/private/util/rfc822MessageDataProcessor'
-import {
-  EmailAttachment,
-  InternetMessageFormatHeader,
-  MessageSizeLimitExceededError,
-} from '../../../../../../src/public'
 import { EmailConfigurationDataService } from '../../../../../../src/private/domain/entities/configuration/configurationDataService'
 import { EmailConfigurationDataEntity } from '../../../../../../src/private/domain/entities/configuration/emailConfigurationDataEntity'
+import { EmailMessageService } from '../../../../../../src/private/domain/entities/message/emailMessageService'
+import { SendEmailMessageUseCase } from '../../../../../../src/private/domain/use-cases/message/sendEmailMessageUseCase'
+import {
+  EmailAttachment,
+  InNetworkAddressNotFoundError,
+  InternetMessageFormatHeader,
+} from '../../../../../../src/public'
+import { EntityDataFactory } from '../../../../data-factory/entity'
 
 describe('SendEmailMessageUseCase', () => {
   const emailMessageMaxOutboundMessageSize = 9999999
@@ -42,10 +41,6 @@ describe('SendEmailMessageUseCase', () => {
   const mockAccountService = mock<EmailAccountService>()
   const mockEmailConfigurationDataService =
     mock<EmailConfigurationDataService>()
-  const mockRfc822Data = stringToArrayBuffer(v4())
-  const encodeToInternetMessageBufferSpy = jest
-    .spyOn(Rfc822MessageDataProcessor, 'encodeToInternetMessageBuffer')
-    .mockReturnValue(mockRfc822Data)
 
   let instanceUnderTest: SendEmailMessageUseCase
 
@@ -56,7 +51,9 @@ describe('SendEmailMessageUseCase', () => {
     reset(mockAccountService)
     reset(mockEmailConfigurationDataService)
 
-    when(mockAccountService.lookupPublicInfo(anything())).thenResolve([])
+    when(mockAccountService.getSupportedEmailDomains(anything())).thenResolve([
+      EntityDataFactory.emailDomain,
+    ])
     when(mockEmailConfigurationDataService.getConfigurationData()).thenResolve({
       emailMessageMaxOutboundMessageSize,
     } as unknown as EmailConfigurationDataEntity)
@@ -69,7 +66,6 @@ describe('SendEmailMessageUseCase', () => {
 
   describe('unencrypted path', () => {
     it('calls the message service sendMessage method', async () => {
-      const rfc822Data = stringToArrayBuffer(v4())
       await instanceUnderTest.execute({
         senderEmailAddressId,
         emailMessageHeader,
@@ -77,16 +73,28 @@ describe('SendEmailMessageUseCase', () => {
         attachments,
         inlineAttachments,
       })
-      verify(mockAccountService.lookupPublicInfo(anything())).once()
+      verify(mockEmailConfigurationDataService.getConfigurationData()).once()
+      verify(mockAccountService.getSupportedEmailDomains(anything())).once()
       verify(mockMessageService.sendMessage(anything())).once()
       const [actualSendInput] = capture(mockMessageService.sendMessage).first()
       expect(actualSendInput).toStrictEqual<typeof actualSendInput>({
-        rfc822Data,
+        message: {
+          from: [{ emailAddress: 'from@example.com' }],
+          to: [{ emailAddress: 'to@example.com' }],
+          cc: undefined,
+          bcc: undefined,
+          replyTo: undefined,
+          subject: undefined,
+          body,
+          attachments,
+          inlineAttachments,
+        },
         senderEmailAddressId,
+        emailMessageMaxOutboundMessageSize,
       })
-      expect(encodeToInternetMessageBufferSpy).toHaveBeenCalledTimes(1)
     })
-    it('returns result of service', async () => {
+
+    it('returns result of service for external recipients', async () => {
       const idResult = v4()
       when(mockMessageService.sendMessage(anything())).thenResolve({
         id: idResult,
@@ -101,17 +109,29 @@ describe('SendEmailMessageUseCase', () => {
           inlineAttachments,
         }),
       ).resolves.toStrictEqual({ id: idResult, createdAt: timestamp })
+      verify(mockEmailConfigurationDataService.getConfigurationData()).once()
+      verify(mockAccountService.getSupportedEmailDomains(anything())).once()
+      verify(mockMessageService.sendMessage(anything())).once()
     })
 
-    it('respect email message size limit', async () => {
-      const limit = 10485760 // 10mb
-      when(
-        mockEmailConfigurationDataService.getConfigurationData(),
-      ).thenResolve({
-        emailMessageMaxOutboundMessageSize: limit,
-      } as unknown as EmailConfigurationDataEntity)
-      encodeToInternetMessageBufferSpy.mockReturnValue(Buffer.alloc(limit + 1))
-
+    it('returns result of service for external and internal recipients', async () => {
+      const emailMessageHeader = {
+        from: { emailAddress: 'from@example.com' },
+        to: [{ emailAddress: EntityDataFactory.emailAddress.emailAddress }],
+        cc: [{ emailAddress: 'cc@example.com' }],
+      } as unknown as InternetMessageFormatHeader
+      const idResult = v4()
+      when(mockAccountService.lookupPublicInfo(anything())).thenResolve([
+        {
+          emailAddress: EntityDataFactory.emailAddress.emailAddress,
+          keyId: 'mockKeyId',
+          publicKey: 'mockPublicKey',
+        },
+      ])
+      when(mockMessageService.sendMessage(anything())).thenResolve({
+        id: idResult,
+        createdAt: timestamp,
+      })
       await expect(
         instanceUnderTest.execute({
           senderEmailAddressId,
@@ -120,7 +140,35 @@ describe('SendEmailMessageUseCase', () => {
           attachments,
           inlineAttachments,
         }),
-      ).rejects.toThrow(MessageSizeLimitExceededError)
+      ).resolves.toStrictEqual({ id: idResult, createdAt: timestamp })
+      verify(mockEmailConfigurationDataService.getConfigurationData()).once()
+      verify(mockAccountService.getSupportedEmailDomains(anything())).once()
+      verify(mockAccountService.lookupPublicInfo(anything())).once()
+      verify(mockMessageService.sendMessage(anything())).once()
+    })
+
+    it('returns result of service for no recipients', async () => {
+      const emailMessageHeader = {
+        from: { emailAddress: 'from@example.com' },
+        to: [],
+      } as unknown as InternetMessageFormatHeader
+      const idResult = v4()
+      when(mockMessageService.sendMessage(anything())).thenResolve({
+        id: idResult,
+        createdAt: timestamp,
+      })
+      await expect(
+        instanceUnderTest.execute({
+          senderEmailAddressId,
+          emailMessageHeader,
+          body,
+          attachments,
+          inlineAttachments,
+        }),
+      ).resolves.toStrictEqual({ id: idResult, createdAt: timestamp })
+      verify(mockEmailConfigurationDataService.getConfigurationData()).once()
+      verify(mockAccountService.getSupportedEmailDomains(anything())).once()
+      verify(mockMessageService.sendMessage(anything())).once()
     })
   })
 
@@ -128,14 +176,17 @@ describe('SendEmailMessageUseCase', () => {
     beforeEach(() => {
       when(mockAccountService.lookupPublicInfo(anything())).thenResolve([
         {
-          emailAddress: 'to@example.com',
+          emailAddress: EntityDataFactory.emailAddress.emailAddress,
           keyId: 'mockKeyId',
           publicKey: 'mockPublicKey',
         },
       ])
     })
     it('calls the message service sendMessage method', async () => {
-      const rfc822Data = stringToArrayBuffer(v4())
+      const emailMessageHeader = {
+        from: { emailAddress: 'from@example.com' },
+        to: [{ emailAddress: EntityDataFactory.emailAddress.emailAddress }],
+      } as unknown as InternetMessageFormatHeader
       await instanceUnderTest.execute({
         senderEmailAddressId,
         emailMessageHeader,
@@ -143,6 +194,8 @@ describe('SendEmailMessageUseCase', () => {
         attachments,
         inlineAttachments,
       })
+      verify(mockEmailConfigurationDataService.getConfigurationData()).once()
+      verify(mockAccountService.getSupportedEmailDomains(anything())).once()
       verify(mockAccountService.lookupPublicInfo(anything())).once()
       verify(mockMessageService.sendEncryptedMessage(anything())).once()
       const [actualSendInput] = capture(
@@ -151,7 +204,7 @@ describe('SendEmailMessageUseCase', () => {
       expect(actualSendInput).toStrictEqual<typeof actualSendInput>({
         message: {
           from: [{ emailAddress: 'from@example.com' }],
-          to: [{ emailAddress: 'to@example.com' }],
+          to: [{ emailAddress: EntityDataFactory.emailAddress.emailAddress }],
           cc: undefined,
           bcc: undefined,
           replyTo: undefined,
@@ -163,7 +216,7 @@ describe('SendEmailMessageUseCase', () => {
         senderEmailAddressId,
         recipientsPublicInfo: [
           {
-            emailAddress: 'to@example.com',
+            emailAddress: EntityDataFactory.emailAddress.emailAddress,
             keyId: 'mockKeyId',
             publicKey: 'mockPublicKey',
           },
@@ -171,8 +224,12 @@ describe('SendEmailMessageUseCase', () => {
         emailMessageMaxOutboundMessageSize,
       })
     })
-    it('returns result of service', async () => {
+    it('returns result of service for internal recipients', async () => {
       const idResult = v4()
+      const emailMessageHeader = {
+        from: { emailAddress: 'from@example.com' },
+        to: [{ emailAddress: EntityDataFactory.emailAddress.emailAddress }],
+      } as unknown as InternetMessageFormatHeader
       when(mockMessageService.sendEncryptedMessage(anything())).thenResolve({
         id: idResult,
         createdAt: timestamp,
@@ -186,6 +243,28 @@ describe('SendEmailMessageUseCase', () => {
           inlineAttachments,
         }),
       ).resolves.toStrictEqual({ id: idResult, createdAt: timestamp })
+      verify(mockEmailConfigurationDataService.getConfigurationData()).once()
+      verify(mockAccountService.getSupportedEmailDomains(anything())).once()
+      verify(mockAccountService.lookupPublicInfo(anything())).once()
+      verify(mockMessageService.sendEncryptedMessage(anything())).once()
+    })
+    it('throws error when any internal recipient email address does not exist', async () => {
+      const emailMessageHeader = {
+        from: { emailAddress: 'from@example.com' },
+        to: [{ emailAddress: 'notexists@unittest.org' }],
+      } as unknown as InternetMessageFormatHeader
+      await expect(
+        instanceUnderTest.execute({
+          senderEmailAddressId,
+          emailMessageHeader,
+          body,
+          attachments,
+          inlineAttachments,
+        }),
+      ).rejects.toThrow(InNetworkAddressNotFoundError)
+      verify(mockEmailConfigurationDataService.getConfigurationData()).once()
+      verify(mockAccountService.getSupportedEmailDomains(anything())).once()
+      verify(mockAccountService.lookupPublicInfo(anything())).once()
     })
   })
 })

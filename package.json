@@ -22,7 +22,7 @@
     "build:transpile:declarations": "tsc --project tsconfig.declarations.json",
     "build:transpile:cjs": "tsc --project tsconfig.commonjs.json",
     "build:transpile:esm": "tsc",
-    "build:docs": "typedoc --treatWarningsAsErrors --excludePrivate --out docs src/index.ts"
+    "build:docs": "typedoc --readme README.external.md --treatWarningsAsErrors --excludePrivate --out docs src/index.ts"
   },
   "main": "./cjs/index.js",
   "types": "./types/index.d.ts",

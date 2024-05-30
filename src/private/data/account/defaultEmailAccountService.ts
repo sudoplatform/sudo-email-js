@@ -32,7 +32,9 @@ import {
   UpdateEmailAccountMetadataInput,
 } from '../../domain/entities/account/emailAccountService'
 import { EmailAddressEntity } from '../../domain/entities/account/emailAddressEntity'
+import { EmailAddressPublicInfoEntity } from '../../domain/entities/account/emailAddressPublicInfoEntity'
 import { EmailDomainEntity } from '../../domain/entities/account/emailDomainEntity'
+import { EmailFolderEntity } from '../../domain/entities/folder/emailFolderEntity'
 import { ApiClient } from '../common/apiClient'
 import {
   DeviceKeyWorker,
@@ -42,10 +44,8 @@ import {
 import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransformer'
 import { EmailAccountEntityTransformer } from './transformer/emailAccountEntityTransformer'
 import { EmailAddressEntityTransformer } from './transformer/emailAddressEntityTransformer'
-import { EmailDomainEntityTransformer } from './transformer/emailDomainEntityTransformer'
-import { EmailFolderEntity } from '../../domain/entities/folder/emailFolderEntity'
-import { EmailAddressPublicInfoEntity } from '../../domain/entities/account/emailAddressPublicInfoEntity'
 import { EmailAddressPublicInfoTransformer } from './transformer/emailAddressPublicInfoTransformer'
+import { EmailDomainEntityTransformer } from './transformer/emailDomainEntityTransformer'
 
 export type EmailAccountServiceConfig = {
   enforceSingletonPublicKey?: boolean

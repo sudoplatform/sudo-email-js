@@ -11,3 +11,4 @@ yalc.lock
 build
 package.json.old
 .dccache
+.env
