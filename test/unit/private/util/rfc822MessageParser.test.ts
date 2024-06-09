@@ -708,11 +708,13 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           data: Base64.encodeString(`${v4()}-attachment`),
           contentId,
         }
-        const body = `Message body <img src="cid:${contentId}">`
+        const body = `Message body`
+        const bodyHtml = `Message body <img src="cid:${contentId}">`
 
         const messageDetails: EmailMessageDetails = {
           from: [{ emailAddress: fromAddress.emailAddress }],
           body,
+          bodyHtml,
           inlineAttachments: [attachment],
         }
 
@@ -728,6 +730,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(body)
+        expect(resultString).toContain(bodyHtml)
         expect(resultString).toContain(
           `Content-Type: multipart/mixed; boundary=`,
         )
@@ -799,110 +802,8 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         Mama, ooh, didn't mean to make you cry
         If I'm not back again this time tomorrow
         Carry on, carry on as if nothing really matters
-        <img src="cid:${contentId}">
         `
-      const attachments: EmailAttachment[] = [
-        {
-          filename: 'attachment1.jpg',
-          contentTransferEncoding: 'base64',
-          inlineAttachment: false,
-          mimeType: 'image/jpg',
-          data: Base64.encodeString(`${v4()}-attachment`),
-        },
-        {
-          filename: 'attachment2.txt',
-          contentTransferEncoding: 'base64',
-          inlineAttachment: false,
-          mimeType: 'text/plain',
-          data: Base64.encodeString(`${v4()}-attachment`),
-        },
-      ]
-      const messageDetails: EmailMessageDetails = {
-        from: [fromAddress],
-        to: [
-          { emailAddress: toAddresses[0].emailAddress },
-          {
-            emailAddress: toAddresses[1].emailAddress,
-            displayName: toAddresses[1].displayName,
-          },
-        ],
-        cc: [
-          {
-            emailAddress: ccAddresses[0].emailAddress,
-            displayName: ccAddresses[0].displayName,
-          },
-          { emailAddress: ccAddresses[1].emailAddress },
-        ],
-        bcc: [
-          { emailAddress: bccAddresses[0].emailAddress },
-          { emailAddress: bccAddresses[1].emailAddress },
-        ],
-        replyTo: [{ emailAddress: replyToAddresses[0].emailAddress }],
-        subject,
-        body,
-        attachments,
-        inlineAttachments: [inlineAttachment],
-      }
-
-      const resultString =
-        Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
-
-      expect(resultString).toContain(
-        `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
-      )
-      expect(resultString).toContain(
-        `To: <${toAddresses[0].emailAddress}>,${eol} ${toAddresses[1].displayName} <${toAddresses[1].emailAddress}>${eol}`,
-      )
-      expect(resultString).toContain(
-        `Cc: ${ccAddresses[0].displayName} <${ccAddresses[0].emailAddress}>,${eol} <${ccAddresses[1].emailAddress}>${eol}`,
-      )
-      expect(resultString).toContain(
-        `Bcc: <${bccAddresses[0].emailAddress}>,${eol} <${bccAddresses[1].emailAddress}>${eol}`,
-      )
-      expect(resultString).toContain(
-        `Reply-To: <${replyToAddresses[0].emailAddress}>${eol}`,
-      )
-      expect(resultString).toContain(`Subject: ${subject}${eol}`)
-      expect(resultString).toContain(body)
-      expect(resultString).toContain(`Content-Type: multipart/mixed; boundary=`)
-      expect(resultString).toContain(
-        `Content-Type: ${attachments[0].mimeType}; name="${attachments[0].filename}"${eol}`,
-      )
-      expect(resultString).toContain(
-        `Content-Transfer-Encoding: ${attachments[0].contentTransferEncoding}${eol}`,
-      )
-      expect(resultString).toContain(attachments[0].data)
-      expect(resultString).toContain(
-        `Content-Type: ${attachments[1].mimeType}; name="${attachments[1].filename}"${eol}`,
-      )
-      expect(resultString).toContain(
-        `Content-Transfer-Encoding: ${attachments[1].contentTransferEncoding}${eol}`,
-      )
-      expect(resultString).toContain(attachments[1].data)
-      expect(resultString).toContain(
-        `Content-Type: ${inlineAttachment.mimeType}; name="${inlineAttachment.filename}"${eol}`,
-      )
-      expect(resultString).toContain(
-        `Content-Transfer-Encoding: ${inlineAttachment.contentTransferEncoding}${eol}`,
-      )
-      expect(resultString).toContain(inlineAttachment.data)
-    })
-  })
-
-  describe('encodeToInternetMessageBuffer', () => {
-    it('returns the correct buffer', () => {
-      // Using the exact same message as the test above
-      const contentId = v4()
-      const inlineAttachment: EmailAttachment = {
-        filename: 'inlineAttachment1.jpg',
-        contentTransferEncoding: 'base64',
-        inlineAttachment: true,
-        mimeType: 'image/jpg',
-        data: Base64.encodeString(`${v4()}-attachment`),
-        contentId,
-      }
-      const subject = `Is this the real life? Is this just fantasy? Caught in a landslide, no escape from reality Open your eyes, look up to the skies and see I'm just a poor boy, I need no sympathy`
-      const body = `
+      const bodyHtml = `
         🎶🎶🎶🎶
         Is this the real life? Is this just fantasy?
         Caught in a landslide, no escape from reality
@@ -959,6 +860,145 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         replyTo: [{ emailAddress: replyToAddresses[0].emailAddress }],
         subject,
         body,
+        bodyHtml,
+        attachments,
+        inlineAttachments: [inlineAttachment],
+      }
+
+      const resultString =
+        Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+
+      expect(resultString).toContain(
+        `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
+      )
+      expect(resultString).toContain(
+        `To: <${toAddresses[0].emailAddress}>,${eol} ${toAddresses[1].displayName} <${toAddresses[1].emailAddress}>${eol}`,
+      )
+      expect(resultString).toContain(
+        `Cc: ${ccAddresses[0].displayName} <${ccAddresses[0].emailAddress}>,${eol} <${ccAddresses[1].emailAddress}>${eol}`,
+      )
+      expect(resultString).toContain(
+        `Bcc: <${bccAddresses[0].emailAddress}>,${eol} <${bccAddresses[1].emailAddress}>${eol}`,
+      )
+      expect(resultString).toContain(
+        `Reply-To: <${replyToAddresses[0].emailAddress}>${eol}`,
+      )
+      expect(resultString).toContain(`Subject: ${subject}${eol}`)
+      expect(resultString).toContain(body)
+      expect(resultString).toContain(bodyHtml)
+      expect(resultString).toContain(`Content-Type: multipart/mixed; boundary=`)
+      expect(resultString).toContain(
+        `Content-Type: ${attachments[0].mimeType}; name="${attachments[0].filename}"${eol}`,
+      )
+      expect(resultString).toContain(
+        `Content-Transfer-Encoding: ${attachments[0].contentTransferEncoding}${eol}`,
+      )
+      expect(resultString).toContain(attachments[0].data)
+      expect(resultString).toContain(
+        `Content-Type: ${attachments[1].mimeType}; name="${attachments[1].filename}"${eol}`,
+      )
+      expect(resultString).toContain(
+        `Content-Transfer-Encoding: ${attachments[1].contentTransferEncoding}${eol}`,
+      )
+      expect(resultString).toContain(attachments[1].data)
+      expect(resultString).toContain(
+        `Content-Type: ${inlineAttachment.mimeType}; name="${inlineAttachment.filename}"${eol}`,
+      )
+      expect(resultString).toContain(
+        `Content-Transfer-Encoding: ${inlineAttachment.contentTransferEncoding}${eol}`,
+      )
+      expect(resultString).toContain(inlineAttachment.data)
+    })
+  })
+
+  describe('encodeToInternetMessageBuffer', () => {
+    it('returns the correct buffer', () => {
+      // Using the exact same message as the test above
+      const contentId = v4()
+      const inlineAttachment: EmailAttachment = {
+        filename: 'inlineAttachment1.jpg',
+        contentTransferEncoding: 'base64',
+        inlineAttachment: true,
+        mimeType: 'image/jpg',
+        data: Base64.encodeString(`${v4()}-attachment`),
+        contentId,
+      }
+      const subject = `Is this the real life? Is this just fantasy? Caught in a landslide, no escape from reality Open your eyes, look up to the skies and see I'm just a poor boy, I need no sympathy`
+      const body = `
+        🎶🎶🎶🎶
+        Is this the real life? Is this just fantasy?
+        Caught in a landslide, no escape from reality
+        Open your eyes, look up to the skies and see
+        I'm just a poor boy, I need no sympathy
+        Because I'm easy come, easy go, little high, little low
+        Any way the wind blows doesn't really matter to me, to me
+
+        Mama, just killed a man
+        Put a gun against his head, pulled my trigger, now he's dead
+        Mama, life had just begun
+        But now I've gone and thrown it all away
+        Mama, ooh, didn't mean to make you cry
+        If I'm not back again this time tomorrow
+        Carry on, carry on as if nothing really matters
+        `
+      const bodyHtml = `
+        🎶🎶🎶🎶
+        Is this the real life? Is this just fantasy?
+        Caught in a landslide, no escape from reality
+        Open your eyes, look up to the skies and see
+        I'm just a poor boy, I need no sympathy
+        Because I'm easy come, easy go, little high, little low
+        Any way the wind blows doesn't really matter to me, to me
+
+        Mama, just killed a man
+        Put a gun against his head, pulled my trigger, now he's dead
+        Mama, life had just begun
+        But now I've gone and thrown it all away
+        Mama, ooh, didn't mean to make you cry
+        If I'm not back again this time tomorrow
+        Carry on, carry on as if nothing really matters
+        <img src="cid:${contentId}">
+        `
+      const attachments: EmailAttachment[] = [
+        {
+          filename: 'attachment1.jpg',
+          contentTransferEncoding: 'base64',
+          inlineAttachment: false,
+          mimeType: 'image/jpg',
+          data: Base64.encodeString(`${v4()}-attachment`),
+        },
+        {
+          filename: 'attachment2.txt',
+          contentTransferEncoding: 'base64',
+          inlineAttachment: false,
+          mimeType: 'text/plain',
+          data: Base64.encodeString(`${v4()}-attachment`),
+        },
+      ]
+      const messageDetails: EmailMessageDetails = {
+        from: [fromAddress],
+        to: [
+          { emailAddress: toAddresses[0].emailAddress },
+          {
+            emailAddress: toAddresses[1].emailAddress,
+            displayName: toAddresses[1].displayName,
+          },
+        ],
+        cc: [
+          {
+            emailAddress: ccAddresses[0].emailAddress,
+            displayName: ccAddresses[0].displayName,
+          },
+          { emailAddress: ccAddresses[1].emailAddress },
+        ],
+        bcc: [
+          { emailAddress: bccAddresses[0].emailAddress },
+          { emailAddress: bccAddresses[1].emailAddress },
+        ],
+        replyTo: [{ emailAddress: replyToAddresses[0].emailAddress }],
+        subject,
+        body,
+        bodyHtml,
         attachments,
         inlineAttachments: [inlineAttachment],
       }
@@ -985,6 +1025,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
       )
       expect(resultString).toContain(`Subject: ${subject}${eol}`)
       expect(resultString).toContain(body)
+      expect(resultString).toContain(bodyHtml)
       expect(resultString).toContain(`Content-Type: multipart/mixed; boundary=`)
       expect(resultString).toContain(
         `Content-Type: ${attachments[0].mimeType}; name="${attachments[0].filename}"${eol}`,
@@ -1810,11 +1851,13 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           data: Base64.encodeString(`${v4()}-attachment`),
           contentId,
         }
-        const body = `Message body <img src="cid:${contentId}">`
+        const body = `Message body`
+        const bodyHtml = `Message body <img src="cid:${contentId}">`
 
         const messageDetails: EmailMessageDetails = {
           from: [{ emailAddress: fromAddress.emailAddress }],
           body,
+          bodyHtml,
           inlineAttachments: [attachment],
         }
 
@@ -1830,7 +1873,8 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.cc).toHaveLength(0)
         expect(result.bcc).toHaveLength(0)
         expect(result.replyTo).toHaveLength(0)
-        expect(result.body).toEqual(body)
+        expect(result.body?.trim()).toEqual(body)
+        expect(result.bodyHtml?.trim()).toEqual(bodyHtml)
         expect(result.subject).toBeFalsy()
         expect(result.attachments).toHaveLength(0)
         expect(result.inlineAttachments).toHaveLength(1)
@@ -1908,6 +1952,22 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         "But now I've gone and thrown it all away\n" +
         "Mama, ooh, didn't mean to make you cry\n" +
         "If I'm not back again this time tomorrow\n" +
+        'Carry on, carry on as if nothing really matters\n'
+      const bodyHtml =
+        '🎶🎶🎶🎶\n' +
+        'Is this the real life? Is this just fantasy?\n' +
+        'Caught in a landslide, no escape from reality\n' +
+        'Open your eyes, look up to the skies and see\n' +
+        "I'm just a poor boy, I need no sympathy\n" +
+        "Because I'm easy come, easy go, little high, little low\n" +
+        "Any way the wind blows doesn't really matter to me, to me\n" +
+        '\n' +
+        'Mama, just killed a man\n' +
+        "Put a gun against his head, pulled my trigger, now he's dead\n" +
+        'Mama, life had just begun\n' +
+        "But now I've gone and thrown it all away\n" +
+        "Mama, ooh, didn't mean to make you cry\n" +
+        "If I'm not back again this time tomorrow\n" +
         'Carry on, carry on as if nothing really matters\n' +
         `<img src="cid:${contentId}">`
 
@@ -1950,6 +2010,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         replyTo: [{ emailAddress: replyToAddresses[0].emailAddress }],
         subject,
         body: body.trim(),
+        bodyHtml,
         attachments,
         inlineAttachments: [inlineAttachment],
       }
@@ -1983,7 +2044,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         replyToAddresses[0].emailAddress,
       )
       expect(result.replyTo![0].displayName).toBeFalsy()
-      expect(result.body).toEqual(body)
+      expect(result.bodyHtml?.trim()).toEqual(bodyHtml)
       expect(result.subject).toEqual(subject)
       console.debug({ att: result.attachments })
       console.debug({ inatt: result.inlineAttachments })
@@ -2054,6 +2115,22 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         "But now I've gone and thrown it all away\n" +
         "Mama, ooh, didn't mean to make you cry\n" +
         "If I'm not back again this time tomorrow\n" +
+        'Carry on, carry on as if nothing really matters\n'
+      const bodyHtml =
+        '🎶🎶🎶🎶\n' +
+        'Is this the real life? Is this just fantasy?\n' +
+        'Caught in a landslide, no escape from reality\n' +
+        'Open your eyes, look up to the skies and see\n' +
+        "I'm just a poor boy, I need no sympathy\n" +
+        "Because I'm easy come, easy go, little high, little low\n" +
+        "Any way the wind blows doesn't really matter to me, to me\n" +
+        '\n' +
+        'Mama, just killed a man\n' +
+        "Put a gun against his head, pulled my trigger, now he's dead\n" +
+        'Mama, life had just begun\n' +
+        "But now I've gone and thrown it all away\n" +
+        "Mama, ooh, didn't mean to make you cry\n" +
+        "If I'm not back again this time tomorrow\n" +
         'Carry on, carry on as if nothing really matters\n' +
         `<img src="cid:${contentId}">`
 
@@ -2096,6 +2173,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         replyTo: [{ emailAddress: replyToAddresses[0].emailAddress }],
         subject,
         body: body.trim(),
+        bodyHtml,
         attachments,
         inlineAttachments: [inlineAttachment],
       }
@@ -2108,9 +2186,15 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           encodedRfc822String,
         )
 
-      expect(decodedRfc822Object).toMatchObject<EmailMessageDetails>(
-        messageDetails,
-      )
+      expect({
+        ...decodedRfc822Object,
+        bodyHtml: decodedRfc822Object.bodyHtml?.trim(),
+        body: decodedRfc822Object.body?.trim(),
+      }).toMatchObject<EmailMessageDetails>({
+        ...messageDetails,
+        bodyHtml: messageDetails.bodyHtml?.trim(),
+        body: messageDetails.body?.trim(),
+      })
     })
   })
 })

@@ -3,29 +3,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
-import { gunzip, gzip } from 'zlib'
+import { gzipSync, gunzipSync } from 'fflate'
 
 export async function gzipAsync(message: ArrayBuffer) {
   return new Promise<ArrayBuffer>((resolve, reject) => {
-    gzip(message, (err, output) => {
-      if (err) {
-        reject(err)
-      } else {
-        resolve(output)
-      }
-    })
+    try {
+      return resolve(gzipSync(new Uint8Array(message)))
+    } catch (e) {
+      reject(e)
+    }
   })
 }
 
 export async function gunzipAsync(compressed: ArrayBuffer) {
   return new Promise<ArrayBuffer>((resolve, reject) => {
-    gunzip(compressed, (err, output) => {
-      if (err) {
-        reject(err)
-      } else {
-        resolve(output)
-      }
-    })
+    try {
+      return resolve(gunzipSync(new Uint8Array(compressed)))
+    } catch (e) {
+      reject(e)
+    }
   })
 }

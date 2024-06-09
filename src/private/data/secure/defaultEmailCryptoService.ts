@@ -16,8 +16,6 @@ import { EmailCryptoService } from '../../domain/entities/secure/emailCryptoServ
 import { SealedKey } from '../../domain/entities/secure/sealedKey'
 import { SecureData } from '../../domain/entities/secure/secureData'
 import {
-  LEGACY_BODY_CONTENT_ID,
-  LEGACY_KEY_EXCHANGE_CONTENT_ID,
   SecureEmailAttachmentType,
   SecureEmailAttachmentTypeInterface,
 } from '../../domain/entities/secure/secureEmailAttachmentType'
@@ -94,8 +92,7 @@ export class DefaultEmailCryptoService implements EmailCryptoService {
       const keyExistPromises = await Promise.all(
         keyAttachments.map(async (keyAttachment) => {
           let keyData = keyAttachment.data
-          if (keyAttachment.contentId === LEGACY_KEY_EXCHANGE_CONTENT_ID) {
-            // Legacy system base64 encodes the data, so decode here
+          if (keyAttachment.contentTransferEncoding === 'base64') {
             keyData = Base64.decodeString(keyData)
           }
           const keyDataJson = SealedKeyTransformer.fromJson(keyData)
@@ -114,9 +111,7 @@ export class DefaultEmailCryptoService implements EmailCryptoService {
         throw new DecodeError('No public key for this user found')
       }
       let bodyData = bodyAttachment.data
-
-      if (bodyAttachment.contentId === LEGACY_BODY_CONTENT_ID) {
-        // Legacy system base64 encodes the data, so decode here
+      if (bodyAttachment.contentTransferEncoding === 'base64') {
         bodyData = Base64.decodeString(bodyData)
       }
 

@@ -20,7 +20,7 @@ export interface EmailAttachmentEntity {
   filename: string
   contentId?: string
   mimeType: string
-  contentTransferEncoding: ContentTransferEncoding
+  contentTransferEncoding?: ContentTransferEncoding
   inlineAttachment: boolean
   data: string
 }

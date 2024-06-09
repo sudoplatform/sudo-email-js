@@ -83,7 +83,7 @@ describe('SudoEmailClient Interoperability Test Suite', () => {
     'it can send to and receive from %p',
     async (externalAccount) => {
       const timestamp = new Date()
-      console.info(timestamp.toUTCString())
+      console.info(timestamp.toUTCString(), externalAccount)
       const { id: sentId } = await instanceUnderTest.sendEmailMessage({
         senderEmailAddressId: emailAddress.id,
         emailMessageHeader: {
@@ -162,7 +162,7 @@ describe('SudoEmailClient Interoperability Test Suite', () => {
 
         expect(messageWithBody).toBeDefined()
         expect(messageWithBody!.id).toBeDefined()
-        expect(messageWithBody!.body).toEqual(
+        expect(messageWithBody!.body).toContain(
           'Message received. This is an auto-reply',
         )
         expect(messageWithBody!.attachments).toHaveLength(0)

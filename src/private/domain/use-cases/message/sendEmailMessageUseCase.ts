@@ -88,7 +88,7 @@ export class SendEmailMessageUseCase {
       bcc,
       replyTo,
       subject,
-      body,
+      body: body,
       attachments,
       inlineAttachments,
     }

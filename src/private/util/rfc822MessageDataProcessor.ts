@@ -5,7 +5,6 @@
  */
 
 import { MIMETextError, createMimeMessage } from 'mail-mime-builder'
-import { simpleParser, AddressObject } from 'mailparser'
 import {
   EmailAddressDetail,
   EmailAttachment,
@@ -16,10 +15,11 @@ import {
 import {
   AttachmentOptions,
   MailboxAddrObject,
-  ContentTransferEncoding,
 } from 'mail-mime-builder/umd/types'
 import { Base64 } from '@sudoplatform/sudo-common'
-import { arrayBufferToString } from './buffer'
+import { arrayBufferToString, stringToArrayBuffer } from './buffer'
+import PostalMime, { Address } from 'postal-mime'
+import { htmlToPlaintext } from './stringUtils'
 
 export interface EmailMessageDetails {
   from: EmailAddressDetail[]
@@ -29,6 +29,7 @@ export interface EmailMessageDetails {
   replyTo?: EmailAddressDetail[]
   subject?: string
   body?: string
+  bodyHtml?: string
   attachments?: EmailAttachment[]
   inlineAttachments?: EmailAttachment[]
   encryptionStatus?: EncryptionStatus
@@ -78,6 +79,7 @@ export class Rfc822MessageDataProcessor {
     replyTo,
     subject,
     body,
+    bodyHtml,
     attachments,
     inlineAttachments,
     encryptionStatus = EncryptionStatus.UNENCRYPTED,
@@ -125,6 +127,11 @@ export class Rfc822MessageDataProcessor {
         charset: 'UTF-8',
         contentType: 'text/plain',
       })
+      msg.addMessage({
+        data: bodyHtml ?? '',
+        contentType: 'text/html',
+        charset: 'UTF-8',
+      })
     }
 
     attachments?.forEach((attachment) => {
@@ -166,18 +173,18 @@ export class Rfc822MessageDataProcessor {
     data: string,
   ): Promise<EmailMessageDetails> {
     try {
-      const parsed = await simpleParser(data, { skipTextToHtml: true })
+      const parsed = await PostalMime.parse(stringToArrayBuffer(data))
 
-      const from: EmailAddressDetail[] =
-        parsed.from?.value.map((addr) => ({
-          emailAddress: addr.address ?? '',
-          displayName: addr.name,
-        })) ?? []
-      const replyTo: EmailAddressDetail[] =
-        parsed.replyTo?.value.map((addr) => ({
-          emailAddress: addr.address ?? '',
-          displayName: addr.name,
-        })) ?? []
+      const from: EmailAddressDetail[] = [
+        {
+          emailAddress: parsed.from?.address ?? '',
+          displayName: parsed.from?.name,
+        },
+      ]
+      const replyTo =
+        Rfc822MessageDataProcessor.addressObjectToEmailAddressDetailArray(
+          parsed.replyTo,
+        )
 
       const to =
         Rfc822MessageDataProcessor.addressObjectToEmailAddressDetailArray(
@@ -192,36 +199,32 @@ export class Rfc822MessageDataProcessor {
           parsed.bcc,
         )
 
-      const body = parsed.text?.trim()
+      const body = parsed.text
+        ? parsed.text.trim()
+        : htmlToPlaintext(parsed.html ?? '')
+      const bodyHtml = parsed.html
       const subject = parsed.subject
 
-      const encryptionHeader = parsed.headers.get(
-        EMAIL_HEADER_NAME_ENCRYPTION.toLowerCase(),
+      const encryptionHeader = parsed.headers.find(
+        (h) => h.key === EMAIL_HEADER_NAME_ENCRYPTION.toLowerCase(),
       )
 
       const encryptionStatus =
-        encryptionHeader?.valueOf() === PLATFORM_ENCRYPTION
+        encryptionHeader?.value === PLATFORM_ENCRYPTION
           ? EncryptionStatus.ENCRYPTED
           : EncryptionStatus.UNENCRYPTED
 
       const attachments: EmailAttachment[] = []
       const inlineAttachments: EmailAttachment[] = []
       parsed.attachments.forEach((a) => {
-        const contentTransferEncoding =
-          a.headers.get(CONTENT_TRANSFER_ENCODING.toLowerCase())?.valueOf() ??
-          'base64'
-        let decodedContent = arrayBufferToString(a.content)
-        if (contentTransferEncoding === 'base64') {
-          decodedContent = Base64.encodeString(decodedContent)
-        }
+        const decodedContent = arrayBufferToString(a.content)
         const attachment: EmailAttachment = {
-          data: decodedContent.trim(),
+          data: Base64.encodeString(decodedContent).trim(),
           filename: a.filename ?? '',
-          contentTransferEncoding:
-            contentTransferEncoding as ContentTransferEncoding,
-          mimeType: a.contentType,
+          contentTransferEncoding: 'base64',
+          mimeType: a.mimeType,
           contentId: a.contentId?.replace(/(<|>)/g, ''),
-          inlineAttachment: a.contentDisposition === 'inline',
+          inlineAttachment: a.disposition === 'inline',
         }
         // This is necessary because inline attachments are included in the parsed object twice
         if (
@@ -241,6 +244,7 @@ export class Rfc822MessageDataProcessor {
         bcc,
         replyTo,
         body,
+        bodyHtml,
         subject,
         encryptionStatus,
         attachments,
@@ -324,31 +328,17 @@ export class Rfc822MessageDataProcessor {
   }
 
   /**
-   * Supposedly, the `to`, `cc`, and `bcc` properties on the `ParsedMail` object can be
-   * arrays of `AddressObject`s. But, the `AddressObject` already contains an array of
-   * email addresses to represent the actual recipients. This function converts those properties
-   * to an array of our EmailAddressDetail objects.
-   *
-   * I've looked through the source code of the library and done some
-   * testing and as far as I can tell there is no path where that can actually happen so
-   * I can say with some confidence that the outer loop of the nested loop below will
-   * only run once.
-   *
-   * @param {AddressObject | AddressObject[] | undefined} addressObject The value of the `to` `cc` or `bcc` properties of the `ParsedMail` object
+   * @param {Address[] | undefined} addressObject The value of the `replyTo`, `to`, `cc`, or `bcc` properties of the `Email` object
    * @return {EmailAddressDetail[]}
    */
   private static addressObjectToEmailAddressDetailArray(
-    addressObject: AddressObject | AddressObject[] | undefined,
+    addressObject: Address[] | undefined,
   ): EmailAddressDetail[] {
-    if (addressObject && !Array.isArray(addressObject)) {
-      addressObject = [addressObject]
-    }
     const result: EmailAddressDetail[] = []
-    addressObject?.forEach((ao) =>
-      ao.value.forEach((a) =>
-        result.push({ emailAddress: a.address ?? '', displayName: a.name }),
-      ),
+    addressObject?.forEach((a) =>
+      result.push({ emailAddress: a.address ?? '', displayName: a.name }),
     )
+
     return result
   }
 }

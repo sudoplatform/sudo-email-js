@@ -1650,7 +1650,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       )
       expect(result).toStrictEqual({
         id: EmailMessageRfc822DataFactory.getEmailMessageInput.id,
-        body,
+        body: body,
         attachments: [],
         inlineAttachments: [],
       })
@@ -1962,6 +1962,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         hasAttachments: false,
         status: {
           type: 'Failed',
+          // This will fail once the SDKs are running on Node >=20
           cause: new SyntaxError('Unexpected token ] in JSON at position 1'),
         },
       })
