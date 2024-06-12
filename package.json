@@ -85,7 +85,8 @@
     "fast-xml-parser": "^4.1.2",
     "semver": "^7.5.2",
     "@babel/traverse": "^7.24.1",
-    "es5-ext": "^0.10.63"
+    "es5-ext": "^0.10.63",
+    "braces": "^3.0.3"
   },
   "devDependencies": {
     "@graphql-codegen/add": "^5.0.2",

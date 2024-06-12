@@ -17,7 +17,7 @@ import {
   MailboxAddrObject,
 } from 'mail-mime-builder/umd/types'
 import { Base64 } from '@sudoplatform/sudo-common'
-import { arrayBufferToString, stringToArrayBuffer } from './buffer'
+import { stringToArrayBuffer } from './buffer'
 import PostalMime, { Address } from 'postal-mime'
 import { htmlToPlaintext } from './stringUtils'
 
@@ -217,9 +217,8 @@ export class Rfc822MessageDataProcessor {
       const attachments: EmailAttachment[] = []
       const inlineAttachments: EmailAttachment[] = []
       parsed.attachments.forEach((a) => {
-        const decodedContent = arrayBufferToString(a.content)
         const attachment: EmailAttachment = {
-          data: Base64.encodeString(decodedContent).trim(),
+          data: Base64.encode(a.content).trim(),
           filename: a.filename ?? '',
           contentTransferEncoding: 'base64',
           mimeType: a.mimeType,

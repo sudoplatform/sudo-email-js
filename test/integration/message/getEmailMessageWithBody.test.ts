@@ -11,6 +11,7 @@ import {
 } from '@sudoplatform/sudo-common'
 import {
   EmailAddress,
+  EmailAttachment,
   SendEmailMessageInput,
   SudoEmailClient,
 } from '../../../src'
@@ -102,6 +103,7 @@ describe('getEmailMessageWithBody test suite', () => {
   function generateSendInput(
     body: string,
     to = [{ emailAddress: 'success@simulator.amazonses.com' }],
+    attachments: EmailAttachment[] = [],
   ): SendEmailMessageInput {
     return {
       senderEmailAddressId: emailAddress.id,
@@ -114,7 +116,7 @@ describe('getEmailMessageWithBody test suite', () => {
         subject: 'Testing rfc822Data',
       },
       body,
-      attachments: [],
+      attachments,
       inlineAttachments: [],
     }
   }
@@ -202,6 +204,39 @@ describe('getEmailMessageWithBody test suite', () => {
           inlineAttachments: [],
         })
       }
+    })
+
+    it('works with attachments', async () => {
+      const body = 'This has an attachment'
+      const attachment: EmailAttachment = {
+        data: Base64.encodeString(`Email Attachment ${v4()}`),
+        filename: 'attachment.pdf',
+        inlineAttachment: false,
+        mimeType: 'application/pdf',
+        contentTransferEncoding: 'base64',
+        contentId: undefined,
+      }
+      const input = generateSendInput(
+        body,
+        [{ emailAddress: emailAddress.emailAddress }],
+        [attachment],
+      )
+
+      const sendResult = await instanceUnderTest.sendEmailMessage(input)
+
+      await waitForRfc822Data(sendResult.id)
+
+      const messageWithBody = await instanceUnderTest.getEmailMessageWithBody({
+        id: sendResult.id,
+        emailAddressId: emailAddress.id,
+      })
+
+      expect(messageWithBody).toStrictEqual<EmailMessageWithBody>({
+        id: sendResult.id,
+        body,
+        attachments: [attachment],
+        inlineAttachments: [],
+      })
     })
   })
 
