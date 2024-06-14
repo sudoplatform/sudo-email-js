@@ -380,11 +380,25 @@ export class DefaultEmailMessageService implements EmailMessageService {
     )
 
     const rfc822Header: Rfc822HeaderInput = {
-      from: message.from[0].emailAddress,
-      to: message.to?.map((a) => a.emailAddress) ?? [],
-      cc: message.cc?.map((a) => a.emailAddress) ?? [],
-      bcc: message.bcc?.map((a) => a.emailAddress) ?? [],
-      replyTo: message.replyTo?.map((a) => a.emailAddress) ?? [],
+      from: Rfc822MessageDataProcessor.emailAddressDetailToString(
+        message.from[0],
+      ),
+      to:
+        message.to?.map((a) =>
+          Rfc822MessageDataProcessor.emailAddressDetailToString(a),
+        ) ?? [],
+      cc:
+        message.cc?.map((a) =>
+          Rfc822MessageDataProcessor.emailAddressDetailToString(a),
+        ) ?? [],
+      bcc:
+        message.bcc?.map((a) =>
+          Rfc822MessageDataProcessor.emailAddressDetailToString(a),
+        ) ?? [],
+      replyTo:
+        message.replyTo?.map((a) =>
+          Rfc822MessageDataProcessor.emailAddressDetailToString(a),
+        ) ?? [],
       subject: message.subject,
       hasAttachments:
         (message.attachments ? message.attachments.length > 0 : false) ||

@@ -256,6 +256,17 @@ export class Rfc822MessageDataProcessor {
   }
 
   /**
+   * Helper function to stringify an `EmailAddressDetails`
+   */
+  public static emailAddressDetailToString(
+    address: EmailAddressDetail,
+  ): string {
+    return address.displayName
+      ? `${address.displayName} <${address.emailAddress}>`
+      : address.emailAddress
+  }
+
+  /**
    * Converts an EmailAddressDetail object to a MailboxAddrObject for use in mail-mime-builder functions
    * @param {EmailAddressDetail} address
    * @returns MailboxAddrObject
