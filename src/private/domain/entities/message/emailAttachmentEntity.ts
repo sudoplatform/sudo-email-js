@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ContentTransferEncoding } from 'mail-mime-builder/umd/types'
+import { ContentTransferEncoding } from 'mimetext'
 
 /**
  * Representation of an email attachment used in the Sudo Platform Email SDK.

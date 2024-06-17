@@ -20,5 +20,5 @@
     }
   },
   "testRunner": "jest-jasmine2",
-  "transformIgnorePatterns": ["node_modules/(?!(postal-mime)/)"]
+  "transformIgnorePatterns": ["node_modules/(?!(mimetext)/)"]
 }

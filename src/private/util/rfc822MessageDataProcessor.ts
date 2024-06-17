@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MIMETextError, createMimeMessage } from 'mail-mime-builder'
 import {
   EmailAddressDetail,
   EmailAttachment,
@@ -12,14 +11,18 @@ import {
   InternalError,
   InvalidEmailContentsError,
 } from '../../public'
+import { Base64 } from '@sudoplatform/sudo-common'
 import {
   AttachmentOptions,
+  MIMETextError,
+  Mailbox,
   MailboxAddrObject,
-} from 'mail-mime-builder/umd/types'
-import { Base64 } from '@sudoplatform/sudo-common'
-import { stringToArrayBuffer } from './buffer'
-import PostalMime, { Address } from 'postal-mime'
+  createMimeMessage,
+} from 'mimetext'
+import { extract, parse } from 'letterparser'
+import { LetterparserMailbox } from 'letterparser/lib/esm/extractor'
 import { htmlToPlaintext } from './stringUtils'
+import { arrayBufferToString } from './buffer'
 
 export interface EmailMessageDetails {
   from: EmailAddressDetail[]
@@ -107,11 +110,17 @@ export class Rfc822MessageDataProcessor {
         Rfc822MessageDataProcessor.emailAddressDetailToMailboxAddrObject,
       ) ?? [],
     )
-    msg.setReplyTo(
-      replyTo?.map(
-        Rfc822MessageDataProcessor.emailAddressDetailToMailboxAddrObject,
-      ) ?? [],
-    )
+
+    // mimetext currently only supports a single `replyTo` address
+    // https://github.com/muratgozel/MIMEText/issues/69
+    if (replyTo && replyTo?.length != 0) {
+      const mailbox: Mailbox = new Mailbox(
+        replyTo[0].displayName
+          ? `${replyTo[0].displayName} <${replyTo[0].emailAddress}>`
+          : replyTo[0].emailAddress,
+      )
+      msg.setHeader('Reply-To', mailbox)
+    }
     msg.setSubject(subject ?? '')
 
     if (encryptionStatus === EncryptionStatus.ENCRYPTED) {
@@ -173,57 +182,67 @@ export class Rfc822MessageDataProcessor {
     data: string,
   ): Promise<EmailMessageDetails> {
     try {
-      const parsed = await PostalMime.parse(stringToArrayBuffer(data))
+      const parsedMessage = extract(data)
 
-      const from: EmailAddressDetail[] = [
-        {
-          emailAddress: parsed.from?.address ?? '',
-          displayName: parsed.from?.name,
-        },
-      ]
-      const replyTo =
+      const from =
         Rfc822MessageDataProcessor.addressObjectToEmailAddressDetailArray(
-          parsed.replyTo,
+          parsedMessage.from,
         )
+
+      // letterparser does not yet support ReplyTo
+      // https://github.com/mat-sz/letterparser/issues/18
+      // const replyTo =
+      //   Rfc822MessageDataProcessor.addressObjectToEmailAddressDetailArray(
+      //     parsedMessage.replyTo,
+      //   )
 
       const to =
         Rfc822MessageDataProcessor.addressObjectToEmailAddressDetailArray(
-          parsed.to,
+          parsedMessage.to,
         )
       const cc =
         Rfc822MessageDataProcessor.addressObjectToEmailAddressDetailArray(
-          parsed.cc,
+          parsedMessage.cc,
         )
       const bcc =
         Rfc822MessageDataProcessor.addressObjectToEmailAddressDetailArray(
-          parsed.bcc,
+          parsedMessage.bcc,
         )
 
-      const body = parsed.text
-        ? parsed.text.trim()
-        : htmlToPlaintext(parsed.html ?? '')
-      const bodyHtml = parsed.html
-      const subject = parsed.subject
+      const body = parsedMessage.text
+        ? parsedMessage.text.trim()
+        : htmlToPlaintext(parsedMessage.html ? parsedMessage.html : '')
+      const bodyHtml = parsedMessage.html ? parsedMessage.html : undefined
+      const subject = parsedMessage.subject
 
-      const encryptionHeader = parsed.headers.find(
-        (h) => h.key === EMAIL_HEADER_NAME_ENCRYPTION.toLowerCase(),
-      )
+      const parsedHeaders = parse(data)
+
+      const encryptionHeader =
+        parsedHeaders.headers[EMAIL_HEADER_NAME_ENCRYPTION]
 
       const encryptionStatus =
-        encryptionHeader?.value === PLATFORM_ENCRYPTION
+        encryptionHeader?.valueOf() === PLATFORM_ENCRYPTION
           ? EncryptionStatus.ENCRYPTED
           : EncryptionStatus.UNENCRYPTED
 
       const attachments: EmailAttachment[] = []
       const inlineAttachments: EmailAttachment[] = []
-      parsed.attachments.forEach((a) => {
+      parsedMessage.attachments?.forEach((a) => {
+        let attachmentData = a.body
+        if (typeof attachmentData !== 'string') {
+          attachmentData = arrayBufferToString(attachmentData)
+        }
+
         const attachment: EmailAttachment = {
-          data: Base64.encode(a.content).trim(),
+          data: Base64.encodeString(attachmentData).trim(),
           filename: a.filename ?? '',
           contentTransferEncoding: 'base64',
-          mimeType: a.mimeType,
+          mimeType: a.contentType.type,
           contentId: a.contentId?.replace(/(<|>)/g, ''),
-          inlineAttachment: a.disposition === 'inline',
+          inlineAttachment:
+            a.contentId && parsedMessage.html
+              ? parsedMessage.html.includes(a.contentId)
+              : false,
         }
         // This is necessary because inline attachments are included in the parsed object twice
         if (
@@ -241,7 +260,7 @@ export class Rfc822MessageDataProcessor {
         to,
         cc,
         bcc,
-        replyTo,
+        // replyTo,
         body,
         bodyHtml,
         subject,
@@ -251,6 +270,9 @@ export class Rfc822MessageDataProcessor {
       }
     } catch (e) {
       console.error('Error decoding Rfc822 data', { e })
+      if (e instanceof Error) {
+        console.error(e.stack)
+      }
       throw e
     }
   }
@@ -338,17 +360,29 @@ export class Rfc822MessageDataProcessor {
   }
 
   /**
-   * @param {Address[] | undefined} addressObject The value of the `replyTo`, `to`, `cc`, or `bcc` properties of the `Email` object
+   * Supposedly, the `to`, `cc`, and `bcc` properties on the `ParsedMail` object can be
+   * arrays of `AddressObject`s however, the `AddressObject` already contains an array of
+   * email addresses to represent the actual recipients. This function converts those properties
+   * to an array of our EmailAddressDetail objects.
+   *
+   * I've looked through the source code of the library and done some
+   * testing and as far as I can tell there is no path where that can actually happen so
+   * I can say with some confidence that the outer loop of the nested loop below will
+   * only run once.
+   *
+   * @param {AddressObject | AddressObject[] | undefined} addressObject The value of the `from`, `replyTo`, `to` `cc` or `bcc` properties of the `ParsedMail` object
    * @return {EmailAddressDetail[]}
    */
   private static addressObjectToEmailAddressDetailArray(
-    addressObject: Address[] | undefined,
+    addressObject: LetterparserMailbox | LetterparserMailbox[] | undefined,
   ): EmailAddressDetail[] {
+    if (addressObject && !Array.isArray(addressObject)) {
+      addressObject = [addressObject]
+    }
     const result: EmailAddressDetail[] = []
-    addressObject?.forEach((a) =>
+    addressObject?.map((a) =>
       result.push({ emailAddress: a.address ?? '', displayName: a.name }),
     )
-
     return result
   }
 }

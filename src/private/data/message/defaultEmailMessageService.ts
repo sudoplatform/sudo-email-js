@@ -528,6 +528,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
           await Rfc822MessageDataProcessor.parseInternetMessageData(
             decodedString,
           )
+
         if (
           !decodedEncryptedMessage.attachments ||
           decodedEncryptedMessage.attachments.length === 0

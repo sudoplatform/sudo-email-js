@@ -60,11 +60,11 @@
     "fp-ts": "^2.16.5",
     "graphql": "^15.8.0",
     "io-ts": "^2.2.20",
+    "letterparser": "^0.1.6",
     "lodash": "^4.17.21",
-    "mail-mime-builder": "^0.1.0",
+    "mimetext": "^3.0.24",
     "monocle-ts": "^2.3.13",
     "newtype-ts": "^0.3.5",
-    "postal-mime": "^2.2.5",
     "redux": "^5.0.1",
     "tslib": "^2.6.0"
   },
