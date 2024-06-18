@@ -14,6 +14,7 @@ export interface GetConfigurationDataUseCaseOutput {
   emailMessageMaxOutboundMessageSize: number
   emailMessageRecipientsLimit: number
   encryptedEmailMessageRecipientsLimit: number
+  sendEncryptedEmailEnabled: boolean
 }
 
 /**

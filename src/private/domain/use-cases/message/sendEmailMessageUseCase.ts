@@ -76,9 +76,8 @@ export class SendEmailMessageUseCase {
       attachments,
       inlineAttachments,
     })
-    const { emailMessageMaxOutboundMessageSize } =
+    const { sendEncryptedEmailEnabled, emailMessageMaxOutboundMessageSize } =
       await this.configurationDataService.getConfigurationData()
-    const domains = await this.accountService.getSupportedEmailDomains({})
 
     const { from, to, cc, bcc, replyTo, subject } = emailMessageHeader
     const message: EmailMessageDetails = {
@@ -92,6 +91,17 @@ export class SendEmailMessageUseCase {
       attachments,
       inlineAttachments,
     }
+
+    if (!sendEncryptedEmailEnabled) {
+      // Process non-encrypted email message
+      return await this.messageService.sendMessage({
+        message,
+        senderEmailAddressId,
+        emailMessageMaxOutboundMessageSize,
+      })
+    }
+
+    const domains = await this.accountService.getSupportedEmailDomains({})
 
     const allRecipients: string[] = []
     to?.forEach((addr) => allRecipients.push(addr.emailAddress))

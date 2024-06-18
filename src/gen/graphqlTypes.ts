@@ -156,6 +156,7 @@ export type EmailConfigurationData = {
   emailMessageMaxOutboundMessageSize: Scalars['Int']['output']
   emailMessageRecipientsLimit: Scalars['Int']['output']
   encryptedEmailMessageRecipientsLimit: Scalars['Int']['output']
+  sendEncryptedEmailEnabled: Scalars['Boolean']['output']
   updateEmailMessagesLimit: Scalars['Int']['output']
 }
 
@@ -727,6 +728,7 @@ export type EmailConfigurationDataFragment = {
   emailMessageMaxOutboundMessageSize: number
   emailMessageRecipientsLimit: number
   encryptedEmailMessageRecipientsLimit: number
+  sendEncryptedEmailEnabled: boolean
 }
 
 export type EmailFolderFragment = {
@@ -1091,6 +1093,7 @@ export type GetEmailConfigQuery = {
     emailMessageMaxOutboundMessageSize: number
     emailMessageRecipientsLimit: number
     encryptedEmailMessageRecipientsLimit: number
+    sendEncryptedEmailEnabled: boolean
   }
 }
 
@@ -2189,6 +2192,10 @@ export const EmailConfigurationDataFragmentDoc = {
               kind: 'Name',
               value: 'encryptedEmailMessageRecipientsLimit',
             },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sendEncryptedEmailEnabled' },
           },
         ],
       },
@@ -3570,6 +3577,10 @@ export const GetEmailConfigDocument = {
               kind: 'Name',
               value: 'encryptedEmailMessageRecipientsLimit',
             },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sendEncryptedEmailEnabled' },
           },
         ],
       },

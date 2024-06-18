@@ -30,6 +30,7 @@ import { EmailMessageDetails } from '../../../src/private/util/rfc822MessageData
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { readAllPages } from '../util/paginator'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import { runTestsIf } from '../../util/util'
 
 describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   jest.setTimeout(240000)
@@ -43,6 +44,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   let userClient: SudoUserClient
   let sudo: Sudo
   let ownershipProofToken: string
+  let sendEncryptedEmailEnabled: boolean
 
   let emailAddress1: EmailAddress
   let emailAddress2: EmailAddress
@@ -61,6 +63,9 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     sudo = result.sudo
     ownershipProofToken = result.ownershipProofToken
     configurationDataService = result.configurationDataService
+
+    const configuration = await instanceUnderTest.getConfigurationData()
+    sendEncryptedEmailEnabled = configuration.sendEncryptedEmailEnabled
 
     emailAddress1 = await provisionEmailAddress(
       ownershipProofToken,
@@ -569,7 +574,9 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         ..._.omit(encryptedDraft, 'body', 'attachments'),
         id: sentId,
         hasAttachments: false,
-        encryptionStatus: EncryptionStatus.ENCRYPTED,
+        encryptionStatus: sendEncryptedEmailEnabled
+          ? EncryptionStatus.ENCRYPTED
+          : EncryptionStatus.UNENCRYPTED,
       })
     })
 
@@ -612,7 +619,9 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         ..._.omit(replyDraft, 'body', 'attachments'),
         id: sentId,
         hasAttachments: false,
-        encryptionStatus: EncryptionStatus.ENCRYPTED,
+        encryptionStatus: sendEncryptedEmailEnabled
+          ? EncryptionStatus.ENCRYPTED
+          : EncryptionStatus.UNENCRYPTED,
       })
     })
 
@@ -651,7 +660,9 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         ..._.omit(encryptedDraftWithAttachments, 'body', 'attachments'),
         id: sentId,
         hasAttachments: true,
-        encryptionStatus: EncryptionStatus.ENCRYPTED,
+        encryptionStatus: sendEncryptedEmailEnabled
+          ? EncryptionStatus.ENCRYPTED
+          : EncryptionStatus.UNENCRYPTED,
       })
     })
 
@@ -694,7 +705,9 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         ..._.omit(ccDraft, 'body', 'attachments'),
         id: sentId,
         hasAttachments: false,
-        encryptionStatus: EncryptionStatus.ENCRYPTED,
+        encryptionStatus: sendEncryptedEmailEnabled
+          ? EncryptionStatus.ENCRYPTED
+          : EncryptionStatus.UNENCRYPTED,
       })
     })
 
@@ -737,33 +750,39 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         ..._.omit(bccDraft, 'body', 'attachments'),
         id: sentId,
         hasAttachments: false,
-        encryptionStatus: EncryptionStatus.ENCRYPTED,
+        encryptionStatus: sendEncryptedEmailEnabled
+          ? EncryptionStatus.ENCRYPTED
+          : EncryptionStatus.UNENCRYPTED,
       })
     })
 
-    it('throws an error if internal recipient is not found', async () => {
-      const domains = await instanceUnderTest.getSupportedEmailDomains()
-      const inNetworkNotFoundAddress = `notfoundaddress@${domains[0]}`
-      await expect(
-        instanceUnderTest.sendEmailMessage({
-          senderEmailAddressId: emailAddress1.id,
-          emailMessageHeader: {
-            from: draft.from[0],
-            to: [
-              ...(draft.to ?? []),
-              { emailAddress: inNetworkNotFoundAddress },
-            ],
-            cc: draft.cc ?? [],
-            bcc: draft.bcc ?? [],
-            replyTo: draft.replyTo ?? [],
-            subject: draft.subject ?? '',
-          },
-          body: draft.body ?? '',
-          attachments: draft.attachments ?? [],
-          inlineAttachments: draft.inlineAttachments ?? [],
-        }),
-      ).rejects.toThrow(InNetworkAddressNotFoundError)
-    })
+    runTestsIf(
+      'throws an error if internal recipient is not found',
+      () => sendEncryptedEmailEnabled,
+      async () => {
+        const domains = await instanceUnderTest.getSupportedEmailDomains()
+        const inNetworkNotFoundAddress = `notfoundaddress@${domains[0]}`
+        await expect(
+          instanceUnderTest.sendEmailMessage({
+            senderEmailAddressId: emailAddress1.id,
+            emailMessageHeader: {
+              from: draft.from[0],
+              to: [
+                ...(draft.to ?? []),
+                { emailAddress: inNetworkNotFoundAddress },
+              ],
+              cc: draft.cc ?? [],
+              bcc: draft.bcc ?? [],
+              replyTo: draft.replyTo ?? [],
+              subject: draft.subject ?? '',
+            },
+            body: draft.body ?? '',
+            attachments: draft.attachments ?? [],
+            inlineAttachments: draft.inlineAttachments ?? [],
+          }),
+        ).rejects.toThrow(InNetworkAddressNotFoundError)
+      },
+    )
 
     it('respects the outgoing email message size limit', async () => {
       const { emailMessageMaxOutboundMessageSize } =

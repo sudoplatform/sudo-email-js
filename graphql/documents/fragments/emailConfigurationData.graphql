@@ -5,4 +5,5 @@ fragment EmailConfigurationData on EmailConfigurationData {
   emailMessageMaxOutboundMessageSize
   emailMessageRecipientsLimit
   encryptedEmailMessageRecipientsLimit
+  sendEncryptedEmailEnabled
 }

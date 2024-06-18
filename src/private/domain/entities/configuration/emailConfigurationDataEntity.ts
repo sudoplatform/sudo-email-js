@@ -15,6 +15,7 @@
  * @property {number} emailMessageRecipientsLimit The maximum number of recipients for an out-of-network email message.
  * @property {number} encryptedEmailMessageRecipientsLimit The maximum number of recipients for an in-network encrypted
  *  email message.
+ * @property {boolean} sendEncryptedEmailEnabled Flag indicating whether End-to-end encrypted send operations are enabled.
  */
 export interface EmailConfigurationDataEntity {
   deleteEmailMessagesLimit: number
@@ -23,4 +24,5 @@ export interface EmailConfigurationDataEntity {
   emailMessageMaxOutboundMessageSize: number
   emailMessageRecipientsLimit: number
   encryptedEmailMessageRecipientsLimit: number
+  sendEncryptedEmailEnabled: boolean
 }

@@ -5,7 +5,7 @@
  */
 
 import { DefaultLogger } from '@sudoplatform/sudo-common'
-import { ConfigurationData, SudoEmailClient } from '../../../src'
+import { SudoEmailClient } from '../../../src'
 import { setupEmailClient } from '../util/emailClientLifecycle'
 
 describe('SudoEmailClient GetConfigurationData Test Suite', () => {
@@ -21,7 +21,7 @@ describe('SudoEmailClient GetConfigurationData Test Suite', () => {
 
   describe('GetConfigurationData', () => {
     it('returns expected result', async () => {
-      const expectedResult: ConfigurationData = {
+      const expectedResult = {
         deleteEmailMessagesLimit: 100,
         updateEmailMessagesLimit: 100,
         emailMessageMaxInboundMessageSize: 10485760,
@@ -30,9 +30,9 @@ describe('SudoEmailClient GetConfigurationData Test Suite', () => {
         encryptedEmailMessageRecipientsLimit: 10,
       }
 
-      await expect(
-        instanceUnderTest.getConfigurationData(),
-      ).resolves.toStrictEqual(expectedResult)
+      const result = await instanceUnderTest.getConfigurationData()
+      expect(result).toMatchObject(expectedResult)
+      expect(result).toHaveProperty('sendEncryptedEmailEnabled')
     })
   })
 })

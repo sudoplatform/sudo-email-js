@@ -21,6 +21,7 @@ export class ConfigurationDataAPITransformer {
       emailMessageRecipientsLimit: entity.emailMessageRecipientsLimit,
       encryptedEmailMessageRecipientsLimit:
         entity.encryptedEmailMessageRecipientsLimit,
+      sendEncryptedEmailEnabled: entity.sendEncryptedEmailEnabled,
     }
 
     return transformed
@@ -36,6 +37,7 @@ export class ConfigurationDataAPITransformer {
       emailMessageRecipientsLimit: data.emailMessageRecipientsLimit,
       encryptedEmailMessageRecipientsLimit:
         data.encryptedEmailMessageRecipientsLimit,
+      sendEncryptedEmailEnabled: data.sendEncryptedEmailEnabled,
     }
   }
 }

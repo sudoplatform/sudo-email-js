@@ -224,6 +224,7 @@ type EmailConfigurationData {
   emailMessageMaxOutboundMessageSize: Int!
   emailMessageRecipientsLimit: Int!
   encryptedEmailMessageRecipientsLimit: Int!
+  sendEncryptedEmailEnabled: Boolean!
 }
 
 type Owner {

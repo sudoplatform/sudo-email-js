@@ -55,6 +55,7 @@ describe('SendEmailMessageUseCase', () => {
       EntityDataFactory.emailDomain,
     ])
     when(mockEmailConfigurationDataService.getConfigurationData()).thenResolve({
+      sendEncryptedEmailEnabled: true,
       emailMessageMaxOutboundMessageSize,
     } as unknown as EmailConfigurationDataEntity)
     instanceUnderTest = new SendEmailMessageUseCase(
@@ -247,6 +248,35 @@ describe('SendEmailMessageUseCase', () => {
       verify(mockAccountService.getSupportedEmailDomains(anything())).once()
       verify(mockAccountService.lookupPublicInfo(anything())).once()
       verify(mockMessageService.sendEncryptedMessage(anything())).once()
+    })
+    it('returns result of service when send encrypted email disabled', async () => {
+      when(
+        mockEmailConfigurationDataService.getConfigurationData(),
+      ).thenResolve({
+        sendEncryptedEmailEnabled: false,
+        emailMessageMaxOutboundMessageSize,
+      } as unknown as EmailConfigurationDataEntity)
+
+      const idResult = v4()
+      const emailMessageHeader = {
+        from: { emailAddress: 'from@example.com' },
+        to: [{ emailAddress: EntityDataFactory.emailAddress.emailAddress }],
+      } as unknown as InternetMessageFormatHeader
+      when(mockMessageService.sendMessage(anything())).thenResolve({
+        id: idResult,
+        createdAt: timestamp,
+      })
+      await expect(
+        instanceUnderTest.execute({
+          senderEmailAddressId,
+          emailMessageHeader,
+          body,
+          attachments,
+          inlineAttachments,
+        }),
+      ).resolves.toStrictEqual({ id: idResult, createdAt: timestamp })
+      verify(mockEmailConfigurationDataService.getConfigurationData()).once()
+      verify(mockMessageService.sendMessage(anything())).once()
     })
     it('throws error when any internal recipient email address does not exist', async () => {
       const emailMessageHeader = {
