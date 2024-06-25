@@ -471,6 +471,7 @@ export type QueryLookupEmailAddressesPublicInfoArgs = {
 export type Rfc822HeaderInput = {
   bcc: Array<Scalars['String']['input']>
   cc: Array<Scalars['String']['input']>
+  dateEpochMs?: InputMaybe<Scalars['Float']['input']>
   from: Scalars['String']['input']
   hasAttachments?: InputMaybe<Scalars['Boolean']['input']>
   replyTo: Array<Scalars['String']['input']>

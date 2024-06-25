@@ -132,6 +132,7 @@ input Rfc822HeaderInput {
   replyTo: [String!]!
   subject: String
   hasAttachments: Boolean
+  dateEpochMs: Float
 }
 
 input SendEmailMessageInput {

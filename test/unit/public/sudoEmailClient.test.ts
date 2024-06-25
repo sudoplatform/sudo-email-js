@@ -2656,6 +2656,7 @@ describe('SudoEmailClient Test Suite', () => {
             sortDate: EntityDataFactory.emailMessage.sortDate,
             size: 12345,
             encryptionStatus: EntityDataFactory.emailMessage.encryptionStatus,
+            date: EntityDataFactory.emailMessage.date,
           },
         ],
         failed: [
@@ -2677,6 +2678,7 @@ describe('SudoEmailClient Test Suite', () => {
               sortDate: EntityDataFactory.emailMessage.sortDate,
               size: 12345,
               encryptionStatus: EntityDataFactory.emailMessage.encryptionStatus,
+              date: EntityDataFactory.emailMessage.date,
             },
             cause: new Error('dummy_error'),
           },

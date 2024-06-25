@@ -59,6 +59,7 @@ export interface EmailMessageProps {
   createdAt: Date
   updatedAt: Date
   size: number
+  date?: Date
 }
 
 export interface SealedEmailMessageProps {

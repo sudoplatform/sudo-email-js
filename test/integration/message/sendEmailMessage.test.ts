@@ -185,6 +185,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       ..._.omit(draft, 'body', 'attachments'),
       id: sentId,
       hasAttachments: false,
+      date: expect.any(Date),
     })
 
     const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
@@ -235,6 +236,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       ..._.omit(draft, 'body', 'attachments'),
       id: sentId,
       hasAttachments: true,
+      date: expect.any(Date),
     })
 
     const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
@@ -295,6 +297,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     expect(sent).toMatchObject({
       ..._.omit(ccDraft, 'body', 'attachments'),
       id: sentId,
+      date: expect.any(Date),
     })
 
     const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
@@ -577,6 +580,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         encryptionStatus: sendEncryptedEmailEnabled
           ? EncryptionStatus.ENCRYPTED
           : EncryptionStatus.UNENCRYPTED,
+        date: expect.any(Date),
       })
     })
 
@@ -622,6 +626,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         encryptionStatus: sendEncryptedEmailEnabled
           ? EncryptionStatus.ENCRYPTED
           : EncryptionStatus.UNENCRYPTED,
+        date: expect.any(Date),
       })
     })
 
@@ -663,6 +668,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         encryptionStatus: sendEncryptedEmailEnabled
           ? EncryptionStatus.ENCRYPTED
           : EncryptionStatus.UNENCRYPTED,
+        date: expect.any(Date),
       })
     })
 
@@ -708,6 +714,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         encryptionStatus: sendEncryptedEmailEnabled
           ? EncryptionStatus.ENCRYPTED
           : EncryptionStatus.UNENCRYPTED,
+        date: expect.any(Date),
       })
     })
 
@@ -753,6 +760,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         encryptionStatus: sendEncryptedEmailEnabled
           ? EncryptionStatus.ENCRYPTED
           : EncryptionStatus.UNENCRYPTED,
+        date: expect.any(Date),
       })
     })
 

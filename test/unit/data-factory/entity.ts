@@ -135,6 +135,7 @@ export class EntityDataFactory {
     sortDate: new Date(1.0),
     size: 12345,
     encryptionStatus: EncryptionStatus.UNENCRYPTED,
+    date: new Date(2.0),
   }
 
   static readonly sealedEmailMessage: SealedEmailMessageEntity = {

@@ -75,10 +75,12 @@ import { EmailCryptoService } from '../../../../../src/private/domain/entities/s
 const identityServiceConfig = DraftEmailMessageDataFactory.identityServiceConfig
 
 const unsealedHeaderDetailsHasAttachmentsUnsetString =
-  '{"bcc":[],"to":[{"emailAddress":"testie@unittest.org"}],"from":[{"emailAddress":"testie@unittest.org"}],"cc":[],"replyTo":[],"subject":"testSubject"}'
+  '{"bcc":[],"to":[{"emailAddress":"testie@unittest.org"}],"from":[{"emailAddress":"testie@unittest.org"}],"cc":[],"replyTo":[],"subject":"testSubject","date":"1970-01-01T00:00:00.002Z"}'
 const unsealedHeaderDetailsHasAttachmentsTrueString =
-  '{"bcc":[],"to":[{"emailAddress":"testie@unittest.org"}],"from":[{"emailAddress":"testie@unittest.org"}],"cc":[],"replyTo":[],"subject":"testSubject","hasAttachments":true}'
+  '{"bcc":[],"to":[{"emailAddress":"testie@unittest.org"}],"from":[{"emailAddress":"testie@unittest.org"}],"cc":[],"replyTo":[],"subject":"testSubject","date":"1970-01-01T00:00:00.002Z","hasAttachments":true}'
 const unsealedHeaderDetailsString =
+  '{"bcc":[],"to":[{"emailAddress":"testie@unittest.org"}],"from":[{"emailAddress":"testie@unittest.org"}],"cc":[],"replyTo":[],"subject":"testSubject","date":"1970-01-01T00:00:00.002Z","hasAttachments":false}'
+const unsealedHeaderDetailsNoDateString =
   '{"bcc":[],"to":[{"emailAddress":"testie@unittest.org"}],"from":[{"emailAddress":"testie@unittest.org"}],"cc":[],"replyTo":[],"subject":"testSubject","hasAttachments":false}'
 
 jest.mock('../../../../../src/private/data/common/subscriptionManager')
@@ -417,6 +419,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           replyTo: message.replyTo?.map((a) => a.emailAddress) ?? [],
           subject: message.subject,
           hasAttachments: false,
+          dateEpochMs: expect.any(Number),
         },
       })
     })
@@ -551,6 +554,30 @@ describe('DefaultEmailMessageService Test Suite', () => {
       },
     )
 
+    it.each`
+      json                                 | name       | expected
+      ${unsealedHeaderDetailsString}       | ${'set'}   | ${new Date(2.0)}
+      ${unsealedHeaderDetailsNoDateString} | ${'unset'} | ${undefined}
+    `('unseals correctly when date is $name', async ({ json, expected }) => {
+      when(mockAppSync.getEmailMessage(anything(), anything())).thenResolve(
+        GraphQLDataFactory.sealedEmailMessage,
+      )
+      when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(json)
+      const id = v4()
+      const result = await instanceUnderTest.getMessage({
+        id,
+        cachePolicy: CachePolicy.CacheOnly,
+      })
+      verify(mockAppSync.getEmailMessage(anything(), anything())).once()
+      const [idArg, policyArg] = capture(mockAppSync.getEmailMessage).first()
+      expect(idArg).toStrictEqual<typeof idArg>(id)
+      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+      expect(result).toEqual({
+        ...EntityDataFactory.emailMessage,
+        date: expected,
+      })
+    })
+
     it('calls appsync correctly with undefined result', async () => {
       when(mockAppSync.getEmailMessage(anything(), anything())).thenResolve(
         undefined,
@@ -669,6 +696,46 @@ describe('DefaultEmailMessageService Test Suite', () => {
         })
       },
     )
+
+    it.each`
+      json                                 | name       | expected
+      ${unsealedHeaderDetailsString}       | ${'set'}   | ${new Date(2.0)}
+      ${unsealedHeaderDetailsNoDateString} | ${'unset'} | ${undefined}
+    `('unseals correctly when date is $name', async ({ json, expected }) => {
+      when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(json)
+      when(
+        mockAppSync.listEmailMessages(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+      const result = await instanceUnderTest.listMessages({
+        cachePolicy: CachePolicy.CacheOnly,
+      })
+      verify(
+        mockAppSync.listEmailMessages(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).once()
+      const [policyArg] = capture(mockAppSync.listEmailMessages).first()
+      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+      expect(result).toStrictEqual({
+        emailMessages: [
+          {
+            ...EntityDataFactory.emailMessage,
+            date: expected,
+          },
+        ],
+        nextToken: undefined,
+      })
+    })
 
     it.each`
       cachePolicy               | test
@@ -919,6 +986,53 @@ describe('DefaultEmailMessageService Test Suite', () => {
         })
       },
     )
+
+    it.each`
+      json                                 | name       | expected
+      ${unsealedHeaderDetailsString}       | ${'set'}   | ${new Date(2.0)}
+      ${unsealedHeaderDetailsNoDateString} | ${'unset'} | ${undefined}
+    `('unseals correctly when date is $name', async ({ json, expected }) => {
+      when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(json)
+      when(
+        mockAppSync.listEmailMessagesForEmailAddressId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+      const emailAddressId = v4()
+      const result = await instanceUnderTest.listMessagesForEmailAddressId({
+        emailAddressId,
+        cachePolicy: CachePolicy.CacheOnly,
+      })
+      verify(
+        mockAppSync.listEmailMessagesForEmailAddressId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).once()
+      const [inputArg, policyArg] = capture(
+        mockAppSync.listEmailMessagesForEmailAddressId,
+      ).first()
+      expect(inputArg).toStrictEqual<typeof inputArg>(emailAddressId)
+      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+      expect(result).toStrictEqual({
+        emailMessages: [
+          {
+            ...EntityDataFactory.emailMessage,
+            date: expected,
+          },
+        ],
+        nextToken: undefined,
+      })
+    })
 
     it.each`
       cachePolicy               | test
@@ -1191,6 +1305,53 @@ describe('DefaultEmailMessageService Test Suite', () => {
         })
       },
     )
+
+    it.each`
+      json                                 | name       | expected
+      ${unsealedHeaderDetailsString}       | ${'set'}   | ${new Date(2.0)}
+      ${unsealedHeaderDetailsNoDateString} | ${'unset'} | ${undefined}
+    `('unseals correctly when date is $name', async ({ json, expected }) => {
+      when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(json)
+      when(
+        mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+      const folderId = v4()
+      const result = await instanceUnderTest.listMessagesForEmailFolderId({
+        folderId,
+        cachePolicy: CachePolicy.CacheOnly,
+      })
+      verify(
+        mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).once()
+      const [inputArg, policyArg] = capture(
+        mockAppSync.listEmailMessagesForEmailFolderId,
+      ).first()
+      expect(inputArg).toStrictEqual<typeof inputArg>(folderId)
+      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+      expect(result).toStrictEqual({
+        emailMessages: [
+          {
+            ...EntityDataFactory.emailMessage,
+            date: expected,
+          },
+        ],
+        nextToken: undefined,
+      })
+    })
 
     it.each`
       cachePolicy               | test
@@ -1965,6 +2126,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           // This will fail once the SDKs are running on Node >=20
           cause: new SyntaxError('Unexpected token ] in JSON at position 1'),
         },
+        date: undefined,
       })
 
       verify(mockDeviceKeyWorker.unsealString(anything())).once()
@@ -2001,6 +2163,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
             'RFC822 header unable to be parsed as header details',
           ),
         },
+        date: undefined,
       })
 
       verify(mockDeviceKeyWorker.unsealString(anything())).once()
@@ -2032,6 +2195,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           type: 'Failed',
           cause: new KeyNotFoundError(),
         },
+        date: undefined,
       })
     })
   })

@@ -63,6 +63,7 @@ interface ListEmailMessagesUseCaseOutput {
     status: { type: 'Completed' } | { type: 'Failed'; cause: Error }
     size: number
     encryptionStatus: EncryptionStatus
+    date?: Date
   }>
   nextToken?: string
 }

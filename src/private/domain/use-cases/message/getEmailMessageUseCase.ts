@@ -48,6 +48,7 @@ interface GetEmailMessageUseCaseOutput {
   status: { type: 'Completed' } | { type: 'Failed'; cause: Error }
   size: number
   encryptionStatus: EncryptionStatus
+  date?: Date
 }
 
 /**

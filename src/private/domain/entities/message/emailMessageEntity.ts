@@ -66,4 +66,5 @@ export interface EmailMessageEntity {
   status: EmailMessageEntityStatus
   size: number
   encryptionStatus: EncryptionStatus
+  date?: Date
 }

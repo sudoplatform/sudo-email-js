@@ -15,6 +15,7 @@ import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { FetchResult } from 'apollo-link'
 import { isLeft } from 'fp-ts/lib/Either'
 import * as t from 'io-ts'
+import { DateFromISOString } from 'io-ts-types'
 import { PathReporter } from 'io-ts/PathReporter'
 import { v4 } from 'uuid'
 import {
@@ -118,6 +119,7 @@ const EmailHeaderDetailsCodec = t.intersection(
     }),
     t.partial({
       subject: t.string,
+      date: DateFromISOString,
     }),
   ],
   'EmailHeaderDetails',
@@ -405,6 +407,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
         (message.inlineAttachments
           ? message.inlineAttachments.length > 0
           : false),
+      dateEpochMs: new Date().getTime(),
     }
 
     const result = await this.appSync.sendEncryptedEmailMessage({
@@ -777,6 +780,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       status: { type: 'Completed' },
       size: sealedEmailMessage.size,
       encryptionStatus: sealedEmailMessage.encryptionStatus,
+      date: undefined,
     }
 
     const status = await this.deviceKeyWorker.keyExists(
