@@ -136,11 +136,13 @@ export class Rfc822MessageDataProcessor {
         charset: 'UTF-8',
         contentType: 'text/plain',
       })
-      msg.addMessage({
-        data: bodyHtml ?? '',
-        contentType: 'text/html',
-        charset: 'UTF-8',
-      })
+      if (bodyHtml && bodyHtml.trim() !== '') {
+        msg.addMessage({
+          data: bodyHtml,
+          contentType: 'text/html',
+          charset: 'UTF-8',
+        })
+      }
     }
 
     attachments?.forEach((attachment) => {
@@ -189,12 +191,10 @@ export class Rfc822MessageDataProcessor {
           parsedMessage.from,
         )
 
-      // letterparser does not yet support ReplyTo
-      // https://github.com/mat-sz/letterparser/issues/18
-      // const replyTo =
-      //   Rfc822MessageDataProcessor.addressObjectToEmailAddressDetailArray(
-      //     parsedMessage.replyTo,
-      //   )
+      const replyTo =
+        Rfc822MessageDataProcessor.addressObjectToEmailAddressDetailArray(
+          parsedMessage.replyTo,
+        )
 
       const to =
         Rfc822MessageDataProcessor.addressObjectToEmailAddressDetailArray(
@@ -260,7 +260,7 @@ export class Rfc822MessageDataProcessor {
         to,
         cc,
         bcc,
-        // replyTo,
+        replyTo,
         body,
         bodyHtml,
         subject,

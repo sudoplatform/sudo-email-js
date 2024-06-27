@@ -53,7 +53,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(resultString).toContain(`To: ${eol}`)
         expect(resultString).toContain(`Cc: ${eol}`)
         expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
           `Content-Type: text/plain; charset=UTF-8${eol}`,
@@ -100,7 +99,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         )
         expect(resultString).toContain(`Cc: ${eol}`)
         expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
           `Content-Type: text/plain; charset=UTF-8${eol}`,
@@ -127,7 +125,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         )
         expect(resultString).toContain(`Cc: ${eol}`)
         expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
           `Content-Type: text/plain; charset=UTF-8${eol}`,
@@ -157,7 +154,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         )
         expect(resultString).toContain(`Cc: ${eol}`)
         expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
           `Content-Type: text/plain; charset=UTF-8${eol}`,
@@ -183,7 +179,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           `Cc: <${ccAddresses[0].emailAddress}>${eol}`,
         )
         expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
           `Content-Type: text/plain; charset=UTF-8${eol}`,
@@ -210,7 +205,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           `Cc: <${ccAddresses[0].emailAddress}>,${eol} <${ccAddresses[1].emailAddress}>${eol}`,
         )
         expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
           `Content-Type: text/plain; charset=UTF-8${eol}`,
@@ -240,7 +234,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           `Cc: ${ccAddresses[0].displayName} <${ccAddresses[0].emailAddress}>,${eol} <${ccAddresses[1].emailAddress}>${eol}`,
         )
         expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
           `Content-Type: text/plain; charset=UTF-8${eol}`,
@@ -266,7 +259,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(resultString).toContain(
           `Bcc: <${bccAddresses[0].emailAddress}>${eol}`,
         )
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
           `Content-Type: text/plain; charset=UTF-8${eol}`,
@@ -293,7 +285,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(resultString).toContain(
           `Bcc: <${bccAddresses[0].emailAddress}>,${eol} <${bccAddresses[1].emailAddress}>${eol}`,
         )
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
           `Content-Type: text/plain; charset=UTF-8${eol}`,
@@ -323,7 +314,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(resultString).toContain(
           `Bcc: <${bccAddresses[0].emailAddress}>,${eol} ${bccAddresses[1].displayName} <${bccAddresses[1].emailAddress}>${eol}`,
         )
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
           `Content-Type: text/plain; charset=UTF-8${eol}`,
@@ -598,6 +588,34 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
           `Content-Type: text/plain; charset=UTF-8${eol}`,
+        )
+        expect(resultString).toContain(body)
+      })
+
+      it('does not set the html body if it trims down to an empty string', () => {
+        const body = '       '
+        const messageDetails: EmailMessageDetails = {
+          from: [{ emailAddress: fromAddress.emailAddress }],
+          body,
+          bodyHtml: body,
+        }
+
+        const resultString =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+
+        expect(resultString).toContain(
+          `From: <${fromAddress.emailAddress}>${eol}`,
+        )
+        expect(resultString).toContain(`To: ${eol}`)
+        expect(resultString).toContain(`Cc: ${eol}`)
+        expect(resultString).toContain(`Bcc: ${eol}`)
+        // expect(resultString).toContain(`Reply-To: ${eol}`)
+        expect(resultString).toContain(`Subject: ${eol}`)
+        expect(resultString).toContain(
+          `Content-Type: text/plain; charset=UTF-8${eol}`,
+        )
+        expect(resultString).not.toContain(
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
         expect(resultString).toContain(body)
       })
@@ -1074,7 +1092,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.to).toHaveLength(0)
         expect(result.cc).toHaveLength(0)
         expect(result.bcc).toHaveLength(0)
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toBeFalsy()
         expect(result.subject).toBeFalsy()
         expect(result.attachments).toHaveLength(0)
@@ -1099,7 +1117,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.to).toHaveLength(0)
         expect(result.cc).toHaveLength(0)
         expect(result.bcc).toHaveLength(0)
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toBeFalsy()
         expect(result.subject).toBeFalsy()
         expect(result.attachments).toHaveLength(0)
@@ -1129,7 +1147,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.to![0].displayName).toBeFalsy()
         expect(result.cc).toHaveLength(0)
         expect(result.bcc).toHaveLength(0)
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toBeFalsy()
         expect(result.subject).toBeFalsy()
         expect(result.attachments).toHaveLength(0)
@@ -1162,7 +1180,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.to![1].displayName).toBeFalsy()
         expect(result.cc).toHaveLength(0)
         expect(result.bcc).toHaveLength(0)
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toBeFalsy()
         expect(result.subject).toBeFalsy()
         expect(result.attachments).toHaveLength(0)
@@ -1198,7 +1216,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.to![1].displayName).toEqual(toAddresses[1].displayName)
         expect(result.cc).toHaveLength(0)
         expect(result.bcc).toHaveLength(0)
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toBeFalsy()
         expect(result.subject).toBeFalsy()
         expect(result.attachments).toHaveLength(0)
@@ -1228,7 +1246,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.cc![0].emailAddress).toEqual(ccAddresses[0].emailAddress)
         expect(result.cc![0].displayName).toBeFalsy()
         expect(result.bcc).toHaveLength(0)
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toBeFalsy()
         expect(result.subject).toBeFalsy()
         expect(result.attachments).toHaveLength(0)
@@ -1261,7 +1279,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.cc![1].emailAddress).toEqual(ccAddresses[1].emailAddress)
         expect(result.cc![1].displayName).toBeFalsy()
         expect(result.bcc).toHaveLength(0)
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toBeFalsy()
         expect(result.subject).toBeFalsy()
         expect(result.attachments).toHaveLength(0)
@@ -1297,7 +1315,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.cc![1].emailAddress).toEqual(ccAddresses[1].emailAddress)
         expect(result.cc![1].displayName).toBeFalsy()
         expect(result.bcc).toHaveLength(0)
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toBeFalsy()
         expect(result.subject).toBeFalsy()
         expect(result.attachments).toHaveLength(0)
@@ -1329,7 +1347,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           bccAddresses[0].emailAddress,
         )
         expect(result.bcc![0].displayName).toBeFalsy()
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toBeFalsy()
         expect(result.subject).toBeFalsy()
         expect(result.attachments).toHaveLength(0)
@@ -1366,7 +1384,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           bccAddresses[1].emailAddress,
         )
         expect(result.bcc![1].displayName).toBeFalsy()
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toBeFalsy()
         expect(result.subject).toBeFalsy()
         expect(result.attachments).toHaveLength(0)
@@ -1406,7 +1424,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           bccAddresses[1].emailAddress,
         )
         expect(result.bcc![1].displayName).toEqual(bccAddresses[1].displayName)
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toBeFalsy()
         expect(result.subject).toBeFalsy()
         expect(result.attachments).toHaveLength(0)
@@ -1415,7 +1433,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
       })
     })
 
-    describe.skip('replyTo', () => {
+    describe('replyTo', () => {
       test('works with one address', async () => {
         const messageDetails: EmailMessageDetails = {
           from: [fromAddress],
@@ -1446,7 +1464,9 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.encryptionStatus).toEqual(EncryptionStatus.UNENCRYPTED)
       })
 
-      test('works with two addresses', async () => {
+      // mimetext currently only supports a single `replyTo` address
+      // https://github.com/muratgozel/MIMEText/issues/69
+      test.skip('works with two addresses', async () => {
         const messageDetails: EmailMessageDetails = {
           from: [fromAddress],
           replyTo: [
@@ -1491,7 +1511,9 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         const messageDetails: EmailMessageDetails = {
           from: [fromAddress],
           replyTo: [
-            { emailAddress: replyToAddresses[0].emailAddress },
+            // mimetext currently only supports a single `replyTo` address
+            // https://github.com/muratgozel/MIMEText/issues/69
+            // { emailAddress: replyToAddresses[0].emailAddress },
             {
               emailAddress: replyToAddresses[1].emailAddress,
               displayName: replyToAddresses[1].displayName,
@@ -1514,16 +1536,18 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         // mimetext currently only supports a single `replyTo` address
         // https://github.com/muratgozel/MIMEText/issues/69
         expect(result.replyTo).toHaveLength(1)
-        expect(result.replyTo![0].emailAddress).toEqual(
-          replyToAddresses[0].emailAddress,
-        )
-        expect(result.replyTo![0].displayName).toBeFalsy()
         // mimetext currently only supports a single `replyTo` address
         // https://github.com/muratgozel/MIMEText/issues/69
-        expect(result.replyTo![1].emailAddress).toEqual(
+        // expect(result.replyTo![0].emailAddress).toEqual(
+        //   replyToAddresses[0].emailAddress,
+        // )
+        // expect(result.replyTo![0].displayName).toBeFalsy()
+        // mimetext currently only supports a single `replyTo` address so checking only 0th item here. Change to 1st when updated
+        // https://github.com/muratgozel/MIMEText/issues/69
+        expect(result.replyTo![0].emailAddress).toEqual(
           replyToAddresses[1].emailAddress,
         )
-        expect(result.replyTo![1].displayName).toEqual(
+        expect(result.replyTo![0].displayName).toEqual(
           replyToAddresses[1].displayName,
         )
         expect(result.body).toBeFalsy()
@@ -1554,7 +1578,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.to).toHaveLength(0)
         expect(result.cc).toHaveLength(0)
         expect(result.bcc).toHaveLength(0)
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toBeFalsy()
         expect(result.subject).toEqual(subject)
         expect(result.attachments).toHaveLength(0)
@@ -1581,7 +1605,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.to).toHaveLength(0)
         expect(result.cc).toHaveLength(0)
         expect(result.bcc).toHaveLength(0)
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toBeFalsy()
         expect(result.subject).toEqual(subject)
         expect(result.attachments).toHaveLength(0)
@@ -1608,7 +1632,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.to).toHaveLength(0)
         expect(result.cc).toHaveLength(0)
         expect(result.bcc).toHaveLength(0)
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toBeFalsy()
         expect(result.subject).toEqual(subject)
         expect(result.attachments).toHaveLength(0)
@@ -1637,7 +1661,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.to).toHaveLength(0)
         expect(result.cc).toHaveLength(0)
         expect(result.bcc).toHaveLength(0)
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toEqual(body)
         expect(result.subject).toBeFalsy()
         expect(result.attachments).toHaveLength(0)
@@ -1665,7 +1689,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.to).toHaveLength(0)
         expect(result.cc).toHaveLength(0)
         expect(result.bcc).toHaveLength(0)
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toEqual(body)
         expect(result.subject).toBeFalsy()
         expect(result.attachments).toHaveLength(0)
@@ -1692,7 +1716,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.to).toHaveLength(0)
         expect(result.cc).toHaveLength(0)
         expect(result.bcc).toHaveLength(0)
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toEqual(body)
         expect(result.subject).toBeFalsy()
         expect(result.attachments).toHaveLength(0)
@@ -1700,7 +1724,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.encryptionStatus).toEqual(EncryptionStatus.UNENCRYPTED)
       })
 
-      it('works with a multiline body', () => {
+      it('works with a multiline body', async () => {
         const body = `
         Is this the real life? Is this just fantasy?
         Caught in a landslide, no escape from reality
@@ -1722,21 +1746,24 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           body,
         }
 
-        const resultString =
+        const msgStr =
           Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
-        expect(resultString).toContain(
-          `From: <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
-        )
-        expect(resultString).toContain(body)
+        const result =
+          await Rfc822MessageDataProcessor.parseInternetMessageData(msgStr)
+
+        expect(result.from).toHaveLength(1)
+        expect(result.from[0].emailAddress).toEqual(fromAddress.emailAddress)
+        expect(result.from[0].displayName).toBeFalsy()
+        expect(result.to).toHaveLength(0)
+        expect(result.cc).toHaveLength(0)
+        expect(result.bcc).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
+        expect(result.body).toEqual(body.trim())
+        expect(result.subject).toBeFalsy()
+        expect(result.attachments).toHaveLength(0)
+        expect(result.inlineAttachments).toHaveLength(0)
+        expect(result.encryptionStatus).toEqual(EncryptionStatus.UNENCRYPTED)
       })
     })
 
@@ -1768,7 +1795,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.to).toHaveLength(0)
         expect(result.cc).toHaveLength(0)
         expect(result.bcc).toHaveLength(0)
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toEqual(body)
         expect(result.subject).toBeFalsy()
         expect(result.attachments).toHaveLength(1)
@@ -1822,7 +1849,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.to).toHaveLength(0)
         expect(result.cc).toHaveLength(0)
         expect(result.bcc).toHaveLength(0)
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toEqual(body)
         expect(result.subject).toBeFalsy()
         expect(result.attachments).toHaveLength(2)
@@ -1883,7 +1910,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.to).toHaveLength(0)
         expect(result.cc).toHaveLength(0)
         expect(result.bcc).toHaveLength(0)
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body?.trim()).toEqual(body)
         expect(result.bodyHtml?.trim()).toEqual(bodyHtml)
         expect(result.subject).toBeFalsy()
@@ -1928,7 +1955,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.to).toHaveLength(0)
         expect(result.cc).toHaveLength(0)
         expect(result.bcc).toHaveLength(0)
-        // expect(result.replyTo).toHaveLength(0)
+        expect(result.replyTo).toHaveLength(0)
         expect(result.body).toEqual(CANNED_TEXT_BODY)
         expect(result.subject).toBeFalsy()
         expect(result.attachments).toHaveLength(0)
@@ -2050,11 +2077,11 @@ describe('rfc822MessageDataProcessor unit tests', () => {
       expect(result.bcc![0].displayName).toBeFalsy()
       expect(result.bcc![1].emailAddress).toEqual(bccAddresses[1].emailAddress)
       expect(result.bcc![1].displayName).toBeFalsy()
-      // expect(result.replyTo).toHaveLength(1)
-      // expect(result.replyTo![0].emailAddress).toEqual(
-      //   replyToAddresses[0].emailAddress,
-      // )
-      // expect(result.replyTo![0].displayName).toBeFalsy()
+      expect(result.replyTo).toHaveLength(1)
+      expect(result.replyTo![0].emailAddress).toEqual(
+        replyToAddresses[0].emailAddress,
+      )
+      expect(result.replyTo![0].displayName).toBeFalsy()
       expect(result.bodyHtml?.trim()).toEqual(bodyHtml)
       expect(result.subject).toEqual(subject)
 
@@ -2180,7 +2207,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           { emailAddress: bccAddresses[0].emailAddress },
           { emailAddress: bccAddresses[1].emailAddress },
         ],
-        // replyTo: [{ emailAddress: replyToAddresses[0].emailAddress }],
+        replyTo: [{ emailAddress: replyToAddresses[0].emailAddress }],
         subject,
         body: body.trim(),
         bodyHtml,

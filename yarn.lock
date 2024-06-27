@@ -6535,10 +6535,10 @@ lettercoder@^0.0.7:
   dependencies:
     base64-js "^1.5.1"
 
-letterparser@^0.1.6:
-  version "0.1.6"
-  resolved "https://registry.yarnpkg.com/letterparser/-/letterparser-0.1.6.tgz#559ac506b9629f4d2f3b03bb13b2ea1e873cc05b"
-  integrity sha512-rK9gAA1TWMHY9Jufi4f3sCEtJ6xLUEG+9AzFfFzbFKRj3zG6G2WDXR+nISyrRozelGBlFceQU5t29/82guXdqg==
+letterparser@^0.1.7:
+  version "0.1.7"
+  resolved "https://registry.yarnpkg.com/letterparser/-/letterparser-0.1.7.tgz#1ad5c6e30bf989ddf5f7c2875c35093e80bbf84a"
+  integrity sha512-Q7l8STh+KZZymGVawAgeqi4ILoHr0SKZ9fyC/sEGoGwk+bPLhwg9DJ1LFHzTfJdVC2RgPbfnUNECSSaWQsWF/g==
   dependencies:
     base64-js "^1.5.1"
     lettercoder "^0.0.7"

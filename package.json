@@ -60,7 +60,7 @@
     "fp-ts": "^2.16.5",
     "graphql": "^15.8.0",
     "io-ts": "^2.2.20",
-    "letterparser": "^0.1.6",
+    "letterparser": "^0.1.7",
     "lodash": "^4.17.21",
     "mimetext": "^3.0.24",
     "monocle-ts": "^2.3.13",
