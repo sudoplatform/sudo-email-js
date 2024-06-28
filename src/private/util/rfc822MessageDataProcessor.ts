@@ -22,7 +22,6 @@ import {
 import { extract, parse } from 'letterparser'
 import { LetterparserMailbox } from 'letterparser/lib/esm/extractor'
 import { htmlToPlaintext } from './stringUtils'
-import { arrayBufferToString } from './buffer'
 
 export interface EmailMessageDetails {
   from: EmailAddressDetail[]
@@ -230,11 +229,13 @@ export class Rfc822MessageDataProcessor {
       parsedMessage.attachments?.forEach((a) => {
         let attachmentData = a.body
         if (typeof attachmentData !== 'string') {
-          attachmentData = arrayBufferToString(attachmentData)
+          attachmentData = Base64.encode(attachmentData)
+        } else {
+          attachmentData = Base64.encodeString(attachmentData)
         }
 
         const attachment: EmailAttachment = {
-          data: Base64.encodeString(attachmentData).trim(),
+          data: attachmentData.trim(),
           filename: a.filename ?? '',
           contentTransferEncoding: 'base64',
           mimeType: a.contentType.type,

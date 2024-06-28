@@ -13,10 +13,10 @@ import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { setupEmailClient, teardown } from './util/emailClientLifecycle'
 import { provisionEmailAddress } from './util/provisionEmailAddress'
-import { EmailMessageDetails } from '../../src/private/util/rfc822MessageDataProcessor'
 import waitForExpect from 'wait-for-expect'
 import _ from 'lodash'
 import { v4 } from 'uuid'
+import fs from 'node:fs/promises'
 
 const externalAccounts = [
   'sudo.platform.testing@gmail.com',
@@ -46,7 +46,15 @@ describe('SudoEmailClient Interoperability Test Suite', () => {
   let emailAddress: EmailAddress
   let inboxFolder: EmailFolder
 
+  let attachmentData: string = ''
+
   const emailInteropTestsEnabled = !!process.env.ENABLE_EMAIL_INTEROP_TESTS
+
+  beforeAll(async () => {
+    attachmentData = await fs.readFile('test/util/files/lorem-ipsum.pdf', {
+      encoding: 'base64',
+    })
+  })
 
   beforeEach(async () => {
     const result = await setupEmailClient(log)
@@ -99,10 +107,8 @@ describe('SudoEmailClient Interoperability Test Suite', () => {
           {
             mimeType: 'application/pdf',
             contentTransferEncoding: 'base64',
-            filename: 'goodExtension.pdf',
-            data: Buffer.from('This file has a valid file extension').toString(
-              'base64',
-            ),
+            filename: 'lorem-ipsum.pdf',
+            data: attachmentData,
             inlineAttachment: false,
           },
         ],

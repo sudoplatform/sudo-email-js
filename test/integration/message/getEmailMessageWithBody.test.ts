@@ -31,7 +31,6 @@ import {
   SealedEmailMessage,
 } from '../../../src/gen/graphqlTypes'
 import { getEmailServiceConfig } from '../../../src/private/data/common/config'
-import { base64StringToString } from '../../../src/private/util/buffer'
 import {
   CompleteMultipartUploadOutput,
   PutObjectCommandInput,
@@ -39,6 +38,7 @@ import {
 } from '@aws-sdk/client-s3'
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers'
 import { Upload } from '@aws-sdk/lib-storage'
+import fs from 'node:fs/promises'
 
 describe('getEmailMessageWithBody test suite', () => {
   jest.setTimeout(240000)
@@ -57,6 +57,8 @@ describe('getEmailMessageWithBody test suite', () => {
   let legacyMessageKey = ''
   let bucket = ''
   let region = ''
+  let imageData: string = ''
+  let pdfData: string = ''
 
   let emailAddress: EmailAddress
 
@@ -83,6 +85,12 @@ describe('getEmailMessageWithBody test suite', () => {
       instanceUnderTest,
     )
     emailAddresses.push(emailAddress)
+    imageData = await fs.readFile('test/util/files/dogimage.jpeg', {
+      encoding: 'base64',
+    })
+    pdfData = await fs.readFile('test/util/files/lorem-ipsum.pdf', {
+      encoding: 'base64',
+    })
   })
 
   afterAll(async () => {
@@ -168,6 +176,42 @@ describe('getEmailMessageWithBody test suite', () => {
         })
       }
     })
+
+    it('works for emails with attachments', async () => {
+      const body = 'This message has an attachment'
+
+      const imageAttachment: EmailAttachment = {
+        data: imageData,
+        filename: 'dogImage.jpg',
+        inlineAttachment: false,
+        mimeType: 'image/jpg',
+        contentTransferEncoding: 'base64',
+        contentId: undefined,
+      }
+
+      const input = generateSendInput(
+        body,
+        [{ emailAddress: 'success@simulator.amazonses.com' }],
+        [imageAttachment],
+      )
+
+      const result = await instanceUnderTest.sendEmailMessage(input)
+      expect(result.id).toBeDefined()
+
+      await waitForRfc822Data(result.id)
+
+      const messageWithBody = await instanceUnderTest.getEmailMessageWithBody({
+        emailAddressId: emailAddress.id,
+        id: result.id,
+      })
+
+      expect(messageWithBody).toStrictEqual<EmailMessageWithBody>({
+        id: result.id,
+        body: body,
+        attachments: [imageAttachment],
+        inlineAttachments: [],
+      })
+    })
   })
 
   describe('encrypted path', () => {
@@ -208,18 +252,23 @@ describe('getEmailMessageWithBody test suite', () => {
 
     it('works with attachments', async () => {
       const body = 'This has an attachment'
-      const attachment: EmailAttachment = {
-        data: Base64.encodeString(`Email Attachment ${v4()}`),
-        filename: 'attachment.pdf',
+
+      const pdfData = await fs.readFile('test/util/files/lorem-ipsum.pdf', {
+        encoding: 'base64',
+      })
+      const pdfAttachment: EmailAttachment = {
+        data: pdfData,
+        filename: 'lorem-ipsum.pdf',
         inlineAttachment: false,
         mimeType: 'application/pdf',
         contentTransferEncoding: 'base64',
         contentId: undefined,
       }
+
       const input = generateSendInput(
         body,
         [{ emailAddress: emailAddress.emailAddress }],
-        [attachment],
+        [pdfAttachment],
       )
 
       const sendResult = await instanceUnderTest.sendEmailMessage(input)
@@ -234,7 +283,7 @@ describe('getEmailMessageWithBody test suite', () => {
       expect(messageWithBody).toStrictEqual<EmailMessageWithBody>({
         id: sendResult.id,
         body,
-        attachments: [attachment],
+        attachments: [pdfAttachment],
         inlineAttachments: [],
       })
     })
