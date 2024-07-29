@@ -103,3 +103,9 @@ export class EmailServiceConfigNotFoundError extends EmailError {
     super(msg)
   }
 }
+
+export class S3UploadError extends EmailError {
+  constructor(message: string) {
+    super(message)
+  }
+}

@@ -10,7 +10,6 @@ import {
   SudoCryptoProvider,
   SudoKeyManager,
 } from '@sudoplatform/sudo-common'
-import { SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient, internal as userSdk } from '@sudoplatform/sudo-user'
 import { WebSudoCryptoProvider } from '@sudoplatform/sudo-web-crypto-provider'
 import {
@@ -385,7 +384,6 @@ jest.mock(
 describe('SudoEmailClient Test Suite', () => {
   // Opt Mocks
   const mockSudoUserClient = mock<SudoUserClient>()
-  const mockSudoProfilesClient = mock<SudoProfilesClient>()
   const mockSudoCryptoProvider = mock<SudoCryptoProvider>()
   const mockSudoKeyManager = mock<SudoKeyManager>()
   const mockApiClient = mock<ApiClient>()
@@ -480,7 +478,6 @@ describe('SudoEmailClient Test Suite', () => {
 
   const resetMocks = (): void => {
     reset(mockSudoUserClient)
-    reset(mockSudoProfilesClient)
     reset(mockSudoCryptoProvider)
     reset(mockSudoKeyManager)
     reset(mockApiClient)

@@ -55,7 +55,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(resultString).toContain(`Bcc: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
       })
 
@@ -76,7 +76,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
       })
     })
@@ -101,7 +101,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(resultString).toContain(`Bcc: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
       })
 
@@ -127,7 +127,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(resultString).toContain(`Bcc: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
       })
 
@@ -156,7 +156,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(resultString).toContain(`Bcc: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
       })
     })
@@ -181,7 +181,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(resultString).toContain(`Bcc: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
       })
 
@@ -207,7 +207,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(resultString).toContain(`Bcc: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
       })
 
@@ -236,7 +236,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(resultString).toContain(`Bcc: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
       })
     })
@@ -261,7 +261,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         )
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
       })
 
@@ -287,7 +287,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         )
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
       })
 
@@ -316,7 +316,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         )
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
       })
     })
@@ -342,7 +342,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         )
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
       })
 
@@ -371,7 +371,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         )
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
       })
 
@@ -403,7 +403,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         )
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
       })
     })
@@ -428,7 +428,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${subject}${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
       })
 
@@ -451,7 +451,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${subject}${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
       })
 
@@ -474,7 +474,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${subject}${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
       })
     })
@@ -499,7 +499,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
         expect(resultString).toContain(body)
       })
@@ -524,7 +524,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
         expect(resultString).toContain(body)
       })
@@ -548,7 +548,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
         expect(resultString).toContain(body)
       })
@@ -587,7 +587,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
+          `Content-Type: text/html; charset=UTF-8${eol}`,
         )
         expect(resultString).toContain(body)
       })
@@ -597,7 +597,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         const messageDetails: EmailMessageDetails = {
           from: [{ emailAddress: fromAddress.emailAddress }],
           body,
-          bodyHtml: body,
         }
 
         const resultString =
@@ -612,9 +611,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
-        )
-        expect(resultString).not.toContain(
           `Content-Type: text/html; charset=UTF-8${eol}`,
         )
         expect(resultString).toContain(body)
@@ -730,13 +726,11 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           data: Base64.encodeString(`${v4()}-attachment`),
           contentId,
         }
-        const body = `Message body`
-        const bodyHtml = `Message body <img src="cid:${contentId}">`
+        const body = `Message body <img src="cid:${contentId}">`
 
         const messageDetails: EmailMessageDetails = {
           from: [{ emailAddress: fromAddress.emailAddress }],
           body,
-          bodyHtml,
           inlineAttachments: [attachment],
         }
 
@@ -752,7 +746,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(body)
-        expect(resultString).toContain(bodyHtml)
         expect(resultString).toContain(
           `Content-Type: multipart/mixed; boundary=`,
         )
@@ -824,23 +817,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         Mama, ooh, didn't mean to make you cry
         If I'm not back again this time tomorrow
         Carry on, carry on as if nothing really matters
-        `
-      const bodyHtml = `
-        🎶🎶🎶🎶
-        Is this the real life? Is this just fantasy?
-        Caught in a landslide, no escape from reality
-        Open your eyes, look up to the skies and see
-        I'm just a poor boy, I need no sympathy
-        Because I'm easy come, easy go, little high, little low
-        Any way the wind blows doesn't really matter to me, to me
-
-        Mama, just killed a man
-        Put a gun against his head, pulled my trigger, now he's dead
-        Mama, life had just begun
-        But now I've gone and thrown it all away
-        Mama, ooh, didn't mean to make you cry
-        If I'm not back again this time tomorrow
-        Carry on, carry on as if nothing really matters
         <img src="cid:${contentId}">
         `
       const attachments: EmailAttachment[] = [
@@ -882,7 +858,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         replyTo: [{ emailAddress: replyToAddresses[0].emailAddress }],
         subject,
         body,
-        bodyHtml,
         attachments,
         inlineAttachments: [inlineAttachment],
       }
@@ -907,7 +882,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
       )
       expect(resultString).toContain(`Subject: ${subject}${eol}`)
       expect(resultString).toContain(body)
-      expect(resultString).toContain(bodyHtml)
       expect(resultString).toContain(`Content-Type: multipart/mixed; boundary=`)
       expect(resultString).toContain(
         `Content-Type: ${attachments[0].mimeType}; name="${attachments[0].filename}"${eol}`,
@@ -962,23 +936,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         Mama, ooh, didn't mean to make you cry
         If I'm not back again this time tomorrow
         Carry on, carry on as if nothing really matters
-        `
-      const bodyHtml = `
-        🎶🎶🎶🎶
-        Is this the real life? Is this just fantasy?
-        Caught in a landslide, no escape from reality
-        Open your eyes, look up to the skies and see
-        I'm just a poor boy, I need no sympathy
-        Because I'm easy come, easy go, little high, little low
-        Any way the wind blows doesn't really matter to me, to me
-
-        Mama, just killed a man
-        Put a gun against his head, pulled my trigger, now he's dead
-        Mama, life had just begun
-        But now I've gone and thrown it all away
-        Mama, ooh, didn't mean to make you cry
-        If I'm not back again this time tomorrow
-        Carry on, carry on as if nothing really matters
         <img src="cid:${contentId}">
         `
       const attachments: EmailAttachment[] = [
@@ -1020,7 +977,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         replyTo: [{ emailAddress: replyToAddresses[0].emailAddress }],
         subject,
         body,
-        bodyHtml,
         attachments,
         inlineAttachments: [inlineAttachment],
       }
@@ -1047,7 +1003,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
       )
       expect(resultString).toContain(`Subject: ${subject}${eol}`)
       expect(resultString).toContain(body)
-      expect(resultString).toContain(bodyHtml)
       expect(resultString).toContain(`Content-Type: multipart/mixed; boundary=`)
       expect(resultString).toContain(
         `Content-Type: ${attachments[0].mimeType}; name="${attachments[0].filename}"${eol}`,
@@ -1889,13 +1844,11 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           data: Base64.encodeString(`${v4()}-attachment`),
           contentId,
         }
-        const body = `Message body`
-        const bodyHtml = `Message body <img src="cid:${contentId}">`
+        const body = `Message body <img src="cid:${contentId}">`
 
         const messageDetails: EmailMessageDetails = {
           from: [{ emailAddress: fromAddress.emailAddress }],
           body,
-          bodyHtml,
           inlineAttachments: [attachment],
         }
 
@@ -1912,7 +1865,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(result.bcc).toHaveLength(0)
         expect(result.replyTo).toHaveLength(0)
         expect(result.body?.trim()).toEqual(body)
-        expect(result.bodyHtml?.trim()).toEqual(bodyHtml)
         expect(result.subject).toBeFalsy()
         expect(result.attachments).toHaveLength(0)
         expect(result.inlineAttachments).toHaveLength(1)
@@ -1990,22 +1942,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         "But now I've gone and thrown it all away\n" +
         "Mama, ooh, didn't mean to make you cry\n" +
         "If I'm not back again this time tomorrow\n" +
-        'Carry on, carry on as if nothing really matters\n'
-      const bodyHtml =
-        '🎶🎶🎶🎶\n' +
-        'Is this the real life? Is this just fantasy?\n' +
-        'Caught in a landslide, no escape from reality\n' +
-        'Open your eyes, look up to the skies and see\n' +
-        "I'm just a poor boy, I need no sympathy\n" +
-        "Because I'm easy come, easy go, little high, little low\n" +
-        "Any way the wind blows doesn't really matter to me, to me\n" +
-        '\n' +
-        'Mama, just killed a man\n' +
-        "Put a gun against his head, pulled my trigger, now he's dead\n" +
-        'Mama, life had just begun\n' +
-        "But now I've gone and thrown it all away\n" +
-        "Mama, ooh, didn't mean to make you cry\n" +
-        "If I'm not back again this time tomorrow\n" +
         'Carry on, carry on as if nothing really matters\n' +
         `<img src="cid:${contentId}">`
 
@@ -2048,7 +1984,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         replyTo: [{ emailAddress: replyToAddresses[0].emailAddress }],
         subject,
         body: body.trim(),
-        bodyHtml,
         attachments,
         inlineAttachments: [inlineAttachment],
       }
@@ -2082,7 +2017,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         replyToAddresses[0].emailAddress,
       )
       expect(result.replyTo![0].displayName).toBeFalsy()
-      expect(result.bodyHtml?.trim()).toEqual(bodyHtml)
+      expect(result.body?.trim()).toEqual(body)
       expect(result.subject).toEqual(subject)
 
       expect(result.attachments).toHaveLength(2)
@@ -2152,22 +2087,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         "But now I've gone and thrown it all away\n" +
         "Mama, ooh, didn't mean to make you cry\n" +
         "If I'm not back again this time tomorrow\n" +
-        'Carry on, carry on as if nothing really matters\n'
-      const bodyHtml =
-        '🎶🎶🎶🎶\n' +
-        'Is this the real life? Is this just fantasy?\n' +
-        'Caught in a landslide, no escape from reality\n' +
-        'Open your eyes, look up to the skies and see\n' +
-        "I'm just a poor boy, I need no sympathy\n" +
-        "Because I'm easy come, easy go, little high, little low\n" +
-        "Any way the wind blows doesn't really matter to me, to me\n" +
-        '\n' +
-        'Mama, just killed a man\n' +
-        "Put a gun against his head, pulled my trigger, now he's dead\n" +
-        'Mama, life had just begun\n' +
-        "But now I've gone and thrown it all away\n" +
-        "Mama, ooh, didn't mean to make you cry\n" +
-        "If I'm not back again this time tomorrow\n" +
         'Carry on, carry on as if nothing really matters\n' +
         `<img src="cid:${contentId}">`
 
@@ -2210,7 +2129,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         replyTo: [{ emailAddress: replyToAddresses[0].emailAddress }],
         subject,
         body: body.trim(),
-        bodyHtml,
         attachments,
         inlineAttachments: [inlineAttachment],
       }
@@ -2225,11 +2143,9 @@ describe('rfc822MessageDataProcessor unit tests', () => {
 
       expect({
         ...decodedRfc822Object,
-        bodyHtml: decodedRfc822Object.bodyHtml?.trim(),
         body: decodedRfc822Object.body?.trim(),
       }).toMatchObject<EmailMessageDetails>({
         ...messageDetails,
-        bodyHtml: messageDetails.bodyHtml?.trim(),
         body: messageDetails.body?.trim(),
       })
     })

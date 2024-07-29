@@ -293,11 +293,13 @@ export interface GetEmailMessageInput {
  * @property {EmailMessageDateRange} dateRange Email messages matching the specified date range inclusive will be fetched.
  * @property {CachePolicy} cachePolicy Determines how the email messages will be fetched. Default usage is `remoteOnly`.
  * @property {SortOrder} sortOrder The direction in which the email messages are sorted. Defaults to descending.
+ * @property {boolean} includeDeletedMessages A flag to indicate if deleted messages should be included. Defaults to false.
  */
 export interface ListEmailMessagesInput extends Pagination {
   dateRange?: EmailMessageDateRange
   cachePolicy?: CachePolicy
   sortOrder?: SortOrder
+  includeDeletedMessages?: boolean
 }
 
 /**
@@ -308,12 +310,14 @@ export interface ListEmailMessagesInput extends Pagination {
  * @property {EmailMessageDateRange} dateRange Email messages matching the specified date range inclusive will be fetched.
  * @property {CachePolicy} cachePolicy Determines how the email messages will be fetched. Default usage is `remoteOnly`.
  * @property {SortOrder} sortOrder The direction in which the email messages are sorted. Defaults to descending.
+ * @property {boolean} includeDeletedMessages A flag to indicate if deleted messages should be included. Defaults to false.
  */
 export interface ListEmailMessagesForEmailAddressIdInput extends Pagination {
   emailAddressId: string
   dateRange?: EmailMessageDateRange
   cachePolicy?: CachePolicy
   sortOrder?: SortOrder
+  includeDeletedMessages?: boolean
 }
 
 /**
@@ -324,12 +328,14 @@ export interface ListEmailMessagesForEmailAddressIdInput extends Pagination {
  * @property {EmailMessageDateRange} dateRange Email messages matching the specified date range inclusive will be fetched.
  * @property {CachePolicy} cachePolicy Determines how the email messages will be fetched. Default usage is `remoteOnly`.
  * @property {SortOrder} sortOrder The direction in which the email messages are sorted. Defaults to descending.
+ * @property {boolean} includeDeletedMessages A flag to indicate if deleted messages should be included. Defaults to false.
  */
 export interface ListEmailMessagesForEmailFolderIdInput extends Pagination {
   folderId: string
   dateRange?: EmailMessageDateRange
   cachePolicy?: CachePolicy
   sortOrder?: SortOrder
+  includeDeletedMessages?: boolean
 }
 
 /**
@@ -841,7 +847,7 @@ export interface SudoEmailClient {
   /**
    * Get the body and attachment data of an EmailMessage
    *
-   * @param {GetEmailMessageWithBodyInput} input PArameters used to retrieve the data of the email message.
+   * @param {GetEmailMessageWithBodyInput} input Parameters used to retrieve the data of the email message.
    * @returns {EmailMessageWithBody | undefined} The data associated with the email message or undefined if not found
    */
   getEmailMessageWithBody(
@@ -849,6 +855,8 @@ export interface SudoEmailClient {
   ): Promise<EmailMessageWithBody | undefined>
 
   /**
+   * @deprecated Use `getEmailMessageWithBody` instead to retrieve the body and attachment data.
+   *
    * Get the RFC 6854 (supersedes RFC 822) data of the email message.
    *
    * @param {GetEmailMessageRfc822DataInput} input Parameters used to retrieve the data of the email message.
@@ -1584,6 +1592,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     limit,
     sortOrder,
     nextToken,
+    includeDeletedMessages,
   }: ListEmailMessagesInput): Promise<ListEmailMessagesResult> {
     this.log.debug(this.listEmailMessages.name, {
       dateRange,
@@ -1591,6 +1600,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       limit,
       sortOrder,
       nextToken,
+      includeDeletedMessages,
     })
     const useCase = new ListEmailMessagesUseCase(this.emailMessageService)
     const { emailMessages, nextToken: resultNextToken } = await useCase.execute(
@@ -1600,6 +1610,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
         limit,
         sortOrder,
         nextToken,
+        includeDeletedMessages,
       },
     )
     const transformer = new ListEmailMessagesAPITransformer()
@@ -1614,6 +1625,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     limit,
     sortOrder,
     nextToken,
+    includeDeletedMessages,
   }: ListEmailMessagesForEmailAddressIdInput): Promise<ListEmailMessagesResult> {
     this.log.debug(this.listEmailMessagesForEmailAddressId.name, {
       emailAddressId,
@@ -1622,6 +1634,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       limit,
       sortOrder,
       nextToken,
+      includeDeletedMessages,
     })
     const useCase = new ListEmailMessagesForEmailAddressIdUseCase(
       this.emailMessageService,
@@ -1634,6 +1647,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
         limit,
         sortOrder,
         nextToken,
+        includeDeletedMessages,
       },
     )
     const transformer = new ListEmailMessagesAPITransformer()
@@ -1648,6 +1662,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     limit,
     sortOrder,
     nextToken,
+    includeDeletedMessages,
   }: ListEmailMessagesForEmailFolderIdInput): Promise<ListEmailMessagesResult> {
     this.log.debug(this.listEmailMessagesForEmailFolderId.name, {
       folderId,
@@ -1656,12 +1671,21 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       limit,
       sortOrder,
       nextToken,
+      includeDeletedMessages,
     })
     const useCase = new ListEmailMessagesForEmailFolderIdUseCase(
       this.emailMessageService,
     )
     const { emailMessages, nextToken: resultNextToken } = await useCase.execute(
-      { folderId, dateRange, cachePolicy, limit, sortOrder, nextToken },
+      {
+        folderId,
+        dateRange,
+        cachePolicy,
+        limit,
+        sortOrder,
+        nextToken,
+        includeDeletedMessages,
+      },
     )
     const transformer = new ListEmailMessagesAPITransformer()
     const result = transformer.transform(emailMessages, resultNextToken)

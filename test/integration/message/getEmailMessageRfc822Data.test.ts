@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DefaultLogger } from '@sudoplatform/sudo-common'
+import { CachePolicy, DefaultLogger } from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import waitForExpect from 'wait-for-expect'
@@ -189,6 +189,37 @@ describe('getEmailMessageRfc822Data test suite', () => {
       instanceUnderTest.getEmailMessageRfc822Data({
         id: result.id,
         emailAddressId: 'invalidEmailAddressId',
+      }),
+    ).resolves.toBeUndefined()
+  })
+
+  it.only('does not return deleted messages', async () => {
+    const sendInput = generateSendInput('Test body', [
+      { emailAddress: emailAddress.emailAddress },
+    ])
+    const sendResult = await instanceUnderTest.sendEmailMessage(sendInput)
+
+    await waitForExpect(
+      async () => {
+        await expect(
+          instanceUnderTest.getEmailMessage({
+            id: sendResult.id,
+            cachePolicy: CachePolicy.RemoteOnly,
+          }),
+        ).resolves.toBeDefined()
+      },
+      60000,
+      10000,
+    )
+
+    await expect(
+      instanceUnderTest.deleteEmailMessage(sendResult.id),
+    ).resolves.toEqual(sendResult.id)
+
+    await expect(
+      instanceUnderTest.getEmailMessageRfc822Data({
+        emailAddressId: emailAddress.id,
+        id: sendResult.id,
       }),
     ).resolves.toBeUndefined()
   })

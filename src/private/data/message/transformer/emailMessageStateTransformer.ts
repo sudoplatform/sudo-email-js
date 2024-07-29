@@ -22,6 +22,8 @@ export class EmailMessageStateTransformer {
         return EmailMessageState.Failed
       case State.Received:
         return EmailMessageState.Received
+      case State.Deleted:
+        return EmailMessageState.Deleted
     }
   }
 
@@ -39,6 +41,8 @@ export class EmailMessageStateTransformer {
         return State.Failed
       case EmailMessageState.Received:
         return State.Received
+      case EmailMessageState.Deleted:
+        return State.Deleted
     }
   }
 }

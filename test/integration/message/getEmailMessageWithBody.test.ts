@@ -6,6 +6,7 @@
 
 import {
   Base64,
+  CachePolicy,
   DefaultLogger,
   SudoKeyManager,
 } from '@sudoplatform/sudo-common'
@@ -289,6 +290,37 @@ describe('getEmailMessageWithBody test suite', () => {
     })
   })
 
+  it('does not return deleted messages', async () => {
+    const sendInput = generateSendInput('Test body', [
+      { emailAddress: emailAddress.emailAddress },
+    ])
+    const sendResult = await instanceUnderTest.sendEmailMessage(sendInput)
+
+    await waitForExpect(
+      async () => {
+        await expect(
+          instanceUnderTest.getEmailMessage({
+            id: sendResult.id,
+            cachePolicy: CachePolicy.RemoteOnly,
+          }),
+        ).resolves.toBeDefined()
+      },
+      60000,
+      10000,
+    )
+
+    await expect(
+      instanceUnderTest.deleteEmailMessage(sendResult.id),
+    ).resolves.toEqual(sendResult.id)
+
+    await expect(
+      instanceUnderTest.getEmailMessageWithBody({
+        emailAddressId: emailAddress.id,
+        id: sendResult.id,
+      }),
+    ).resolves.toBeUndefined()
+  })
+
   it('works with legacy email', async () => {
     // Initialize data
     const legacyEmailMessageKeyId = '38392063-2E6B-456D-A2D6-B8F92E908324'
@@ -387,6 +419,6 @@ describe('getEmailMessageWithBody test suite', () => {
     })
 
     expect(result?.id).toEqual(legacyEmailMessageId)
-    expect(result?.body).toEqual('Hello')
+    expect(result?.body).toContain('Hello')
   })
 })

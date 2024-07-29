@@ -532,6 +532,67 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         1000,
       )
     })
+
+    it('should respect includeDeletedMessages flag', async () => {
+      const sendResult = await instanceUnderTest.sendEmailMessage({
+        senderEmailAddressId: emailAddress.id,
+        emailMessageHeader: {
+          from: messageDetails.from[0],
+          to: messageDetails.to ?? [],
+          cc: messageDetails.cc ?? [],
+          bcc: messageDetails.bcc ?? [],
+          replyTo: messageDetails.replyTo ?? [],
+          subject: messageDetails.subject ?? 'Important Subject',
+        },
+        body: messageDetails.body ?? 'Hello, World',
+        attachments: messageDetails.attachments ?? [],
+        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      })
+      await waitForExpect(
+        async () => {
+          const messages = await instanceUnderTest.listEmailMessages({
+            cachePolicy: CachePolicy.RemoteOnly,
+            sortOrder: SortOrder.Desc,
+          })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(4)
+        },
+        30000,
+        1000,
+      )
+      await expect(
+        instanceUnderTest.deleteEmailMessage(sendResult.id),
+      ).resolves.toEqual(sendResult.id)
+      await waitForExpect(
+        async () => {
+          const messages = await instanceUnderTest.listEmailMessages({
+            cachePolicy: CachePolicy.RemoteOnly,
+          })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(3)
+        },
+        30000,
+        1000,
+      )
+      await waitForExpect(
+        async () => {
+          const messages = await instanceUnderTest.listEmailMessages({
+            cachePolicy: CachePolicy.RemoteOnly,
+            includeDeletedMessages: true,
+          })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(4)
+        },
+        30000,
+        1000,
+      )
+    })
   })
 
   describe('listEmailMessagesForEmailAddressId', () => {
@@ -1010,6 +1071,72 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         1000,
       )
     })
+
+    it('should respect includeDeletedMessages flag', async () => {
+      const sendResult = await instanceUnderTest.sendEmailMessage({
+        senderEmailAddressId: emailAddress.id,
+        emailMessageHeader: {
+          from: messageDetails.from[0],
+          to: messageDetails.to ?? [],
+          cc: messageDetails.cc ?? [],
+          bcc: messageDetails.bcc ?? [],
+          replyTo: messageDetails.replyTo ?? [],
+          subject: messageDetails.subject ?? 'Important Subject',
+        },
+        body: messageDetails.body ?? 'Hello, World',
+        attachments: messageDetails.attachments ?? [],
+        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      })
+      await waitForExpect(
+        async () => {
+          const messages =
+            await instanceUnderTest.listEmailMessagesForEmailAddressId({
+              emailAddressId: emailAddress.id,
+              cachePolicy: CachePolicy.RemoteOnly,
+            })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(4)
+        },
+        30000,
+        1000,
+      )
+      await expect(
+        instanceUnderTest.deleteEmailMessage(sendResult.id),
+      ).resolves.toEqual(sendResult.id)
+      await waitForExpect(
+        async () => {
+          const messages =
+            await instanceUnderTest.listEmailMessagesForEmailAddressId({
+              emailAddressId: emailAddress.id,
+              cachePolicy: CachePolicy.RemoteOnly,
+            })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(3)
+        },
+        30000,
+        1000,
+      )
+      await waitForExpect(
+        async () => {
+          const messages =
+            await instanceUnderTest.listEmailMessagesForEmailAddressId({
+              emailAddressId: emailAddress.id,
+              cachePolicy: CachePolicy.RemoteOnly,
+              includeDeletedMessages: true,
+            })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(4)
+        },
+        30000,
+        1000,
+      )
+    })
   })
 
   describe('listEmailMessagesForEmailFolderId', () => {
@@ -1483,6 +1610,77 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               )
             }
           })
+        },
+        30000,
+        1000,
+      )
+    })
+
+    it('should respect includeDeletedMessages flag', async () => {
+      const sendResult = await instanceUnderTest.sendEmailMessage({
+        senderEmailAddressId: emailAddress.id,
+        emailMessageHeader: {
+          from: messageDetails.from[0],
+          to: messageDetails.to ?? [],
+          cc: messageDetails.cc ?? [],
+          bcc: messageDetails.bcc ?? [],
+          replyTo: messageDetails.replyTo ?? [],
+          subject: messageDetails.subject ?? 'Important Subject',
+        },
+        body: messageDetails.body ?? 'Hello, World',
+        attachments: messageDetails.attachments ?? [],
+        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      })
+      const sentFolder = await getFolderByName({
+        emailClient: instanceUnderTest,
+        emailAddressId: emailAddress.id,
+        folderName: 'SENT',
+      })
+      await waitForExpect(
+        async () => {
+          const messages =
+            await instanceUnderTest.listEmailMessagesForEmailFolderId({
+              folderId: sentFolder?.id ?? '',
+              cachePolicy: CachePolicy.RemoteOnly,
+            })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(2)
+        },
+        30000,
+        1000,
+      )
+      await expect(
+        instanceUnderTest.deleteEmailMessage(sendResult.id),
+      ).resolves.toEqual(sendResult.id)
+      await waitForExpect(
+        async () => {
+          const messages =
+            await instanceUnderTest.listEmailMessagesForEmailFolderId({
+              folderId: sentFolder?.id ?? '',
+              cachePolicy: CachePolicy.RemoteOnly,
+            })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(1)
+        },
+        30000,
+        1000,
+      )
+      await waitForExpect(
+        async () => {
+          const messages =
+            await instanceUnderTest.listEmailMessagesForEmailFolderId({
+              folderId: sentFolder?.id ?? '',
+              cachePolicy: CachePolicy.RemoteOnly,
+              includeDeletedMessages: true,
+            })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.items).toHaveLength(2)
         },
         30000,
         1000,

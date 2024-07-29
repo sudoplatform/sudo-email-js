@@ -385,6 +385,7 @@ export class ApiClient {
     limit?: number,
     sortOrder?: SortOrder,
     nextToken?: string,
+    includeDeletedMessages?: boolean,
   ): Promise<EmailMessageConnection> {
     const data = await this.performQuery<ListEmailMessagesQuery>({
       query: ListEmailMessagesDocument,
@@ -394,6 +395,7 @@ export class ApiClient {
           limit,
           sortOrder,
           nextToken,
+          includeDeletedMessages,
         },
       },
       fetchPolicy,
@@ -409,6 +411,7 @@ export class ApiClient {
     limit?: number,
     sortOrder?: SortOrder,
     nextToken?: string,
+    includeDeletedMessages?: boolean,
   ): Promise<EmailMessageConnection> {
     const data =
       await this.performQuery<ListEmailMessagesForEmailAddressIdQuery>({
@@ -420,6 +423,7 @@ export class ApiClient {
             limit,
             sortOrder,
             nextToken,
+            includeDeletedMessages,
           },
         },
         fetchPolicy,
@@ -435,6 +439,7 @@ export class ApiClient {
     limit?: number,
     sortOrder?: SortOrder,
     nextToken?: string,
+    includeDeletedMessages?: boolean,
   ): Promise<EmailMessageConnection> {
     const data =
       await this.performQuery<ListEmailMessagesForEmailFolderIdQuery>({
@@ -446,6 +451,7 @@ export class ApiClient {
             limit,
             sortOrder,
             nextToken,
+            includeDeletedMessages,
           },
         },
         fetchPolicy,

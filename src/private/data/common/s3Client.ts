@@ -4,20 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
-import { S3UploadError } from '@sudoplatform/sudo-profiles'
 import {
-  internal as SudoUserInternal,
-  SudoUserClient,
-} from '@sudoplatform/sudo-user'
-import {
-  S3,
   CompleteMultipartUploadOutput,
   NoSuchKey,
+  S3,
 } from '@aws-sdk/client-s3'
-import { Upload } from '@aws-sdk/lib-storage'
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers'
+import { Upload } from '@aws-sdk/lib-storage'
+import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
+import {
+  SudoUserClient,
+  internal as SudoUserInternal,
+} from '@sudoplatform/sudo-user'
 import _ from 'lodash'
+import { S3UploadError } from '../../../public'
 
 interface GetAWSS3Input {
   region: string

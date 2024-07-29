@@ -631,6 +631,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const result = await instanceUnderTest.listMessages({
@@ -638,6 +639,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessages(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -669,6 +671,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
+            anything(),
           ),
         ).thenResolve(GraphQLDataFactory.emailMessageConnection)
         const result = await instanceUnderTest.listMessages({
@@ -676,6 +679,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         })
         verify(
           mockAppSync.listEmailMessages(
+            anything(),
             anything(),
             anything(),
             anything(),
@@ -710,6 +714,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const result = await instanceUnderTest.listMessages({
@@ -717,6 +722,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessages(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -751,6 +757,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
+            anything(),
           ),
         ).thenResolve(GraphQLDataFactory.emailMessageConnection)
         await expect(
@@ -768,6 +775,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
+            anything(),
           ),
         ).once()
       },
@@ -780,6 +788,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     `('returns transformed result ordered $test', async ({ sortOrder }) => {
       when(
         mockAppSync.listEmailMessages(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -803,6 +812,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).once()
     })
@@ -810,6 +820,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     it('returns result for sortDate date range successfully', async () => {
       when(
         mockAppSync.listEmailMessages(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -847,6 +858,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).once()
     })
@@ -854,6 +866,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     it('returns result for updatedAt date range successfully', async () => {
       when(
         mockAppSync.listEmailMessages(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -887,6 +900,44 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
+        ),
+      ).once()
+    })
+
+    it('returns result for includeDeletedMessages successfully', async () => {
+      when(
+        mockAppSync.listEmailMessages(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+      const result = await instanceUnderTest.listMessages({
+        cachePolicy: CachePolicy.CacheOnly,
+        includeDeletedMessages: true,
+      })
+      const [
+        policyArg,
+        dateRangeArg,
+        limitArg,
+        sortOrderArg,
+        nextTokenArg,
+        includeDeletedMessagesArg,
+      ] = capture(mockAppSync.listEmailMessages).first()
+      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+      expect(includeDeletedMessagesArg).toStrictEqual(true)
+      verify(
+        mockAppSync.listEmailMessages(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
         ),
       ).once()
     })
@@ -908,6 +959,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const emailAddressId = v4()
@@ -917,6 +969,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessagesForEmailAddressId(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -953,6 +1006,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
+            anything(),
           ),
         ).thenResolve(GraphQLDataFactory.emailMessageConnection)
         const emailAddressId = v4()
@@ -962,6 +1016,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         })
         verify(
           mockAppSync.listEmailMessagesForEmailAddressId(
+            anything(),
             anything(),
             anything(),
             anything(),
@@ -1001,6 +1056,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const emailAddressId = v4()
@@ -1010,6 +1066,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessagesForEmailAddressId(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -1049,6 +1106,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
+            anything(),
           ),
         ).thenResolve(GraphQLDataFactory.emailMessageConnection)
         const emailAddressId = v4()
@@ -1069,6 +1127,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
+            anything(),
           ),
         ).once()
       },
@@ -1081,6 +1140,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     `('returns transformed result ordered $test', async ({ sortOrder }) => {
       when(
         mockAppSync.listEmailMessagesForEmailAddressId(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -1108,6 +1168,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).once()
     })
@@ -1115,6 +1176,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     it('returns result for sortDate date range successfully', async () => {
       when(
         mockAppSync.listEmailMessagesForEmailAddressId(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -1157,6 +1219,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).once()
     })
@@ -1164,6 +1227,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     it('returns result for updatedAt date range successfully', async () => {
       when(
         mockAppSync.listEmailMessagesForEmailAddressId(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -1206,6 +1270,54 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
+        ),
+      ).once()
+    })
+
+    it('returns result for includeDeletedMessages successfully', async () => {
+      when(
+        mockAppSync.listEmailMessagesForEmailAddressId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+      const emailAddressId = v4()
+      const result = await instanceUnderTest.listMessagesForEmailAddressId({
+        emailAddressId,
+        cachePolicy: CachePolicy.CacheOnly,
+        includeDeletedMessages: true,
+      })
+      const [
+        idArg,
+        policyArg,
+        dateRangeArg,
+        limitArg,
+        sortOrderArg,
+        nextTokenArg,
+        includeDeletedMessagesArg,
+      ] = capture(mockAppSync.listEmailMessagesForEmailAddressId).first()
+      expect(idArg).toStrictEqual<typeof idArg>(emailAddressId)
+      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+      expect(includeDeletedMessagesArg).toStrictEqual(true)
+      expect(result).toStrictEqual({
+        emailMessages: [EntityDataFactory.emailMessage],
+        nextToken: undefined,
+      })
+      verify(
+        mockAppSync.listEmailMessagesForEmailAddressId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
         ),
       ).once()
     })
@@ -1227,6 +1339,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const folderId = v4()
@@ -1236,6 +1349,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -1272,6 +1386,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
+            anything(),
           ),
         ).thenResolve(GraphQLDataFactory.emailMessageConnection)
         const folderId = v4()
@@ -1281,6 +1396,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         })
         verify(
           mockAppSync.listEmailMessagesForEmailFolderId(
+            anything(),
             anything(),
             anything(),
             anything(),
@@ -1320,6 +1436,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const folderId = v4()
@@ -1329,6 +1446,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -1368,6 +1486,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
+            anything(),
           ),
         ).thenResolve(GraphQLDataFactory.emailMessageConnection)
         const folderId = v4()
@@ -1388,6 +1507,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
+            anything(),
           ),
         ).once()
       },
@@ -1400,6 +1520,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     `('returns transformed result ordered $test', async ({ sortOrder }) => {
       when(
         mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -1427,6 +1548,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).once()
     })
@@ -1434,6 +1556,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     it('returns result for sortDate date range successfully', async () => {
       when(
         mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -1476,6 +1599,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).once()
     })
@@ -1483,6 +1607,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     it('returns result for updatedAt date range successfully', async () => {
       when(
         mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -1515,6 +1640,54 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).once()
+    })
+
+    it('returns result for includeDeletedMessages successfully', async () => {
+      when(
+        mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+      const folderId = v4()
+      const result = await instanceUnderTest.listMessagesForEmailFolderId({
+        folderId,
+        cachePolicy: CachePolicy.CacheOnly,
+        includeDeletedMessages: true,
+      })
+      const [
+        idArg,
+        policyArg,
+        dateRangeArg,
+        limitArg,
+        sortOrderArg,
+        nextTokenArg,
+        includeDeletedMessagesArg,
+      ] = capture(mockAppSync.listEmailMessagesForEmailFolderId).first()
+      expect(idArg).toStrictEqual<typeof idArg>(folderId)
+      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+      expect(includeDeletedMessagesArg).toStrictEqual(true)
+      expect(result).toStrictEqual({
+        emailMessages: [EntityDataFactory.emailMessage],
+        nextToken: undefined,
+      })
+      verify(
+        mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
           anything(),
           anything(),
           anything(),

@@ -596,6 +596,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     limit,
     sortOrder,
     nextToken,
+    includeDeletedMessages,
   }: ListEmailMessagesInput): Promise<ListEmailMessagesOutput> {
     const fetchPolicy = cachePolicy
       ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
@@ -614,6 +615,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       limit,
       sortOrderInput,
       nextToken,
+      includeDeletedMessages,
     )
     let sealedEmailMessages: SealedEmailMessageEntity[] = []
     if (response.items) {
@@ -640,6 +642,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     limit,
     sortOrder,
     nextToken,
+    includeDeletedMessages,
   }: ListEmailMessagesForEmailAddressIdInput): Promise<ListEmailMessagesForEmailAddressIdOutput> {
     const fetchPolicy = cachePolicy
       ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
@@ -659,6 +662,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       limit,
       sortOrderInput,
       nextToken,
+      includeDeletedMessages,
     )
     let sealedEmailMessages: SealedEmailMessageEntity[] = []
     if (response.items) {
@@ -685,6 +689,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     limit,
     sortOrder,
     nextToken,
+    includeDeletedMessages,
   }: ListEmailMessagesForEmailFolderIdInput): Promise<ListEmailMessagesForEmailFolderIdOutput> {
     const fetchPolicy = cachePolicy
       ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
@@ -704,6 +709,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       limit,
       sortOrderInput,
       nextToken,
+      includeDeletedMessages,
     )
     let sealedEmailMessages: SealedEmailMessageEntity[] = []
     if (response.items) {

@@ -204,6 +204,7 @@ export enum EmailMessageEncryptionStatus {
 }
 
 export enum EmailMessageState {
+  Deleted = 'DELETED',
   Delivered = 'DELIVERED',
   Failed = 'FAILED',
   Queued = 'QUEUED',
@@ -250,6 +251,7 @@ export type ListEmailFoldersForEmailAddressIdInput = {
 
 export type ListEmailMessagesForEmailAddressIdInput = {
   emailAddressId: Scalars['ID']['input']
+  includeDeletedMessages?: InputMaybe<Scalars['Boolean']['input']>
   limit?: InputMaybe<Scalars['Int']['input']>
   nextToken?: InputMaybe<Scalars['String']['input']>
   sortOrder?: InputMaybe<SortOrder>
@@ -258,6 +260,7 @@ export type ListEmailMessagesForEmailAddressIdInput = {
 
 export type ListEmailMessagesForEmailFolderIdInput = {
   folderId: Scalars['ID']['input']
+  includeDeletedMessages?: InputMaybe<Scalars['Boolean']['input']>
   limit?: InputMaybe<Scalars['Int']['input']>
   nextToken?: InputMaybe<Scalars['String']['input']>
   sortOrder?: InputMaybe<SortOrder>
@@ -265,6 +268,7 @@ export type ListEmailMessagesForEmailFolderIdInput = {
 }
 
 export type ListEmailMessagesInput = {
+  includeDeletedMessages?: InputMaybe<Scalars['Boolean']['input']>
   limit?: InputMaybe<Scalars['Int']['input']>
   nextToken?: InputMaybe<Scalars['String']['input']>
   sortOrder?: InputMaybe<SortOrder>
@@ -504,6 +508,7 @@ export type SealedEmailMessage = {
   __typename?: 'SealedEmailMessage'
   clientRefId?: Maybe<Scalars['String']['output']>
   createdAtEpochMs: Scalars['Float']['output']
+  deletedAtEpochMs?: Maybe<Scalars['Float']['output']>
   direction: EmailMessageDirection
   emailAddressId: Scalars['ID']['output']
   encryptionStatus?: Maybe<EmailMessageEncryptionStatus>

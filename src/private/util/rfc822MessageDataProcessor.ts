@@ -21,7 +21,6 @@ import {
 } from 'mimetext'
 import { extract, parse } from 'letterparser'
 import { LetterparserMailbox } from 'letterparser/lib/esm/extractor'
-import { htmlToPlaintext } from './stringUtils'
 
 export interface EmailMessageDetails {
   from: EmailAddressDetail[]
@@ -31,7 +30,7 @@ export interface EmailMessageDetails {
   replyTo?: EmailAddressDetail[]
   subject?: string
   body?: string
-  bodyHtml?: string
+  isHtml?: boolean
   attachments?: EmailAttachment[]
   inlineAttachments?: EmailAttachment[]
   encryptionStatus?: EncryptionStatus
@@ -81,7 +80,7 @@ export class Rfc822MessageDataProcessor {
     replyTo,
     subject,
     body,
-    bodyHtml,
+    isHtml = true,
     attachments,
     inlineAttachments,
     encryptionStatus = EncryptionStatus.UNENCRYPTED,
@@ -132,16 +131,9 @@ export class Rfc822MessageDataProcessor {
     } else {
       msg.addMessage({
         data: body ?? '',
+        contentType: isHtml ? 'text/html' : 'text/plain',
         charset: 'UTF-8',
-        contentType: 'text/plain',
       })
-      if (bodyHtml && bodyHtml.trim() !== '') {
-        msg.addMessage({
-          data: bodyHtml,
-          contentType: 'text/html',
-          charset: 'UTF-8',
-        })
-      }
     }
 
     attachments?.forEach((attachment) => {
@@ -208,10 +200,14 @@ export class Rfc822MessageDataProcessor {
           parsedMessage.bcc,
         )
 
-      const body = parsedMessage.text
-        ? parsedMessage.text.trim()
-        : htmlToPlaintext(parsedMessage.html ? parsedMessage.html : '')
-      const bodyHtml = parsedMessage.html ? parsedMessage.html : undefined
+      let body = ''
+      let isHtml = false
+      if (parsedMessage.html) {
+        body = parsedMessage.html
+        isHtml = true
+      } else {
+        body = parsedMessage.text ? parsedMessage.text.trim() : ''
+      }
       const subject = parsedMessage.subject
 
       const parsedHeaders = parse(data)
@@ -263,7 +259,7 @@ export class Rfc822MessageDataProcessor {
         bcc,
         replyTo,
         body,
-        bodyHtml,
+        isHtml,
         subject,
         encryptionStatus,
         attachments,

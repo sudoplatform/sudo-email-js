@@ -48,6 +48,7 @@ describe('ListEmailMessagesUseCase Test Suite', () => {
         limit: undefined,
         sortOrder: undefined,
         nextToken: undefined,
+        includeDeletedMessages: undefined,
       })
       expect(result).toStrictEqual({
         emailMessages: [EntityDataFactory.emailMessage],
@@ -77,6 +78,7 @@ describe('ListEmailMessagesUseCase Test Suite', () => {
         limit: undefined,
         sortOrder: SortOrder.Desc,
         nextToken: undefined,
+        includeDeletedMessages: undefined,
       })
       expect(result).toStrictEqual({
         emailMessages: [EntityDataFactory.emailMessage],
@@ -106,6 +108,7 @@ describe('ListEmailMessagesUseCase Test Suite', () => {
         limit: undefined,
         sortOrder: SortOrder.Desc,
         nextToken: undefined,
+        includeDeletedMessages: undefined,
       })
       expect(result).toStrictEqual({
         emailMessages: [EntityDataFactory.emailMessage],
@@ -127,9 +130,33 @@ describe('ListEmailMessagesUseCase Test Suite', () => {
         limit: undefined,
         sortOrder: undefined,
         nextToken: undefined,
+        includeDeletedMessages: undefined,
       })
       expect(result).toStrictEqual({
         emailMessages: [],
+      })
+    })
+
+    it('completes successfully with includeDeletedMessages', async () => {
+      when(mockEmailMessageService.listMessages(anything())).thenResolve({
+        emailMessages: [EntityDataFactory.emailMessage],
+      })
+      const result = await instanceUnderTest.execute({
+        cachePolicy: CachePolicy.CacheOnly,
+        includeDeletedMessages: true,
+      })
+      verify(mockEmailMessageService.listMessages(anything())).once()
+      const [inputArgs] = capture(mockEmailMessageService.listMessages).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        dateRange: undefined,
+        cachePolicy: CachePolicy.CacheOnly,
+        limit: undefined,
+        sortOrder: undefined,
+        nextToken: undefined,
+        includeDeletedMessages: true,
+      })
+      expect(result).toStrictEqual({
+        emailMessages: [EntityDataFactory.emailMessage],
       })
     })
   })

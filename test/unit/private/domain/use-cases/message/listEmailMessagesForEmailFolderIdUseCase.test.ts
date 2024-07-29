@@ -58,6 +58,7 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
         limit: undefined,
         sortOrder: undefined,
         nextToken: undefined,
+        includeDeletedMessages: undefined,
       })
       expect(result).toStrictEqual({
         emailMessages: [EntityDataFactory.emailMessage],
@@ -96,6 +97,7 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
         limit: undefined,
         sortOrder: SortOrder.Desc,
         nextToken: undefined,
+        includeDeletedMessages: undefined,
       })
       expect(result).toStrictEqual({
         emailMessages: [EntityDataFactory.emailMessage],
@@ -134,6 +136,7 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
         limit: undefined,
         sortOrder: SortOrder.Desc,
         nextToken: undefined,
+        includeDeletedMessages: undefined,
       })
       expect(result).toStrictEqual({
         emailMessages: [EntityDataFactory.emailMessage],
@@ -164,9 +167,42 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
         limit: undefined,
         sortOrder: undefined,
         nextToken: undefined,
+        includeDeletedMessages: undefined,
       })
       expect(result).toStrictEqual({
         emailMessages: [],
+      })
+    })
+
+    it('completes successfully with includeDeletedMessages', async () => {
+      const folderId = v4()
+      when(
+        mockEmailMessageService.listMessagesForEmailFolderId(anything()),
+      ).thenResolve({
+        emailMessages: [EntityDataFactory.emailMessage],
+      })
+      const result = await instanceUnderTest.execute({
+        folderId,
+        cachePolicy: CachePolicy.CacheOnly,
+        includeDeletedMessages: true,
+      })
+      verify(
+        mockEmailMessageService.listMessagesForEmailFolderId(anything()),
+      ).once()
+      const [inputArgs] = capture(
+        mockEmailMessageService.listMessagesForEmailFolderId,
+      ).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        folderId,
+        dateRange: undefined,
+        cachePolicy: CachePolicy.CacheOnly,
+        limit: undefined,
+        sortOrder: undefined,
+        nextToken: undefined,
+        includeDeletedMessages: true,
+      })
+      expect(result).toStrictEqual({
+        emailMessages: [EntityDataFactory.emailMessage],
       })
     })
   })

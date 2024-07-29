@@ -92,6 +92,7 @@ export enum State {
   Undelivered = 'UNDELIVERED',
   Failed = 'FAILED',
   Received = 'RECEIVED',
+  Deleted = 'DELETED'
 }
 
 /**
