@@ -174,6 +174,7 @@ describe('SendEmailMessageUseCase', () => {
   })
 
   describe('encrypted path', () => {
+    const fromAddress = 'from@unittest.org'
     beforeEach(() => {
       when(mockAccountService.lookupPublicInfo(anything())).thenResolve([
         {
@@ -181,11 +182,16 @@ describe('SendEmailMessageUseCase', () => {
           keyId: 'mockKeyId',
           publicKey: 'mockPublicKey',
         },
+        {
+          emailAddress: fromAddress,
+          keyId: 'mockKeyId',
+          publicKey: 'mockPublicKey',
+        },
       ])
     })
     it('calls the message service sendMessage method', async () => {
       const emailMessageHeader = {
-        from: { emailAddress: 'from@example.com' },
+        from: { emailAddress: fromAddress },
         to: [{ emailAddress: EntityDataFactory.emailAddress.emailAddress }],
       } as unknown as InternetMessageFormatHeader
       await instanceUnderTest.execute({
@@ -204,7 +210,7 @@ describe('SendEmailMessageUseCase', () => {
       ).first()
       expect(actualSendInput).toStrictEqual<typeof actualSendInput>({
         message: {
-          from: [{ emailAddress: 'from@example.com' }],
+          from: [{ emailAddress: fromAddress }],
           to: [{ emailAddress: EntityDataFactory.emailAddress.emailAddress }],
           cc: undefined,
           bcc: undefined,
@@ -215,9 +221,14 @@ describe('SendEmailMessageUseCase', () => {
           inlineAttachments,
         },
         senderEmailAddressId,
-        recipientsPublicInfo: [
+        recipientsAndSenderPublicInfo: [
           {
             emailAddress: EntityDataFactory.emailAddress.emailAddress,
+            keyId: 'mockKeyId',
+            publicKey: 'mockPublicKey',
+          },
+          {
+            emailAddress: fromAddress,
             keyId: 'mockKeyId',
             publicKey: 'mockPublicKey',
           },
@@ -228,7 +239,7 @@ describe('SendEmailMessageUseCase', () => {
     it('returns result of service for internal recipients', async () => {
       const idResult = v4()
       const emailMessageHeader = {
-        from: { emailAddress: 'from@example.com' },
+        from: { emailAddress: fromAddress },
         to: [{ emailAddress: EntityDataFactory.emailAddress.emailAddress }],
       } as unknown as InternetMessageFormatHeader
       when(mockMessageService.sendEncryptedMessage(anything())).thenResolve({
@@ -259,7 +270,7 @@ describe('SendEmailMessageUseCase', () => {
 
       const idResult = v4()
       const emailMessageHeader = {
-        from: { emailAddress: 'from@example.com' },
+        from: { emailAddress: fromAddress },
         to: [{ emailAddress: EntityDataFactory.emailAddress.emailAddress }],
       } as unknown as InternetMessageFormatHeader
       when(mockMessageService.sendMessage(anything())).thenResolve({
@@ -280,7 +291,7 @@ describe('SendEmailMessageUseCase', () => {
     })
     it('throws error when any internal recipient email address does not exist', async () => {
       const emailMessageHeader = {
-        from: { emailAddress: 'from@example.com' },
+        from: { emailAddress: fromAddress },
         to: [{ emailAddress: 'notexists@unittest.org' }],
       } as unknown as InternetMessageFormatHeader
       await expect(

@@ -339,20 +339,20 @@ export class DefaultEmailMessageService implements EmailMessageService {
 
   async sendEncryptedMessage({
     message,
-    recipientsPublicInfo,
+    recipientsAndSenderPublicInfo,
     senderEmailAddressId,
     emailMessageMaxOutboundMessageSize,
   }: SendEncryptedMessageInput): Promise<SendEmailMessageOutput> {
     this.log.debug(this.sendEncryptedMessage.name, {
       message,
-      recipientsPublicInfo,
+      recipientsPublicInfo: recipientsAndSenderPublicInfo,
       senderEmailAddressId,
     })
     const rfc822Data =
       Rfc822MessageDataProcessor.encodeToInternetMessageBuffer(message)
     const keyIds: string[] = []
 
-    recipientsPublicInfo.forEach((recip) => {
+    recipientsAndSenderPublicInfo.forEach((recip) => {
       if (!keyIds.some((v) => v === recip.keyId)) {
         keyIds.push(recip.keyId)
       }

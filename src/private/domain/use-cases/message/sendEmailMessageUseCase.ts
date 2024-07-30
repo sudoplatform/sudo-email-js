@@ -121,12 +121,13 @@ export class SendEmailMessageUseCase {
 
     if (internalRecipients.length) {
       // Lookup public key information for each internal recipient
-      const recipientsPublicInfo = await this.accountService.lookupPublicInfo({
-        emailAddresses: internalRecipients,
-      })
+      const recipientsAndSenderPublicInfo =
+        await this.accountService.lookupPublicInfo({
+          emailAddresses: [...internalRecipients, from.emailAddress],
+        })
       // Check whether internal recipient addresses and associated public keys exist in the platform
       const isInNetwork = internalRecipients.every((r) =>
-        recipientsPublicInfo.some((p) => p.emailAddress === r),
+        recipientsAndSenderPublicInfo.some((p) => p.emailAddress === r),
       )
       if (!isInNetwork) {
         throw new InNetworkAddressNotFoundError(
@@ -138,7 +139,7 @@ export class SendEmailMessageUseCase {
         return await this.messageService.sendEncryptedMessage({
           message,
           senderEmailAddressId,
-          recipientsPublicInfo,
+          recipientsAndSenderPublicInfo,
           emailMessageMaxOutboundMessageSize,
         })
       } else {
