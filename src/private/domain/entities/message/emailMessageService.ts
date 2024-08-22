@@ -88,13 +88,13 @@ export interface SendMessageInput {
  * @interface SendEncryptedMessageInput
  * @property {EmailMessageDetails} message The email message header and contents to be sent.
  * @property {string} senderEmailAddressId Identifier of the sender email address that is composing the email message.
- * @property {EmailAddressPublicInfoEntity[]} recipientsAndSenderPublicInfo The public key information for each recipient and the sender of the email message.
+ * @property {EmailAddressPublicInfoEntity[]} emailAddressesPublicInfo The public key information for each recipient and the sender of the email message.
  * @property {number} emailMessageMaxOutboundMessageSize The maximum size of an outbound email message.
  */
 export interface SendEncryptedMessageInput {
   message: EmailMessageDetails
   senderEmailAddressId: string
-  recipientsAndSenderPublicInfo: EmailAddressPublicInfoEntity[]
+  emailAddressesPublicInfo: EmailAddressPublicInfoEntity[]
   emailMessageMaxOutboundMessageSize: number
 }
 

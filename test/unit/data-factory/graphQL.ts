@@ -17,7 +17,6 @@ import {
   EmailMessageConnection,
   EmailMessageDirection,
   EmailMessageState,
-  GetEmailAddressBlocklistResponse,
   GetEmailAddressBlocklistResponseFragment,
   KeyFormat,
   Owner,

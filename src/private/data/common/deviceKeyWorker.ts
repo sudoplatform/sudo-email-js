@@ -84,14 +84,44 @@ export interface UnsealWithKeyPairIdInput {
   iv?: ArrayBuffer
 }
 
+/**
+ * Input used to encrypt the data with the input symmetric key.
+ *
+ * @property {ArrayBuffer} key The symmetric key used to encrypt the data.
+ * @property {ArrayBuffer} data Data to encrypted.
+ * @property {ArrayBuffer} iv (Optional) The initialization vector. Must be 128 bit in size for AES-CBC and 96 for AES-GCM.
+ */
+export interface EncryptWithSymmetricKeyInput {
+  key: ArrayBuffer
+  data: ArrayBuffer
+  iv?: ArrayBuffer
+}
+
+/**
+ * Input used to encrypt the data with the input public key.
+ *
+ * @property {ArrayBuffer} key The public key used to encrypt the data.
+ * @property {ArrayBuffer} data Data to encrypted.
+ * @property {EncryptionAlgorithm} algorithm Algorithm used to encrypt the data.
+ */
+export interface EncryptWithPublicKeyInput {
+  key: ArrayBuffer
+  data: ArrayBuffer
+  algorithm: EncryptionAlgorithm
+}
+
 export const SYMMETRIC_KEY_ID = 'email-symmetric-key'
 const RSA_KEY_SIZE = 256
 const SINGLETON_PUBLIC_KEY_ID = 'singleton-key-id'
 
 export interface DeviceKeyWorker {
+  generateRandomData(size: number): Promise<ArrayBuffer>
+
   generateKeyPair(): Promise<DeviceKey>
 
   getSingletonKeyPair(): Promise<DeviceKey>
+
+  generateRandomSymmetricKey(): Promise<ArrayBuffer>
 
   generateCurrentSymmetricKey(): Promise<string>
 
@@ -100,8 +130,6 @@ export interface DeviceKeyWorker {
   keyExists(id: string, type: KeyType): Promise<boolean>
 
   removeKey(id: string, type: KeyType): Promise<void>
-
-  unsealString(input: UnsealInput): Promise<string>
 
   /**
    * Seals the given string using the provided key and algorithm.
@@ -114,9 +142,15 @@ export interface DeviceKeyWorker {
     input: SealWithKeyPairIdsInput,
   ): Promise<SealWithKeyPairIdsOutput>
 
-  unsealWithKeyPairId(input: UnsealWithKeyPairIdInput): Promise<ArrayBuffer>
+  encryptWithSymmetricKey(
+    input: EncryptWithSymmetricKeyInput,
+  ): Promise<ArrayBuffer>
 
-  generateRandomData(size: number): Promise<ArrayBuffer>
+  encryptWithPublicKey(input: EncryptWithPublicKeyInput): Promise<ArrayBuffer>
+
+  unsealString(input: UnsealInput): Promise<string>
+
+  unsealWithKeyPairId(input: UnsealWithKeyPairIdInput): Promise<ArrayBuffer>
 }
 
 export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
@@ -146,6 +180,10 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
       data: publicKeyData,
       format: publicKeyFormat,
     }
+  }
+
+  async generateRandomData(size: number): Promise<ArrayBuffer> {
+    return await this.keyManager.generateRandomData(size)
   }
 
   /**
@@ -193,6 +231,28 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
     return deviceKey
   }
 
+  /**
+   * Generates a new symmetric key and returns its bytes. Does not store it in the
+   * device.
+   * @returns {ArrayBuffer} The symmetric key.
+   */
+  async generateRandomSymmetricKey(): Promise<ArrayBuffer> {
+    const keyId = v4()
+    const message = 'Failed to generate symmetric key'
+    try {
+      await this.keyManager.generateSymmetricKey(keyId)
+      const symmetricKey = await this.keyManager.getSymmetricKey(keyId)
+      if (!symmetricKey) {
+        throw new InternalError(message)
+      }
+      await this.keyManager.deleteSymmetricKey(keyId)
+      return symmetricKey
+    } catch (err) {
+      this.log.error(message, { err })
+      throw new InternalError(message)
+    }
+  }
+
   async generateCurrentSymmetricKey(): Promise<string> {
     const keyId = v4()
     const keyIdBits = new TextEncoder().encode(keyId)
@@ -235,27 +295,6 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
     }
   }
 
-  async unsealString({
-    keyId,
-    keyType,
-    encrypted,
-    algorithm,
-  }: UnsealInput): Promise<string> {
-    switch (keyType) {
-      case KeyType.KeyPair:
-        return await this.unsealStringWithKeyPairId({
-          keyPairId: keyId,
-          encrypted,
-        })
-      case KeyType.SymmetricKey:
-        return await this.unsealWithSymmetricKeyId({
-          symmetricKeyId: keyId,
-          encrypted,
-          algorithm,
-        })
-    }
-  }
-
   async sealString({
     keyId,
     keyType,
@@ -285,9 +324,9 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
   async sealWithKeyPairIds(
     input: SealWithKeyPairIdsInput,
   ): Promise<SealWithKeyPairIdsOutput> {
-    const cipherKey = await this.generateCipherKey()
+    const symmetricKey = await this.generateRandomSymmetricKey()
     const sealedPayload = await this.keyManager.encryptWithSymmetricKey(
-      cipherKey,
+      symmetricKey,
       input.payload,
       { algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding, iv: input.iv },
     )
@@ -295,7 +334,7 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
       input.keyIds.map(async (keyPairId) => {
         const sealedValue = await this.keyManager.encryptWithPublicKey(
           keyPairId,
-          cipherKey,
+          symmetricKey,
           {
             algorithm: EncryptionAlgorithm.RsaOaepSha1, // Same as default
           },
@@ -304,6 +343,57 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
       }),
     )
     return { sealedPayload, sealedCipherKeys }
+  }
+
+  async encryptWithSymmetricKey(
+    input: EncryptWithSymmetricKeyInput,
+  ): Promise<ArrayBuffer> {
+    try {
+      return await this.keyManager.encryptWithSymmetricKey(
+        input.key,
+        input.data,
+        { algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding, iv: input.iv },
+      )
+    } catch (err) {
+      const message = 'Failed to encrypt with symmetric key'
+      this.log.error(message, { err })
+      throw new InternalError(message)
+    }
+  }
+
+  async encryptWithPublicKey(
+    input: EncryptWithPublicKeyInput,
+  ): Promise<ArrayBuffer> {
+    try {
+      return await this.keyManager.encryptWithPublicKey(input.key, input.data, {
+        algorithm: input.algorithm,
+      })
+    } catch (err) {
+      const message = 'Failed to encrypt with public key'
+      this.log.error(message, { err })
+      throw new InternalError(message)
+    }
+  }
+
+  async unsealString({
+    keyId,
+    keyType,
+    encrypted,
+    algorithm,
+  }: UnsealInput): Promise<string> {
+    switch (keyType) {
+      case KeyType.KeyPair:
+        return await this.unsealStringWithKeyPairId({
+          keyPairId: keyId,
+          encrypted,
+        })
+      case KeyType.SymmetricKey:
+        return await this.unsealWithSymmetricKeyId({
+          symmetricKeyId: keyId,
+          encrypted,
+          algorithm,
+        })
+    }
   }
 
   async unsealWithKeyPairId(
@@ -331,33 +421,12 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
     }
   }
 
-  async generateRandomData(size: number): Promise<ArrayBuffer> {
-    return await this.keyManager.generateRandomData(size)
-  }
-
   private async decryptWithSymmetricKey(
     key: ArrayBuffer,
     data: ArrayBuffer,
     options: SymmetricEncryptionOptions,
   ): Promise<ArrayBuffer> {
     return this.keyManager.decryptWithSymmetricKey(key, data, options)
-  }
-
-  /**
-   * Generates a new symmetric key (cipher) and returns its bytes. Does not store it in the
-   * device.
-   * @returns {ArrayBuffer} The cipher key
-   */
-  private async generateCipherKey(): Promise<ArrayBuffer> {
-    const cipherKeyId = v4()
-    await this.keyManager.generateSymmetricKey(cipherKeyId)
-    const cipherKey = await this.keyManager.getSymmetricKey(cipherKeyId)
-    if (!cipherKey) {
-      throw new InternalError('Failed to create cipher key')
-    }
-    // Need to remove symmetric key as we don't want to save it on device
-    await this.keyManager.deleteSymmetricKey(cipherKeyId)
-    return cipherKey
   }
 
   /**

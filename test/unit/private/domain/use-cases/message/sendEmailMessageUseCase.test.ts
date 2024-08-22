@@ -221,7 +221,7 @@ describe('SendEmailMessageUseCase', () => {
           inlineAttachments,
         },
         senderEmailAddressId,
-        recipientsAndSenderPublicInfo: [
+        emailAddressesPublicInfo: [
           {
             emailAddress: EntityDataFactory.emailAddress.emailAddress,
             keyId: 'mockKeyId',

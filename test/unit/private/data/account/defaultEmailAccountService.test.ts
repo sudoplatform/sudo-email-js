@@ -31,9 +31,9 @@ import {
   DeleteEmailAccountInput,
   UpdateEmailAccountMetadataInput,
 } from '../../../../../src/private/domain/entities/account/emailAccountService'
+import { EmailAddressPublicInfoEntity } from '../../../../../src/private/domain/entities/account/emailAddressPublicInfoEntity'
 import { EntityDataFactory } from '../../../data-factory/entity'
 import { GraphQLDataFactory } from '../../../data-factory/graphQL'
-import { EmailAddressPublicInfoEntity } from '../../../../../src/private/domain/entities/account/emailAddressPublicInfoEntity'
 
 describe('DefaultEmailAccountService Test Suite', () => {
   const generatedPKDeviceKey = EntityDataFactory.deviceKey

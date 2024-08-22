@@ -96,6 +96,7 @@ import { SortOrderTransformer } from '../common/transformer/sortOrderTransformer
 import { withDefault } from '../common/withDefault'
 import { SealedEmailMessageEntityTransformer } from './transformer/sealedEmailMessageEntityTransformer'
 import { SendEmailMessageResultTransformer } from './transformer/sendEmailMessageResultTransformer'
+import { EmailAddressPublicInfoEntity } from '../../domain/entities/account/emailAddressPublicInfoEntity'
 
 const EmailAddressEntityCodec = t.intersection(
   [t.type({ emailAddress: t.string }), t.partial({ displayName: t.string })],
@@ -339,34 +340,35 @@ export class DefaultEmailMessageService implements EmailMessageService {
 
   async sendEncryptedMessage({
     message,
-    recipientsAndSenderPublicInfo,
+    emailAddressesPublicInfo,
     senderEmailAddressId,
     emailMessageMaxOutboundMessageSize,
   }: SendEncryptedMessageInput): Promise<SendEmailMessageOutput> {
     this.log.debug(this.sendEncryptedMessage.name, {
       message,
-      recipientsPublicInfo: recipientsAndSenderPublicInfo,
+      emailAddressesPublicInfo,
       senderEmailAddressId,
     })
     const rfc822Data =
       Rfc822MessageDataProcessor.encodeToInternetMessageBuffer(message)
-    const keyIds: string[] = []
 
-    recipientsAndSenderPublicInfo.forEach((recip) => {
-      if (!keyIds.some((v) => v === recip.keyId)) {
-        keyIds.push(recip.keyId)
+    const uniqueEmailAddressPublicInfo: EmailAddressPublicInfoEntity[] = []
+    emailAddressesPublicInfo.forEach((info) => {
+      if (!uniqueEmailAddressPublicInfo.some((v) => v.keyId === info.keyId)) {
+        uniqueEmailAddressPublicInfo.push(info)
       }
     })
 
-    const securePackage = await this.emailCryptoService.encrypt(
+    const encryptedEmailMessage = await this.emailCryptoService.encrypt(
       rfc822Data,
-      keyIds,
+      uniqueEmailAddressPublicInfo,
     )
+    const secureAttachments = encryptedEmailMessage.toArray()
 
     const encryptedRfc822Data =
       Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
         ...message,
-        attachments: securePackage.toArray(),
+        attachments: secureAttachments,
         encryptionStatus: EncryptionStatus.ENCRYPTED,
       })
 

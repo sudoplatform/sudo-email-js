@@ -6,6 +6,7 @@
 
 import {
   DecodeError,
+  EncryptionAlgorithm,
   KeyNotFoundError,
   PublicKeyFormat,
   SudoKeyManager,
@@ -28,12 +29,12 @@ import {
   KeyType,
   SYMMETRIC_KEY_ID,
 } from '../../../../../src/private/data/common/deviceKeyWorker'
-import { InternalError } from '../../../../../src/public/errors'
 import {
   arrayBufferToString,
   base64StringToString,
   stringToArrayBuffer,
 } from '../../../../../src/private/util/buffer'
+import { InternalError } from '../../../../../src/public/errors'
 import { EntityDataFactory } from '../../../data-factory/entity'
 
 describe('DeviceKeyWorker Test Suite', () => {
@@ -66,6 +67,20 @@ describe('DeviceKeyWorker Test Suite', () => {
     when(mockKeyManager.generateRandomData(anything())).thenResolve(
       stringToArrayBuffer(v4()),
     )
+  })
+
+  describe('generateRandomData', () => {
+    it('calls the keyManager function properly and returns the result', async () => {
+      const size = 256
+      const result = await instanceUnderTest.generateRandomData(size)
+
+      verify(mockKeyManager.generateRandomData(anything())).once()
+      const [actualSize] = capture(mockKeyManager.generateRandomData).first()
+      expect(actualSize).toEqual(size)
+      expect(new TextDecoder().decode(result)).toMatch(
+        /^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
+      )
+    })
   })
 
   describe('generateKeyPair', () => {
@@ -112,6 +127,49 @@ describe('DeviceKeyWorker Test Suite', () => {
         format: DeviceKeyWorkerKeyFormat.RsaPublicKey,
       })
       verify(mockKeyManager.getPublicKey(anything())).once()
+    })
+  })
+
+  describe('generateRandomSymmetricKey', () => {
+    it('generates a new symmetric key successfully', async () => {
+      await expect(
+        instanceUnderTest.generateRandomSymmetricKey(),
+      ).resolves.not.toThrow()
+      verify(mockKeyManager.generateSymmetricKey(anything())).once()
+      const [actualSymmKeyId] = capture(
+        mockKeyManager.generateSymmetricKey,
+      ).first()
+      expect(actualSymmKeyId).toMatch(
+        /^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
+      )
+      verify(mockKeyManager.getSymmetricKey(actualSymmKeyId)).once()
+      const [actualSymmKeyInput] = capture(
+        mockKeyManager.getSymmetricKey,
+      ).first()
+      expect(actualSymmKeyInput).toStrictEqual(actualSymmKeyId)
+      verify(mockKeyManager.deleteSymmetricKey(actualSymmKeyId)).once()
+      const [actualDeleteSymmKeyInout] = capture(
+        mockKeyManager.getSymmetricKey,
+      ).first()
+      expect(actualDeleteSymmKeyInout).toStrictEqual(actualSymmKeyId)
+    })
+    it('should throw an internal error when the symmetric key cannot be found', async () => {
+      when(mockKeyManager.getSymmetricKey(anything())).thenResolve(undefined)
+      await expect(
+        instanceUnderTest.generateRandomSymmetricKey(),
+      ).rejects.toThrow(new InternalError('Failed to generate symmetric key'))
+      verify(mockKeyManager.generateSymmetricKey(anything())).once()
+      const [actualSymmKeyId] = capture(
+        mockKeyManager.generateSymmetricKey,
+      ).first()
+      expect(actualSymmKeyId).toMatch(
+        /^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
+      )
+      verify(mockKeyManager.getSymmetricKey(actualSymmKeyId)).once()
+      const [actualSymmKeyInput] = capture(
+        mockKeyManager.getSymmetricKey,
+      ).first()
+      expect(actualSymmKeyInput).toStrictEqual(actualSymmKeyId)
     })
   })
 
@@ -183,6 +241,7 @@ describe('DeviceKeyWorker Test Suite', () => {
       expect(actualPasswordKeyName).toStrictEqual(SYMMETRIC_KEY_ID)
     })
   })
+
   describe('removeKey', () => {
     it('removes symmetric key correctly', async () => {
       await instanceUnderTest.removeKey('dummy_id', KeyType.SymmetricKey)
@@ -195,158 +254,7 @@ describe('DeviceKeyWorker Test Suite', () => {
       verify(mockKeyManager.deleteSymmetricKey(anything())).never()
     })
   })
-  describe('unsealString', () => {
-    describe('keyType == KeyPair', () => {
-      it('throws KeyNotFoundError if currentPublicKey returns undefined', async () => {
-        const keyId = v4()
-        when(mockKeyManager.getPrivateKey(anything())).thenResolve(undefined)
-        await expect(
-          instanceUnderTest.unsealString({
-            encrypted: '',
-            keyType: KeyType.KeyPair,
-            keyId,
-          }),
-        ).rejects.toStrictEqual(
-          new KeyNotFoundError(`Key pair id not found: ${keyId}`),
-        )
-      })
 
-      it('throws DecodeError when decrypt fails', async () => {
-        when(
-          mockKeyManager.decryptWithPrivateKey(anything(), anything()),
-        ).thenReject(new Error('error'))
-        await expect(
-          instanceUnderTest.unsealString({
-            encrypted: '',
-            keyType: KeyType.KeyPair,
-            keyId: '',
-          }),
-        ).rejects.toStrictEqual(
-          new DecodeError('Could not decrypt AES key from sealed string'),
-        )
-      })
-      it('throws DecodeError when decrypt private key returns undefined', async () => {
-        when(
-          mockKeyManager.decryptWithPrivateKey(anything(), anything()),
-        ).thenResolve(undefined)
-        await expect(
-          instanceUnderTest.unsealString({
-            encrypted: '',
-            keyType: KeyType.KeyPair,
-            keyId: '',
-          }),
-        ).rejects.toStrictEqual(
-          new DecodeError('Could not extract AES key from sealed string'),
-        )
-      })
-      it('throws DecodeError when decrypt symmetric key fails', async () => {
-        when(
-          mockKeyManager.decryptWithSymmetricKey(
-            anything(),
-            anything(),
-            anything(),
-          ),
-        ).thenReject(new Error('error'))
-        await expect(
-          instanceUnderTest.unsealString({
-            encrypted: '',
-            keyType: KeyType.KeyPair,
-            keyId: '',
-          }),
-        ).rejects.toStrictEqual(
-          new DecodeError('Could not extract AES key from sealed string'),
-        )
-      })
-      it('calls through everything expected', async () => {
-        when(
-          mockKeyManager.decryptWithPrivateKey(anything(), anything()),
-        ).thenResolve(stringToArrayBuffer('cipherKey'))
-        await expect(
-          instanceUnderTest.unsealString({
-            encrypted: btoa(`${new Array(256 + 1).join('0')}aabbccddeeff`),
-            keyType: KeyType.KeyPair,
-            keyId: 'keyId',
-          }),
-        ).resolves.toStrictEqual('decryptedSym')
-        verify(
-          mockKeyManager.decryptWithPrivateKey(anything(), anything()),
-        ).once()
-        const [inputKeyId, encrypted] = capture(
-          mockKeyManager.decryptWithPrivateKey,
-        ).first()
-        expect(inputKeyId).toStrictEqual('keyId')
-        const expectedBuffer = Uint8Array.from(
-          `${new Array(256 + 1).join('0')}`,
-          (c) => c.charCodeAt(0),
-        )
-        // This is expected due to the way buffers need to be converted from Buffer -> ArrayBuffer
-        expect(encrypted).toStrictEqual(expectedBuffer)
-        verify(
-          mockKeyManager.decryptWithSymmetricKey(
-            anything(),
-            anything(),
-            anything(),
-          ),
-        ).once()
-        const [cipherKey, encryptedData] = capture(
-          mockKeyManager.decryptWithSymmetricKey,
-        ).first()
-        expect(cipherKey).toStrictEqual(stringToArrayBuffer('cipherKey'))
-        const expectedEncryptedData = Uint8Array.from('aabbccddeeff', (c) =>
-          c.charCodeAt(0),
-        )
-        expect(encryptedData).toStrictEqual(expectedEncryptedData)
-      })
-    })
-    describe('keyType == SymmetricKey', () => {
-      beforeEach(() => {
-        when(
-          mockKeyManager.decryptWithSymmetricKeyName(
-            anything(),
-            anything(),
-            anything(),
-          ),
-        ).thenResolve(stringToArrayBuffer('aa'))
-      })
-      it('calls keyManager.decryptWithSymmetricKeyName correctly', async () => {
-        await instanceUnderTest.unsealString({
-          keyId: 'keyId',
-          encrypted: btoa('encrypted'),
-          keyType: KeyType.SymmetricKey,
-        })
-        verify(
-          mockKeyManager.decryptWithSymmetricKeyName(
-            anything(),
-            anything(),
-            anything(),
-          ),
-        ).once()
-        const [actualKeyId, actualEncryptedB64] = capture(
-          mockKeyManager.decryptWithSymmetricKeyName,
-        ).first()
-        expect(actualKeyId).toStrictEqual('keyId')
-        expect(arrayBufferToString(actualEncryptedB64)).toStrictEqual(
-          'encrypted',
-        )
-      })
-      it('throws an DecodeError if keyManager.decryptWithSymmetricKeyName throws an error', async () => {
-        when(
-          mockKeyManager.decryptWithSymmetricKeyName(
-            anything(),
-            anything(),
-            anything(),
-          ),
-        ).thenReject(new Error('Failed'))
-        await expect(
-          instanceUnderTest.unsealString({
-            keyId: 'keyId',
-            encrypted: btoa('encrypted'),
-            keyType: KeyType.SymmetricKey,
-          }),
-        ).rejects.toThrow(new DecodeError('Could not unseal sealed payload'))
-      })
-    })
-  })
   describe('sealString', () => {
     beforeEach(() => {
       when(mockKeyManager.getSymmetricKey(anything())).thenResolve(
@@ -393,7 +301,7 @@ describe('DeviceKeyWorker Test Suite', () => {
             keyType: KeyType.KeyPair,
             payload: stringToArrayBuffer(''),
           }),
-        ).rejects.toThrow(new InternalError('Failed to create cipher key'))
+        ).rejects.toThrow(new InternalError('Failed to generate symmetric key'))
       })
       it('encrypts the payload with the generated cipher key', async () => {
         const cipherKey = stringToArrayBuffer('cipherKey')
@@ -558,6 +466,220 @@ describe('DeviceKeyWorker Test Suite', () => {
     })
   })
 
+  describe('encryptWithSymmetricKey', () => {
+    it('encrypts payload with symmetric key successfully', async () => {
+      const key = stringToArrayBuffer(v4())
+      const payload = stringToArrayBuffer(v4())
+      const iv = stringToArrayBuffer(v4())
+      const encryptedData = stringToArrayBuffer(v4())
+      when(
+        mockKeyManager.encryptWithSymmetricKey(
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(encryptedData)
+      await expect(
+        instanceUnderTest.encryptWithSymmetricKey({
+          key,
+          data: payload,
+          iv: iv,
+        }),
+      ).resolves.toEqual(encryptedData)
+      verify(
+        mockKeyManager.encryptWithSymmetricKey(anything(), anything(), {
+          algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding,
+          iv: anything(),
+        }),
+      )
+      const [symmetricKeyArg, payloadArg, optionsArg] = capture(
+        mockKeyManager.encryptWithSymmetricKey,
+      ).first()
+      expect(symmetricKeyArg).toEqual(key)
+      expect(payloadArg).toEqual(payload)
+      expect(optionsArg?.iv!).toEqual(iv)
+    })
+  })
+
+  describe('encryptWithPublicKey', () => {
+    it('encrypts payload with public key successfully', async () => {
+      const key = stringToArrayBuffer(v4())
+      const payload = stringToArrayBuffer(v4())
+      const encryptedData = stringToArrayBuffer(v4())
+      when(
+        mockKeyManager.encryptWithPublicKey(anything(), anything(), anything()),
+      ).thenResolve(encryptedData)
+      expect(
+        await instanceUnderTest.encryptWithPublicKey({
+          key,
+          data: payload,
+          algorithm: EncryptionAlgorithm.RsaOaepSha1,
+        }),
+      ).toEqual(encryptedData)
+      verify(
+        mockKeyManager.encryptWithPublicKey(anything(), anything(), anything()),
+      ).once()
+      const [keyArg, payloadArg] = capture(
+        mockKeyManager.encryptWithPublicKey,
+      ).first()
+      expect(keyArg).toEqual(key)
+      expect(payloadArg).toEqual(payload)
+    })
+  })
+
+  describe('unsealString', () => {
+    describe('keyType == KeyPair', () => {
+      it('throws KeyNotFoundError if currentPublicKey returns undefined', async () => {
+        const keyId = v4()
+        when(mockKeyManager.getPrivateKey(anything())).thenResolve(undefined)
+        await expect(
+          instanceUnderTest.unsealString({
+            encrypted: '',
+            keyType: KeyType.KeyPair,
+            keyId,
+          }),
+        ).rejects.toStrictEqual(
+          new KeyNotFoundError(`Key pair id not found: ${keyId}`),
+        )
+      })
+
+      it('throws DecodeError when decrypt fails', async () => {
+        when(
+          mockKeyManager.decryptWithPrivateKey(anything(), anything()),
+        ).thenReject(new Error('error'))
+        await expect(
+          instanceUnderTest.unsealString({
+            encrypted: '',
+            keyType: KeyType.KeyPair,
+            keyId: '',
+          }),
+        ).rejects.toStrictEqual(
+          new DecodeError('Could not decrypt AES key from sealed string'),
+        )
+      })
+      it('throws DecodeError when decrypt private key returns undefined', async () => {
+        when(
+          mockKeyManager.decryptWithPrivateKey(anything(), anything()),
+        ).thenResolve(undefined)
+        await expect(
+          instanceUnderTest.unsealString({
+            encrypted: '',
+            keyType: KeyType.KeyPair,
+            keyId: '',
+          }),
+        ).rejects.toStrictEqual(
+          new DecodeError('Could not extract AES key from sealed string'),
+        )
+      })
+      it('throws DecodeError when decrypt symmetric key fails', async () => {
+        when(
+          mockKeyManager.decryptWithSymmetricKey(
+            anything(),
+            anything(),
+            anything(),
+          ),
+        ).thenReject(new Error('error'))
+        await expect(
+          instanceUnderTest.unsealString({
+            encrypted: '',
+            keyType: KeyType.KeyPair,
+            keyId: '',
+          }),
+        ).rejects.toStrictEqual(
+          new DecodeError('Could not extract AES key from sealed string'),
+        )
+      })
+      it('calls through everything expected', async () => {
+        when(
+          mockKeyManager.decryptWithPrivateKey(anything(), anything()),
+        ).thenResolve(stringToArrayBuffer('cipherKey'))
+        await expect(
+          instanceUnderTest.unsealString({
+            encrypted: btoa(`${new Array(256 + 1).join('0')}aabbccddeeff`),
+            keyType: KeyType.KeyPair,
+            keyId: 'keyId',
+          }),
+        ).resolves.toStrictEqual('decryptedSym')
+        verify(
+          mockKeyManager.decryptWithPrivateKey(anything(), anything()),
+        ).once()
+        const [inputKeyId, encrypted] = capture(
+          mockKeyManager.decryptWithPrivateKey,
+        ).first()
+        expect(inputKeyId).toStrictEqual('keyId')
+        const expectedBuffer = Uint8Array.from(
+          `${new Array(256 + 1).join('0')}`,
+          (c) => c.charCodeAt(0),
+        )
+        // This is expected due to the way buffers need to be converted from Buffer -> ArrayBuffer
+        expect(encrypted).toStrictEqual(expectedBuffer)
+        verify(
+          mockKeyManager.decryptWithSymmetricKey(
+            anything(),
+            anything(),
+            anything(),
+          ),
+        ).once()
+        const [cipherKey, encryptedData] = capture(
+          mockKeyManager.decryptWithSymmetricKey,
+        ).first()
+        expect(cipherKey).toStrictEqual(stringToArrayBuffer('cipherKey'))
+        const expectedEncryptedData = Uint8Array.from('aabbccddeeff', (c) =>
+          c.charCodeAt(0),
+        )
+        expect(encryptedData).toStrictEqual(expectedEncryptedData)
+      })
+    })
+    describe('keyType == SymmetricKey', () => {
+      beforeEach(() => {
+        when(
+          mockKeyManager.decryptWithSymmetricKeyName(
+            anything(),
+            anything(),
+            anything(),
+          ),
+        ).thenResolve(stringToArrayBuffer('aa'))
+      })
+      it('calls keyManager.decryptWithSymmetricKeyName correctly', async () => {
+        await instanceUnderTest.unsealString({
+          keyId: 'keyId',
+          encrypted: btoa('encrypted'),
+          keyType: KeyType.SymmetricKey,
+        })
+        verify(
+          mockKeyManager.decryptWithSymmetricKeyName(
+            anything(),
+            anything(),
+            anything(),
+          ),
+        ).once()
+        const [actualKeyId, actualEncryptedB64] = capture(
+          mockKeyManager.decryptWithSymmetricKeyName,
+        ).first()
+        expect(actualKeyId).toStrictEqual('keyId')
+        expect(arrayBufferToString(actualEncryptedB64)).toStrictEqual(
+          'encrypted',
+        )
+      })
+      it('throws an DecodeError if keyManager.decryptWithSymmetricKeyName throws an error', async () => {
+        when(
+          mockKeyManager.decryptWithSymmetricKeyName(
+            anything(),
+            anything(),
+            anything(),
+          ),
+        ).thenReject(new Error('Failed'))
+        await expect(
+          instanceUnderTest.unsealString({
+            keyId: 'keyId',
+            encrypted: btoa('encrypted'),
+            keyType: KeyType.SymmetricKey,
+          }),
+        ).rejects.toThrow(new DecodeError('Could not unseal sealed payload'))
+      })
+    })
+  })
+
   describe('unsealWithKeyPairId', () => {
     it('decrypts the cipher key then uses that to decrypt the data', async () => {
       const keyPairId = v4()
@@ -606,20 +728,6 @@ describe('DeviceKeyWorker Test Suite', () => {
       )
 
       expect(arrayBufferToString(result)).toEqual('decryptedSym')
-    })
-  })
-
-  describe('generateRandomData', () => {
-    it('calls the keyManager function properly and returns the result', async () => {
-      const size = 256
-      const result = await instanceUnderTest.generateRandomData(size)
-
-      verify(mockKeyManager.generateRandomData(anything())).once()
-      const [actualSize] = capture(mockKeyManager.generateRandomData).first()
-      expect(actualSize).toEqual(size)
-      expect(new TextDecoder().decode(result)).toMatch(
-        /^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
-      )
     })
   })
 })

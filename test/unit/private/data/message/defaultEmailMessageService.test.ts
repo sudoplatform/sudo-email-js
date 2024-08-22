@@ -244,7 +244,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       'encodeToInternetMessageBuffer',
     )
     let message: EmailMessageDetails
-    let recipientsAndSenderPublicInfo: EmailAddressPublicInfoEntity[]
+    let emailAddressesPublicInfo: EmailAddressPublicInfoEntity[]
     let senderEmailAddressId: string
     let resultId: string
     let securePackage: SecurePackage
@@ -287,7 +287,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       message = {
         from: [{ emailAddress: `from-${v4()}@example.com` }],
       }
-      recipientsAndSenderPublicInfo = [
+      emailAddressesPublicInfo = [
         {
           emailAddress: `to-${v4()}`,
           keyId: `keyID-${v4()}`,
@@ -301,7 +301,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       await instanceUnderTest.sendEncryptedMessage({
         message: message,
         senderEmailAddressId: senderEmailAddressId,
-        recipientsAndSenderPublicInfo,
+        emailAddressesPublicInfo,
         emailMessageMaxOutboundMessageSize,
       })
 
@@ -317,7 +317,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       await instanceUnderTest.sendEncryptedMessage({
         message: message,
         senderEmailAddressId: senderEmailAddressId,
-        recipientsAndSenderPublicInfo,
+        emailAddressesPublicInfo,
         emailMessageMaxOutboundMessageSize,
       })
 
@@ -327,17 +327,17 @@ describe('DefaultEmailMessageService Test Suite', () => {
       ).first()
       expect(rfc822DataArg).toEqual(encodedOriginalMessage)
       expect(recipientsAndSenderPublicInfoArg).toStrictEqual(
-        recipientsAndSenderPublicInfo.map((v) => v.keyId),
+        emailAddressesPublicInfo,
       )
     })
 
     it('filters out duplicate public keys', async () => {
       const recipientsAndSenderPublicInfoWithDupKey: EmailAddressPublicInfoEntity[] =
-        [...recipientsAndSenderPublicInfo, recipientsAndSenderPublicInfo[0]]
+        [...emailAddressesPublicInfo, emailAddressesPublicInfo[0]]
       await instanceUnderTest.sendEncryptedMessage({
         message: message,
         senderEmailAddressId: senderEmailAddressId,
-        recipientsAndSenderPublicInfo: recipientsAndSenderPublicInfoWithDupKey,
+        emailAddressesPublicInfo: recipientsAndSenderPublicInfoWithDupKey,
         emailMessageMaxOutboundMessageSize,
       })
 
@@ -347,7 +347,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       ).first()
       expect(rfc822DataArg).toEqual(encodedOriginalMessage)
       expect(recipientsAndSenderPublicInfoArg).toStrictEqual(
-        recipientsAndSenderPublicInfo.map((v) => v.keyId),
+        emailAddressesPublicInfo,
       )
     })
 
@@ -355,7 +355,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       await instanceUnderTest.sendEncryptedMessage({
         message: message,
         senderEmailAddressId: senderEmailAddressId,
-        recipientsAndSenderPublicInfo,
+        emailAddressesPublicInfo,
         emailMessageMaxOutboundMessageSize,
       })
 
@@ -372,7 +372,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       await instanceUnderTest.sendEncryptedMessage({
         message: message,
         senderEmailAddressId: senderEmailAddressId,
-        recipientsAndSenderPublicInfo,
+        emailAddressesPublicInfo,
         emailMessageMaxOutboundMessageSize,
       })
 
@@ -392,7 +392,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       await instanceUnderTest.sendEncryptedMessage({
         message: message,
         senderEmailAddressId: senderEmailAddressId,
-        recipientsAndSenderPublicInfo,
+        emailAddressesPublicInfo,
         emailMessageMaxOutboundMessageSize,
       })
 
@@ -427,7 +427,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         instanceUnderTest.sendEncryptedMessage({
           message: message,
           senderEmailAddressId: senderEmailAddressId,
-          recipientsAndSenderPublicInfo,
+          emailAddressesPublicInfo,
           emailMessageMaxOutboundMessageSize,
         }),
       ).resolves.toStrictEqual({ id: resultId, createdAt: timestamp })
@@ -444,7 +444,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         instanceUnderTest.sendEncryptedMessage({
           message,
           senderEmailAddressId: senderEmailAddressId,
-          recipientsAndSenderPublicInfo,
+          emailAddressesPublicInfo,
           emailMessageMaxOutboundMessageSize: limit,
         }),
       ).rejects.toThrow(MessageSizeLimitExceededError)

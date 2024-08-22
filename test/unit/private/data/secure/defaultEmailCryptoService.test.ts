@@ -26,17 +26,19 @@ import {
   arrayBufferToString,
   stringToArrayBuffer,
 } from '../../../../../src/private/util/buffer'
+import { EmailAddressPublicInfoEntity } from '../../../../../src/private/domain/entities/account/emailAddressPublicInfoEntity'
 
 describe('DefaultEmailCryptoService Test Suite', () => {
   const mockDeviceKeyWorker = mock<DeviceKeyWorker>()
 
   let instanceUnderTest: EmailCryptoService
 
+  let mockSymmetricKey: ArrayBuffer
   let mockEncryptedData: ArrayBuffer
   let mockIv: ArrayBuffer
   let mockSealedSymmetricKey: ArrayBuffer
   let mockData: ArrayBuffer
-  let mockKeyIds: string[]
+  let mockEmailAddressPublicInfo: EmailAddressPublicInfoEntity[]
 
   beforeEach(() => {
     reset(mockDeviceKeyWorker)
@@ -45,20 +47,35 @@ describe('DefaultEmailCryptoService Test Suite', () => {
       instance(mockDeviceKeyWorker),
     )
 
-    mockEncryptedData = stringToArrayBuffer(v4())
+    mockSymmetricKey = stringToArrayBuffer(v4())
     mockIv = stringToArrayBuffer(v4())
+    mockEncryptedData = stringToArrayBuffer(v4())
     mockSealedSymmetricKey = stringToArrayBuffer(v4())
     mockData = stringToArrayBuffer(`mockData-${v4()}`)
-    mockKeyIds = [`keyId-${v4()}`, `keyId-${v4()}`]
+    mockEmailAddressPublicInfo = [
+      {
+        emailAddress: 'foobar@example.com',
+        keyId: `keyId-${v4()}`,
+        publicKey: 'mockPublicKey1',
+      },
+      {
+        emailAddress: 'foobar2@example.com',
+        keyId: `keyId-${v4()}`,
+        publicKey: 'mockPublicKey2',
+      },
+    ]
 
+    when(mockDeviceKeyWorker.generateRandomSymmetricKey()).thenResolve(
+      mockSymmetricKey,
+    )
     when(mockDeviceKeyWorker.generateRandomData(anything())).thenResolve(mockIv)
-    when(mockDeviceKeyWorker.sealWithKeyPairIds(anything())).thenResolve({
-      sealedPayload: mockEncryptedData,
-      sealedCipherKeys: [
-        { keyId: mockKeyIds[0], sealedValue: mockSealedSymmetricKey },
-        { keyId: mockKeyIds[1], sealedValue: mockSealedSymmetricKey },
-      ],
-    })
+    when(mockDeviceKeyWorker.encryptWithSymmetricKey(anything())).thenResolve(
+      mockEncryptedData,
+    )
+    when(mockDeviceKeyWorker.encryptWithPublicKey(anything())).thenResolve(
+      mockSealedSymmetricKey,
+    )
+
     when(mockDeviceKeyWorker.unsealWithKeyPairId(anything())).thenResolve(
       mockData,
     )
@@ -71,36 +88,48 @@ describe('DefaultEmailCryptoService Test Suite', () => {
     it('throws if data is empty', async () => {
       const data = new ArrayBuffer(0)
 
-      await expect(instanceUnderTest.encrypt(data, mockKeyIds)).rejects.toThrow(
-        InvalidArgumentError,
-      )
+      await expect(
+        instanceUnderTest.encrypt(data, mockEmailAddressPublicInfo),
+      ).rejects.toThrow(InvalidArgumentError)
     })
 
-    it('throws if no addresses passed', async () => {
+    it('throws if no email address public info passed', async () => {
       await expect(instanceUnderTest.encrypt(mockData, [])).rejects.toThrow(
         InvalidArgumentError,
       )
     })
 
     it('generates a random iv and seals the data', async () => {
-      await instanceUnderTest.encrypt(mockData, mockKeyIds)
+      await instanceUnderTest.encrypt(mockData, mockEmailAddressPublicInfo)
 
+      verify(mockDeviceKeyWorker.generateRandomSymmetricKey()).once()
       verify(mockDeviceKeyWorker.generateRandomData(anything())).once()
-      verify(mockDeviceKeyWorker.sealWithKeyPairIds(anything())).once()
       const [randomDataSize] = capture(
         mockDeviceKeyWorker.generateRandomData,
       ).first()
       expect(randomDataSize).toEqual(16)
-      const [inputArgs] = capture(
-        mockDeviceKeyWorker.sealWithKeyPairIds,
+      verify(mockDeviceKeyWorker.encryptWithSymmetricKey(anything())).once()
+      const [symmKeyArg] = capture(
+        mockDeviceKeyWorker.encryptWithSymmetricKey,
       ).first()
-      expect(inputArgs.iv).toEqual(mockIv)
-      expect(inputArgs.keyIds).toEqual(mockKeyIds)
-      expect(inputArgs.payload).toEqual(mockData)
+      expect(symmKeyArg.key).toEqual(mockSymmetricKey)
+      expect(symmKeyArg.data).toEqual(mockData)
+      expect(symmKeyArg.iv).toEqual(mockIv)
+      const [pubKeyArg] = capture(
+        mockDeviceKeyWorker.encryptWithPublicKey,
+      ).first()
+      expect(pubKeyArg.key).toEqual(
+        Base64.decode(mockEmailAddressPublicInfo[0].publicKey),
+      )
+      expect(pubKeyArg.data).toEqual(mockData)
+      expect(pubKeyArg.algorithm).toEqual(EncryptionAlgorithm.RsaOaepSha1)
     })
 
     it('returns a SecurePackage containing the sealed body and sealed keys as attachments', async () => {
-      const result = await instanceUnderTest.encrypt(mockData, mockKeyIds)
+      const result = await instanceUnderTest.encrypt(
+        mockData,
+        mockEmailAddressPublicInfo,
+      )
       const resultArray = result.toArray()
       const mockSecureData: SecureData = {
         encryptedData: mockEncryptedData,
@@ -108,11 +137,7 @@ describe('DefaultEmailCryptoService Test Suite', () => {
       }
 
       // Number of recipients plus 1 for the body
-      expect(resultArray).toHaveLength(mockKeyIds.length + 1)
-      console.debug({ body: resultArray[2] })
-      console.debug({
-        mockSecureData: SecureDataTransformer.toJson(mockSecureData),
-      })
+      expect(resultArray).toHaveLength(mockEmailAddressPublicInfo.length + 1)
       expect(resultArray).toContainEqual<EmailAttachment>({
         contentTransferEncoding: 'binary',
         data: SecureDataTransformer.toJson(mockSecureData),
@@ -121,11 +146,11 @@ describe('DefaultEmailCryptoService Test Suite', () => {
         mimeType: SecureEmailAttachmentType.BODY.mimeType,
         contentId: SecureEmailAttachmentType.BODY.contentId,
       })
-      mockKeyIds.forEach((keyId, index) => {
+      mockEmailAddressPublicInfo.forEach((publicInfo, index) => {
         expect(resultArray).toContainEqual<EmailAttachment>({
           contentTransferEncoding: 'binary',
           data: SealedKeyTransformer.toJson({
-            publicKeyId: keyId,
+            publicKeyId: publicInfo.keyId,
             encryptedKey: Base64.encode(mockSealedSymmetricKey),
             algorithm: EncryptionAlgorithm.RsaOaepSha1,
           }),
@@ -158,10 +183,10 @@ describe('DefaultEmailCryptoService Test Suite', () => {
         contentId: SecureEmailAttachmentType.BODY.contentId,
       }
       mockKeyAttachments = new Set(
-        mockKeyIds.map((keyId, index) => ({
+        mockEmailAddressPublicInfo.map((publicInfo, index) => ({
           contentTransferEncoding: 'binary',
           data: SealedKeyTransformer.toJson({
-            publicKeyId: keyId,
+            publicKeyId: publicInfo.keyId,
             encryptedKey: Base64.encode(mockSealedSymmetricKey),
             algorithm: EncryptionAlgorithm.RsaOaepSha1,
           }),
@@ -211,7 +236,7 @@ describe('DefaultEmailCryptoService Test Suite', () => {
       expect(arrayBufferToString(inputArgs.iv!)).toEqual(
         arrayBufferToString(mockIv),
       )
-      expect(inputArgs.keyPairId).toEqual(mockKeyIds[0])
+      expect(inputArgs.keyPairId).toEqual(mockEmailAddressPublicInfo[0].keyId)
       expect(arrayBufferToString(inputArgs.sealedCipherKey)).toEqual(
         arrayBufferToString(mockSealedSymmetricKey),
       )

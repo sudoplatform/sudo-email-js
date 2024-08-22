@@ -12,6 +12,7 @@ import {
   Logger,
 } from '@sudoplatform/sudo-common'
 import { EmailAttachment, InvalidArgumentError } from '../../../public'
+import { EmailAddressPublicInfoEntity } from '../../domain/entities/account/emailAddressPublicInfoEntity'
 import { EmailCryptoService } from '../../domain/entities/secure/emailCryptoService'
 import { SealedKey } from '../../domain/entities/secure/sealedKey'
 import { SecureData } from '../../domain/entities/secure/secureData'
@@ -34,47 +35,75 @@ export class DefaultEmailCryptoService implements EmailCryptoService {
     this.log = new DefaultLogger(this.constructor.name)
   }
 
-  async encrypt(data: ArrayBuffer, keyIds: string[]): Promise<SecurePackage> {
-    if (data.byteLength === 0 || keyIds.length === 0) {
+  async encrypt(
+    data: ArrayBuffer,
+    emailAddressPublicInfo: EmailAddressPublicInfoEntity[],
+  ): Promise<SecurePackage> {
+    if (data.byteLength === 0 || emailAddressPublicInfo.length === 0) {
       throw new InvalidArgumentError()
     }
 
     try {
+      // Create a symmetric key that will be used to encrypt the input data
+      const symmetricKey =
+        await this.deviceKeyWorker.generateRandomSymmetricKey()
+
+      // Encrypt the input data using the symmetric key with an AES/CBC/PKCS7Padding cipher
       const iv = await this.deviceKeyWorker.generateRandomData(IV_BYTES_SIZE)
-      const sealingResults = await this.deviceKeyWorker.sealWithKeyPairIds({
-        keyIds,
-        payload: data,
-        iv,
-      })
+      const encryptedBodyData =
+        await this.deviceKeyWorker.encryptWithSymmetricKey({
+          key: symmetricKey,
+          data,
+          iv,
+        })
 
       const secureEmailData: SecureData = {
-        encryptedData: sealingResults.sealedPayload,
+        encryptedData: encryptedBodyData,
         initVectorKeyID: iv,
       }
       const serializedEmailData = stringToArrayBuffer(
         SecureDataTransformer.toJson(secureEmailData),
       )
+
+      // Build an email attachment of the secure email body data
       const secureBodyAttachment = this.buildEmailAttachment(
         serializedEmailData,
         SecureEmailAttachmentType.BODY,
       )
 
-      const secureKeyAttachments = sealingResults.sealedCipherKeys.map(
-        (sealedResult, index) => {
+      // Iterate through each public key for each recipient and encrypt the symmetric key with the public key
+      const distinctPublicInfo = emailAddressPublicInfo.filter(
+        (value, index, self) =>
+          index === self.findIndex((t) => t.keyId === value.keyId),
+      )
+      const secureKeyAttachments = await Promise.all(
+        distinctPublicInfo.map(async (publicInfo, index) => {
+          // Seal the symmetric key using the publicKey and RSA_ECB_OAEPSHA1 algorithm
+          const encryptedSymmetricKey =
+            await this.deviceKeyWorker.encryptWithPublicKey({
+              key: Base64.decode(publicInfo.publicKey),
+              data: symmetricKey,
+              algorithm: EncryptionAlgorithm.RsaOaepSha1,
+            })
           const sealedKey: SealedKey = {
-            publicKeyId: sealedResult.keyId,
-            encryptedKey: Base64.encode(sealedResult.sealedValue),
+            publicKeyId: publicInfo.keyId,
+            encryptedKey: Base64.encode(encryptedSymmetricKey),
             algorithm: EncryptionAlgorithm.RsaOaepSha1,
           }
+          const sealedKeyData = stringToArrayBuffer(
+            SealedKeyTransformer.toJson(sealedKey),
+          )
 
+          // Build an email attachment of the sealed keys
           return this.buildEmailAttachment(
-            stringToArrayBuffer(SealedKeyTransformer.toJson(sealedKey)),
+            sealedKeyData,
             SecureEmailAttachmentType.KEY_EXCHANGE,
             index + 1,
           )
-        },
+        }),
       )
 
+      // Return a secure package with the secure key attachments and the secure body attachment
       return new SecurePackage(
         new Set(secureKeyAttachments),
         secureBodyAttachment,
