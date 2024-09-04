@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EmailDomainEntity } from '../../../domain/entities/account/emailDomainEntity'
+import { EmailDomainEntity } from '../../../domain/entities/emailDomain/emailDomainEntity'
 
 export class EmailDomainEntityTransformer {
   transformGraphQL(domain: string): EmailDomainEntity {

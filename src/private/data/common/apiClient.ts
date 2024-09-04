@@ -116,6 +116,9 @@ import {
   UpdateEmailMessagesInput,
   UpdateEmailMessagesMutation,
   UpdateEmailMessagesV2Result,
+  ConfiguredDomains,
+  GetConfiguredEmailDomainsQuery,
+  GetConfiguredEmailDomainsDocument,
 } from '../../../gen/graphqlTypes'
 import { ErrorTransformer } from './transformer/errorTransformer'
 
@@ -227,6 +230,17 @@ export class ApiClient {
       calleeName: this.getSupportedEmailDomains.name,
     })
     return data.getEmailDomains
+  }
+
+  public async getConfiguredEmailDomains(
+    fetchPolicy: FetchPolicy = 'network-only',
+  ): Promise<ConfiguredDomains> {
+    const data = await this.performQuery<GetConfiguredEmailDomainsQuery>({
+      query: GetConfiguredEmailDomainsDocument,
+      fetchPolicy,
+      calleeName: this.getConfiguredEmailDomains.name,
+    })
+    return data.getConfiguredEmailDomains
   }
 
   public async checkEmailAddressAvailability(

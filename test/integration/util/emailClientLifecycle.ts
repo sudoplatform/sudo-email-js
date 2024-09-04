@@ -138,7 +138,7 @@ export const setupEmailClient = async (
         `email-JS-SDK-${v4()}`,
       )
       .catch((err) => {
-        console.log('Error regisering user', { err })
+        console.log('Error registering user', { err })
         throw err
       })
     log.debug('username', { username })
@@ -172,6 +172,9 @@ export const setupEmailClient = async (
         console.log('Error pushing Sudo symmetric key', { err })
         throw err
       })
+
+    // Ensure cache is hydrated with listSudos result
+    await profilesClient.listSudos(FetchOption.RemoteOnly)
 
     const { sudo, ownershipProofToken } = await createSudo(
       'emailIntegrationTest',

@@ -7,6 +7,7 @@
 import {
   AvailableAddresses,
   BlockEmailAddressesBulkUpdateResult,
+  ConfiguredDomains,
   EmailAddress,
   EmailAddressConnection,
   EmailAddressPublicInfo,
@@ -126,6 +127,10 @@ export class GraphQLDataFactory {
 
   static readonly supportedEmailDomains: SupportedDomains = {
     domains: ['unittest.org'],
+  }
+
+  static readonly configuredEmailDomains: ConfiguredDomains = {
+    domains: ['unittest.org', 'foobar.com'],
   }
 
   static readonly emailFolderConnection: EmailFolderConnection = {

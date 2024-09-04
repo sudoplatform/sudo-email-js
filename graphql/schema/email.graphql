@@ -372,10 +372,16 @@ type SendEmailMessageResult {
   createdAtEpochMs: Float!
 }
 
+type ConfiguredDomains {
+  domains: [String!]!
+}
+
 type Query {
   getEmailConfig: EmailConfigurationData!
 
   getEmailDomains: SupportedDomains!
+
+  getConfiguredEmailDomains: ConfiguredDomains!
 
   checkEmailAddressAvailability(
     input: CheckEmailAddressAvailabilityInput!

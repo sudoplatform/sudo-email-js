@@ -25,6 +25,7 @@ import {
   InternetMessageFormatHeader,
 } from '../../../../../../src/public'
 import { EntityDataFactory } from '../../../../data-factory/entity'
+import { EmailDomainService } from '../../../../../../src/private/domain/entities/emailDomain/emailDomainService'
 
 describe('SendEmailMessageUseCase', () => {
   const emailMessageMaxOutboundMessageSize = 9999999
@@ -39,6 +40,7 @@ describe('SendEmailMessageUseCase', () => {
   const inlineAttachments: EmailAttachment[] = []
   const mockMessageService = mock<EmailMessageService>()
   const mockAccountService = mock<EmailAccountService>()
+  const mockEmailDomainService = mock<EmailDomainService>()
   const mockEmailConfigurationDataService =
     mock<EmailConfigurationDataService>()
 
@@ -49,11 +51,12 @@ describe('SendEmailMessageUseCase', () => {
     timestamp = new Date()
     reset(mockMessageService)
     reset(mockAccountService)
+    reset(mockEmailDomainService)
     reset(mockEmailConfigurationDataService)
 
-    when(mockAccountService.getSupportedEmailDomains(anything())).thenResolve([
-      EntityDataFactory.emailDomain,
-    ])
+    when(
+      mockEmailDomainService.getConfiguredEmailDomains(anything()),
+    ).thenResolve([EntityDataFactory.emailDomain])
     when(mockEmailConfigurationDataService.getConfigurationData()).thenResolve({
       sendEncryptedEmailEnabled: true,
       emailMessageMaxOutboundMessageSize,
@@ -61,6 +64,7 @@ describe('SendEmailMessageUseCase', () => {
     instanceUnderTest = new SendEmailMessageUseCase(
       instance(mockMessageService),
       instance(mockAccountService),
+      instance(mockEmailDomainService),
       instance(mockEmailConfigurationDataService),
     )
   })
@@ -75,7 +79,9 @@ describe('SendEmailMessageUseCase', () => {
         inlineAttachments,
       })
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
-      verify(mockAccountService.getSupportedEmailDomains(anything())).once()
+      verify(
+        mockEmailDomainService.getConfiguredEmailDomains(anything()),
+      ).once()
       verify(mockMessageService.sendMessage(anything())).once()
       const [actualSendInput] = capture(mockMessageService.sendMessage).first()
       expect(actualSendInput).toStrictEqual<typeof actualSendInput>({
@@ -111,7 +117,9 @@ describe('SendEmailMessageUseCase', () => {
         }),
       ).resolves.toStrictEqual({ id: idResult, createdAt: timestamp })
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
-      verify(mockAccountService.getSupportedEmailDomains(anything())).once()
+      verify(
+        mockEmailDomainService.getConfiguredEmailDomains(anything()),
+      ).once()
       verify(mockMessageService.sendMessage(anything())).once()
     })
 
@@ -143,7 +151,9 @@ describe('SendEmailMessageUseCase', () => {
         }),
       ).resolves.toStrictEqual({ id: idResult, createdAt: timestamp })
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
-      verify(mockAccountService.getSupportedEmailDomains(anything())).once()
+      verify(
+        mockEmailDomainService.getConfiguredEmailDomains(anything()),
+      ).once()
       verify(mockAccountService.lookupPublicInfo(anything())).once()
       verify(mockMessageService.sendMessage(anything())).once()
     })
@@ -168,7 +178,9 @@ describe('SendEmailMessageUseCase', () => {
         }),
       ).resolves.toStrictEqual({ id: idResult, createdAt: timestamp })
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
-      verify(mockAccountService.getSupportedEmailDomains(anything())).once()
+      verify(
+        mockEmailDomainService.getConfiguredEmailDomains(anything()),
+      ).once()
       verify(mockMessageService.sendMessage(anything())).once()
     })
   })
@@ -202,7 +214,9 @@ describe('SendEmailMessageUseCase', () => {
         inlineAttachments,
       })
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
-      verify(mockAccountService.getSupportedEmailDomains(anything())).once()
+      verify(
+        mockEmailDomainService.getConfiguredEmailDomains(anything()),
+      ).once()
       verify(mockAccountService.lookupPublicInfo(anything())).once()
       verify(mockMessageService.sendEncryptedMessage(anything())).once()
       const [actualSendInput] = capture(
@@ -256,7 +270,9 @@ describe('SendEmailMessageUseCase', () => {
         }),
       ).resolves.toStrictEqual({ id: idResult, createdAt: timestamp })
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
-      verify(mockAccountService.getSupportedEmailDomains(anything())).once()
+      verify(
+        mockEmailDomainService.getConfiguredEmailDomains(anything()),
+      ).once()
       verify(mockAccountService.lookupPublicInfo(anything())).once()
       verify(mockMessageService.sendEncryptedMessage(anything())).once()
     })
@@ -304,7 +320,9 @@ describe('SendEmailMessageUseCase', () => {
         }),
       ).rejects.toThrow(InNetworkAddressNotFoundError)
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
-      verify(mockAccountService.getSupportedEmailDomains(anything())).once()
+      verify(
+        mockEmailDomainService.getConfiguredEmailDomains(anything()),
+      ).once()
       verify(mockAccountService.lookupPublicInfo(anything())).once()
     })
   })

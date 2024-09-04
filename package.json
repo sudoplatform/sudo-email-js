@@ -88,7 +88,8 @@
     "@babel/traverse": "^7.24.1",
     "es5-ext": "^0.10.63",
     "braces": "^3.0.3",
-    "@whatwg-node/node-fetch": "0.3.6"
+    "@whatwg-node/node-fetch": "0.3.6",
+    "micromatch": "^4.0.8"
   },
   "devDependencies": {
     "@graphql-codegen/add": "^5.0.2",
@@ -132,9 +133,6 @@
     "uuid": "^9.0.0",
     "wait-for-expect": "^3.0.2",
     "websocket": "^1.0.34"
-  },
-  "auditSuppressions": {
-    "1098615": 1724974170
   },
   "outdatedSuppressions": {
     "major": {

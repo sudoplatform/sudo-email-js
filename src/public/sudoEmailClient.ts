@@ -28,7 +28,6 @@ import { DefaultEmailAccountService } from '../private/data/account/defaultEmail
 import { EmailAddressAPITransformer } from '../private/data/account/transformer/emailAddressAPITransformer'
 import { EmailAddressEntityTransformer } from '../private/data/account/transformer/emailAddressEntityTransformer'
 import { EmailAddressPublicInfoTransformer } from '../private/data/account/transformer/emailAddressPublicInfoTransformer'
-import { EmailDomainEntityTransformer } from '../private/data/account/transformer/emailDomainEntityTransformer'
 import { ListEmailAddressesAPITransformer } from '../private/data/account/transformer/listEmailAddressesAPITransformer'
 import { DefaultEmailAddressBlocklistService } from '../private/data/blocklist/defaultEmailAddressBlocklistService'
 import { ApiClient } from '../private/data/common/apiClient'
@@ -47,14 +46,14 @@ import { DefaultEmailMessageService } from '../private/data/message/defaultEmail
 import { EmailMessageAPITransformer } from '../private/data/message/transformer/emailMessageAPITransformer'
 import { ListEmailMessagesAPITransformer } from '../private/data/message/transformer/listEmailMessagesAPITransformer'
 import { UpdateEmailMessagesResultTransformer } from '../private/data/message/transformer/updateEmailMessagesResultTransformer'
-import { EmailDomainEntity } from '../private/domain/entities/account/emailDomainEntity'
+import { EmailDomainEntity } from '../private/domain/entities/emailDomain/emailDomainEntity'
 import { EmailAddressBlocklistService } from '../private/domain/entities/blocklist/emailAddressBlocklistService'
 import { UpdateEmailMessagesStatus } from '../private/domain/entities/message/updateEmailMessagesStatus'
 import { EmailCryptoService } from '../private/domain/entities/secure/emailCryptoService'
 import { CheckEmailAddressAvailabilityUseCase } from '../private/domain/use-cases/account/checkEmailAddressAvailabilityUseCase'
 import { DeprovisionEmailAccountUseCase } from '../private/domain/use-cases/account/deprovisionEmailAccountUseCase'
 import { GetEmailAccountUseCase } from '../private/domain/use-cases/account/getEmailAccountUseCase'
-import { GetSupportedEmailDomainsUseCase } from '../private/domain/use-cases/account/getSupportedEmailDomainsUseCase'
+import { GetSupportedEmailDomainsUseCase } from '../private/domain/use-cases/emailDomain/getSupportedEmailDomainsUseCase'
 import { ListEmailAccountsForSudoIdUseCase } from '../private/domain/use-cases/account/listEmailAccountsForSudoIdUseCase'
 import { ListEmailAccountsUseCase } from '../private/domain/use-cases/account/listEmailAccountsUseCase'
 import { LookupEmailAddressesPublicInfoUseCase } from '../private/domain/use-cases/account/lookupEmailAddressesPublicInfoUseCase'
@@ -114,6 +113,9 @@ import {
 } from './typings/listOperationResult'
 import { SortOrder } from './typings/sortOrder'
 import { DefaultEmailCryptoService } from '../private/data/secure/defaultEmailCryptoService'
+import { DefaultEmailDomainService } from '../private/data/emailDomain/defaultEmailDomainService'
+import { GetConfiguredEmailDomainsUseCase } from '../private/domain/use-cases/emailDomain/getConfiguredEmailDomainsUseCase'
+import { EmailDomainEntityTransformer } from '../private/data/emailDomain/transformer/emailDomainEntityTransformer'
 
 /**
  * Pagination interface designed to be extended for list interfaces.
@@ -529,7 +531,7 @@ export interface SudoEmailClient {
   ): Promise<string>
 
   /**
-   * Get a list of supported email domains.
+   * Get a list of all of the email domains on which emails may be provisioned.
    *
    * @param {CachePolicy} cachePolicy Determines how the supported email domains will be fetched. Default usage is
    *   `remoteOnly`.
@@ -539,6 +541,18 @@ export interface SudoEmailClient {
    * @throws ServiceError
    */
   getSupportedEmailDomains(cachePolicy?: CachePolicy): Promise<string[]>
+
+  /**
+   * Get a list of all of the email domains for which end-to-end encryption is supported.
+   *
+   * @param {CachePolicy} cachePolicy Determines how the configured email domains will be fetched. Default usage is
+   *   `remoteOnly`.
+   * @returns {string[]} A list of all configured domains.
+   *
+   * @throws NotRegisteredError
+   * @throws ServiceError
+   */
+  getConfiguredEmailDomains(cachePolicy?: CachePolicy): Promise<string[]>
 
   /**
    * Check if an email address is available to be provisioned within a domain.
@@ -968,6 +982,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   private readonly userClient: SudoUserClient
   private readonly configurationDataService: DefaultConfigurationDataService
   private readonly emailAccountService: DefaultEmailAccountService
+  private readonly emailDomainService: DefaultEmailDomainService
   private readonly emailFolderService: DefaultEmailFolderService
   private readonly emailMessageService: DefaultEmailMessageService
   private readonly emailAddressBlocklistService: EmailAddressBlocklistService
@@ -1018,6 +1033,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
           opts.sudoEmailClientConfig?.enforceSingletonPublicKey,
       },
     )
+    this.emailDomainService = new DefaultEmailDomainService(this.apiClient)
     this.emailFolderService = new DefaultEmailFolderService(
       this.apiClient,
       deviceKeyWorker,
@@ -1099,6 +1115,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const sendEmailMessageUseCase = new SendEmailMessageUseCase(
       this.emailMessageService,
       this.emailAccountService,
+      this.emailDomainService,
       this.configurationDataService,
     )
     return await sendEmailMessageUseCase.execute({
@@ -1165,8 +1182,16 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async getSupportedEmailDomains(
     cachePolicy: CachePolicy,
   ): Promise<string[]> {
-    const useCase = new GetSupportedEmailDomainsUseCase(
-      this.emailAccountService,
+    const useCase = new GetSupportedEmailDomainsUseCase(this.emailDomainService)
+    const result = await useCase.execute(cachePolicy)
+    return result.map((domain) => domain.domain)
+  }
+
+  public async getConfiguredEmailDomains(
+    cachePolicy: CachePolicy,
+  ): Promise<string[]> {
+    const useCase = new GetConfiguredEmailDomainsUseCase(
+      this.emailDomainService,
     )
     const result = await useCase.execute(cachePolicy)
     return result.map((domain) => domain.domain)

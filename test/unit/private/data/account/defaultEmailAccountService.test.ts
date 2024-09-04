@@ -698,23 +698,4 @@ describe('DefaultEmailAccountService Test Suite', () => {
       verify(mockAppSync.checkEmailAddressAvailability(anything())).once()
     })
   })
-
-  describe('getSupportedEmailDomains', () => {
-    it.each`
-      cachePolicy               | test
-      ${CachePolicy.CacheOnly}  | ${'cache'}
-      ${CachePolicy.RemoteOnly} | ${'remote'}
-    `(
-      'returns transformed result when calling $test',
-      async ({ cachePolicy }) => {
-        when(mockAppSync.getSupportedEmailDomains(anything())).thenResolve(
-          GraphQLDataFactory.supportedEmailDomains,
-        )
-        await expect(
-          instanceUnderTest.getSupportedEmailDomains({ cachePolicy }),
-        ).resolves.toStrictEqual([EntityDataFactory.emailDomain])
-        verify(mockAppSync.getSupportedEmailDomains(anything())).once()
-      },
-    )
-  })
 })

@@ -17,6 +17,7 @@ import waitForExpect from 'wait-for-expect'
 import _ from 'lodash'
 import { v4 } from 'uuid'
 import fs from 'node:fs/promises'
+import { delay } from '../util/delay'
 
 const externalAccounts = [
   'sudo.platform.testing@gmail.com',
@@ -69,6 +70,10 @@ describe('SudoEmailClient Interoperability Test Suite', () => {
       instanceUnderTest,
       { localPart: `em-test-interop-js-${v4()}` },
     )
+
+    // Pause here to make sure every part of the system sees the new email address we just
+    // created.
+    await delay(3000)
 
     const folder = emailAddress.folders.find((f) => f.folderName === 'INBOX')
     if (!folder) {
@@ -134,7 +139,7 @@ describe('SudoEmailClient Interoperability Test Suite', () => {
       expect(sent.subject).toEqual(`Test ${timestamp.toUTCString()}`)
 
       if (
-        // Autoreplies are a paid feature in proton, so not looking for it here
+        // Auto-replies are a paid feature in proton, so not looking for it here
         !externalAccount.endsWith('proton.me') &&
         // And yahoo keeps sending us to spam and not sending the auto-reply
         !externalAccount.endsWith('yahoo.com')
@@ -147,14 +152,29 @@ describe('SudoEmailClient Interoperability Test Suite', () => {
                 folderId: inboxFolder.id,
               })
 
+            expect({
+              status: result.status,
+              emailAddress: emailAddress.emailAddress,
+            }).toEqual({
+              status: ListOperationResultStatus.Success,
+              emailAddress: emailAddress.emailAddress,
+            })
             if (result.status !== ListOperationResultStatus.Success) {
-              fail(`Expect result not returned: ${result}`)
+              fail(`result.status unexpectedly not success`)
             }
-            expect(result.items[0].id).toBeDefined()
+
+            expect({
+              emailAddress: emailAddress.emailAddress,
+              items: result.items,
+            }).toEqual({
+              emailAddress: emailAddress.emailAddress,
+              items: expect.arrayContaining([expect.anything()]),
+            })
+
             receivedMessages.push(result.items[0])
           },
-          75000,
-          500,
+          100000,
+          1000,
         )
 
         expect(receivedMessages).toHaveLength(1)
@@ -166,13 +186,21 @@ describe('SudoEmailClient Interoperability Test Suite', () => {
           },
         )
 
-        expect(messageWithBody).toBeDefined()
-        expect(messageWithBody!.id).toBeDefined()
-        expect(messageWithBody!.body).toContain(
-          'Message received. This is an auto-reply',
-        )
-        expect(messageWithBody!.attachments).toHaveLength(0)
-        expect(messageWithBody!.inlineAttachments).toHaveLength(0)
+        expect({
+          emailAddress: emailAddress.emailAddress,
+          messageId: messageWithBody?.id,
+          messageBody: messageWithBody?.body,
+          messageAttachments: messageWithBody?.attachments.length,
+          messageInlineAttachments: messageWithBody?.inlineAttachments.length,
+        }).toEqual({
+          emailAddress: emailAddress.emailAddress,
+          messageId: expect.anything(),
+          messageBody: expect.stringContaining(
+            'Message received. This is an auto-reply',
+          ),
+          messageAttachments: 0,
+          messageInlineAttachments: 0,
+        })
       }
     },
   )

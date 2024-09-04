@@ -7,6 +7,7 @@
     "dset",
     "mutex",
     "OAEPAESCBC",
+    "ooto",
     "sudoplatformconfig",
     "sudos",
     "sudoservice",

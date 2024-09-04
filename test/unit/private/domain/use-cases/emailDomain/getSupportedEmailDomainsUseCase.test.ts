@@ -14,57 +14,53 @@ import {
   verify,
   when,
 } from 'ts-mockito'
-import { EmailAccountService } from '../../../../../../src/private/domain/entities/account/emailAccountService'
-import { GetSupportedEmailDomainsUseCase } from '../../../../../../src/private/domain/use-cases/account/getSupportedEmailDomainsUseCase'
 import { EntityDataFactory } from '../../../../data-factory/entity'
+import { GetSupportedEmailDomainsUseCase } from '../../../../../../src/private/domain/use-cases/emailDomain/getSupportedEmailDomainsUseCase'
+import { EmailDomainService } from '../../../../../../src/private/domain/entities/emailDomain/emailDomainService'
 
 describe('GetSupportedEmailDomainsUseCase Test Suite', () => {
-  const mockEmailAccountService = mock<EmailAccountService>()
+  const mockEmailDomainService = mock<EmailDomainService>()
 
   let instanceUnderTest: GetSupportedEmailDomainsUseCase
 
   const domains = [EntityDataFactory.emailDomain, EntityDataFactory.emailDomain]
 
   beforeEach(() => {
-    reset(mockEmailAccountService)
+    reset(mockEmailDomainService)
     instanceUnderTest = new GetSupportedEmailDomainsUseCase(
-      instance(mockEmailAccountService),
+      instance(mockEmailDomainService),
     )
   })
 
   describe('execute', () => {
     it('completes successfully returning expected single supported domain', async () => {
       when(
-        mockEmailAccountService.getSupportedEmailDomains(anything()),
+        mockEmailDomainService.getSupportedEmailDomains(anything()),
       ).thenResolve([domains[0]])
       const result = await instanceUnderTest.execute(CachePolicy.CacheOnly)
       expect(result).toStrictEqual([domains[0]])
       const [inputArgs] = capture(
-        mockEmailAccountService.getSupportedEmailDomains,
+        mockEmailDomainService.getSupportedEmailDomains,
       ).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         cachePolicy: CachePolicy.CacheOnly,
       })
-      verify(
-        mockEmailAccountService.getSupportedEmailDomains(anything()),
-      ).once()
+      verify(mockEmailDomainService.getSupportedEmailDomains(anything())).once()
     })
 
     it('completes successfully returning expected multiple supported domains', async () => {
       when(
-        mockEmailAccountService.getSupportedEmailDomains(anything()),
+        mockEmailDomainService.getSupportedEmailDomains(anything()),
       ).thenResolve(domains)
       const result = await instanceUnderTest.execute(CachePolicy.CacheOnly)
       expect(result).toStrictEqual(domains)
       const [inputArgs] = capture(
-        mockEmailAccountService.getSupportedEmailDomains,
+        mockEmailDomainService.getSupportedEmailDomains,
       ).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         cachePolicy: CachePolicy.CacheOnly,
       })
-      verify(
-        mockEmailAccountService.getSupportedEmailDomains(anything()),
-      ).once()
+      verify(mockEmailDomainService.getSupportedEmailDomains(anything())).once()
     })
   })
 })

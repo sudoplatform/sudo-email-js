@@ -8,7 +8,7 @@ import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { InvalidArgumentError } from '../../../../public/errors'
 import { EmailAccountService } from '../../entities/account/emailAccountService'
 import { EmailAddressEntity } from '../../entities/account/emailAddressEntity'
-import { EmailDomainEntity } from '../../entities/account/emailDomainEntity'
+import { EmailDomainEntity } from '../../entities/emailDomain/emailDomainEntity'
 
 /**
  * Input for `CheckEmailAddressAvailabilityUseCase` use case.

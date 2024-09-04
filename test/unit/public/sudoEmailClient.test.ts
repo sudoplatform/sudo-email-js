@@ -42,7 +42,7 @@ import { DefaultEmailMessageService } from '../../../src/private/data/message/de
 import { CheckEmailAddressAvailabilityUseCase } from '../../../src/private/domain/use-cases/account/checkEmailAddressAvailabilityUseCase'
 import { DeprovisionEmailAccountUseCase } from '../../../src/private/domain/use-cases/account/deprovisionEmailAccountUseCase'
 import { GetEmailAccountUseCase } from '../../../src/private/domain/use-cases/account/getEmailAccountUseCase'
-import { GetSupportedEmailDomainsUseCase } from '../../../src/private/domain/use-cases/account/getSupportedEmailDomainsUseCase'
+import { GetSupportedEmailDomainsUseCase } from '../../../src/private/domain/use-cases/emailDomain/getSupportedEmailDomainsUseCase'
 import { ListEmailAccountsForSudoIdUseCase } from '../../../src/private/domain/use-cases/account/listEmailAccountsForSudoIdUseCase'
 import { ListEmailAccountsUseCase } from '../../../src/private/domain/use-cases/account/listEmailAccountsUseCase'
 import { LookupEmailAddressesPublicInfoUseCase } from '../../../src/private/domain/use-cases/account/lookupEmailAddressesPublicInfoUseCase'
@@ -96,6 +96,8 @@ import { EmailAddressPublicInfo } from '../../../src/public/typings/emailAddress
 import { SortOrder } from '../../../src/public/typings/sortOrder'
 import { APIDataFactory } from '../data-factory/api'
 import { EntityDataFactory } from '../data-factory/entity'
+import { GetConfiguredEmailDomainsUseCase } from '../../../src/private/domain/use-cases/emailDomain/getConfiguredEmailDomainsUseCase'
+import { DefaultEmailDomainService } from '../../../src/private/data/emailDomain/defaultEmailDomainService'
 
 // Constructor mocks
 
@@ -110,6 +112,11 @@ jest.mock('../../../src/private/data/account/defaultEmailAccountService')
 const JestMockDefaultEmailAccountService =
   DefaultEmailAccountService as jest.MockedClass<
     typeof DefaultEmailAccountService
+  >
+jest.mock('../../../src/private/data/emailDomain/defaultEmailDomainService')
+const JestMockDefaultEmailDomainService =
+  DefaultEmailDomainService as jest.MockedClass<
+    typeof DefaultEmailDomainService
   >
 jest.mock('../../../src/private/data/folder/defaultEmailFolderService')
 const JestMockDefaultEmailFolderService =
@@ -192,11 +199,18 @@ const JestMockDeleteEmailMessagesUseCase =
     typeof DeleteEmailMessagesUseCase
   >
 jest.mock(
-  '../../../src/private/domain/use-cases/account/getSupportedEmailDomainsUseCase',
+  '../../../src/private/domain/use-cases/emailDomain/getSupportedEmailDomainsUseCase',
 )
 const JestMockGetSupportedEmailDomainsUseCase =
   GetSupportedEmailDomainsUseCase as jest.MockedClass<
     typeof GetSupportedEmailDomainsUseCase
+  >
+jest.mock(
+  '../../../src/private/domain/use-cases/emailDomain/getConfiguredEmailDomainsUseCase',
+)
+const JestMockGetConfiguredEmailDomainsUseCase =
+  GetConfiguredEmailDomainsUseCase as jest.MockedClass<
+    typeof GetConfiguredEmailDomainsUseCase
   >
 jest.mock(
   '../../../src/private/domain/use-cases/account/checkEmailAddressAvailabilityUseCase',
@@ -390,6 +404,7 @@ describe('SudoEmailClient Test Suite', () => {
 
   // Mocks generated inside of constructor
   const mockEmailAccountService = mock<DefaultEmailAccountService>()
+  const mockEmailDomainService = mock<DefaultEmailDomainService>()
   const mockEmailFolderService = mock<DefaultEmailFolderService>()
   const mockEmailMessageService = mock<DefaultEmailMessageService>()
   const mockConfigurationDataService = mock<DefaultConfigurationDataService>()
@@ -409,6 +424,8 @@ describe('SudoEmailClient Test Suite', () => {
   const mockDeleteEmailMessagesUseCase = mock<DeleteEmailMessagesUseCase>()
   const mockGetSupportedEmailDomainsUseCase =
     mock<GetSupportedEmailDomainsUseCase>()
+  const mockGetConfiguredEmailDomainsUseCase =
+    mock<GetConfiguredEmailDomainsUseCase>()
   const mockCheckEmailAddressAvailabilityUseCase =
     mock<CheckEmailAddressAvailabilityUseCase>()
   const mockGetEmailAccountUseCase = mock<GetEmailAccountUseCase>()
@@ -482,6 +499,7 @@ describe('SudoEmailClient Test Suite', () => {
     reset(mockSudoKeyManager)
     reset(mockApiClient)
     reset(mockEmailAccountService)
+    reset(mockEmailDomainService)
     reset(mockEmailFolderService)
     reset(mockEmailMessageService)
     reset(mockConfigurationDataService)
@@ -493,6 +511,7 @@ describe('SudoEmailClient Test Suite', () => {
     reset(mockSendEmailMessageUseCase)
     reset(mockDeleteEmailMessagesUseCase)
     reset(mockGetSupportedEmailDomainsUseCase)
+    reset(mockGetConfiguredEmailDomainsUseCase)
     reset(mockCheckEmailAddressAvailabilityUseCase)
     reset(mockGetEmailAccountUseCase)
     reset(mockListEmailAccountsUseCase)
@@ -523,6 +542,7 @@ describe('SudoEmailClient Test Suite', () => {
     reset(mockGetEmailAddressBlocklistUseCase)
 
     JestMockDefaultEmailAccountService.mockClear()
+    JestMockDefaultEmailDomainService.mockClear()
     JestMockDefaultEmailFolderService.mockClear()
     JestMockDefaultEmailMessageService.mockClear()
     JestMockDefaultConfigurationDataService.mockClear()
@@ -539,6 +559,7 @@ describe('SudoEmailClient Test Suite', () => {
     JestMockSendEmailMessageUseCase.mockClear()
     JestMockDeleteEmailMessagesUseCase.mockClear()
     JestMockGetSupportedEmailDomainsUseCase.mockClear()
+    JestMockGetConfiguredEmailDomainsUseCase.mockClear()
     JestMockCheckEmailAddressAvailabilityUseCase.mockClear()
     JestMockGetEmailAccountUseCase.mockClear()
     JestMockListEmailAccountsUseCase.mockClear()
@@ -573,6 +594,9 @@ describe('SudoEmailClient Test Suite', () => {
     JestMockDefaultEmailAccountService.mockImplementation(() =>
       instance(mockEmailAccountService),
     )
+    JestMockDefaultEmailDomainService.mockImplementation(() =>
+      instance(mockEmailDomainService),
+    )
     JestMockDefaultEmailFolderService.mockImplementation(() =>
       instance(mockEmailFolderService),
     )
@@ -606,6 +630,9 @@ describe('SudoEmailClient Test Suite', () => {
     )
     JestMockGetSupportedEmailDomainsUseCase.mockImplementation(() =>
       instance(mockGetSupportedEmailDomainsUseCase),
+    )
+    JestMockGetConfiguredEmailDomainsUseCase.mockImplementation(() =>
+      instance(mockGetConfiguredEmailDomainsUseCase),
     )
     JestMockCheckEmailAddressAvailabilityUseCase.mockImplementation(() =>
       instance(mockCheckEmailAddressAvailabilityUseCase),
@@ -732,6 +759,7 @@ describe('SudoEmailClient Test Suite', () => {
         1,
       )
       expect(JestMockDefaultEmailAccountService).toHaveBeenCalledTimes(1)
+      expect(JestMockDefaultEmailDomainService).toHaveBeenCalledTimes(1)
       expect(JestMockDefaultEmailFolderService).toHaveBeenCalledTimes(1)
       expect(JestMockDefaultEmailMessageService).toHaveBeenCalledTimes(1)
       expect(JestMockDefaultEmailAddressBlocklistService).toHaveBeenCalledTimes(
@@ -1358,6 +1386,31 @@ describe('SudoEmailClient Test Suite', () => {
     it('returns expected result', async () => {
       await expect(
         instanceUnderTest.getSupportedEmailDomains(CachePolicy.CacheOnly),
+      ).resolves.toEqual(['domain.com'])
+    })
+  })
+
+  describe('getConfiguredEmailDomains', () => {
+    beforeEach(() => {
+      when(
+        mockGetConfiguredEmailDomainsUseCase.execute(anything()),
+      ).thenResolve([{ domain: 'domain.com' }])
+    })
+    it('generates use case', async () => {
+      await instanceUnderTest.getConfiguredEmailDomains(CachePolicy.CacheOnly)
+      expect(JestMockGetConfiguredEmailDomainsUseCase).toHaveBeenCalledTimes(1)
+    })
+    it('calls use case as expected', async () => {
+      await instanceUnderTest.getConfiguredEmailDomains(CachePolicy.CacheOnly)
+      verify(mockGetConfiguredEmailDomainsUseCase.execute(anything())).once()
+      const [actualCachePolicy] = capture(
+        mockGetConfiguredEmailDomainsUseCase.execute,
+      ).first()
+      expect(actualCachePolicy).toEqual(CachePolicy.CacheOnly)
+    })
+    it('returns expected result', async () => {
+      await expect(
+        instanceUnderTest.getConfiguredEmailDomains(CachePolicy.CacheOnly),
       ).resolves.toEqual(['domain.com'])
     })
   })

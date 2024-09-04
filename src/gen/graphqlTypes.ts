@@ -83,6 +83,11 @@ export type CheckEmailAddressAvailabilityInput = {
   localParts: Array<Scalars['String']['input']>
 }
 
+export type ConfiguredDomains = {
+  __typename?: 'ConfiguredDomains'
+  domains: Array<Scalars['String']['output']>
+}
+
 export type CreateCustomEmailFolderInput = {
   customFolderName: SealedAttributeInput
   emailAddressId: Scalars['ID']['input']
@@ -396,6 +401,7 @@ export type PublicKey = {
 export type Query = {
   __typename?: 'Query'
   checkEmailAddressAvailability: AvailableAddresses
+  getConfiguredEmailDomains: ConfiguredDomains
   getEmailAddress?: Maybe<EmailAddress>
   getEmailAddressBlocklist: GetEmailAddressBlocklistResponse
   getEmailConfig: EmailConfigurationData
@@ -1108,6 +1114,18 @@ export type GetEmailDomainsQueryVariables = Exact<{ [key: string]: never }>
 export type GetEmailDomainsQuery = {
   __typename?: 'Query'
   getEmailDomains: { __typename?: 'SupportedDomains'; domains: Array<string> }
+}
+
+export type GetConfiguredEmailDomainsQueryVariables = Exact<{
+  [key: string]: never
+}>
+
+export type GetConfiguredEmailDomainsQuery = {
+  __typename?: 'Query'
+  getConfiguredEmailDomains: {
+    __typename?: 'ConfiguredDomains'
+    domains: Array<string>
+  }
 }
 
 export type CheckEmailAddressAvailabilityQueryVariables = Exact<{
@@ -3620,6 +3638,34 @@ export const GetEmailDomainsDocument = {
 } as unknown as DocumentNode<
   GetEmailDomainsQuery,
   GetEmailDomainsQueryVariables
+>
+export const GetConfiguredEmailDomainsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetConfiguredEmailDomains' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'getConfiguredEmailDomains' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'domains' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  GetConfiguredEmailDomainsQuery,
+  GetConfiguredEmailDomainsQueryVariables
 >
 export const CheckEmailAddressAvailabilityDocument = {
   kind: 'Document',

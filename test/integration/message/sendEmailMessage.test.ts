@@ -768,7 +768,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       'throws an error if internal recipient is not found',
       () => sendEncryptedEmailEnabled,
       async () => {
-        const domains = await instanceUnderTest.getSupportedEmailDomains()
+        const domains = await instanceUnderTest.getConfiguredEmailDomains()
         const inNetworkNotFoundAddress = `notfoundaddress@${domains[0]}`
         await expect(
           instanceUnderTest.sendEmailMessage({

@@ -14,6 +14,7 @@ import { EmailMessageDetails } from '../../../util/rfc822MessageDataProcessor'
 import { EmailAccountService } from '../../entities/account/emailAccountService'
 import { EmailConfigurationDataService } from '../../entities/configuration/configurationDataService'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
+import { EmailDomainService } from '../../entities/emailDomain/emailDomainService'
 
 /**
  * Input object containing information required to send an email message.
@@ -57,6 +58,7 @@ export class SendEmailMessageUseCase {
   constructor(
     private readonly messageService: EmailMessageService,
     private readonly accountService: EmailAccountService,
+    private readonly domainService: EmailDomainService,
     private readonly configurationDataService: EmailConfigurationDataService,
   ) {
     this.log = new DefaultLogger(this.constructor.name)
@@ -101,7 +103,7 @@ export class SendEmailMessageUseCase {
       })
     }
 
-    const domains = await this.accountService.getSupportedEmailDomains({})
+    const domains = await this.domainService.getConfiguredEmailDomains({})
 
     const allRecipients: string[] = []
     to?.forEach((addr) => allRecipients.push(addr.emailAddress))

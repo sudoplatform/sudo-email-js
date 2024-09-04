@@ -5,8 +5,8 @@
  */
 
 import { CachePolicy, DefaultLogger, Logger } from '@sudoplatform/sudo-common'
-import { EmailAccountService } from '../../entities/account/emailAccountService'
-import { EmailDomainEntity } from '../../entities/account/emailDomainEntity'
+import { EmailDomainEntity } from '../../entities/emailDomain/emailDomainEntity'
+import { EmailDomainService } from '../../entities/emailDomain/emailDomainService'
 
 /**
  * Application business logic for retrieving supported email domains.
@@ -14,7 +14,7 @@ import { EmailDomainEntity } from '../../entities/account/emailDomainEntity'
 export class GetSupportedEmailDomainsUseCase {
   private readonly log: Logger
 
-  constructor(private readonly emailAccountService: EmailAccountService) {
+  constructor(private readonly emailDomainService: EmailDomainService) {
     this.log = new DefaultLogger(this.constructor.name)
   }
 
@@ -22,7 +22,7 @@ export class GetSupportedEmailDomainsUseCase {
     this.log.debug(this.constructor.name, {
       cachePolicy,
     })
-    return await this.emailAccountService.getSupportedEmailDomains({
+    return await this.emailDomainService.getSupportedEmailDomains({
       cachePolicy,
     })
   }

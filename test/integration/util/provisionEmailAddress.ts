@@ -8,6 +8,7 @@ import { CachePolicy } from '@sudoplatform/sudo-common'
 import { v4 } from 'uuid'
 import { SudoEmailClient } from '../../../src/public/sudoEmailClient'
 import { EmailAddress } from '../../../src/public/typings/emailAddress'
+import { delay } from '../../util/delay'
 
 export const provisionEmailAddress = async (
   ownershipProofToken: string,
@@ -25,11 +26,18 @@ export const provisionEmailAddress = async (
       })
     address = `${localPart}@${domain}`
   }
-  return await emailClient.provisionEmailAddress({
+
+  const provisioned = await emailClient.provisionEmailAddress({
     emailAddress: address,
     ownershipProofToken: ownershipProofToken,
     alias: options?.alias,
   })
+
+  // Delay after provisioning to allow settling of eventual consistency of the new address.
+  // In particular, ingress lookup by address may not find the new address immediately.
+  await delay(3000)
+
+  return provisioned
 }
 
 /**

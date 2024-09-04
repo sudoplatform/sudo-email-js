@@ -109,7 +109,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
   )
   let instanceUnderTest: DefaultEmailMessageService
   let timestamp: Date
-  let mockMesageId: string
+  let mockMessageId: string
 
   beforeEach(() => {
     reset(mockAppSync)
@@ -120,7 +120,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     reset(mockEmailCryptoService)
     reset(mockSubscriptionManager)
     timestamp = new Date(1)
-    mockMesageId = v4()
+    mockMessageId = v4()
     instanceUnderTest = new DefaultEmailMessageService(
       instance(mockAppSync),
       instance(mockUserClient),
@@ -138,7 +138,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       true,
     )
     when(mockAppSync.sendEmailMessage(anything())).thenResolve({
-      id: mockMesageId,
+      id: mockMessageId,
       createdAtEpochMs: timestamp.getMilliseconds(),
     })
     JestMockSubscriptionManager.mockImplementation(() =>
@@ -2091,7 +2091,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       expect(gunzipSpy).toHaveBeenCalledTimes(0)
     })
 
-    it('decrypts the messsage if the encrypted body id is found', async () => {
+    it('decrypts the message if the encrypted body id is found', async () => {
       const message: EmailMessageDetails = {
         from: [{ emailAddress: `from-${v4()}@example.com` }],
         attachments: [

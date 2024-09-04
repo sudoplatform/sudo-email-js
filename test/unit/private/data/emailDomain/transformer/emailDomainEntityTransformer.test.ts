@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EmailDomainEntityTransformer } from '../../../../../../src/private/data/account/transformer/emailDomainEntityTransformer'
+import { EmailDomainEntityTransformer } from '../../../../../../src/private/data/emailDomain/transformer/emailDomainEntityTransformer'
 import { EntityDataFactory } from '../../../../data-factory/entity'
 import { GraphQLDataFactory } from '../../../../data-factory/graphQL'
 

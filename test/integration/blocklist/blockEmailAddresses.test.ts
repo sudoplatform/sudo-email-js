@@ -25,6 +25,7 @@ import {
 } from '../util/provisionEmailAddress'
 import waitForExpect from 'wait-for-expect'
 import { getFolderByName } from '../util/folder'
+import { delay } from '../../util/delay'
 
 describe('SudoEmailClient Email Blocklist Integration Test Suite', () => {
   jest.setTimeout(240000)
@@ -219,6 +220,9 @@ describe('SudoEmailClient Email Blocklist Integration Test Suite', () => {
 
     expect(blockingResult.status).toEqual(BatchOperationResultStatus.Success)
 
+    // Ensure new block is consistently read
+    await delay(3000)
+
     await sendMessage(emailAddress, ootoSimulatorAddress, 'Block test 2')
 
     await waitForExpect(
@@ -245,6 +249,9 @@ describe('SudoEmailClient Email Blocklist Integration Test Suite', () => {
     })
 
     expect(unblockingResult.status).toEqual(BatchOperationResultStatus.Success)
+
+    // Ensure block deletion is consistently read
+    await delay(3000)
 
     await sendMessage(emailAddress, ootoSimulatorAddress, 'Block test 3')
 

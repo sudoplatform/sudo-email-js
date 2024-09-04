@@ -24,7 +24,6 @@ import {
   DeleteEmailAccountInput,
   EmailAccountService,
   GetEmailAccountInput,
-  GetSupportedEmailDomainsInput,
   ListEmailAccountsForSudoIdInput,
   ListEmailAccountsInput,
   ListEmailAccountsOutput,
@@ -33,7 +32,6 @@ import {
 } from '../../domain/entities/account/emailAccountService'
 import { EmailAddressEntity } from '../../domain/entities/account/emailAddressEntity'
 import { EmailAddressPublicInfoEntity } from '../../domain/entities/account/emailAddressPublicInfoEntity'
-import { EmailDomainEntity } from '../../domain/entities/account/emailDomainEntity'
 import { EmailFolderEntity } from '../../domain/entities/folder/emailFolderEntity'
 import { ApiClient } from '../common/apiClient'
 import {
@@ -45,7 +43,6 @@ import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransfo
 import { EmailAccountEntityTransformer } from './transformer/emailAccountEntityTransformer'
 import { EmailAddressEntityTransformer } from './transformer/emailAddressEntityTransformer'
 import { EmailAddressPublicInfoTransformer } from './transformer/emailAddressPublicInfoTransformer'
-import { EmailDomainEntityTransformer } from './transformer/emailDomainEntityTransformer'
 
 export type EmailAccountServiceConfig = {
   enforceSingletonPublicKey?: boolean
@@ -226,17 +223,6 @@ export class DefaultEmailAccountService implements EmailAccountService {
     return result.addresses.map((address) =>
       this.emailAddressTransformer.transform(address),
     )
-  }
-
-  async getSupportedEmailDomains({
-    cachePolicy,
-  }: GetSupportedEmailDomainsInput): Promise<EmailDomainEntity[]> {
-    const fetchPolicy = cachePolicy
-      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
-      : undefined
-    const result = await this.appSync.getSupportedEmailDomains(fetchPolicy)
-    const transformer = new EmailDomainEntityTransformer()
-    return result.domains.map((domain) => transformer.transformGraphQL(domain))
   }
 
   async updateMetadata(

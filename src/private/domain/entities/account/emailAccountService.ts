@@ -8,7 +8,7 @@ import { CachePolicy } from '@sudoplatform/sudo-common'
 import { UpdateEmailAddressMetadataInput } from '../../../../public/sudoEmailClient'
 import { EmailAccountEntity } from './emailAccountEntity'
 import { EmailAddressEntity } from './emailAddressEntity'
-import { EmailDomainEntity } from './emailDomainEntity'
+import { EmailDomainEntity } from '../emailDomain/emailDomainEntity'
 import { EmailAddressPublicInfoEntity } from './emailAddressPublicInfoEntity'
 
 /**
@@ -126,16 +126,6 @@ export interface CheckEmailAddressAvailabilityInput {
 }
 
 /**
- * Input for `EmailAccountService.getSupportedEmailDomains` method.
- *
- * @interface GetSuppoortedEmailDomainsInput
- * @property {CachePolicy} cachePolicy Cache policy determines the strategy for accessing the supported email domains.
- */
-export interface GetSupportedEmailDomainsInput {
-  cachePolicy?: CachePolicy
-}
-
-/**
  * Core entity representation of an email account service used in business logic. Used to perfrom CRUD operations for email accounts.
  *
  * @interface EmailAccountService
@@ -211,14 +201,4 @@ export interface EmailAccountService {
   checkAvailability(
     input: CheckEmailAddressAvailabilityInput,
   ): Promise<EmailAddressEntity[]>
-
-  /**
-   * Get the supported email domains.
-   *
-   * @param {GetSupportedEmailDomainsInput} input Parameters used to retrieve the list of supported email domains.
-   * @returns {EmailDomainEntity[]} The list of supported email domains.
-   */
-  getSupportedEmailDomains(
-    input: GetSupportedEmailDomainsInput,
-  ): Promise<EmailDomainEntity[]>
 }
