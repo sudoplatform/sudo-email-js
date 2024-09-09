@@ -30,6 +30,8 @@ export class SealedEmailMessageEntityTransformer {
       previousFolderId: data.previousFolderId ?? undefined,
       direction: directionTransformer.fromGraphQLtoAPI(data.direction),
       seen: data.seen,
+      repliedTo: data.repliedTo,
+      forwarded: data.forwarded,
       state: stateTransformer.fromGraphQLtoAPI(data.state),
       clientRefId: data.clientRefId ?? undefined,
       rfc822Header: data.rfc822Header.base64EncodedSealedData,

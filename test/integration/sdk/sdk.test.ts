@@ -222,6 +222,7 @@ describe('SDK Tests', () => {
         connectionState = state
       },
       emailMessageDeleted(emailMessage: EmailMessage): void {},
+      emailMessageUpdated(emailMessage: EmailMessage): void {},
     })
 
     for (let i = 0; i < 10; i++) {

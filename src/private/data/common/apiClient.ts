@@ -116,6 +116,8 @@ import {
   UpdateEmailMessagesInput,
   UpdateEmailMessagesMutation,
   UpdateEmailMessagesV2Result,
+  OnEmailMessageUpdatedSubscription,
+  OnEmailMessageUpdatedDocument,
   ConfiguredDomains,
   GetConfiguredEmailDomainsQuery,
   GetConfiguredEmailDomainsDocument,
@@ -491,6 +493,16 @@ export class ApiClient {
       query: OnEmailMessageCreatedDocument,
       variables: { owner: ownerId },
       calleeName: this.onEmailMessageCreated.name,
+    })
+  }
+
+  public onEmailMessageUpdated(
+    ownerId: string,
+  ): Observable<FetchResult<OnEmailMessageUpdatedSubscription>> {
+    return this.performSubscription({
+      query: OnEmailMessageUpdatedDocument,
+      variables: { owner: ownerId },
+      calleeName: this.onEmailMessageUpdated.name,
     })
   }
 

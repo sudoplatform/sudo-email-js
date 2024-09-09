@@ -165,6 +165,7 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
           connectionState = state
         },
         emailMessageDeleted(emailMessage: EmailMessage): void {},
+        emailMessageUpdated(emailMessage: EmailMessage): void {},
       })
 
       expect(connectionStateChangeCalled).toBeTruthy()
@@ -201,6 +202,7 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
           connectionState = state
         },
         emailMessageCreated(emailMessage: EmailMessage): void {},
+        emailMessageUpdated(emailMessage: EmailMessage): void {},
       })
 
       await sendEmailMessage(emailAddress)
@@ -249,6 +251,10 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
           connectionState = state
         },
         emailMessageCreated(emailMessage: EmailMessage): void {
+          createSubscriptionCalled = true
+          createNotifiedEmailMessageId = emailMessage.id
+        },
+        emailMessageUpdated(emailMessage: EmailMessage): void {
           createSubscriptionCalled = true
           createNotifiedEmailMessageId = emailMessage.id
         },
@@ -305,6 +311,10 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
           connectionState = state
         },
         emailMessageCreated(emailMessage: EmailMessage): void {
+          createSubscriptionCalled = true
+          createNotifiedEmailMessageId = emailMessage.id
+        },
+        emailMessageUpdated(emailMessage: EmailMessage): void {
           createSubscriptionCalled = true
           createNotifiedEmailMessageId = emailMessage.id
         },
@@ -379,6 +389,7 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
             latestConnectionStatus = state
           },
           emailMessageCreated(emailMessage: EmailMessage): void {},
+          emailMessageUpdated(emailMessage: EmailMessage): void {},
         },
       })
 

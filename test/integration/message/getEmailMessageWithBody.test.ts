@@ -353,6 +353,8 @@ describe('getEmailMessageWithBody test suite', () => {
         __typename: 'SealedAttribute',
       },
       seen: false,
+      repliedTo: false,
+      forwarded: false,
       size: 1.0,
       sortDateEpochMs: timestamp.getTime(),
       state: EmailMessageState.Delivered,

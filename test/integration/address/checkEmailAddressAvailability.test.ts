@@ -49,6 +49,7 @@ describe('SudoEmailClient checkEmailAddressAvailability Test Suite', () => {
     supportedDomains = await instanceUnderTest.getSupportedEmailDomains(
       CachePolicy.RemoteOnly,
     )
+
     expect(supportedDomains.length).toBeGreaterThanOrEqual(1)
   })
 

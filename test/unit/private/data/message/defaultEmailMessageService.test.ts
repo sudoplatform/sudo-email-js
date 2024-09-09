@@ -2296,6 +2296,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
           type: 'Failed',
           // This will fail once the SDKs are running on Node >=20
           cause: new SyntaxError('Unexpected token ] in JSON at position 1'),
+          // Below is what's thrown on >=20
+          // cause: new SyntaxError("Expected property name or '}' in JSON at position 1"),
         },
         date: undefined,
       })
@@ -2386,23 +2388,24 @@ describe('DefaultEmailMessageService Test Suite', () => {
             return
           },
           emailMessageCreated(emailMessage: EmailMessage): void {},
+          emailMessageUpdated(emailMessage: EmailMessage): void {},
         },
       })
-      verify(mockSubscriptionManager.subscribe(anything(), anything())).twice()
+      verify(mockSubscriptionManager.subscribe(anything(), anything())).times(3)
       const [actualId, actualSubscriber] = capture(
         mockSubscriptionManager.subscribe,
       ).first()
       expect(actualId).toEqual<typeof actualId>(mockOwnerId)
       verify(mockAppSync.onEmailMessageDeleted(anything())).once()
       const [ownerId] = capture(mockAppSync.onEmailMessageDeleted).first()
-      verify(mockSubscriptionManager.getWatcher()).times(4)
-      verify(mockSubscriptionManager.setWatcher(anything())).twice()
-      verify(mockSubscriptionManager.setSubscription(anything())).twice()
+      verify(mockSubscriptionManager.getWatcher()).times(6)
+      verify(mockSubscriptionManager.setWatcher(anything())).times(3)
+      verify(mockSubscriptionManager.setSubscription(anything())).times(3)
       verify(
         mockSubscriptionManager.connectionStatusChanged(
           ConnectionState.Connected,
         ),
-      ).twice()
+      ).times(3)
     })
   })
 })

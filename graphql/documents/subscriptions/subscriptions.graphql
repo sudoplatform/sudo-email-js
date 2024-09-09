@@ -9,3 +9,9 @@ subscription onEmailMessageCreated($owner: String!) {
     ...SealedEmailMessage
   }
 }
+
+subscription onEmailMessageUpdated($owner: String!) {
+  onEmailMessageUpdated(owner: $owner) {
+    ...SealedEmailMessage
+  }
+}

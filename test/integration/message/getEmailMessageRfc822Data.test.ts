@@ -193,7 +193,7 @@ describe('getEmailMessageRfc822Data test suite', () => {
     ).resolves.toBeUndefined()
   })
 
-  it.only('does not return deleted messages', async () => {
+  it('does not return deleted messages', async () => {
     const sendInput = generateSendInput('Test body', [
       { emailAddress: emailAddress.emailAddress },
     ])

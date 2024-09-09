@@ -36,6 +36,10 @@ describe('SubscriptionManager test suite', () => {
       subscriptionCalled = true
       notifiedEmailMessageId = emailMessage.id
     },
+    emailMessageUpdated(emailMessage: EmailMessage): void {
+      subscriptionCalled = true
+      notifiedEmailMessageId = emailMessage.id
+    },
   }
 
   let iut: SubscriptionManager<
@@ -147,6 +151,9 @@ describe('SubscriptionManager test suite', () => {
       },
       emailMessageCreated(emailMessage: EmailMessage): void {
         fail('unexpectedly invoked incorrect email message deleted callback')
+      },
+      emailMessageUpdated(emailMessage: EmailMessage): void {
+        fail('unexpectedly invoked incorrect email message updated callback')
       },
     })
     iut.subscribe('dummy-id', defaultSubscriber)

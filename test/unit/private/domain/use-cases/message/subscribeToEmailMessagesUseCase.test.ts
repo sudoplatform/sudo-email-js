@@ -47,6 +47,7 @@ describe('SubscribeToEmailMessagesUseCase Test Suite', () => {
           subscriber: {
             emailMessageDeleted(emailMessage: EmailMessage): void {},
             emailMessageCreated(emailMessage: EmailMessage): void {},
+            emailMessageUpdated(emailMessage: EmailMessage): void {},
           },
         }),
       ).rejects.toThrow(NotSignedInError)
@@ -61,6 +62,7 @@ describe('SubscribeToEmailMessagesUseCase Test Suite', () => {
             return
           },
           emailMessageCreated(emailMessage: EmailMessage): void {},
+          emailMessageUpdated(emailMessage: EmailMessage): void {},
         },
       })
       verify(

@@ -22,6 +22,7 @@ import {
   EmailMessageDateRangeInput,
   OnEmailMessageCreatedSubscription,
   OnEmailMessageDeletedSubscription,
+  OnEmailMessageUpdatedSubscription,
   Rfc822HeaderInput,
   S3EmailObjectInput,
   SealedEmailMessage,
@@ -121,6 +122,8 @@ const EmailHeaderDetailsCodec = t.intersection(
     t.partial({
       subject: t.string,
       date: DateFromISOString,
+      inReplyTo: t.string,
+      references: t.array(t.string),
     }),
   ],
   'EmailHeaderDetails',
@@ -140,6 +143,11 @@ export class DefaultEmailMessageService implements EmailMessageService {
     EmailMessageSubscriber
   >
 
+  private readonly updateSubscriptionManager: SubscriptionManager<
+    OnEmailMessageUpdatedSubscription,
+    EmailMessageSubscriber
+  >
+
   constructor(
     private readonly appSync: ApiClient,
     private readonly userClient: SudoUserClient,
@@ -156,6 +164,11 @@ export class DefaultEmailMessageService implements EmailMessageService {
 
     this.deleteSubscriptionManager = new SubscriptionManager<
       OnEmailMessageDeletedSubscription,
+      EmailMessageSubscriber
+    >()
+
+    this.updateSubscriptionManager = new SubscriptionManager<
+      OnEmailMessageUpdatedSubscription,
       EmailMessageSubscriber
     >()
   }
@@ -313,6 +326,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       senderEmailAddressId,
       emailMessageMaxOutboundMessageSize,
     })
+
     const rfc822Data = Rfc822MessageDataProcessor.encodeToInternetMessageBuffer(
       {
         ...message,
@@ -349,6 +363,14 @@ export class DefaultEmailMessageService implements EmailMessageService {
       emailAddressesPublicInfo,
       senderEmailAddressId,
     })
+
+    const rfc822HeaderProperties: Partial<Rfc822HeaderInput> = {}
+    const { forwardMessageId, replyMessageId } = message
+    if (forwardMessageId) {
+      rfc822HeaderProperties.references = [forwardMessageId]
+    } else if (replyMessageId) {
+      rfc822HeaderProperties.inReplyTo = replyMessageId
+    }
     const rfc822Data =
       Rfc822MessageDataProcessor.encodeToInternetMessageBuffer(message)
 
@@ -410,6 +432,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
           ? message.inlineAttachments.length > 0
           : false),
       dateEpochMs: new Date().getTime(),
+      ...rfc822HeaderProperties,
     }
 
     const result = await this.appSync.sendEncryptedEmailMessage({
@@ -772,6 +795,8 @@ export class DefaultEmailMessageService implements EmailMessageService {
       folderId: sealedEmailMessage.folderId,
       previousFolderId: sealedEmailMessage.previousFolderId,
       seen: sealedEmailMessage.seen,
+      repliedTo: sealedEmailMessage.repliedTo,
+      forwarded: sealedEmailMessage.forwarded,
       direction: sealedEmailMessage.direction,
       state: sealedEmailMessage.state,
       clientRefId: sealedEmailMessage.clientRefId,
@@ -889,6 +914,27 @@ export class DefaultEmailMessageService implements EmailMessageService {
       )
 
       this.deleteSubscriptionManager.connectionStatusChanged(
+        ConnectionState.Connected,
+      )
+    }
+
+    // Subscribe to email messages updated
+    this.updateSubscriptionManager.subscribe(
+      input.subscriptionId,
+      input.subscriber,
+    )
+    // If subscription manager watcher and subscription hasn't been setup yet
+    // create them and watch for email message changes per `owner`.
+    if (!this.updateSubscriptionManager.getWatcher()) {
+      this.updateSubscriptionManager.setWatcher(
+        this.appSync.onEmailMessageUpdated(input.ownerId),
+      )
+
+      this.updateSubscriptionManager.setSubscription(
+        this.setupEmailMessagesUpdatedSubscription(),
+      )
+
+      this.updateSubscriptionManager.connectionStatusChanged(
         ConnectionState.Connected,
       )
     }
@@ -1054,6 +1100,44 @@ export class DefaultEmailMessageService implements EmailMessageService {
               },
               async (message) =>
                 this.deleteSubscriptionManager.emailMessageDeleted(message),
+            )
+          })(result)
+        },
+      })
+    return subscription
+  }
+
+  private setupEmailMessagesUpdatedSubscription():
+    | ZenObservable.Subscription
+    | undefined {
+    const subscription = this.updateSubscriptionManager
+      .getWatcher()
+      ?.subscribe({
+        complete: () => {
+          this.onSubscriptionCompleted(
+            this.updateSubscriptionManager,
+            'onEmailMessageUpdated',
+          )
+        },
+        error: (error) => {
+          this.onSubscriptionError(
+            this.updateSubscriptionManager,
+            'onEmailMessageUpdated',
+            error,
+          )
+        },
+        next: (result: FetchResult<OnEmailMessageUpdatedSubscription>) => {
+          return void (async (
+            result: FetchResult<OnEmailMessageUpdatedSubscription>,
+          ): Promise<void> => {
+            return this.onSubscriptionNext(
+              'onEmailMessageUpdated',
+              result,
+              (data) => {
+                return data.onEmailMessageUpdated
+              },
+              async (message) =>
+                this.updateSubscriptionManager.emailMessageUpdated(message),
             )
           })(result)
         },

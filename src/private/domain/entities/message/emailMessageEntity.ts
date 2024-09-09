@@ -26,6 +26,8 @@ export type EmailMessageEntityStatus =
  * @property {string} folderId Unique identifier of the email folder which the message resource is assigned to.
  * @property {string} previousFolderId Unique identifier of the previous email folder which the message resource was assigned to, if any.
  * @property {boolean} seen True if the user has previously seen the email message.
+ * @property {boolean} repliedTo True if the email message has been replied to.
+ * @property {boolean} forwarded True if the email message has been forwarded.
  * @property {Direction} direction Direction of the email message.
  * @property {State} state Current state of the email message.
  * @property {string} clientRefId Unique client reference identifier.
@@ -49,6 +51,8 @@ export interface EmailMessageEntity {
   folderId: string
   previousFolderId?: string
   seen: boolean
+  repliedTo: boolean
+  forwarded: boolean
   direction: Direction
   state: State
   clientRefId?: string

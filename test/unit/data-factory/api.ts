@@ -84,6 +84,8 @@ export class APIDataFactory {
     folderId: 'testFolderId',
     previousFolderId: 'testPreviousFolderId',
     seen: false,
+    repliedTo: false,
+    forwarded: false,
     direction: Direction.Outbound,
     state: State.Sent,
     clientRefId: 'testClientRefId',

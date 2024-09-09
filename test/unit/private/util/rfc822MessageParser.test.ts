@@ -777,7 +777,6 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(resultString).toContain(`To: ${eol}`)
         expect(resultString).toContain(`Cc: ${eol}`)
         expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
           `${EMAIL_HEADER_NAME_ENCRYPTION}: ${PLATFORM_ENCRYPTION}${eol}`,
@@ -786,6 +785,32 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         expect(resultString).toContain(CANNED_TEXT_BODY)
         expect(resultString).toContain(
           `Content-Type: text/plain; charset=UTF-8${eol}`,
+        )
+      })
+    })
+
+    describe('reply/forward message inclusion', () => {
+      it('adds correct header when replying message id is provided', () => {
+        const messageDetails: EmailMessageDetails = {
+          from: [{ emailAddress: fromAddress.emailAddress }],
+          replyMessageId: 'Dummy reply message id',
+        }
+        const resultString =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+        expect(resultString).toContain(
+          `In-Reply-To: <${messageDetails.replyMessageId}>`,
+        )
+      })
+
+      it('adds correct header when forwarding message id is provided', () => {
+        const messageDetails: EmailMessageDetails = {
+          from: [{ emailAddress: fromAddress.emailAddress }],
+          forwardMessageId: 'Dummy forward message id',
+        }
+        const resultString =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+        expect(resultString).toContain(
+          `References: <${messageDetails.forwardMessageId}>`,
         )
       })
     })

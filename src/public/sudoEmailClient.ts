@@ -433,6 +433,10 @@ export interface InternetMessageFormatHeader {
  *  Default is an empty list.
  * @property {EmailAttachment[]} inlineAttachments List of inline attachments to be sent with the message.
  *  Default is an empty list.
+ * @property {string} replyingMessageId Optional identifier of the message being replied to.
+ *  If this is set, `forwardingMessageId` must not be set.
+ * @property {string} forwardingMessageId Optional identifier of the message being forwarded.
+ *  If this is set, `replyingMessageId` must not be set.
  */
 export interface SendEmailMessageInput {
   senderEmailAddressId: string
@@ -440,6 +444,8 @@ export interface SendEmailMessageInput {
   body: string
   attachments: EmailAttachment[]
   inlineAttachments: EmailAttachment[]
+  replyingMessageId?: string
+  forwardingMessageId?: string
 }
 
 /**
@@ -1111,6 +1117,8 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     body,
     attachments,
     inlineAttachments,
+    replyingMessageId,
+    forwardingMessageId,
   }: SendEmailMessageInput): Promise<SendEmailMessageResult> {
     const sendEmailMessageUseCase = new SendEmailMessageUseCase(
       this.emailMessageService,
@@ -1124,6 +1132,8 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       body,
       attachments,
       inlineAttachments,
+      replyingMessageId,
+      forwardingMessageId,
     })
   }
 

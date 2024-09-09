@@ -48,6 +48,8 @@ interface ListEmailMessagesUseCaseOutput {
     folderId: string
     previousFolderId?: string
     seen: boolean
+    repliedTo: boolean
+    forwarded: boolean
     direction: Direction
     state: State
     clientRefId?: string

@@ -2693,6 +2693,8 @@ describe('SudoEmailClient Test Suite', () => {
             folderId: EntityDataFactory.emailMessage.folderId,
             previousFolderId: EntityDataFactory.emailMessage.previousFolderId,
             seen: EntityDataFactory.emailMessage.seen,
+            repliedTo: EntityDataFactory.emailMessage.repliedTo,
+            forwarded: EntityDataFactory.emailMessage.forwarded,
             direction: EntityDataFactory.emailMessage.direction,
             state: EntityDataFactory.emailMessage.state,
             clientRefId: EntityDataFactory.emailMessage.clientRefId,
@@ -2722,6 +2724,8 @@ describe('SudoEmailClient Test Suite', () => {
               folderId: EntityDataFactory.emailMessage.folderId,
               previousFolderId: EntityDataFactory.emailMessage.previousFolderId,
               seen: EntityDataFactory.emailMessage.seen,
+              repliedTo: EntityDataFactory.emailMessage.repliedTo,
+              forwarded: EntityDataFactory.emailMessage.forwarded,
               direction: EntityDataFactory.emailMessage.direction,
               state: EntityDataFactory.emailMessage.state,
               clientRefId: EntityDataFactory.emailMessage.clientRefId,
@@ -2801,6 +2805,7 @@ describe('SudoEmailClient Test Suite', () => {
       await instanceUnderTest.subscribeToEmailMessages('subscriber-id', {
         emailMessageDeleted(emailMessage: EmailMessage): void {},
         emailMessageCreated(emailMessage: EmailMessage): void {},
+        emailMessageUpdated(emailMessage: EmailMessage): void {},
       })
       expect(JestMockSubscribeToEmailMessagesUseCase).toHaveBeenCalledTimes(1)
     })

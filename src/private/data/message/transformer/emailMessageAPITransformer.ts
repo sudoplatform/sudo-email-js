@@ -31,6 +31,8 @@ export class EmailMessageAPITransformer {
       folderId: entity.folderId,
       previousFolderId: entity.previousFolderId,
       seen: entity.seen,
+      repliedTo: entity.repliedTo,
+      forwarded: entity.forwarded,
       direction: entity.direction,
       state: entity.state,
       from: entity.from.map(transformEntityEmailAddressEntity),

@@ -34,6 +34,8 @@ export interface EmailMessageDetails {
   attachments?: EmailAttachment[]
   inlineAttachments?: EmailAttachment[]
   encryptionStatus?: EncryptionStatus
+  forwardMessageId?: string
+  replyMessageId?: string
 }
 
 export const EMAIL_HEADER_NAME_ENCRYPTION = 'X-Sudoplatform-Encryption'
@@ -60,9 +62,10 @@ export class Rfc822MessageDataProcessor {
    * @returns ArrayBuffer
    */
   public static encodeToInternetMessageBuffer(
-    email: EmailMessageDetails,
+    emailMessage: EmailMessageDetails,
   ): ArrayBuffer {
-    const parsed = Rfc822MessageDataProcessor.encodeToInternetMessageStr(email)
+    const parsed =
+      Rfc822MessageDataProcessor.encodeToInternetMessageStr(emailMessage)
     return new TextEncoder().encode(parsed)
   }
 
@@ -78,12 +81,14 @@ export class Rfc822MessageDataProcessor {
     cc,
     bcc,
     replyTo,
-    subject,
-    body,
+    subject = '',
+    body = '',
     isHtml = true,
     attachments,
     inlineAttachments,
     encryptionStatus = EncryptionStatus.UNENCRYPTED,
+    forwardMessageId,
+    replyMessageId,
   }: EmailMessageDetails): string {
     const msg = createMimeMessage()
     if (from && from.length > 0) {
@@ -119,22 +124,25 @@ export class Rfc822MessageDataProcessor {
       )
       msg.setHeader('Reply-To', mailbox)
     }
-    msg.setSubject(subject ?? '')
 
     if (encryptionStatus === EncryptionStatus.ENCRYPTED) {
       msg.setHeader(EMAIL_HEADER_NAME_ENCRYPTION, PLATFORM_ENCRYPTION)
-      msg.addMessage({
-        data: CANNED_TEXT_BODY,
-        charset: 'UTF-8',
-        contentType: 'text/plain',
-      })
+      body = CANNED_TEXT_BODY
+      isHtml = false
     } else {
-      msg.addMessage({
-        data: body ?? '',
-        contentType: isHtml ? 'text/html' : 'text/plain',
-        charset: 'UTF-8',
-      })
+      if (forwardMessageId) {
+        msg.setHeader('References', `<${forwardMessageId}>`)
+      } else if (replyMessageId) {
+        msg.setHeader('In-Reply-To', `<${replyMessageId}>`)
+      }
     }
+
+    msg.setSubject(subject)
+    msg.addMessage({
+      data: body,
+      contentType: isHtml ? 'text/html' : 'text/plain',
+      charset: 'UTF-8',
+    })
 
     attachments?.forEach((attachment) => {
       msg.addAttachment(

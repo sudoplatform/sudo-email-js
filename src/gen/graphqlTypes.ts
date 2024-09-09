@@ -484,6 +484,8 @@ export type Rfc822HeaderInput = {
   dateEpochMs?: InputMaybe<Scalars['Float']['input']>
   from: Scalars['String']['input']
   hasAttachments?: InputMaybe<Scalars['Boolean']['input']>
+  inReplyTo?: InputMaybe<Scalars['String']['input']>
+  references?: InputMaybe<Array<Scalars['String']['input']>>
   replyTo: Array<Scalars['String']['input']>
   subject?: InputMaybe<Scalars['String']['input']>
   to: Array<Scalars['String']['input']>
@@ -519,10 +521,12 @@ export type SealedEmailMessage = {
   emailAddressId: Scalars['ID']['output']
   encryptionStatus?: Maybe<EmailMessageEncryptionStatus>
   folderId: Scalars['ID']['output']
+  forwarded: Scalars['Boolean']['output']
   id: Scalars['ID']['output']
   owner: Scalars['ID']['output']
   owners: Array<Owner>
   previousFolderId?: Maybe<Scalars['ID']['output']>
+  repliedTo: Scalars['Boolean']['output']
   rfc822Header: SealedAttribute
   seen: Scalars['Boolean']['output']
   size: Scalars['Float']['output']
@@ -560,6 +564,7 @@ export type Subscription = {
   __typename?: 'Subscription'
   onEmailMessageCreated: SealedEmailMessage
   onEmailMessageDeleted: SealedEmailMessage
+  onEmailMessageUpdated: SealedEmailMessage
 }
 
 export type SubscriptionOnEmailMessageCreatedArgs = {
@@ -568,6 +573,10 @@ export type SubscriptionOnEmailMessageCreatedArgs = {
 
 export type SubscriptionOnEmailMessageDeletedArgs = {
   owner: Scalars['ID']['input']
+}
+
+export type SubscriptionOnEmailMessageUpdatedArgs = {
+  owner: Scalars['String']['input']
 }
 
 export type SupportedDomains = {
@@ -820,6 +829,8 @@ export type SealedEmailMessageFragment = {
   previousFolderId?: string | null
   direction: EmailMessageDirection
   seen: boolean
+  repliedTo: boolean
+  forwarded: boolean
   state: EmailMessageState
   clientRefId?: string | null
   size: number
@@ -1373,6 +1384,8 @@ export type GetEmailMessageQuery = {
     previousFolderId?: string | null
     direction: EmailMessageDirection
     seen: boolean
+    repliedTo: boolean
+    forwarded: boolean
     state: EmailMessageState
     clientRefId?: string | null
     size: number
@@ -1410,6 +1423,8 @@ export type ListEmailMessagesQuery = {
       previousFolderId?: string | null
       direction: EmailMessageDirection
       seen: boolean
+      repliedTo: boolean
+      forwarded: boolean
       state: EmailMessageState
       clientRefId?: string | null
       size: number
@@ -1448,6 +1463,8 @@ export type ListEmailMessagesForEmailAddressIdQuery = {
       previousFolderId?: string | null
       direction: EmailMessageDirection
       seen: boolean
+      repliedTo: boolean
+      forwarded: boolean
       state: EmailMessageState
       clientRefId?: string | null
       size: number
@@ -1486,6 +1503,8 @@ export type ListEmailMessagesForEmailFolderIdQuery = {
       previousFolderId?: string | null
       direction: EmailMessageDirection
       seen: boolean
+      repliedTo: boolean
+      forwarded: boolean
       state: EmailMessageState
       clientRefId?: string | null
       size: number
@@ -1617,6 +1636,8 @@ export type OnEmailMessageDeletedSubscription = {
     previousFolderId?: string | null
     direction: EmailMessageDirection
     seen: boolean
+    repliedTo: boolean
+    forwarded: boolean
     state: EmailMessageState
     clientRefId?: string | null
     size: number
@@ -1639,6 +1660,42 @@ export type OnEmailMessageCreatedSubscriptionVariables = Exact<{
 export type OnEmailMessageCreatedSubscription = {
   __typename?: 'Subscription'
   onEmailMessageCreated: {
+    __typename?: 'SealedEmailMessage'
+    id: string
+    owner: string
+    emailAddressId: string
+    version: number
+    createdAtEpochMs: number
+    updatedAtEpochMs: number
+    sortDateEpochMs: number
+    folderId: string
+    previousFolderId?: string | null
+    direction: EmailMessageDirection
+    seen: boolean
+    repliedTo: boolean
+    forwarded: boolean
+    state: EmailMessageState
+    clientRefId?: string | null
+    size: number
+    encryptionStatus?: EmailMessageEncryptionStatus | null
+    owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+    rfc822Header: {
+      __typename?: 'SealedAttribute'
+      algorithm: string
+      keyId: string
+      plainTextType: string
+      base64EncodedSealedData: string
+    }
+  }
+}
+
+export type OnEmailMessageUpdatedSubscriptionVariables = Exact<{
+  owner: Scalars['String']['input']
+}>
+
+export type OnEmailMessageUpdatedSubscription = {
+  __typename?: 'Subscription'
+  onEmailMessageUpdated: {
     __typename?: 'SealedEmailMessage'
     id: string
     owner: string
@@ -2364,6 +2421,8 @@ export const SealedEmailMessageFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'previousFolderId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'direction' } },
           { kind: 'Field', name: { kind: 'Name', value: 'seen' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'repliedTo' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'forwarded' } },
           { kind: 'Field', name: { kind: 'Name', value: 'state' } },
           { kind: 'Field', name: { kind: 'Name', value: 'clientRefId' } },
           {
@@ -4668,6 +4727,8 @@ export const GetEmailMessageDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'previousFolderId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'direction' } },
           { kind: 'Field', name: { kind: 'Name', value: 'seen' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'repliedTo' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'forwarded' } },
           { kind: 'Field', name: { kind: 'Name', value: 'state' } },
           { kind: 'Field', name: { kind: 'Name', value: 'clientRefId' } },
           {
@@ -4793,6 +4854,8 @@ export const ListEmailMessagesDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'previousFolderId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'direction' } },
           { kind: 'Field', name: { kind: 'Name', value: 'seen' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'repliedTo' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'forwarded' } },
           { kind: 'Field', name: { kind: 'Name', value: 'state' } },
           { kind: 'Field', name: { kind: 'Name', value: 'clientRefId' } },
           {
@@ -4921,6 +4984,8 @@ export const ListEmailMessagesForEmailAddressIdDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'previousFolderId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'direction' } },
           { kind: 'Field', name: { kind: 'Name', value: 'seen' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'repliedTo' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'forwarded' } },
           { kind: 'Field', name: { kind: 'Name', value: 'state' } },
           { kind: 'Field', name: { kind: 'Name', value: 'clientRefId' } },
           {
@@ -5049,6 +5114,8 @@ export const ListEmailMessagesForEmailFolderIdDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'previousFolderId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'direction' } },
           { kind: 'Field', name: { kind: 'Name', value: 'seen' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'repliedTo' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'forwarded' } },
           { kind: 'Field', name: { kind: 'Name', value: 'state' } },
           { kind: 'Field', name: { kind: 'Name', value: 'clientRefId' } },
           {
@@ -5616,6 +5683,8 @@ export const OnEmailMessageDeletedDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'previousFolderId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'direction' } },
           { kind: 'Field', name: { kind: 'Name', value: 'seen' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'repliedTo' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'forwarded' } },
           { kind: 'Field', name: { kind: 'Name', value: 'state' } },
           { kind: 'Field', name: { kind: 'Name', value: 'clientRefId' } },
           {
@@ -5731,6 +5800,8 @@ export const OnEmailMessageCreatedDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'previousFolderId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'direction' } },
           { kind: 'Field', name: { kind: 'Name', value: 'seen' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'repliedTo' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'forwarded' } },
           { kind: 'Field', name: { kind: 'Name', value: 'state' } },
           { kind: 'Field', name: { kind: 'Name', value: 'clientRefId' } },
           {
@@ -5761,4 +5832,119 @@ export const OnEmailMessageCreatedDocument = {
 } as unknown as DocumentNode<
   OnEmailMessageCreatedSubscription,
   OnEmailMessageCreatedSubscriptionVariables
+>
+export const OnEmailMessageUpdatedDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'subscription',
+      name: { kind: 'Name', value: 'onEmailMessageUpdated' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'owner' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'String' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'onEmailMessageUpdated' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'owner' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'owner' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedEmailMessage' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SealedEmailMessage' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SealedEmailMessage' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owners' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'sortDateEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'folderId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'previousFolderId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'direction' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'seen' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'clientRefId' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'rfc822Header' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'plainTextType' },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'base64EncodedSealedData' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  OnEmailMessageUpdatedSubscription,
+  OnEmailMessageUpdatedSubscriptionVariables
 >

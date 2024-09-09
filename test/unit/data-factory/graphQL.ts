@@ -175,6 +175,8 @@ export class GraphQLDataFactory {
     previousFolderId: 'testPreviousFolderId',
     direction: EmailMessageDirection.Outbound,
     seen: false,
+    repliedTo: false,
+    forwarded: false,
     state: EmailMessageState.Sent,
     clientRefId: 'testClientRefId',
     rfc822Header: {

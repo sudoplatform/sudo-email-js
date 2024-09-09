@@ -10,6 +10,7 @@ import { FetchResult } from 'apollo-link'
 import {
   OnEmailMessageDeletedSubscription,
   OnEmailMessageCreatedSubscription,
+  OnEmailMessageUpdatedSubscription,
 } from '../../../gen/graphqlTypes'
 import {
   ConnectionState,
@@ -20,6 +21,7 @@ import {
 export type Subscribable =
   | OnEmailMessageDeletedSubscription
   | OnEmailMessageCreatedSubscription
+  | OnEmailMessageUpdatedSubscription
 export class SubscriptionManager<
   T extends Subscribable,
   S extends EmailMessageSubscriber,
@@ -108,6 +110,17 @@ export class SubscriptionManager<
   public emailMessageCreated(emailMessage: EmailMessage): void {
     for (const subscriber of Object.values(this.subscribers)) {
       subscriber?.emailMessageCreated(emailMessage)
+    }
+  }
+
+  /**
+   * Notifies subscribers of an updated `EmailMessage`.
+   *
+   * @param emailMessage updated `EmailMessage`.
+   */
+  public emailMessageUpdated(emailMessage: EmailMessage): void {
+    for (const subscriber of Object.values(this.subscribers)) {
+      subscriber?.emailMessageUpdated(emailMessage)
     }
   }
 }

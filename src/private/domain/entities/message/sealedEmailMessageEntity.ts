@@ -22,6 +22,8 @@ import { OwnerEntity } from '../common/ownerEntity'
  * @property {string} previousFolderId Unique identifier of the previous email folder which the message resource was assigned to, if any.
  * @property {Direction} direction Direction of the email message.
  * @property {boolean} seen True if the user has previously seen the email message.
+ * @property {boolean} repliedTo True if the email message has been replied to.
+ * @property {boolean} forwarded True if the email message has been forwarded.
  * @property {State} state Current state of the email message.
  * @property {string} clientRefId Unique client reference identifier.
  * @property {string} rfc822Header RFC 822 header data for the email message. Contains the recipients and subject matter.
@@ -40,6 +42,8 @@ export interface SealedEmailMessageEntity {
   previousFolderId?: string
   direction: Direction
   seen: boolean
+  repliedTo: boolean
+  forwarded: boolean
   state: State
   clientRefId?: string
   rfc822Header: string

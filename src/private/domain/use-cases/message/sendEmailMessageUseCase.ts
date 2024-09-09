@@ -4,16 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
+import { CachePolicy, DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import {
   EmailAttachment,
   InNetworkAddressNotFoundError,
   InternetMessageFormatHeader,
+  InvalidArgumentError,
 } from '../../../../public'
 import { EmailMessageDetails } from '../../../util/rfc822MessageDataProcessor'
 import { EmailAccountService } from '../../entities/account/emailAccountService'
 import { EmailConfigurationDataService } from '../../entities/configuration/configurationDataService'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
+import { MessageFormatter } from '../../../util/messageFormatter'
 import { EmailDomainService } from '../../entities/emailDomain/emailDomainService'
 
 /**
@@ -28,6 +30,10 @@ import { EmailDomainService } from '../../entities/emailDomain/emailDomainServic
  *  Default is an empty list.
  * @property {EmailAttachment[]} inlineAttachments List of inline attachments to be sent with the message.
  *  Default is an empty list.
+ * @property {string} replyingMessageId Identifier of the message being replied to.
+ *  If this property is set, `forwardedMessageId` must not be set.
+ * @property {string} forwardingMessageId Identifier of the message being forwarded.
+ *  If this property is set, `replyingMessageId` must not be set.
  */
 interface SendEmailMessageUseCaseInput {
   senderEmailAddressId: string
@@ -35,6 +41,8 @@ interface SendEmailMessageUseCaseInput {
   body: string
   attachments: EmailAttachment[]
   inlineAttachments: EmailAttachment[]
+  replyingMessageId?: string
+  forwardingMessageId?: string
 }
 
 /**
@@ -70,6 +78,8 @@ export class SendEmailMessageUseCase {
     body,
     attachments,
     inlineAttachments,
+    replyingMessageId,
+    forwardingMessageId,
   }: SendEmailMessageUseCaseInput): Promise<SendEmailMessageUseCaseOutput> {
     this.log.debug(this.constructor.name, {
       senderEmailAddressId,
@@ -77,12 +87,20 @@ export class SendEmailMessageUseCase {
       body,
       attachments,
       inlineAttachments,
+      replyingMessageId,
+      forwardingMessageId,
     })
     const { sendEncryptedEmailEnabled, emailMessageMaxOutboundMessageSize } =
       await this.configurationDataService.getConfigurationData()
 
+    if (replyingMessageId && forwardingMessageId) {
+      throw new InvalidArgumentError(
+        'Unable to send - received values for both `replyingMessageId` and `forwardingMessageId`',
+      )
+    }
+
     const { from, to, cc, bcc, replyTo, subject } = emailMessageHeader
-    const message: EmailMessageDetails = {
+    let message: EmailMessageDetails = {
       from: [from],
       to,
       cc,
@@ -92,6 +110,69 @@ export class SendEmailMessageUseCase {
       body: body,
       attachments,
       inlineAttachments,
+    }
+
+    if (replyingMessageId) {
+      // Get message details associated with the reply message id.
+      try {
+        const [replyMessage, replyMessageWithBody] = await Promise.all([
+          this.messageService.getMessage({
+            id: replyingMessageId,
+          }),
+          this.messageService.getEmailMessageWithBody({
+            id: replyingMessageId,
+            emailAddressId: senderEmailAddressId,
+          }),
+        ])
+        if (replyMessage && replyMessageWithBody) {
+          message.replyMessageId = replyingMessageId
+          message = MessageFormatter.formatAsReplyingMessage(message, {
+            from: replyMessage.to,
+            date: replyMessage.date,
+            subject: replyMessage.subject,
+            body: replyMessageWithBody.body,
+          })
+        }
+      } catch (err) {
+        // Don't cause a send failure - just log and continue
+        this.log.error(
+          `Failed to get reply message with id ${replyingMessageId}, error: ${(err as Error).message}`,
+        )
+      }
+    } else if (forwardingMessageId) {
+      // Get message details associated with the forward message id.
+      try {
+        const [forwardMessage, forwardMessageWithBody] = await Promise.all([
+          this.messageService.getMessage({
+            id: forwardingMessageId,
+            cachePolicy: CachePolicy.CacheOnly,
+          }),
+          this.messageService.getEmailMessageWithBody({
+            id: forwardingMessageId,
+            emailAddressId: senderEmailAddressId,
+          }),
+        ])
+        if (forwardMessage && forwardMessageWithBody) {
+          message.forwardMessageId = forwardingMessageId
+          message = MessageFormatter.formatAsForwardingMessage(message, {
+            from: forwardMessage.from,
+            to: forwardMessage.to,
+            cc: forwardMessage.cc,
+            date: forwardMessage.date,
+            subject: forwardMessage.subject,
+            body: forwardMessageWithBody.body,
+          })
+
+          // Add all attachments from the forwarded message to the current message
+          attachments.push(...forwardMessageWithBody.attachments)
+          attachments.push(...forwardMessageWithBody.inlineAttachments)
+        }
+      } catch (err) {
+        // Don't cause a send failure - just log and continue
+        this.log.error(
+          `Failed to get forward message with id ${forwardingMessageId}, error: ${(err as Error).message}`,
+        )
+      }
     }
 
     if (!sendEncryptedEmailEnabled) {
