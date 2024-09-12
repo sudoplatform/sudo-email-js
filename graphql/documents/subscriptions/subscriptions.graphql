@@ -4,13 +4,13 @@ subscription OnEmailMessageDeleted($owner: ID!) {
   }
 }
 
-subscription onEmailMessageCreated($owner: String!) {
+subscription onEmailMessageCreated($owner: ID!) {
   onEmailMessageCreated(owner: $owner) {
     ...SealedEmailMessage
   }
 }
 
-subscription onEmailMessageUpdated($owner: String!) {
+subscription onEmailMessageUpdated($owner: ID!) {
   onEmailMessageUpdated(owner: $owner) {
     ...SealedEmailMessage
   }

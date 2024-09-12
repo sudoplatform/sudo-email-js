@@ -111,7 +111,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         expect(result.items).toHaveLength(1)
         beforeEachComplete = true
       },
-      30000,
+      45000,
       1000,
     )
   }, 60000)

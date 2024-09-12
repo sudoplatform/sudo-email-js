@@ -78,7 +78,6 @@
     "ansi-regex": "5.0.1",
     "minimist": "^1.2.8",
     "got": "^12.6.0",
-    "dset": "^3.1.2",
     "debug": "^4.3.4",
     "ua-parser-js": "^1.0.35",
     "json5": "^2.2.3",
@@ -89,6 +88,7 @@
     "es5-ext": "^0.10.63",
     "braces": "^3.0.3",
     "@whatwg-node/node-fetch": "0.3.6",
+    "@whatwg-node/fetch": "0.9.0",
     "micromatch": "^4.0.8"
   },
   "devDependencies": {

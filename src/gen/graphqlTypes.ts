@@ -568,7 +568,7 @@ export type Subscription = {
 }
 
 export type SubscriptionOnEmailMessageCreatedArgs = {
-  owner: Scalars['String']['input']
+  owner: Scalars['ID']['input']
 }
 
 export type SubscriptionOnEmailMessageDeletedArgs = {
@@ -576,7 +576,7 @@ export type SubscriptionOnEmailMessageDeletedArgs = {
 }
 
 export type SubscriptionOnEmailMessageUpdatedArgs = {
-  owner: Scalars['String']['input']
+  owner: Scalars['ID']['input']
 }
 
 export type SupportedDomains = {
@@ -1654,7 +1654,7 @@ export type OnEmailMessageDeletedSubscription = {
 }
 
 export type OnEmailMessageCreatedSubscriptionVariables = Exact<{
-  owner: Scalars['String']['input']
+  owner: Scalars['ID']['input']
 }>
 
 export type OnEmailMessageCreatedSubscription = {
@@ -1690,7 +1690,7 @@ export type OnEmailMessageCreatedSubscription = {
 }
 
 export type OnEmailMessageUpdatedSubscriptionVariables = Exact<{
-  owner: Scalars['String']['input']
+  owner: Scalars['ID']['input']
 }>
 
 export type OnEmailMessageUpdatedSubscription = {
@@ -1708,6 +1708,8 @@ export type OnEmailMessageUpdatedSubscription = {
     previousFolderId?: string | null
     direction: EmailMessageDirection
     seen: boolean
+    repliedTo: boolean
+    forwarded: boolean
     state: EmailMessageState
     clientRefId?: string | null
     size: number
@@ -5732,10 +5734,7 @@ export const OnEmailMessageCreatedDocument = {
           },
           type: {
             kind: 'NonNullType',
-            type: {
-              kind: 'NamedType',
-              name: { kind: 'Name', value: 'String' },
-            },
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
           },
         },
       ],
@@ -5849,10 +5848,7 @@ export const OnEmailMessageUpdatedDocument = {
           },
           type: {
             kind: 'NonNullType',
-            type: {
-              kind: 'NamedType',
-              name: { kind: 'Name', value: 'String' },
-            },
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
           },
         },
       ],
@@ -5917,6 +5913,8 @@ export const OnEmailMessageUpdatedDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'previousFolderId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'direction' } },
           { kind: 'Field', name: { kind: 'Name', value: 'seen' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'repliedTo' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'forwarded' } },
           { kind: 'Field', name: { kind: 'Name', value: 'state' } },
           { kind: 'Field', name: { kind: 'Name', value: 'clientRefId' } },
           {

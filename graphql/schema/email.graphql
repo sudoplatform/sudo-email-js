@@ -471,6 +471,6 @@ type Mutation {
 
 type Subscription {
   onEmailMessageDeleted(owner: ID!): SealedEmailMessage!
-  onEmailMessageCreated(owner: String!): SealedEmailMessage!
-  onEmailMessageUpdated(owner: String!): SealedEmailMessage!
+  onEmailMessageCreated(owner: ID!): SealedEmailMessage!
+  onEmailMessageUpdated(owner: ID!): SealedEmailMessage!
 }
