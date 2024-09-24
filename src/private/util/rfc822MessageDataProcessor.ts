@@ -46,6 +46,9 @@ export const CANNED_TEXT_BODY = 'Encrypted message attached'
 const CONTENT_TRANSFER_ENCODING = 'Content-Transfer-Encoding'
 const CONTENT_ID = 'Content-ID'
 
+const IN_REPLY_TO_HEADER_NAME = 'In-Reply-To'
+const REFERENCES_HEADER_NAME = 'References'
+
 const encodedStringRegex = RegExp(
   /(?:=\?([\w-]+)\?([A-Z])\?([a-zA-Z0-9+\/=]*)\?=)/,
   'g',
@@ -131,9 +134,9 @@ export class Rfc822MessageDataProcessor {
       isHtml = false
     } else {
       if (forwardMessageId) {
-        msg.setHeader('References', `<${forwardMessageId}>`)
+        msg.setHeader(REFERENCES_HEADER_NAME, `<${forwardMessageId}>`)
       } else if (replyMessageId) {
-        msg.setHeader('In-Reply-To', `<${replyMessageId}>`)
+        msg.setHeader(IN_REPLY_TO_HEADER_NAME, `<${replyMessageId}>`)
       }
     }
 
@@ -260,7 +263,7 @@ export class Rfc822MessageDataProcessor {
         }
       })
 
-      return {
+      const messageDetails: EmailMessageDetails = {
         from,
         to,
         cc,
@@ -273,6 +276,23 @@ export class Rfc822MessageDataProcessor {
         attachments,
         inlineAttachments,
       }
+
+      if (!!parsedHeaders.headers[REFERENCES_HEADER_NAME]) {
+        // The standard for this header is a list, so parse the last added value only.
+        // We only ever track a single id.
+        const chunks =
+          parsedHeaders.headers[REFERENCES_HEADER_NAME].split(/,|, /)
+        const forwardMessageId = chunks[chunks.length - 1].replace(/<|>/g, '')
+        messageDetails.forwardMessageId = forwardMessageId
+      }
+      if (!!parsedHeaders.headers[IN_REPLY_TO_HEADER_NAME]) {
+        const replyMessageId = parsedHeaders.headers[
+          IN_REPLY_TO_HEADER_NAME
+        ].replace(/<|>/g, '')
+        messageDetails.replyMessageId = replyMessageId
+      }
+
+      return messageDetails
     } catch (e) {
       console.error('Error decoding Rfc822 data', { e })
       if (e instanceof Error) {

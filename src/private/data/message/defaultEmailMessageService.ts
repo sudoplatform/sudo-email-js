@@ -364,13 +364,6 @@ export class DefaultEmailMessageService implements EmailMessageService {
       senderEmailAddressId,
     })
 
-    const rfc822HeaderProperties: Partial<Rfc822HeaderInput> = {}
-    const { forwardMessageId, replyMessageId } = message
-    if (forwardMessageId) {
-      rfc822HeaderProperties.references = [forwardMessageId]
-    } else if (replyMessageId) {
-      rfc822HeaderProperties.inReplyTo = replyMessageId
-    }
     const rfc822Data =
       Rfc822MessageDataProcessor.encodeToInternetMessageBuffer(message)
 
@@ -432,7 +425,12 @@ export class DefaultEmailMessageService implements EmailMessageService {
           ? message.inlineAttachments.length > 0
           : false),
       dateEpochMs: new Date().getTime(),
-      ...rfc822HeaderProperties,
+    }
+    if (message.forwardMessageId) {
+      rfc822Header.references = [message.forwardMessageId]
+    }
+    if (message.replyMessageId) {
+      rfc822Header.inReplyTo = message.replyMessageId
     }
 
     const result = await this.appSync.sendEncryptedEmailMessage({

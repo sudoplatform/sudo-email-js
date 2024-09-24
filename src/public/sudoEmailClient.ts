@@ -434,9 +434,7 @@ export interface InternetMessageFormatHeader {
  * @property {EmailAttachment[]} inlineAttachments List of inline attachments to be sent with the message.
  *  Default is an empty list.
  * @property {string} replyingMessageId Optional identifier of the message being replied to.
- *  If this is set, `forwardingMessageId` must not be set.
  * @property {string} forwardingMessageId Optional identifier of the message being forwarded.
- *  If this is set, `replyingMessageId` must not be set.
  */
 export interface SendEmailMessageInput {
   senderEmailAddressId: string
