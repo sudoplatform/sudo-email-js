@@ -662,7 +662,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       )
       await expect(
         instanceUnderTest.deleteEmailMessage(sendResult.id),
-      ).resolves.toEqual(sendResult.id)
+      ).resolves.toEqual({ id: sendResult.id })
       await waitForExpect(
         async () => {
           const messages = await readAllPages((nextToken?: string) =>
@@ -1247,7 +1247,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       )
       await expect(
         instanceUnderTest.deleteEmailMessage(sendResult.id),
-      ).resolves.toEqual(sendResult.id)
+      ).resolves.toEqual({ id: sendResult.id })
       await waitForExpect(
         async () => {
           const messages =
@@ -1790,7 +1790,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       )
       await expect(
         instanceUnderTest.deleteEmailMessage(sendResult.id),
-      ).resolves.toEqual(sendResult.id)
+      ).resolves.toEqual({ id: sendResult.id })
       await waitForExpect(
         async () => {
           const messages =

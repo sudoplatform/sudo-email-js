@@ -311,7 +311,7 @@ describe('getEmailMessageWithBody test suite', () => {
 
     await expect(
       instanceUnderTest.deleteEmailMessage(sendResult.id),
-    ).resolves.toEqual(sendResult.id)
+    ).resolves.toEqual({ id: sendResult.id })
 
     await expect(
       instanceUnderTest.getEmailMessageWithBody({

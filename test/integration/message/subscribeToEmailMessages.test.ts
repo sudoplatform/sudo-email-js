@@ -219,11 +219,12 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
       const deletedEmailMessageId = await instanceUnderTest.deleteEmailMessage(
         emailMessageId!,
       )
+      expect(deletedEmailMessageId).toBeDefined()
 
       // Verify subscriber receives delete message event.
       await waitForExpect(() => {
         expect(deleteSubscriptionCalled).toBeTruthy()
-        expect(deleteNotifiedEmailMessageId).toEqual(deletedEmailMessageId)
+        expect(deleteNotifiedEmailMessageId).toEqual(deletedEmailMessageId?.id)
       })
 
       instanceUnderTest.unsubscribeFromEmailMessages(subscriptionId)
@@ -283,7 +284,7 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
       // Verify subscriber receives delete message event.
       await waitForExpect(() => {
         expect(deleteSubscriptionCalled).toBeTruthy()
-        expect(deleteNotifiedEmailMessageId).toEqual(deletedEmailMessageId)
+        expect(deleteNotifiedEmailMessageId).toEqual(deletedEmailMessageId?.id)
       })
 
       instanceUnderTest.unsubscribeFromEmailMessages(subscriptionId)

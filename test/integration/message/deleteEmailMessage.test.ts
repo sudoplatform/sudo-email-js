@@ -73,7 +73,7 @@ describe('SudoEmailClient DeleteEmailMessage Test Suite', () => {
       async () =>
         await expect(
           instanceUnderTest.deleteEmailMessage(result.id),
-        ).resolves.toStrictEqual(result.id),
+        ).resolves.toStrictEqual({ id: result.id }),
       30000,
       1000,
     )

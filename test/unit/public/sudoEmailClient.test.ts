@@ -1909,7 +1909,7 @@ describe('SudoEmailClient Test Suite', () => {
       when(mockDeleteDraftEmailMessagesUseCase.execute(anything())).thenResolve(
         {
           successIds: [],
-          failureIds: [],
+          failureMessages: [],
         },
       )
     })
@@ -1940,8 +1940,12 @@ describe('SudoEmailClient Test Suite', () => {
     it('returns success when success ids equal the unique set of input ids', async () => {
       const duplicateInputArray = ['id1', 'id1', 'id2', 'id3', 'id2']
       const uniqueArray = Array.from(new Set(duplicateInputArray))
+      const successValues = uniqueArray.map((id) => ({ id }))
       when(mockDeleteDraftEmailMessagesUseCase.execute(anything())).thenResolve(
-        { successIds: uniqueArray, failureIds: [] },
+        {
+          successIds: uniqueArray,
+          failureMessages: [],
+        },
       )
       await expect(
         instanceUnderTest.deleteDraftEmailMessages({
@@ -1950,7 +1954,7 @@ describe('SudoEmailClient Test Suite', () => {
         }),
       ).resolves.toEqual({
         status: BatchOperationResultStatus.Success,
-        successValues: ['id1', 'id2', 'id3'],
+        successValues: successValues,
         failureValues: [],
       })
     })
@@ -1960,7 +1964,10 @@ describe('SudoEmailClient Test Suite', () => {
       when(mockDeleteDraftEmailMessagesUseCase.execute(anything())).thenResolve(
         {
           successIds: [],
-          failureIds: uniqueArray.map((id) => ({ id, errorType: 'error' })),
+          failureMessages: uniqueArray.map((id) => ({
+            id,
+            errorType: 'error',
+          })),
         },
       )
       await expect(
@@ -1983,7 +1990,7 @@ describe('SudoEmailClient Test Suite', () => {
       when(mockDeleteDraftEmailMessagesUseCase.execute(anything())).thenResolve(
         {
           successIds: ['id1'],
-          failureIds: [
+          failureMessages: [
             { id: 'id2', errorType: 'error' },
             { id: 'id3', errorType: 'error' },
           ],
@@ -2000,7 +2007,7 @@ describe('SudoEmailClient Test Suite', () => {
           { id: 'id2', errorType: 'error' },
           { id: 'id3', errorType: 'error' },
         ],
-        successValues: ['id1'],
+        successValues: [{ id: 'id1' }],
       })
     })
   })
@@ -2747,55 +2754,67 @@ describe('SudoEmailClient Test Suite', () => {
     it('deletes a single message successfully', async () => {
       when(mockDeleteEmailMessagesUseCase.execute(anything())).thenResolve({
         successIds: ['1'],
-        failureIds: [],
+        failureMessages: [],
       })
-      await expect(instanceUnderTest.deleteEmailMessage('1')).resolves.toEqual(
-        '1',
-      )
+      await expect(instanceUnderTest.deleteEmailMessage('1')).resolves.toEqual({
+        id: '1',
+      })
     })
     it('returns undefined when single delete fails', async () => {
       when(mockDeleteEmailMessagesUseCase.execute(anything())).thenResolve({
         successIds: [],
-        failureIds: [],
+        failureMessages: [],
       })
       await expect(
         instanceUnderTest.deleteEmailMessage('1'),
       ).resolves.toBeUndefined()
     })
     it('deletes multiple messages successfully', async () => {
-      const successIds = ['1', '2', '3']
+      const messageIds = ['1', '2', '3']
+      const successResult = messageIds.map((id) => ({ id }))
       when(mockDeleteEmailMessagesUseCase.execute(anything())).thenResolve({
-        successIds,
-        failureIds: [],
+        successIds: messageIds,
+        failureMessages: [],
       })
       await expect(
-        instanceUnderTest.deleteEmailMessages(successIds),
-      ).resolves.toEqual({ status: BatchOperationResultStatus.Success })
+        instanceUnderTest.deleteEmailMessages(messageIds),
+      ).resolves.toEqual({
+        status: BatchOperationResultStatus.Success,
+        successValues: successResult,
+        failureValues: [],
+      })
     })
     it('returns failure when no messages are deleted', async () => {
-      const failureIds = ['1', '2', '3']
+      const messageIds = ['1', '2', '3']
+      const failureResult = messageIds.map((id) => ({ id, errorType: '' }))
       when(mockDeleteEmailMessagesUseCase.execute(anything())).thenResolve({
         successIds: [],
-        failureIds,
+        failureMessages: failureResult,
       })
       await expect(
-        instanceUnderTest.deleteEmailMessages(failureIds),
-      ).resolves.toEqual({ status: BatchOperationResultStatus.Failure })
+        instanceUnderTest.deleteEmailMessages(messageIds),
+      ).resolves.toEqual({
+        status: BatchOperationResultStatus.Failure,
+        successValues: [],
+        failureValues: failureResult,
+      })
     })
     it('returns partial when some of the messages fail to delete', async () => {
       const idsToDelete = ['1', '2', '3', '4', '5']
       const successIds = ['2', '3', '4']
+      const successResult = successIds.map((id) => ({ id }))
       const failureIds = ['1', '5']
+      const failureResult = failureIds.map((id) => ({ id, errorType: '' }))
       when(mockDeleteEmailMessagesUseCase.execute(anything())).thenResolve({
-        successIds,
-        failureIds,
+        successIds: successIds,
+        failureMessages: failureResult,
       })
       await expect(
         instanceUnderTest.deleteEmailMessages(idsToDelete),
       ).resolves.toEqual({
         status: BatchOperationResultStatus.Partial,
-        successValues: successIds,
-        failureValues: failureIds,
+        successValues: successResult,
+        failureValues: failureResult,
       })
     })
   })

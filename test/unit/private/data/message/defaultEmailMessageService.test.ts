@@ -2281,6 +2281,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         '{]not json[}',
       )
 
+      const [nodeMajorVersion] = process.versions.node.split('.').map(Number)
       const { rfc822Header, ...rest } = EntityDataFactory.sealedEmailMessage
       await expect(
         instanceUnderTest.unsealEmailMessage({ rfc822Header, ...rest }),
@@ -2294,10 +2295,13 @@ describe('DefaultEmailMessageService Test Suite', () => {
         hasAttachments: false,
         status: {
           type: 'Failed',
-          // This will fail once the SDKs are running on Node >=20
-          cause: new SyntaxError('Unexpected token ] in JSON at position 1'),
-          // Below is what's thrown on >=20
-          // cause: new SyntaxError("Expected property name or '}' in JSON at position 1"),
+          // A different error is thrown here based on Node version being <20 or >=20.
+          // - this should handle both scenarios.
+          cause: new SyntaxError(
+            nodeMajorVersion >= 20
+              ? "Expected property name or '}' in JSON at position 1"
+              : 'Unexpected token ] in JSON at position 1',
+          ),
         },
         date: undefined,
       })

@@ -29,7 +29,10 @@ describe('DeleteEmailMessageUseCase tests', () => {
   it('deleting single email message succeeds', async () => {
     await expect(
       instanceUnderTest.execute(new Set(['messageToDelete'])),
-    ).resolves.toEqual({ successIds: ['messageToDelete'], failureIds: [] })
+    ).resolves.toEqual({
+      successIds: ['messageToDelete'],
+      failureMessages: [],
+    })
   })
 
   it('deleting zero email messages fails', async () => {
@@ -52,12 +55,14 @@ describe('DeleteEmailMessageUseCase tests', () => {
     when(mockEmailMessageService.deleteMessages(anything())).thenResolve([
       idsTodeleteArr[3],
     ])
-    const { successIds, failureIds } =
+    const { successIds, failureMessages } =
       await instanceUnderTest.execute(idsTodeleteSet)
     expect(successIds.length).toEqual(idsTodeleteSet.size - 1)
     expect(successIds.includes(idsTodeleteArr[3])).toBeFalsy()
-    expect(failureIds.length).toEqual(1)
-    expect(failureIds).toStrictEqual([idsTodeleteArr[3]])
+    expect(failureMessages.length).toEqual(1)
+    expect(failureMessages).toStrictEqual([
+      { id: idsTodeleteArr[3], errorType: 'Failed to delete email message' },
+    ])
   })
 
   it('multiple undeleted ids are returned', async () => {
@@ -68,12 +73,15 @@ describe('DeleteEmailMessageUseCase tests', () => {
       idsTodeleteArr[3],
       idsTodeleteArr[7],
     ])
-    const { successIds, failureIds } =
+    const { successIds, failureMessages } =
       await instanceUnderTest.execute(idsTodeleteSet)
     expect(successIds.length).toEqual(idsTodeleteSet.size - 2)
     expect(successIds.includes(idsTodeleteArr[3])).toBeFalsy()
     expect(successIds.includes(idsTodeleteArr[7])).toBeFalsy()
-    expect(failureIds.length).toEqual(2)
-    expect(failureIds).toStrictEqual([idsTodeleteArr[3], idsTodeleteArr[7]])
+    expect(failureMessages.length).toEqual(2)
+    expect(failureMessages).toStrictEqual([
+      { id: idsTodeleteArr[3], errorType: 'Failed to delete email message' },
+      { id: idsTodeleteArr[7], errorType: 'Failed to delete email message' },
+    ])
   })
 })

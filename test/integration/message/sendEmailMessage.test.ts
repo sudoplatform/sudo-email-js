@@ -876,7 +876,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       return message as unknown as EmailMessage
     }
 
-    fit('sends a message as a reply and updates the replied message at the service level', async () => {
+    it('sends a message as a reply and updates the replied message at the service level', async () => {
       const sendInput: SendEmailMessageInput = {
         senderEmailAddressId: emailAddress1.id,
         emailMessageHeader: {

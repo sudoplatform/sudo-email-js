@@ -36,6 +36,8 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
 
   let emailAddress: EmailAddress
 
+  const mapIdsToSuccessIds = (ids: string[]) => ids.map((id) => ({ id }))
+
   beforeEach(async () => {
     const result = await setupEmailClient(log)
     instanceUnderTest = result.emailClient
@@ -60,27 +62,50 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
   })
 
   it("returns failure when multiple emails that don't exist are attempted to be deleted", async () => {
+    const messageIds = ['1', '2', '3']
     await expect(
-      instanceUnderTest.deleteEmailMessages(['1', '2', '3']),
-    ).resolves.toStrictEqual({ status: BatchOperationResultStatus.Failure })
+      instanceUnderTest.deleteEmailMessages(messageIds),
+    ).resolves.toStrictEqual({
+      status: BatchOperationResultStatus.Failure,
+      successValues: [],
+      failureValues: expect.arrayContaining(
+        messageIds.map((id) => ({
+          errorType: 'Failed to delete email message',
+          id,
+        })),
+      ),
+    })
   })
+
   it('allows edge case 100 without throwing an error', async () => {
-    const messagIds = _.range(100).map((i) => i.toString())
+    const messageIds = _.range(100).map((i) => i.toString())
     await expect(
-      instanceUnderTest.deleteEmailMessages(messagIds),
-    ).resolves.toStrictEqual({ status: BatchOperationResultStatus.Failure })
+      instanceUnderTest.deleteEmailMessages(messageIds),
+    ).resolves.toStrictEqual({
+      status: BatchOperationResultStatus.Failure,
+      successValues: [],
+      failureValues: expect.arrayContaining(
+        messageIds.map((id) => ({
+          errorType: 'Failed to delete email message',
+          id,
+        })),
+      ),
+    })
   })
+
   it('throws LimitExceededError when limit is exceeded', async () => {
     const messagIds = _.range(101).map((i) => i.toString())
     await expect(
       instanceUnderTest.deleteEmailMessages(messagIds),
     ).rejects.toThrow(LimitExceededError)
   })
+
   it('throws InvalidArgumentError when input ids argument is empty', async () => {
     await expect(instanceUnderTest.deleteEmailMessages([])).rejects.toThrow(
       InvalidArgumentError,
     )
   })
+
   it('deletes multiple email messages successfully', async () => {
     const numberEmailsSent = 2
     const inputs = _.range(numberEmailsSent).map((i) => ({
@@ -121,7 +146,11 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
     )
     await expect(
       instanceUnderTest.deleteEmailMessages(ids),
-    ).resolves.toStrictEqual({ status: BatchOperationResultStatus.Success })
+    ).resolves.toStrictEqual({
+      status: BatchOperationResultStatus.Success,
+      successValues: expect.arrayContaining(mapIdsToSuccessIds(ids)),
+      failureValues: [],
+    })
     for (let i = 0; i < 5; i++) {
       if (updatedEmailAddress!.numberOfEmailMessages === numberEmailsSent) {
         break
@@ -135,6 +164,7 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
       numberEmailsSent,
     )
   })
+
   it("returns partial result when deleting messages that do and don't exist simultaneously", async () => {
     const result = await instanceUnderTest.sendEmailMessage({
       senderEmailAddressId: emailAddress.id,
@@ -163,8 +193,13 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
       instanceUnderTest.deleteEmailMessages([result.id, nonExistentId]),
     ).resolves.toStrictEqual({
       status: BatchOperationResultStatus.Partial,
-      successValues: [result.id],
-      failureValues: [nonExistentId],
+      successValues: mapIdsToSuccessIds([result.id]),
+      failureValues: [
+        {
+          errorType: 'Failed to delete email message',
+          id: nonExistentId,
+        },
+      ],
     })
   })
 })

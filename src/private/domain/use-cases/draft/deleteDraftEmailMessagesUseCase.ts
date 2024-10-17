@@ -19,7 +19,8 @@ import { divideArray } from '../../../util/array'
  *
  * @interface DeleteDraftEmailMessageUseCaseInput
  * @property {Set<string>} ids Identifiers of draft email messages to be deleted.
- * @property {string} emailAddressId Identifier of the email address associated with the draft email messages.
+ * @property {string} emailAddressId Identifier of the email address associated with the
+ *  draft email messages.
  */
 interface DeleteDraftEmailMessagesUseCaseInput {
   ids: Set<string>
@@ -29,13 +30,15 @@ interface DeleteDraftEmailMessagesUseCaseInput {
 /**
  * Output for `DeleteDraftEmailMessagesUseCase` use case.
  *
- * @interface DeleteDraftEmailMessageUseCaseOutput
- * @property {string[]} successIds Identifiers of draft email messages that were successfully deleted.
- * @property {EmailMessageOperationFailureResult[]} failureIds Identifiers of draft email messages that failed to delete.
+ * @interface DeleteDraftEmailMessagesUseCaseOutput
+ * @property {string[]} successIds Result list of identifiers of draft email messages
+ *  that were successfully deleted.
+ * @property {EmailMessageOperationFailureResult[]} failureMessages Result of list of draft
+ *  email messages that failed to delete.
  */
 interface DeleteDraftEmailMessagesUseCaseOutput {
   successIds: string[]
-  failureIds: EmailMessageOperationFailureResult[]
+  failureMessages: EmailMessageOperationFailureResult[]
 }
 
 /**
@@ -68,7 +71,7 @@ export class DeleteDraftEmailMessagesUseCase {
       throw new AddressNotFoundError()
     }
     if (!ids.size) {
-      return { successIds: [], failureIds: [] }
+      return { successIds: [], failureMessages: [] }
     }
     const batches = divideArray([...ids], 10)
 
@@ -99,6 +102,9 @@ export class DeleteDraftEmailMessagesUseCase {
       }
     }
 
-    return { failureIds, successIds }
+    return {
+      failureMessages: failureIds,
+      successIds,
+    }
   }
 }

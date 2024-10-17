@@ -34,6 +34,8 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
   let emailAddress: EmailAddress
   let draftMetadata: DraftEmailMessageMetadata
 
+  const mapIdsToSuccessIds = (ids: string[]) => ids.map((id) => ({ id }))
+
   beforeAll(async () => {
     const result = await setupEmailClient(log)
     instanceUnderTest = result.emailClient
@@ -81,17 +83,19 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
   })
 
   it('deletes a draft successfully', async () => {
+    const ids = [draftMetadata.id]
     await expect(
       instanceUnderTest.deleteDraftEmailMessages({
         emailAddressId: emailAddress.id,
-        ids: [draftMetadata.id],
+        ids,
       }),
     ).resolves.toStrictEqual({
       status: BatchOperationResultStatus.Success,
-      successValues: [draftMetadata.id],
+      successValues: mapIdsToSuccessIds(ids),
       failureValues: [],
     })
   })
+
   it('throws an error if delete performed against a non-existent address', async () => {
     await expect(
       instanceUnderTest.deleteDraftEmailMessages({
@@ -100,27 +104,31 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
       }),
     ).rejects.toThrow(AddressNotFoundError)
   })
+
   it("returns success when deleting a record that doesn't exist", async () => {
+    const ids = ['non-existent']
     await expect(
       instanceUnderTest.deleteDraftEmailMessages({
         emailAddressId: emailAddress.id,
-        ids: ['non-existent'],
+        ids,
       }),
     ).resolves.toStrictEqual({
       status: BatchOperationResultStatus.Success,
-      successValues: ['non-existent'],
+      successValues: mapIdsToSuccessIds(ids),
       failureValues: [],
     })
   })
+
   it('returns success when deleting a fake and real record in one operation', async () => {
+    const ids = ['non-existent', draftMetadata.id]
     await expect(
       instanceUnderTest.deleteDraftEmailMessages({
         emailAddressId: emailAddress.id,
-        ids: ['non-existent', draftMetadata.id],
+        ids,
       }),
     ).resolves.toStrictEqual({
       status: BatchOperationResultStatus.Success,
-      successValues: expect.arrayContaining(['non-existent', draftMetadata.id]),
+      successValues: expect.arrayContaining(mapIdsToSuccessIds(ids)),
       failureValues: [],
     })
   })
@@ -146,14 +154,15 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
           }),
       ),
     )
+    const ids = draftMetadata.map((m) => m.id)
     const deleteResult = await instanceUnderTest.deleteDraftEmailMessages({
       emailAddressId: emailAddress.id,
-      ids: draftMetadata.map((m) => m.id),
+      ids,
     })
 
     expect(deleteResult).toStrictEqual({
       status: BatchOperationResultStatus.Success,
-      successValues: expect.arrayContaining(draftMetadata.map((m) => m.id)),
+      successValues: expect.arrayContaining(mapIdsToSuccessIds(ids)),
       failureValues: [],
     })
   })
@@ -179,14 +188,15 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
           }),
       ),
     )
+    const ids = draftMetadata.map((m) => m.id)
     const deleteResult = await instanceUnderTest.deleteDraftEmailMessages({
       emailAddressId: emailAddress.id,
-      ids: draftMetadata.map((m) => m.id),
+      ids,
     })
 
     expect(deleteResult).toStrictEqual({
       status: BatchOperationResultStatus.Success,
-      successValues: expect.arrayContaining(draftMetadata.map((m) => m.id)),
+      successValues: expect.arrayContaining(mapIdsToSuccessIds(ids)),
       failureValues: [],
     })
   })

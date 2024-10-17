@@ -2809,10 +2809,10 @@
     apollo-cache-inmemory "^1.6.6"
     apollo-link "^1.2.14"
 
-"@sudoplatform/sudo-common@^8.10.0":
-  version "8.10.1"
-  resolved "https://registry.yarnpkg.com/@sudoplatform/sudo-common/-/sudo-common-8.10.1.tgz#7814e235347aef82cde630968452b970444318ac"
-  integrity sha512-GnG0E8X4wi3z4FnqHkB3B2J2CCV5ib9y2zsHyFlr6JdNG+okzkYShA+Vm8uqkuAzeQYVVsukkxjghA4saF0H4g==
+"@sudoplatform/sudo-common@^9.0.2":
+  version "9.0.2"
+  resolved "https://registry.yarnpkg.com/@sudoplatform/sudo-common/-/sudo-common-9.0.2.tgz#48d2818f34972762a7e370fb5fbdb4594334c0b6"
+  integrity sha512-LCxGq8X62vtuHogmrG+4ZFENgWY3nChH9C8RWfKKVgkqNeY0nw+2rEzX+nyiAzXPU8AsJhCZKCHPZO3bS2RifQ==
   dependencies:
     "@aws-sdk/client-s3" "^3.588.0"
     apollo-client "^2.6.10"
@@ -2902,10 +2902,17 @@
     tslib "^2.5.0"
     uuid "^9.0.0"
 
-"@sudoplatform/sudo-web-crypto-provider@^8.0.0", "@sudoplatform/sudo-web-crypto-provider@^8.0.1", "@sudoplatform/sudo-web-crypto-provider@^8.1.0":
+"@sudoplatform/sudo-web-crypto-provider@^8.0.0", "@sudoplatform/sudo-web-crypto-provider@^8.0.1":
   version "8.1.1"
   resolved "https://registry.yarnpkg.com/@sudoplatform/sudo-web-crypto-provider/-/sudo-web-crypto-provider-8.1.1.tgz#edfcf2ef296f21f2b6d0d4307638b7f6e7bd56b7"
   integrity sha512-/ms1OocT2KXzgr0BE2LQI1nJTEi/SvuOSJmCo83vLslIw4luda2nydd7j5TRSY2qh0wLPiXgH1s1XBjiucQT4g==
+  dependencies:
+    tslib "^2.6.2"
+
+"@sudoplatform/sudo-web-crypto-provider@^9.0.0":
+  version "9.0.0"
+  resolved "https://registry.yarnpkg.com/@sudoplatform/sudo-web-crypto-provider/-/sudo-web-crypto-provider-9.0.0.tgz#e8714feb0d9c2e39054fd6cc25315445379f1c98"
+  integrity sha512-j1okcSvKEpaS9fgwI0DeopCQpzQYgZhYvHrzqKfSIpwYXgF5z6+bJHL73ljuzhPuyzubTs+b3ymYjzGyKq6FlQ==
   dependencies:
     tslib "^2.6.2"
 

@@ -116,6 +116,7 @@ import { DefaultEmailCryptoService } from '../private/data/secure/defaultEmailCr
 import { DefaultEmailDomainService } from '../private/data/emailDomain/defaultEmailDomainService'
 import { GetConfiguredEmailDomainsUseCase } from '../private/domain/use-cases/emailDomain/getConfiguredEmailDomainsUseCase'
 import { EmailDomainEntityTransformer } from '../private/data/emailDomain/transformer/emailDomainEntityTransformer'
+import { DeleteEmailMessageSuccessResult } from './typings/deleteEmailMessageSuccessResult'
 
 /**
  * Pagination interface designed to be extended for list interfaces.
@@ -218,7 +219,6 @@ export interface BlockEmailAddressesInput {
 export interface UnblockEmailAddressesInput {
   addresses: string[]
 }
-
 /**
  * Input for `SudoEmailClient.UnblockEmailAddressesByHashedValue`
  *
@@ -371,7 +371,7 @@ export interface UpdateDraftEmailMessageInput {
 /**
  * Input for `SudoEmailClient.deleteDraftEmailMessages`.
  *
- * @interface DeleteDraftEmailMessageInput
+ * @interface DeleteDraftEmailMessagesInput
  * @property {string[]} ids A list of one or more identifiers of the draft email messages to be deleted.
  * @property {string} emailAddressId The identifier of the email address associated with the draft email message.
  */
@@ -710,7 +710,7 @@ export interface SudoEmailClient {
    * Any draft email message ids that do not exist will be marked as success.
    * Any emailAddressId that is not owned or does not exist, will throw an error.
    *
-   * @param {DeleteDraftEmailMessageInput} input Parameters used to delete a draft email message.
+   * @param {DeleteDraftEmailMessagesInput} input Parameters used to delete a draft email message.
    * @returns The status of the delete:
    *    Success - All draft email messages succeeded to delete.
    *    Partial - Only a partial amount of draft email messages succeeded to delete. Includes a list of the
@@ -722,7 +722,12 @@ export interface SudoEmailClient {
    */
   deleteDraftEmailMessages(
     input: DeleteDraftEmailMessagesInput,
-  ): Promise<BatchOperationResult<string, EmailMessageOperationFailureResult>>
+  ): Promise<
+    BatchOperationResult<
+      DeleteEmailMessageSuccessResult,
+      EmailMessageOperationFailureResult
+    >
+  >
 
   /**
    * Get a draft email message that has been previously saved.
@@ -836,20 +841,29 @@ export interface SudoEmailClient {
    * @throws LimitExceededError
    * @throws ServiceError
    */
-  deleteEmailMessages(ids: string[]): Promise<BatchOperationResult<string>>
+  deleteEmailMessages(
+    ids: string[],
+  ): Promise<
+    BatchOperationResult<
+      DeleteEmailMessageSuccessResult,
+      EmailMessageOperationFailureResult
+    >
+  >
 
   /**
    * Delete a single email message identified by id.
    *
    * @param {string} id The identifier of the email message to be deleted.
-   * @returns {string | undefined} The identifier of the email message that was deleted or undefined if the
-   * email message could not be deleted.
+   * @returns {DeleteEmailMessageSuccessResult | undefined} Result object containing the identifier of the email
+   *  message that was deleted, or undefined if the email message could not be deleted.
    *
    * @throws NotRegisteredError
    * @throws LimitExceededError
    * @throws ServiceError
    */
-  deleteEmailMessage(id: string): Promise<string | undefined>
+  deleteEmailMessage(
+    id: string,
+  ): Promise<DeleteEmailMessageSuccessResult | undefined>
 
   /**
    * Get an email message identified by id.
@@ -1156,34 +1170,53 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     return transformer.fromAPItoGraphQL(useCaseResult)
   }
 
-  public async deleteEmailMessage(id: string): Promise<string | undefined> {
+  public async deleteEmailMessage(
+    id: string,
+  ): Promise<DeleteEmailMessageSuccessResult | undefined> {
     const idSet = new Set([id])
     const deleteEmailMessageUseCase = new DeleteEmailMessagesUseCase(
       this.emailMessageService,
     )
     const { successIds } = await deleteEmailMessageUseCase.execute(idSet)
-    return successIds.length === idSet.size ? id : undefined
+    return successIds.length === idSet.size ? { id } : undefined
   }
 
   public async deleteEmailMessages(
     ids: string[],
-  ): Promise<BatchOperationResult<string>> {
+  ): Promise<
+    BatchOperationResult<
+      DeleteEmailMessageSuccessResult,
+      EmailMessageOperationFailureResult
+    >
+  > {
     const idSet = new Set(ids)
     const deleteEmailMessageUseCase = new DeleteEmailMessagesUseCase(
       this.emailMessageService,
     )
-    const { successIds, failureIds } =
-      await deleteEmailMessageUseCase.execute(idSet)
-    if (successIds.length === idSet.size) {
-      return { status: BatchOperationResultStatus.Success }
+
+    const deleteResult = await deleteEmailMessageUseCase.execute(idSet)
+    const failureValues = deleteResult.failureMessages
+    const successValues: DeleteEmailMessageSuccessResult[] =
+      deleteResult.successIds.map((id) => ({ id }))
+
+    if (successValues.length === idSet.size) {
+      return {
+        status: BatchOperationResultStatus.Success,
+        successValues,
+        failureValues: [],
+      }
     }
-    if (failureIds.length === idSet.size) {
-      return { status: BatchOperationResultStatus.Failure }
+    if (failureValues.length === idSet.size) {
+      return {
+        status: BatchOperationResultStatus.Failure,
+        failureValues,
+        successValues: [],
+      }
     }
     return {
       status: BatchOperationResultStatus.Partial,
-      failureValues: failureIds,
-      successValues: successIds,
+      failureValues,
+      successValues,
     }
   }
 
@@ -1480,35 +1513,43 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     ids,
     emailAddressId,
   }: DeleteDraftEmailMessagesInput): Promise<
-    BatchOperationResult<string, EmailMessageOperationFailureResult>
+    BatchOperationResult<
+      DeleteEmailMessageSuccessResult,
+      EmailMessageOperationFailureResult
+    >
   > {
     const idSet = new Set(ids)
     const useCase = new DeleteDraftEmailMessagesUseCase(
       this.emailAccountService,
       this.emailMessageService,
     )
-    const { successIds, failureIds } = await useCase.execute({
+
+    const deleteResult = await useCase.execute({
       ids: idSet,
       emailAddressId,
     })
-    if (successIds.length == idSet.size) {
+    const failureValues = deleteResult.failureMessages
+    const successValues: DeleteEmailMessageSuccessResult[] =
+      deleteResult.successIds.map((id) => ({ id }))
+
+    if (successValues.length === idSet.size) {
       return {
         status: BatchOperationResultStatus.Success,
-        failureValues: failureIds,
-        successValues: successIds,
+        successValues,
+        failureValues: [],
       }
     }
-    if (failureIds.length == idSet.size) {
+    if (failureValues.length === idSet.size) {
       return {
         status: BatchOperationResultStatus.Failure,
-        failureValues: failureIds,
-        successValues: successIds,
+        failureValues,
+        successValues: [],
       }
     }
     return {
       status: BatchOperationResultStatus.Partial,
-      failureValues: failureIds,
-      successValues: successIds,
+      failureValues,
+      successValues,
     }
   }
 

@@ -10,16 +10,20 @@ import {
   LimitExceededError,
 } from '../../../../public/errors'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
+import { EmailMessageOperationFailureResult } from '../../../../public'
 
 /**
  * Output for `DeleteEmailMessagesUseCase` use case.
  *
- * @property {string[]} successIds Identifiers of email messages that were successfully deleted.
- * @property {string[]} failureIds dentifiers of email messages that failed to delete.
+ * @interface DeleteEmailMessagesUseCaseOutput
+ * @property {string[]} successIds Result list of identifiers of draft email messages
+ *  that were successfully deleted.
+ * @property {EmailMessageOperationFailureResult[]} failureMessages Result of list of email
+ *  messages that failed to delete.
  */
 interface DeleteEmailMessagesUseCaseOutput {
   successIds: string[]
-  failureIds: string[]
+  failureMessages: EmailMessageOperationFailureResult[]
 }
 
 /**
@@ -41,6 +45,7 @@ export class DeleteEmailMessagesUseCase {
     this.log.debug(this.constructor.name, {
       limit: this.Configuration.IdsSizeLimit,
     })
+
     if (ids.size === 0) {
       throw new InvalidArgumentError()
     }
@@ -49,10 +54,23 @@ export class DeleteEmailMessagesUseCase {
         `Input cannot exceed ${this.Configuration.IdsSizeLimit}`,
       )
     }
+
     const failureIds = await this.emailMessageService.deleteMessages({
       ids: [...ids],
     })
     const successIds = [...ids].filter((id) => !failureIds.includes(id))
-    return { successIds, failureIds }
+    const emailMessageFailureResults: EmailMessageOperationFailureResult[] =
+      failureIds.map((id) => ({
+        id,
+        // We can't explicitly describe the reason for individual delete op failures
+        // without reworking how the service handles message deletions.
+        // So just provide a generic failure reason for all failed ids.
+        errorType: 'Failed to delete email message',
+      }))
+
+    return {
+      successIds,
+      failureMessages: emailMessageFailureResults,
+    }
   }
 }

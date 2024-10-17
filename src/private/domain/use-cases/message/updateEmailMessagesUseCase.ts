@@ -30,8 +30,8 @@ interface UpdateEmailMessagesUseCaseInput {
  *
  * @interface UpdateEmailMessagesUseCaseOutput
  * @property {UpdateEmailMessagesStatus} status Status of the email messages update operation.
- * @property {UpdatedEmailMessageSuccess[]} successIds Identifiers of email messages that were successfully updated.
- * @property {EmailMessageOperationFailureResult[]} failureIds Identifiers of email messages that failed to update.
+ * @property {UpdatedEmailMessageSuccess[]} successMessages Identifiers of email messages that were successfully updated.
+ * @property {EmailMessageOperationFailureResult[]} failureMessages Identifiers of email messages that failed to update.
  */
 export interface UpdateEmailMessagesUseCaseOutput {
   status: UpdateEmailMessagesStatus

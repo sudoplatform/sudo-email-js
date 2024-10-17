@@ -51,7 +51,7 @@ describe('DeleteDraftEmailMessagesUseCase Test Suite', () => {
       instanceUnderTest.execute({ ids: new Set(), emailAddressId: '' }),
     ).resolves.toStrictEqual({
       successIds: [],
-      failureIds: [],
+      failureMessages: [],
     })
   })
 
@@ -113,11 +113,11 @@ describe('DeleteDraftEmailMessagesUseCase Test Suite', () => {
       emailAddressId,
     })
     expect(result.successIds).toHaveLength(2)
-    expect(result.failureIds).toHaveLength(2)
+    expect(result.failureMessages).toHaveLength(2)
 
     expect(result.successIds).toContain('good-id1')
     expect(result.successIds).toContain('good-id2')
-    expect(result.failureIds).toEqual([
+    expect(result.failureMessages).toEqual([
       { id: 'bad-id1', errorType: 'error' },
       { id: 'bad-id2', errorType: 'error' },
     ])
