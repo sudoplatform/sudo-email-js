@@ -218,4 +218,64 @@ describe('DefaultEmailFolderService Test Suite', () => {
       verify(mockDeviceKeyWorker.unsealString(anything())).once()
     })
   })
+
+  describe('deleteCustomEmailFolderForEmailAddressId', () => {
+    it('calls appSync correctly', async () => {
+      when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
+        true,
+      )
+      when(mockDeviceKeyWorker.unsealString(anything())).thenResolve('CUSTOM')
+      when(mockAppSync.deleteCustomEmailFolder(anything())).thenResolve(
+        GraphQLDataFactory.emailFolderWithCustomFolderName,
+      )
+
+      const result =
+        await instanceUnderTest.deleteCustomEmailFolderForEmailAddressId({
+          emailFolderId:
+            EntityDataFactory.emailFolderWithCustomEmailFolderName.id,
+          emailAddressId:
+            EntityDataFactory.emailFolderWithCustomEmailFolderName
+              .emailAddressId,
+        })
+
+      expect(result).toStrictEqual({
+        ...EntityDataFactory.emailFolderWithCustomEmailFolderName,
+      })
+
+      verify(mockAppSync.deleteCustomEmailFolder(anything())).once()
+      const [inputArgs] = capture(mockAppSync.deleteCustomEmailFolder).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        emailAddressId:
+          EntityDataFactory.emailFolderWithCustomEmailFolderName.emailAddressId,
+        emailFolderId:
+          EntityDataFactory.emailFolderWithCustomEmailFolderName.id,
+      })
+    })
+
+    it('accepts and returns undefined from appSync', async () => {
+      when(mockAppSync.deleteCustomEmailFolder(anything())).thenResolve(
+        undefined,
+      )
+
+      const result =
+        await instanceUnderTest.deleteCustomEmailFolderForEmailAddressId({
+          emailFolderId:
+            EntityDataFactory.emailFolderWithCustomEmailFolderName.id,
+          emailAddressId:
+            EntityDataFactory.emailFolderWithCustomEmailFolderName
+              .emailAddressId,
+        })
+
+      expect(result).toStrictEqual(undefined)
+
+      verify(mockAppSync.deleteCustomEmailFolder(anything())).once()
+      const [inputArgs] = capture(mockAppSync.deleteCustomEmailFolder).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        emailAddressId:
+          EntityDataFactory.emailFolderWithCustomEmailFolderName.emailAddressId,
+        emailFolderId:
+          EntityDataFactory.emailFolderWithCustomEmailFolderName.id,
+      })
+    })
+  })
 })

@@ -121,6 +121,9 @@ import {
   ConfiguredDomains,
   GetConfiguredEmailDomainsQuery,
   GetConfiguredEmailDomainsDocument,
+  DeleteCustomEmailFolderInput,
+  DeleteCustomEmailFolderMutation,
+  DeleteCustomEmailFolderDocument,
 } from '../../../gen/graphqlTypes'
 import { ErrorTransformer } from './transformer/errorTransformer'
 
@@ -161,6 +164,17 @@ export class ApiClient {
       calleeName: this.createCustomEmailFolder.name,
     })
     return data.createCustomEmailFolder
+  }
+
+  public async deleteCustomEmailFolder(
+    input: DeleteCustomEmailFolderInput,
+  ): Promise<EmailFolder | undefined> {
+    const data = await this.performMutation<DeleteCustomEmailFolderMutation>({
+      mutation: DeleteCustomEmailFolderDocument,
+      variables: { input },
+      calleeName: this.deleteCustomEmailFolder.name,
+    })
+    return data.deleteCustomEmailFolder || undefined
   }
 
   public async blockEmailAddresses(

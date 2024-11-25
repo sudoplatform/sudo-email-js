@@ -10,6 +10,9 @@ module.exports = {
     {
       parser: '@typescript-eslint/parser',
       files: ['src/**/*.ts'],
+      parserOptions: {
+        project: './tsconfig.test.json',
+      },
       excludedFiles: ['test/**/*.ts'],
       plugins: ['@typescript-eslint', 'tree-shaking'],
       extends: ['plugin:@typescript-eslint/recommended', 'prettier', 'plugin:prettier/recommended'],
@@ -19,6 +22,7 @@ module.exports = {
         '@typescript-eslint/array-type': 'off',
         '@typescript-eslint/no-parameter-properties': 'off',
         '@typescript-eslint/no-use-before-define': 'off',
+        '@typescript-eslint/no-floating-promises': 'error',
         'tree-shaking/no-side-effects-in-initialization': [
           2,
           {
@@ -65,6 +69,7 @@ module.exports = {
       rules: {
         '@typescript-eslint/no-explicit-any': 'off',
         '@typescript-eslint/no-non-null-assertion': 'off',
+        '@typescript-eslint/no-floating-promises': 'error',
         '@tree-shaking/no-side-effects-in-initialization': 'off'
       },
     }

@@ -4,18 +4,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { instance, mock, reset } from 'ts-mockito'
 import { EmailAccountEntityTransformer } from '../../../../../../src/private/data/account/transformer/emailAccountEntityTransformer'
 import { EntityDataFactory } from '../../../../data-factory/entity'
 import { GraphQLDataFactory } from '../../../../data-factory/graphQL'
+import { DeviceKeyWorker } from '../../../../../../src/private/data/common/deviceKeyWorker'
 
 describe('EmailAccountEntityTransformer Test Suite', () => {
-  const instanceUnderTest = new EmailAccountEntityTransformer()
+  const mockDeviceKeyWorker = mock<DeviceKeyWorker>()
+  let instanceUnderTest: EmailAccountEntityTransformer
+
+  beforeEach(() => {
+    reset(mockDeviceKeyWorker)
+    instanceUnderTest = new EmailAccountEntityTransformer(
+      instance(mockDeviceKeyWorker),
+    )
+  })
 
   describe('transformGraphQL', () => {
-    it('transforms successfully with optionals present', () => {
-      expect(
+    it('transforms successfully with optionals present', async () => {
+      await expect(
         instanceUnderTest.transformGraphQL(GraphQLDataFactory.emailAddress),
-      ).toStrictEqual(EntityDataFactory.emailAccount)
+      ).resolves.toStrictEqual(EntityDataFactory.emailAccount)
     })
 
     it.each`
@@ -24,13 +34,13 @@ describe('EmailAccountEntityTransformer Test Suite', () => {
       ${null}
     `(
       'transforms successfully with optionals absent by value $optional',
-      ({ optional }) => {
-        expect(
+      async ({ optional }) => {
+        await expect(
           instanceUnderTest.transformGraphQL({
             ...GraphQLDataFactory.emailAddress,
             lastReceivedAtEpochMs: optional,
           }),
-        ).toStrictEqual({
+        ).resolves.toStrictEqual({
           ...EntityDataFactory.emailAccount,
           lastReceivedAt: undefined,
         })

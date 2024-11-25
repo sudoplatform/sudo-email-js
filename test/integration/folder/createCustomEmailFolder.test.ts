@@ -67,15 +67,76 @@ describe('SudoEmailClient CreateCustomEmailFolder Test Suite', () => {
     })
 
     expect(updatedEmailAddress?.folders).toHaveLength(5)
-    // 'NONE' is returned in the 'folderName' for custom folders, as this attribute is only used for standard folders.
     expect(updatedEmailAddress?.folders.map((f) => f.folderName)).toEqual(
-      expect.arrayContaining(['NONE', 'INBOX', 'SENT', 'OUTBOX', 'TRASH']),
+      expect.arrayContaining([
+        expect.stringContaining('CUSTOM'),
+        'INBOX',
+        'SENT',
+        'OUTBOX',
+        'TRASH',
+      ]),
     )
 
     // Standard folders do not have the 'customFolderName' attribute populated
     expect(updatedEmailAddress?.folders.map((f) => f.customFolderName)).toEqual(
       expect.arrayContaining([
         'CUSTOM_FOLDER',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      ]),
+    )
+  })
+
+  test('can create multiple custom folders successfully', async () => {
+    const customFolderName1 = 'CUSTOM_FOLDER_1'
+    const customFolder1 = await instanceUnderTest.createCustomEmailFolder({
+      emailAddressId: emailAddress.id,
+      customFolderName: customFolderName1,
+    })
+    const sub = await userClient.getSubject()
+    expect(customFolder1.id).toBeDefined()
+    expect(customFolder1.owner).toStrictEqual(sub)
+    expect(customFolder1.owners[0].id).toStrictEqual(sudo.id)
+    expect(customFolder1.owners[0].issuer).toStrictEqual(sudoIssuer)
+    expect(customFolder1.customFolderName).toBeDefined()
+    expect(customFolder1.customFolderName).toStrictEqual(customFolderName1)
+
+    const customFolderName2 = 'CUSTOM_FOLDER_2'
+    const customFolder2 = await instanceUnderTest.createCustomEmailFolder({
+      emailAddressId: emailAddress.id,
+      customFolderName: customFolderName2,
+    })
+    expect(customFolder2.id).toBeDefined()
+    expect(customFolder2.owner).toStrictEqual(sub)
+    expect(customFolder2.owners[0].id).toStrictEqual(sudo.id)
+    expect(customFolder2.owners[0].issuer).toStrictEqual(sudoIssuer)
+    expect(customFolder2.customFolderName).toBeDefined()
+    expect(customFolder2.customFolderName).toStrictEqual(customFolderName2)
+
+    const updatedEmailAddress = await instanceUnderTest.getEmailAddress({
+      id: emailAddress.id,
+      cachePolicy: CachePolicy.RemoteOnly,
+    })
+
+    expect(updatedEmailAddress?.folders).toHaveLength(6)
+    expect(updatedEmailAddress?.folders.map((f) => f.folderName)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('CUSTOM'),
+        expect.stringContaining('CUSTOM'),
+        'INBOX',
+        'SENT',
+        'OUTBOX',
+        'TRASH',
+      ]),
+    )
+
+    // Standard folders do not have the 'customFolderName' attribute populated
+    expect(updatedEmailAddress?.folders.map((f) => f.customFolderName)).toEqual(
+      expect.arrayContaining([
+        'CUSTOM_FOLDER_2',
+        'CUSTOM_FOLDER_1',
         undefined,
         undefined,
         undefined,

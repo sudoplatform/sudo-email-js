@@ -10,10 +10,8 @@ import {
 } from '@sudoplatform/sudo-common'
 import {
   EmailAddress,
-  EmailFolder,
   KeyFormat as GraphQLKeyFormat,
   ProvisionEmailAddressInput,
-  SealedAttribute,
   SealedAttributeInput,
   UpdateEmailAddressMetadataInput,
 } from '../../../gen/graphqlTypes'
@@ -32,7 +30,6 @@ import {
 } from '../../domain/entities/account/emailAccountService'
 import { EmailAddressEntity } from '../../domain/entities/account/emailAddressEntity'
 import { EmailAddressPublicInfoEntity } from '../../domain/entities/account/emailAddressPublicInfoEntity'
-import { EmailFolderEntity } from '../../domain/entities/folder/emailFolderEntity'
 import { ApiClient } from '../common/apiClient'
 import {
   DeviceKeyWorker,
@@ -57,7 +54,9 @@ export class DefaultEmailAccountService implements EmailAccountService {
     private readonly deviceKeyWorker: DeviceKeyWorker,
     private readonly config?: EmailAccountServiceConfig,
   ) {
-    this.emailAccountTransformer = new EmailAccountEntityTransformer()
+    this.emailAccountTransformer = new EmailAccountEntityTransformer(
+      deviceKeyWorker,
+    )
     this.emailAddressTransformer = new EmailAddressEntityTransformer()
   }
 
@@ -265,29 +264,7 @@ export class DefaultEmailAccountService implements EmailAccountService {
     emailAddress: EmailAddress,
   ): Promise<EmailAccountEntity> => {
     const transformed =
-      this.emailAccountTransformer.transformGraphQL(emailAddress)
-
-    if (emailAddress.alias) {
-      const symmetricKeyExists = await this.deviceKeyWorker.keyExists(
-        emailAddress.alias.keyId,
-        KeyType.SymmetricKey,
-      )
-      if (symmetricKeyExists) {
-        try {
-          const unsealedAlias = await this.unsealSealedData(emailAddress.alias)
-          transformed.emailAddress.alias = unsealedAlias
-        } catch (error) {
-          // Tolerate inability to unseal alias. We have the correct
-          // key so this is a decoding error
-          transformed.emailAddress.alias = ''
-        }
-      } else {
-        transformed.status = {
-          type: 'Failed',
-          cause: new KeyNotFoundError(),
-        }
-      }
-    }
+      await this.emailAccountTransformer.transformGraphQL(emailAddress)
 
     for (const keyId of emailAddress.keyIds) {
       const status = await this.deviceKeyWorker.keyExists(
@@ -304,53 +281,6 @@ export class DefaultEmailAccountService implements EmailAccountService {
       }
     }
 
-    // Unseal each custom folder name that exists on the email address
-    await Promise.all(
-      transformed.folders.map(async (f): Promise<EmailFolderEntity> => {
-        return this.unsealCustomFolderNameIfExists(f, emailAddress.folders)
-      }),
-    )
-
     return transformed
-  }
-
-  unsealSealedData = async (sealedData: SealedAttribute): Promise<string> => {
-    return this.deviceKeyWorker.unsealString({
-      encrypted: sealedData.base64EncodedSealedData,
-      keyId: sealedData.keyId,
-      keyType: KeyType.SymmetricKey,
-      algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding,
-    })
-  }
-
-  async unsealCustomFolderNameIfExists(
-    transformedFolder: EmailFolderEntity,
-    folders: EmailFolder[],
-  ): Promise<EmailFolderEntity> {
-    const folder = folders.find((f) => f.id == transformedFolder.id)
-    if (folder && folder.customFolderName) {
-      const symmetricKeyExists = await this.deviceKeyWorker.keyExists(
-        folder.customFolderName.keyId,
-        KeyType.SymmetricKey,
-      )
-      if (symmetricKeyExists) {
-        try {
-          const unsealedCustomFolderName = await this.unsealSealedData(
-            folder.customFolderName,
-          )
-          transformedFolder.customFolderName = unsealedCustomFolderName
-        } catch (error) {
-          // Tolerate inability to unseal customFolderName. We have the correct
-          // key so this is a decoding error
-          transformedFolder.customFolderName = ''
-        }
-      } else {
-        transformedFolder.status = {
-          type: 'Failed',
-          cause: new KeyNotFoundError(),
-        }
-      }
-    }
-    return transformedFolder
   }
 }

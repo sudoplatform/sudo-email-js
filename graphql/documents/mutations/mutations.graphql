@@ -46,6 +46,12 @@ mutation CreateCustomEmailFolder($input: CreateCustomEmailFolderInput!) {
   }
 }
 
+mutation DeleteCustomEmailFolder($input: DeleteCustomEmailFolderInput!) {
+  deleteCustomEmailFolder(input: $input) {
+    ...EmailFolder
+  }
+}
+
 mutation BlockEmailAddresses($input: BlockEmailAddressesInput!) {
   blockEmailAddresses(input: $input) {
     ...BlockAddressesResult

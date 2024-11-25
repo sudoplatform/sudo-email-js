@@ -257,7 +257,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
       ids: nonExistentId,
       values: { seen: true },
     })
-    console.debug({ result })
+
     expect(result).toStrictEqual({
       status: BatchOperationResultStatus.Failure,
       failureValues: [

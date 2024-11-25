@@ -117,6 +117,7 @@ import { DefaultEmailDomainService } from '../private/data/emailDomain/defaultEm
 import { GetConfiguredEmailDomainsUseCase } from '../private/domain/use-cases/emailDomain/getConfiguredEmailDomainsUseCase'
 import { EmailDomainEntityTransformer } from '../private/data/emailDomain/transformer/emailDomainEntityTransformer'
 import { DeleteEmailMessageSuccessResult } from './typings/deleteEmailMessageSuccessResult'
+import { DeleteCustomEmailFolderUseCase } from '../private/domain/use-cases/folder/deleteCustomEmailFolderUseCase'
 
 /**
  * Pagination interface designed to be extended for list interfaces.
@@ -198,6 +199,18 @@ export interface ListEmailFoldersForEmailAddressIdInput extends Pagination {
 export interface CreateCustomEmailFolderInput {
   emailAddressId: string
   customFolderName: string
+}
+
+/**
+ * Input for `SudoEmailClient.DeleteCustomEmailFolder`.
+ *
+ * @interface DeleteCustomEmailFolderInput
+ * @property {string} emailFolderId The identifier of the email folder to delete.
+ * @property {string} emailAddressId The identifier of the email address associated with the folder.
+ */
+export interface DeleteCustomEmailFolderInput {
+  emailFolderId: string
+  emailAddressId: string
 }
 
 /**
@@ -639,6 +652,17 @@ export interface SudoEmailClient {
   createCustomEmailFolder(
     input: CreateCustomEmailFolderInput,
   ): Promise<EmailFolder>
+
+  /**
+   * Delete a custom email folder for the email address identified by emailAddressId.
+   * When a custom folder is deleted, any messages in the folder will be moved to TRASH.
+   *
+   * @param {DeleteCustomEmailFolderInput} input Parameters used to delete a custom email folder.
+   * @returns {EmailFolder | undefined} The deleted folder, or undefined if folder was not found.
+   */
+  deleteCustomEmailFolder(
+    input: DeleteCustomEmailFolderInput,
+  ): Promise<EmailFolder | undefined>
 
   /**
    * Block email address(es) for the given owner
@@ -1381,6 +1405,22 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
 
     const apiTransformer = new EmailFolderAPITransformer()
     return apiTransformer.transformEntity(result)
+  }
+
+  public async deleteCustomEmailFolder({
+    emailFolderId,
+    emailAddressId,
+  }: DeleteCustomEmailFolderInput): Promise<EmailFolder | undefined> {
+    this.log.debug(this.deleteCustomEmailFolder.name, {
+      emailFolderId,
+      emailAddressId,
+    })
+
+    const useCase = new DeleteCustomEmailFolderUseCase(this.emailFolderService)
+    const result = await useCase.execute({ emailFolderId, emailAddressId })
+
+    const apiTransformer = new EmailFolderAPITransformer()
+    return result ? apiTransformer.transformEntity(result) : result
   }
 
   public async blockEmailAddresses(

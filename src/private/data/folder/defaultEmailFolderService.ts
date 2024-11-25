@@ -7,6 +7,7 @@
 import { EmailFolderEntity } from '../../domain/entities/folder/emailFolderEntity'
 import {
   CreateCustomEmailFolderForEmailAddressIdInput,
+  DeleteCustomEmailFolderForEmailAddressIdInput,
   EmailFolderService,
   ListEmailFoldersForEmailAddressIdInput,
   ListEmailFoldersForEmailAddressIdOutput,
@@ -15,16 +16,12 @@ import { ApiClient } from '../common/apiClient'
 import {
   SealedAttributeInput,
   CreateCustomEmailFolderInput,
-  SealedAttribute,
-  EmailFolder,
+  DeleteCustomEmailFolderInput,
 } from '../../../gen/graphqlTypes'
 import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransformer'
 import { EmailFolderEntityTransformer } from './transformer/emailFolderEntityTransformer'
 import { DeviceKeyWorker, KeyType } from '../common/deviceKeyWorker'
-import {
-  EncryptionAlgorithm,
-  KeyNotFoundError,
-} from '@sudoplatform/sudo-common'
+import { EncryptionAlgorithm } from '@sudoplatform/sudo-common'
 
 export class DefaultEmailFolderService implements EmailFolderService {
   private readonly transformer: EmailFolderEntityTransformer
@@ -32,7 +29,7 @@ export class DefaultEmailFolderService implements EmailFolderService {
     private readonly appSync: ApiClient,
     private readonly deviceKeyWorker: DeviceKeyWorker,
   ) {
-    this.transformer = new EmailFolderEntityTransformer()
+    this.transformer = new EmailFolderEntityTransformer(deviceKeyWorker)
   }
 
   async listEmailFoldersForEmailAddressId({
@@ -51,11 +48,19 @@ export class DefaultEmailFolderService implements EmailFolderService {
       nextToken,
     )
     const folders: EmailFolderEntity[] = []
-    if (result.items) {
-      result.items.map((item) =>
-        folders.push(this.transformer.transformGraphQL(item)),
-      )
-    }
+
+    const folderResults = await Promise.allSettled(
+      result.items.map((folder) => {
+        return this.transformer.transformGraphQL(folder)
+      }),
+    )
+    folderResults.forEach((result) => {
+      if (result.status === 'fulfilled') {
+        folders.push(result.value)
+      } else {
+        console.error({ error: result.reason }, 'Error transforming folder')
+      }
+    })
     return {
       folders,
       nextToken: result.nextToken ?? undefined,
@@ -90,46 +95,20 @@ export class DefaultEmailFolderService implements EmailFolderService {
     const result = await this.appSync.createCustomEmailFolder(
       createCustomEmailFolderInput,
     )
-    return await this.mapEmailFolder(result)
-  }
-  mapEmailFolder = async (
-    emailFolder: EmailFolder,
-  ): Promise<EmailFolderEntity> => {
-    const transformed = this.transformer.transformGraphQL(emailFolder)
-    if (emailFolder.customFolderName) {
-      const symmetricKeyExists = await this.deviceKeyWorker.keyExists(
-        emailFolder.customFolderName.keyId,
-        KeyType.SymmetricKey,
-      )
-      if (symmetricKeyExists) {
-        try {
-          const unsealedCustomFolderName = await this.unsealCustomFolderName(
-            emailFolder.customFolderName,
-          )
-          transformed.customFolderName = unsealedCustomFolderName
-        } catch (error) {
-          // Tolerate inability to unseal customFolderName. We have the correct
-          // key so this is a decoding error
-          transformed.customFolderName = ''
-        }
-      } else {
-        transformed.status = {
-          type: 'Failed',
-          cause: new KeyNotFoundError(),
-        }
-      }
-    }
-    return transformed
+    return await this.transformer.transformGraphQL(result)
   }
 
-  unsealCustomFolderName = async (
-    customFolderName: SealedAttribute,
-  ): Promise<string> => {
-    return this.deviceKeyWorker.unsealString({
-      encrypted: customFolderName.base64EncodedSealedData,
-      keyId: customFolderName.keyId,
-      keyType: KeyType.SymmetricKey,
-      algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding,
-    })
+  async deleteCustomEmailFolderForEmailAddressId(
+    input: DeleteCustomEmailFolderForEmailAddressIdInput,
+  ): Promise<EmailFolderEntity | undefined> {
+    const deleteCustomEmailFolderInput: DeleteCustomEmailFolderInput = {
+      emailFolderId: input.emailFolderId,
+      emailAddressId: input.emailAddressId,
+    }
+
+    const result = await this.appSync.deleteCustomEmailFolder(
+      deleteCustomEmailFolderInput,
+    )
+    return result ? await this.transformer.transformGraphQL(result) : result
   }
 }
