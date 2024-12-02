@@ -125,6 +125,16 @@ input DeleteCustomEmailFolderInput {
   emailFolderId: ID!
 }
 
+input CustomEmailFolderUpdateValuesInput {
+  customFolderName: SealedAttributeInput
+}
+
+input UpdateCustomEmailFolderInput {
+  emailAddressId: ID!
+  emailFolderId: ID!
+  values: CustomEmailFolderUpdateValuesInput!
+}
+
 input LookupEmailAddressesPublicInfoInput {
   emailAddresses: [String!]!
 }
@@ -467,6 +477,8 @@ type Mutation {
 
   # Delete a custom folder for an email address.
   deleteCustomEmailFolder(input: DeleteCustomEmailFolderInput!): EmailFolder
+
+  updateCustomEmailFolder(input: UpdateCustomEmailFolderInput!): EmailFolder!
 
   blockEmailAddresses(
     input: BlockEmailAddressesInput!

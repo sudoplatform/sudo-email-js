@@ -118,6 +118,7 @@ import { GetConfiguredEmailDomainsUseCase } from '../private/domain/use-cases/em
 import { EmailDomainEntityTransformer } from '../private/data/emailDomain/transformer/emailDomainEntityTransformer'
 import { DeleteEmailMessageSuccessResult } from './typings/deleteEmailMessageSuccessResult'
 import { DeleteCustomEmailFolderUseCase } from '../private/domain/use-cases/folder/deleteCustomEmailFolderUseCase'
+import { UpdateCustomEmailFolderUseCase } from '../private/domain/use-cases/folder/updateCustomEmailFolderUseCase'
 
 /**
  * Pagination interface designed to be extended for list interfaces.
@@ -211,6 +212,24 @@ export interface CreateCustomEmailFolderInput {
 export interface DeleteCustomEmailFolderInput {
   emailFolderId: string
   emailAddressId: string
+}
+
+export interface CustomEmailFolderUpdateValuesInput {
+  customFolderName?: string
+}
+
+/**
+ * Input for `SudoEmailClient.UpdateCustomEmailFolder`.
+ *
+ * @interface UpdateCustomEmailFolderInput
+ * @property {string} emailFolderId The identifier of the email folder to update
+ * @property {string} emailAddressId The identifier of the email address associated with the folder.
+ * @property {CustomEmailFolderUpdateValuesInput} values The values to update
+ */
+export interface UpdateCustomEmailFolderInput {
+  emailFolderId: string
+  emailAddressId: string
+  values: CustomEmailFolderUpdateValuesInput
 }
 
 /**
@@ -663,6 +682,16 @@ export interface SudoEmailClient {
   deleteCustomEmailFolder(
     input: DeleteCustomEmailFolderInput,
   ): Promise<EmailFolder | undefined>
+
+  /**
+   * Update the custom email folder identified by emailFolderId
+   *
+   * @param {UpdateCustomEmailFolderInput} input Parameters used to update a custom email folder.
+   * @returns {EmailFolder} The updated email folder.
+   */
+  updateCustomEmailFolder(
+    input: UpdateCustomEmailFolderInput,
+  ): Promise<EmailFolder>
 
   /**
    * Block email address(es) for the given owner
@@ -1421,6 +1450,28 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
 
     const apiTransformer = new EmailFolderAPITransformer()
     return result ? apiTransformer.transformEntity(result) : result
+  }
+
+  public async updateCustomEmailFolder({
+    emailAddressId,
+    emailFolderId,
+    values,
+  }: UpdateCustomEmailFolderInput): Promise<EmailFolder> {
+    this.log.debug(this.updateCustomEmailFolder.name, {
+      emailAddressId,
+      emailFolderId,
+      values,
+    })
+
+    const useCase = new UpdateCustomEmailFolderUseCase(this.emailFolderService)
+    const result = await useCase.execute({
+      emailAddressId,
+      emailFolderId,
+      values,
+    })
+
+    const apiTransformer = new EmailFolderAPITransformer()
+    return apiTransformer.transformEntity(result)
   }
 
   public async blockEmailAddresses(

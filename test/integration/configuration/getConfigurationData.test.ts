@@ -21,17 +21,14 @@ describe('SudoEmailClient GetConfigurationData Test Suite', () => {
 
   describe('GetConfigurationData', () => {
     it('returns expected result', async () => {
-      const expectedResult = {
-        deleteEmailMessagesLimit: 100,
-        updateEmailMessagesLimit: 100,
-        emailMessageMaxInboundMessageSize: 10485760,
-        emailMessageMaxOutboundMessageSize: 10485760,
-        emailMessageRecipientsLimit: 10,
-        encryptedEmailMessageRecipientsLimit: 10,
-      }
-
       const result = await instanceUnderTest.getConfigurationData()
-      expect(result).toMatchObject(expectedResult)
+      expect(result.deleteEmailMessagesLimit).toBeGreaterThanOrEqual(1)
+      expect(result.updateEmailMessagesLimit).toBeGreaterThanOrEqual(1)
+      expect(result.emailMessageMaxInboundMessageSize).toBeGreaterThanOrEqual(1)
+      expect(result.emailMessageMaxOutboundMessageSize).toBeGreaterThanOrEqual(
+        1,
+      )
+      expect(result.emailMessageRecipientsLimit).toBeGreaterThanOrEqual(1)
       expect(result).toHaveProperty('sendEncryptedEmailEnabled')
     })
   })

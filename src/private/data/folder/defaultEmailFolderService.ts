@@ -11,12 +11,14 @@ import {
   EmailFolderService,
   ListEmailFoldersForEmailAddressIdInput,
   ListEmailFoldersForEmailAddressIdOutput,
+  UpdateCustomEmailFolderForEmailAddressIdInput,
 } from '../../domain/entities/folder/emailFolderService'
 import { ApiClient } from '../common/apiClient'
 import {
   SealedAttributeInput,
   CreateCustomEmailFolderInput,
   DeleteCustomEmailFolderInput,
+  UpdateCustomEmailFolderInput,
 } from '../../../gen/graphqlTypes'
 import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransformer'
 import { EmailFolderEntityTransformer } from './transformer/emailFolderEntityTransformer'
@@ -110,5 +112,39 @@ export class DefaultEmailFolderService implements EmailFolderService {
       deleteCustomEmailFolderInput,
     )
     return result ? await this.transformer.transformGraphQL(result) : result
+  }
+
+  async updateCustomEmailFolderForEmailAddressId(
+    input: UpdateCustomEmailFolderForEmailAddressIdInput,
+  ): Promise<EmailFolderEntity> {
+    const updateInput: Record<string, SealedAttributeInput> = {}
+    if (input.values.customFolderName) {
+      const symmetricKeyId =
+        (await this.deviceKeyWorker.getCurrentSymmetricKeyId()) ??
+        (await this.deviceKeyWorker.generateCurrentSymmetricKey())
+
+      const sealedCustomFolderName = await this.deviceKeyWorker.sealString({
+        payload: new TextEncoder().encode(input.values.customFolderName),
+        keyId: symmetricKeyId,
+        keyType: KeyType.SymmetricKey,
+      })
+
+      updateInput.customFolderName = {
+        algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding,
+        keyId: symmetricKeyId,
+        plainTextType: 'string',
+        base64EncodedSealedData: sealedCustomFolderName,
+      }
+    }
+    const updateCustomEmailFolderInput: UpdateCustomEmailFolderInput = {
+      emailAddressId: input.emailAddressId,
+      emailFolderId: input.emailFolderId,
+      values: updateInput,
+    }
+
+    const result = await this.appSync.updateCustomEmailFolder(
+      updateCustomEmailFolderInput,
+    )
+    return await this.transformer.transformGraphQL(result)
   }
 }

@@ -10,8 +10,8 @@ import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import { EmailConfigurationData } from '../../../src/gen/graphqlTypes'
 
-// TODO these tests will fail in an environment with spamFolderEnabled set to true
 describe('SudoEmailClient ListEmailFoldersForEmailAddressId Test Suite', () => {
   jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
@@ -22,10 +22,14 @@ describe('SudoEmailClient ListEmailFoldersForEmailAddressId Test Suite', () => {
   let sudo: Sudo
   let sudoOwnershipProofToken: string
   let emailAddress: EmailAddress
+  let config: EmailConfigurationData
 
   beforeEach(async () => {
     const result = await setupEmailClient(log)
     instanceUnderTest = result.emailClient
+    if (!config) {
+      config = await instanceUnderTest.getConfigurationData()
+    }
     profilesClient = result.profilesClient
     userClient = result.userClient
     sudo = result.sudo
@@ -44,18 +48,35 @@ describe('SudoEmailClient ListEmailFoldersForEmailAddressId Test Suite', () => {
   })
 
   test('list returns the expected standard folders', async () => {
+    const expectedFolderNames = ['INBOX', 'SENT', 'TRASH', 'OUTBOX']
     const foldersListResult =
       await instanceUnderTest.listEmailFoldersForEmailAddressId({
         emailAddressId: emailAddress.id,
       })
 
-    expect(foldersListResult.items).toHaveLength(4)
+    expect(foldersListResult.items.length).toBeGreaterThanOrEqual(
+      expectedFolderNames.length,
+    )
     expect(foldersListResult.items.map((folder) => folder.folderName)).toEqual(
-      expect.arrayContaining(['INBOX', 'SENT', 'TRASH', 'OUTBOX']),
+      expect.arrayContaining(expectedFolderNames),
     )
   })
 
   test('list returns standard folders plus custom folders', async () => {
+    const expectedFolderNames = [
+      expect.stringContaining('CUSTOM'),
+      'INBOX',
+      'SENT',
+      'TRASH',
+      'OUTBOX',
+    ]
+    const expectedFolderCustomNames = [
+      'CUSTOM_FOLDER',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]
     const customFolderName = 'CUSTOM_FOLDER'
     const customFolder = await instanceUnderTest.createCustomEmailFolder({
       emailAddressId: emailAddress.id,
@@ -71,27 +92,15 @@ describe('SudoEmailClient ListEmailFoldersForEmailAddressId Test Suite', () => {
       })
 
     expect(foldersListResult.nextToken).toBeFalsy()
-    expect(foldersListResult.items).toHaveLength(5)
+    expect(foldersListResult.items.length).toBeGreaterThanOrEqual(
+      expectedFolderNames.length,
+    )
     expect(foldersListResult.items.map((folder) => folder.folderName)).toEqual(
-      expect.arrayContaining([
-        expect.stringContaining('CUSTOM'),
-        'INBOX',
-        'SENT',
-        'TRASH',
-        'OUTBOX',
-      ]),
+      expect.arrayContaining(expectedFolderNames),
     )
 
     expect(
       foldersListResult.items.map((folder) => folder.customFolderName),
-    ).toEqual(
-      expect.arrayContaining([
-        'CUSTOM_FOLDER',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      ]),
-    )
+    ).toEqual(expect.arrayContaining(expectedFolderCustomNames))
   })
 })

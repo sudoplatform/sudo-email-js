@@ -109,3 +109,9 @@ export class S3UploadError extends EmailError {
     super(message)
   }
 }
+
+export class EmailFolderNotFoundError extends EmailError {
+  constructor(msg?: string) {
+    super(msg)
+  }
+}

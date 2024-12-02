@@ -99,6 +99,7 @@ import { EntityDataFactory } from '../data-factory/entity'
 import { GetConfiguredEmailDomainsUseCase } from '../../../src/private/domain/use-cases/emailDomain/getConfiguredEmailDomainsUseCase'
 import { DefaultEmailDomainService } from '../../../src/private/data/emailDomain/defaultEmailDomainService'
 import { DeleteCustomEmailFolderUseCase } from '../../../src/private/domain/use-cases/folder/deleteCustomEmailFolderUseCase'
+import { UpdateCustomEmailFolderUseCase } from '../../../src/private/domain/use-cases/folder/updateCustomEmailFolderUseCase'
 
 // Constructor mocks
 
@@ -179,6 +180,13 @@ jest.mock(
 const JestMockDeleteCustomEmailFolderUseCase =
   DeleteCustomEmailFolderUseCase as jest.MockedClass<
     typeof DeleteCustomEmailFolderUseCase
+  >
+jest.mock(
+  '../../../src/private/domain/use-cases/folder/updateCustomEmailFolderUseCase',
+)
+const JestMockUpdateCustomEmailFolderUseCase =
+  UpdateCustomEmailFolderUseCase as jest.MockedClass<
+    typeof UpdateCustomEmailFolderUseCase
   >
 jest.mock(
   '../../../src/private/domain/use-cases/account/deprovisionEmailAccountUseCase',
@@ -426,6 +434,8 @@ describe('SudoEmailClient Test Suite', () => {
     mock<CreateCustomEmailFolderUseCase>()
   const mockDeleteCustomEmailFolderUseCase =
     mock<DeleteCustomEmailFolderUseCase>()
+  const mockUpdateCustomEmailFolderUseCase =
+    mock<UpdateCustomEmailFolderUseCase>()
   const mockDeprovisionEmailAccountUseCase =
     mock<DeprovisionEmailAccountUseCase>()
   const mockUpdateEmailAccountMetadataUseCase =
@@ -529,6 +539,7 @@ describe('SudoEmailClient Test Suite', () => {
     reset(mockListEmailFoldersForEmailAddressIdUseCase)
     reset(mockCreateCustomEmailFolderUseCase)
     reset(mockDeleteCustomEmailFolderUseCase)
+    reset(mockUpdateCustomEmailFolderUseCase)
     reset(mockSaveDraftEmailMessageUseCase)
     reset(mockUpdateDraftEmailMessageUseCase)
     reset(mockDeleteDraftEmailMessagesUseCase)
@@ -578,6 +589,8 @@ describe('SudoEmailClient Test Suite', () => {
     JestMockLookupEmailAddressesPublicInfoUseCase.mockClear()
     JestMockListEmailFoldersForEmailAddressIdUseCase.mockClear()
     JestMockCreateCustomEmailFolderUseCase.mockClear()
+    JestMockDeleteCustomEmailFolderUseCase.mockClear()
+    JestMockUpdateCustomEmailFolderUseCase.mockClear()
     JestMockSaveDraftEmailMessageUseCase.mockClear()
     JestMockUpdateDraftEmailMessageUseCase.mockClear()
     JestMockDeleteDraftEmailMessagesUseCase.mockClear()
@@ -668,6 +681,9 @@ describe('SudoEmailClient Test Suite', () => {
     )
     JestMockDeleteCustomEmailFolderUseCase.mockImplementation(() =>
       instance(mockDeleteCustomEmailFolderUseCase),
+    )
+    JestMockUpdateCustomEmailFolderUseCase.mockImplementation(() =>
+      instance(mockUpdateCustomEmailFolderUseCase),
     )
     JestMockSaveDraftEmailMessageUseCase.mockImplementation(() =>
       instance(mockSaveDraftEmailMessageUseCase),
@@ -915,6 +931,55 @@ describe('SudoEmailClient Test Suite', () => {
               .emailAddressId,
         }),
       ).resolves.toEqual(undefined)
+    })
+  })
+
+  describe('updateCustomEmailFolder', () => {
+    beforeEach(() => {
+      when(mockUpdateCustomEmailFolderUseCase.execute(anything())).thenResolve(
+        EntityDataFactory.emailFolderWithCustomEmailFolderName,
+      )
+    })
+
+    it('generates use case', async () => {
+      await instanceUnderTest.updateCustomEmailFolder({
+        emailFolderId: '',
+        emailAddressId: '',
+        values: { customFolderName: 'CUSTOM' },
+      })
+      expect(JestMockUpdateCustomEmailFolderUseCase).toHaveBeenCalledTimes(1)
+    })
+
+    it('calls use case as expected', async () => {
+      await instanceUnderTest.updateCustomEmailFolder({
+        emailFolderId:
+          EntityDataFactory.emailFolderWithCustomEmailFolderName.id,
+        emailAddressId:
+          EntityDataFactory.emailFolderWithCustomEmailFolderName.emailAddressId,
+        values: { customFolderName: 'CUSTOM' },
+      })
+      verify(mockUpdateCustomEmailFolderUseCase.execute(anything())).once()
+      const [args] = capture(mockUpdateCustomEmailFolderUseCase.execute).first()
+      expect(args).toEqual({
+        emailFolderId:
+          EntityDataFactory.emailFolderWithCustomEmailFolderName.id,
+        emailAddressId:
+          EntityDataFactory.emailFolderWithCustomEmailFolderName.emailAddressId,
+        values: { customFolderName: 'CUSTOM' },
+      })
+    })
+
+    it('returns expected result', async () => {
+      await expect(
+        instanceUnderTest.updateCustomEmailFolder({
+          emailFolderId:
+            EntityDataFactory.emailFolderWithCustomEmailFolderName.id,
+          emailAddressId:
+            EntityDataFactory.emailFolderWithCustomEmailFolderName
+              .emailAddressId,
+          values: { customFolderName: 'CUSTOM' },
+        }),
+      ).resolves.toEqual(APIDataFactory.emailFolderWithCustomFolderName)
     })
   })
 

@@ -59,6 +59,24 @@ export interface DeleteCustomEmailFolderForEmailAddressIdInput {
   emailAddressId: string
 }
 
+interface CustomEmailFolderUpdateValuesInput {
+  customFolderName?: string
+}
+
+/**
+ * Input for `EmailFolderService.updateCustomEmailFolderForEmailAddressId`.
+ *
+ * @interface UpdateCustomEmailFolderForEmailAddressIdInput
+ * @property {string} emailFolderId The identifier of the email folder to update
+ * @property {string} emailAddressId The identifier of the email address associated with the folder.
+ * @property {CustomEmailFolderUpdateValuesInput} values The values to update
+ */
+export interface UpdateCustomEmailFolderForEmailAddressIdInput {
+  emailFolderId: string
+  emailAddressId: string
+  values: CustomEmailFolderUpdateValuesInput
+}
+
 /**
  * Core entity representation of an email folder service used in business logic. Used to perform operations for email folders.
  *
@@ -88,10 +106,20 @@ export interface EmailFolderService {
   /**
    * Delete a custom email folder for the email address associated with the emailAddressId.
    *
-   * @param {DeleteCustomEmailFolderForEmailAddressIdInput} input Parameters used to delete a custom email folder for and email address.
+   * @param {DeleteCustomEmailFolderForEmailAddressIdInput} input Parameters used to delete a custom email folder for an email address.
    * @return {EmailFolderEntity | undefined} The custom email folder.
    */
   deleteCustomEmailFolderForEmailAddressId(
     input: DeleteCustomEmailFolderForEmailAddressIdInput,
   ): Promise<EmailFolderEntity | undefined>
+
+  /**
+   * Update a custom email folder for the email address associated with the emailAddressId.
+   *
+   * @param {UpdateCustomEmailFolderForEmailAddressIdInput} input Parameters used to update a custom email folder for an email address.
+   * @return {EmailFolderEntity} The updated custom email folder
+   */
+  updateCustomEmailFolderForEmailAddressId(
+    input: UpdateCustomEmailFolderForEmailAddressIdInput,
+  ): Promise<EmailFolderEntity>
 }

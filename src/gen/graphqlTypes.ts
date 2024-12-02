@@ -101,6 +101,10 @@ export type CreatePublicKeyInput = {
   publicKey: Scalars['String']['input']
 }
 
+export type CustomEmailFolderUpdateValuesInput = {
+  customFolderName?: InputMaybe<SealedAttributeInput>
+}
+
 export type DateRangeInput = {
   endDateEpochMs: Scalars['Float']['input']
   startDateEpochMs: Scalars['Float']['input']
@@ -307,6 +311,7 @@ export type Mutation = {
   sendEmailMessageV2: SendEmailMessageResult
   sendEncryptedEmailMessage: SendEmailMessageResult
   unblockEmailAddresses: BlockEmailAddressesBulkUpdateResult
+  updateCustomEmailFolder: EmailFolder
   updateEmailAddressMetadata: Scalars['ID']['output']
   updateEmailMessagesV2: UpdateEmailMessagesV2Result
 }
@@ -353,6 +358,10 @@ export type MutationSendEncryptedEmailMessageArgs = {
 
 export type MutationUnblockEmailAddressesArgs = {
   input: UnblockEmailAddressesInput
+}
+
+export type MutationUpdateCustomEmailFolderArgs = {
+  input: UpdateCustomEmailFolderInput
 }
 
 export type MutationUpdateEmailAddressMetadataArgs = {
@@ -597,6 +606,12 @@ export type SupportedDomains = {
 export type UnblockEmailAddressesInput = {
   owner: Scalars['ID']['input']
   unblockedAddresses: Array<Scalars['String']['input']>
+}
+
+export type UpdateCustomEmailFolderInput = {
+  emailAddressId: Scalars['ID']['input']
+  emailFolderId: Scalars['ID']['input']
+  values: CustomEmailFolderUpdateValuesInput
 }
 
 export type UpdateEmailAddressMetadataInput = {
@@ -1092,6 +1107,35 @@ export type DeleteCustomEmailFolderMutation = {
       base64EncodedSealedData: string
     } | null
   } | null
+}
+
+export type UpdateCustomEmailFolderMutationVariables = Exact<{
+  input: UpdateCustomEmailFolderInput
+}>
+
+export type UpdateCustomEmailFolderMutation = {
+  __typename?: 'Mutation'
+  updateCustomEmailFolder: {
+    __typename?: 'EmailFolder'
+    id: string
+    owner: string
+    version: number
+    createdAtEpochMs: number
+    updatedAtEpochMs: number
+    emailAddressId: string
+    folderName: string
+    size: number
+    unseenCount: number
+    ttl?: number | null
+    owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+    customFolderName?: {
+      __typename?: 'SealedAttribute'
+      algorithm: string
+      keyId: string
+      plainTextType: string
+      base64EncodedSealedData: string
+    } | null
+  }
 }
 
 export type BlockEmailAddressesMutationVariables = Exact<{
@@ -3536,6 +3580,130 @@ export const DeleteCustomEmailFolderDocument = {
 } as unknown as DocumentNode<
   DeleteCustomEmailFolderMutation,
   DeleteCustomEmailFolderMutationVariables
+>
+export const UpdateCustomEmailFolderDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'UpdateCustomEmailFolder' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'UpdateCustomEmailFolderInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updateCustomEmailFolder' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'EmailFolder' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SealedAttribute' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SealedAttribute' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainTextType' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'base64EncodedSealedData' },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EmailFolder' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EmailFolder' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owners' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'folderName' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'customFolderName' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedAttribute' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'unseenCount' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'ttl' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  UpdateCustomEmailFolderMutation,
+  UpdateCustomEmailFolderMutationVariables
 >
 export const BlockEmailAddressesDocument = {
   kind: 'Document',

@@ -13,6 +13,7 @@ import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import _ from 'lodash'
 import {
+  BatchOperationResultStatus,
   EmailAddress,
   EmailFolder,
   ListEmailMessagesResult,
@@ -26,6 +27,7 @@ import {
 } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import waitForExpect from 'wait-for-expect'
+import { delay } from '../../util/delay'
 
 describe('SudoEmailClient DeleteCustomEmailFolder Test Suite', () => {
   jest.setTimeout(240000)
@@ -58,12 +60,12 @@ describe('SudoEmailClient DeleteCustomEmailFolder Test Suite', () => {
     })
   })
 
-  // afterEach(async () => {
-  //   await teardown(
-  //     { emailAddresses: [emailAddress], sudos: [sudo] },
-  //     { emailClient: instanceUnderTest, profilesClient, userClient },
-  //   )
-  // })
+  afterEach(async () => {
+    await teardown(
+      { emailAddresses: [emailAddress], sudos: [sudo] },
+      { emailClient: instanceUnderTest, profilesClient, userClient },
+    )
+  })
 
   test('delete custom email folder should return success', async () => {
     await expect(
@@ -102,30 +104,31 @@ describe('SudoEmailClient DeleteCustomEmailFolder Test Suite', () => {
 
     expect(sendResult).toBeDefined()
 
-    await expect(
-      instanceUnderTest.updateEmailMessages({
-        ids: [sendResult.id],
-        values: { folderId: customFolder.id },
-      }),
-    ).resolves.toBeDefined()
+    await waitForExpect(async () => {
+      await expect(
+        instanceUnderTest.updateEmailMessages({
+          ids: [sendResult.id],
+          values: { folderId: customFolder.id },
+        }),
+      ).resolves.toMatchObject({ status: BatchOperationResultStatus.Success })
+    })
 
-    await waitForExpect(
-      async () => {
-        await expect(
-          instanceUnderTest.listEmailMessagesForEmailFolderId({
-            folderId: customFolder.id,
-          }),
-        ).resolves.toStrictEqual<ListEmailMessagesResult>({
-          nextToken: undefined,
-          status: ListOperationResultStatus.Success,
-          items: expect.arrayContaining([
-            expect.objectContaining({ id: sendResult.id }),
-          ]),
-        })
-      },
-      60000,
-      10000,
-    )
+    await delay(5000)
+
+    await waitForExpect(async () => {
+      await expect(
+        instanceUnderTest.listEmailMessagesForEmailFolderId({
+          folderId: customFolder.id,
+          cachePolicy: CachePolicy.RemoteOnly,
+        }),
+      ).resolves.toStrictEqual<ListEmailMessagesResult>({
+        nextToken: undefined,
+        status: ListOperationResultStatus.Success,
+        items: expect.arrayContaining([
+          expect.objectContaining({ id: sendResult.id }),
+        ]),
+      })
+    })
 
     await expect(
       instanceUnderTest.deleteCustomEmailFolder({
@@ -145,22 +148,21 @@ describe('SudoEmailClient DeleteCustomEmailFolder Test Suite', () => {
       fail('Trash folder unexpectedly falsy')
     }
 
-    await waitForExpect(
-      async () => {
-        await expect(
-          instanceUnderTest.listEmailMessagesForEmailFolderId({
-            folderId: trashFolder.id,
-          }),
-        ).resolves.toStrictEqual<ListEmailMessagesResult>({
-          nextToken: undefined,
-          status: ListOperationResultStatus.Success,
-          items: expect.arrayContaining([
-            expect.objectContaining({ id: sendResult.id }),
-          ]),
-        })
-      },
-      60000,
-      10000,
-    )
+    await delay(5000)
+
+    await waitForExpect(async () => {
+      await expect(
+        instanceUnderTest.listEmailMessagesForEmailFolderId({
+          folderId: trashFolder.id,
+          cachePolicy: CachePolicy.RemoteOnly,
+        }),
+      ).resolves.toStrictEqual<ListEmailMessagesResult>({
+        nextToken: undefined,
+        status: ListOperationResultStatus.Success,
+        items: expect.arrayContaining([
+          expect.objectContaining({ id: sendResult.id }),
+        ]),
+      })
+    })
   })
 })

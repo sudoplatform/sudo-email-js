@@ -16,6 +16,7 @@ import {
 import {
   AddressNotFoundError,
   AddressUnavailableError,
+  EmailFolderNotFoundError,
   InvalidAddressError,
   InvalidArgumentError,
   InvalidEmailContentsError,
@@ -57,6 +58,8 @@ export class ErrorTransformer {
         return new InvalidEmailContentsError()
       case 'sudoplatform.InvalidArgumentError':
         return new InvalidArgumentError(error.message)
+      case 'sudoplatform.email.EmailFolderNotFound':
+        return new EmailFolderNotFoundError(error.message)
       case 'sudoplatform.ServiceError':
         return new ServiceError(error.message)
       default:

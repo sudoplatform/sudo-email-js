@@ -278,4 +278,145 @@ describe('DefaultEmailFolderService Test Suite', () => {
       })
     })
   })
+
+  describe('updateCustomEmailFolderForEmailAddressId', () => {
+    it('calls appSync correctly', async () => {
+      when(mockAppSync.updateCustomEmailFolder(anything())).thenResolve(
+        GraphQLDataFactory.emailFolderWithCustomFolderName,
+      )
+
+      when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve('keyId')
+      when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
+        true,
+      )
+      when(mockDeviceKeyWorker.sealString(anything())).thenResolve(
+        'TxsJ3delkBH2I1t0qQDscg==',
+      )
+      when(mockDeviceKeyWorker.unsealString(anything())).thenResolve('CUSTOM')
+
+      const result =
+        await instanceUnderTest.updateCustomEmailFolderForEmailAddressId({
+          emailAddressId:
+            EntityDataFactory.emailFolderWithCustomEmailFolderName
+              .emailAddressId,
+          emailFolderId:
+            EntityDataFactory.emailFolderWithCustomEmailFolderName.id,
+          values: { customFolderName: 'CUSTOM-UPDATED' },
+        })
+
+      expect(result).toStrictEqual({
+        ...EntityDataFactory.emailFolderWithCustomEmailFolderName,
+      })
+
+      verify(mockAppSync.updateCustomEmailFolder(anything())).once()
+      const [inputArgs] = capture(mockAppSync.updateCustomEmailFolder).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
+        emailFolderId:
+          EntityDataFactory.emailFolderWithCustomEmailFolderName.id,
+        values: {
+          customFolderName: {
+            algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding,
+            keyId: 'keyId',
+            plainTextType: 'string',
+            base64EncodedSealedData: 'TxsJ3delkBH2I1t0qQDscg==',
+          },
+        },
+      })
+    })
+
+    it('fails result with KeyNotFoundError if symmetric key does not exist', async () => {
+      when(mockAppSync.updateCustomEmailFolder(anything())).thenResolve(
+        GraphQLDataFactory.emailFolderWithCustomFolderName,
+      )
+
+      when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve('keyId')
+      when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
+        false,
+      )
+      when(mockDeviceKeyWorker.sealString(anything())).thenResolve(
+        'TxsJ3delkBH2I1t0qQDscg==',
+      )
+
+      const result =
+        await instanceUnderTest.updateCustomEmailFolderForEmailAddressId({
+          emailAddressId:
+            EntityDataFactory.emailFolderWithCustomEmailFolderName
+              .emailAddressId,
+          emailFolderId:
+            EntityDataFactory.emailFolderWithCustomEmailFolderName.id,
+          values: { customFolderName: 'CUSTOM-UPDATED' },
+        })
+
+      expect(result).toStrictEqual({
+        ...EntityDataFactory.emailFolder,
+        status: { type: 'Failed', cause: new KeyNotFoundError() },
+      })
+
+      verify(mockAppSync.updateCustomEmailFolder(anything())).once()
+      const [inputArgs] = capture(mockAppSync.updateCustomEmailFolder).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
+        emailFolderId:
+          EntityDataFactory.emailFolderWithCustomEmailFolderName.id,
+        values: {
+          customFolderName: {
+            algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding,
+            keyId: 'keyId',
+            plainTextType: 'string',
+            base64EncodedSealedData: 'TxsJ3delkBH2I1t0qQDscg==',
+          },
+        },
+      })
+    })
+
+    it('decoding error should be tolerated and return empty value for customFolderName ', async () => {
+      when(mockAppSync.updateCustomEmailFolder(anything())).thenResolve(
+        GraphQLDataFactory.emailFolderWithCustomFolderName,
+      )
+      when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve('keyId')
+      when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
+        true,
+      )
+      when(mockDeviceKeyWorker.sealString(anything())).thenResolve(
+        'TxsJ3delkBH2I1t0qQDscg==',
+      )
+      when(mockDeviceKeyWorker.unsealString(anything())).thenReject(
+        new DecodeError('Error decoding custom folder name'),
+      )
+
+      const result =
+        await instanceUnderTest.updateCustomEmailFolderForEmailAddressId({
+          emailAddressId:
+            EntityDataFactory.emailFolderWithCustomEmailFolderName
+              .emailAddressId,
+          emailFolderId:
+            EntityDataFactory.emailFolderWithCustomEmailFolderName.id,
+          values: { customFolderName: 'CUSTOM-UPDATED' },
+        })
+
+      expect(result).toStrictEqual({
+        ...EntityDataFactory.emailFolder,
+        customFolderName: '',
+      })
+
+      const [inputArgs] = capture(mockAppSync.updateCustomEmailFolder).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
+        emailFolderId:
+          EntityDataFactory.emailFolderWithCustomEmailFolderName.id,
+        values: {
+          customFolderName: {
+            algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding,
+            keyId: 'keyId',
+            plainTextType: 'string',
+            base64EncodedSealedData: 'TxsJ3delkBH2I1t0qQDscg==',
+          },
+        },
+      })
+
+      verify(mockAppSync.updateCustomEmailFolder(anything())).once()
+      verify(mockDeviceKeyWorker.unsealString(anything())).once()
+    })
+  })
 })
