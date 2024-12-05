@@ -1213,7 +1213,10 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   > {
     this.log.debug(this.provisionEmailAddress.name, { ids, values })
     const idSet = new Set(ids)
-    const useCase = new UpdateEmailMessagesUseCase(this.emailMessageService)
+    const useCase = new UpdateEmailMessagesUseCase(
+      this.emailMessageService,
+      this.configurationDataService,
+    )
     const useCaseResult = await useCase.execute({
       ids: idSet,
       values,
@@ -1229,6 +1232,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const idSet = new Set([id])
     const deleteEmailMessageUseCase = new DeleteEmailMessagesUseCase(
       this.emailMessageService,
+      this.configurationDataService,
     )
     const { successIds } = await deleteEmailMessageUseCase.execute(idSet)
     return successIds.length === idSet.size ? { id } : undefined
@@ -1245,6 +1249,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const idSet = new Set(ids)
     const deleteEmailMessageUseCase = new DeleteEmailMessagesUseCase(
       this.emailMessageService,
+      this.configurationDataService,
     )
 
     const deleteResult = await deleteEmailMessageUseCase.execute(idSet)

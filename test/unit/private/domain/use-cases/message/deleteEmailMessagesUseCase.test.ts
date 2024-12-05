@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { anything, instance, mock, reset, when } from 'ts-mockito'
+import { anything, instance, mock, reset, verify, when } from 'ts-mockito'
 import { EmailMessageService } from '../../../../../../src/private/domain/entities/message/emailMessageService'
 import { DeleteEmailMessagesUseCase } from '../../../../../../src/private/domain/use-cases/message/deleteEmailMessagesUseCase'
 import {
@@ -12,17 +12,26 @@ import {
   LimitExceededError,
 } from '../../../../../../src/public/errors'
 import { EmailMessageDataFactory } from '../../../../data-factory/emailMessage'
+import { EmailConfigurationDataService } from '../../../../../../src/private/domain/entities/configuration/configurationDataService'
+import { EmailConfigurationDataEntity } from '../../../../../../src/private/domain/entities/configuration/emailConfigurationDataEntity'
 
 describe('DeleteEmailMessageUseCase tests', () => {
   const mockEmailMessageService = mock<EmailMessageService>()
+  const mockEmailConfigService = mock<EmailConfigurationDataService>()
+  const mockDeleteLimit = 100
 
   let instanceUnderTest: DeleteEmailMessagesUseCase
 
   beforeEach(() => {
     reset(mockEmailMessageService)
+    reset(mockEmailConfigService)
     when(mockEmailMessageService.deleteMessages(anything())).thenResolve([])
+    when(mockEmailConfigService.getConfigurationData()).thenResolve({
+      deleteEmailMessagesLimit: mockDeleteLimit,
+    } as EmailConfigurationDataEntity)
     instanceUnderTest = new DeleteEmailMessagesUseCase(
       instance(mockEmailMessageService),
+      instance(mockEmailConfigService),
     )
   })
 
@@ -42,10 +51,13 @@ describe('DeleteEmailMessageUseCase tests', () => {
   })
 
   it('deleting more than limit email messages fails', async () => {
-    const tooManyIds = EmailMessageDataFactory.generateTestIdSet(101)
-    await expect(instanceUnderTest.execute(tooManyIds)).rejects.toThrow(
-      new LimitExceededError('Input cannot exceed 100'),
+    const tooManyIds = EmailMessageDataFactory.generateTestIdSet(
+      mockDeleteLimit + 1,
     )
+    await expect(instanceUnderTest.execute(tooManyIds)).rejects.toThrow(
+      new LimitExceededError(`Input cannot exceed ${mockDeleteLimit}`),
+    )
+    verify(mockEmailConfigService.getConfigurationData()).once()
   })
 
   it('single undeleted id is returned', async () => {

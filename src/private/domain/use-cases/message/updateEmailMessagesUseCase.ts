@@ -12,6 +12,7 @@ import {
   EmailMessageOperationFailureResult,
   UpdatedEmailMessageSuccess,
 } from '../../../../public'
+import { EmailConfigurationDataService } from '../../entities/configuration/configurationDataService'
 
 /**
  * Input for `UpdateEmailMessagesUseCase` use case.
@@ -45,13 +46,9 @@ export interface UpdateEmailMessagesUseCaseOutput {
 export class UpdateEmailMessagesUseCase {
   private readonly log: Logger
 
-  private readonly Defaults = {
-    // Max limit of number of ids that can be updated per request.
-    IdsSizeLimit: 100,
-  }
-
   public constructor(
     private readonly emailMessageService: EmailMessageService,
+    private readonly configurationDataService: EmailConfigurationDataService,
   ) {
     this.log = new DefaultLogger(this.constructor.name)
   }
@@ -66,9 +63,12 @@ export class UpdateEmailMessagesUseCase {
         status: UpdateEmailMessagesStatus.Success,
       }
     }
-    if (ids.size > this.Defaults.IdsSizeLimit) {
+
+    const { updateEmailMessagesLimit } =
+      await this.configurationDataService.getConfigurationData()
+    if (ids.size > updateEmailMessagesLimit) {
       throw new LimitExceededError(
-        `Input cannot exceed ${this.Defaults.IdsSizeLimit}`,
+        `Input cannot exceed ${updateEmailMessagesLimit}`,
       )
     }
     const res = await this.emailMessageService.updateMessages({

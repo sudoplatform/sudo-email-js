@@ -154,7 +154,6 @@ describe('SendEmailMessageUseCase', () => {
       verify(
         mockEmailDomainService.getConfiguredEmailDomains(anything()),
       ).once()
-      verify(mockAccountService.lookupPublicInfo(anything())).once()
       verify(mockMessageService.sendMessage(anything())).once()
     })
 

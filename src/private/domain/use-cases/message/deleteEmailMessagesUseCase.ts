@@ -11,6 +11,7 @@ import {
 } from '../../../../public/errors'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
 import { EmailMessageOperationFailureResult } from '../../../../public'
+import { EmailConfigurationDataService } from '../../entities/configuration/configurationDataService'
 
 /**
  * Output for `DeleteEmailMessagesUseCase` use case.
@@ -32,26 +33,26 @@ interface DeleteEmailMessagesUseCaseOutput {
 export class DeleteEmailMessagesUseCase {
   private readonly log: Logger
 
-  private readonly Configuration = {
-    // Max limit of number of ids that can be deleted per request.
-    IdsSizeLimit: 100,
-  }
-
-  constructor(private readonly emailMessageService: EmailMessageService) {
+  constructor(
+    private readonly emailMessageService: EmailMessageService,
+    private readonly configurationDataService: EmailConfigurationDataService,
+  ) {
     this.log = new DefaultLogger(this.constructor.name)
   }
 
   async execute(ids: Set<string>): Promise<DeleteEmailMessagesUseCaseOutput> {
     this.log.debug(this.constructor.name, {
-      limit: this.Configuration.IdsSizeLimit,
+      ids,
     })
 
     if (ids.size === 0) {
       throw new InvalidArgumentError()
     }
-    if (ids.size > this.Configuration.IdsSizeLimit) {
+    const { deleteEmailMessagesLimit } =
+      await this.configurationDataService.getConfigurationData()
+    if (ids.size > deleteEmailMessagesLimit) {
       throw new LimitExceededError(
-        `Input cannot exceed ${this.Configuration.IdsSizeLimit}`,
+        `Input cannot exceed ${deleteEmailMessagesLimit}`,
       )
     }
 

@@ -19,20 +19,30 @@ import { UpdateEmailMessagesStatus } from '../../../../../../src/gen/graphqlType
 import { EmailMessageService } from '../../../../../../src/private/domain/entities/message/emailMessageService'
 import { UpdateEmailMessagesUseCase } from '../../../../../../src/private/domain/use-cases/message/updateEmailMessagesUseCase'
 import { LimitExceededError } from '../../../../../../src/public/errors'
+import { EmailConfigurationDataService } from '../../../../../../src/private/domain/entities/configuration/configurationDataService'
+import { EmailConfigurationDataEntity } from '../../../../../../src/private/domain/entities/configuration/emailConfigurationDataEntity'
+import { EmailMessageDataFactory } from '../../../../data-factory/emailMessage'
 
 describe('UpdateEmailMessagesUseCase Test Suite', () => {
   const mockEmailMessageService = mock<EmailMessageService>()
+  const mockEmailConfigService = mock<EmailConfigurationDataService>()
+  const mockUpdateLimit = 100
 
   let instanceUnderTest: UpdateEmailMessagesUseCase
 
   beforeEach(() => {
     reset(mockEmailMessageService)
+    reset(mockEmailConfigService)
     instanceUnderTest = new UpdateEmailMessagesUseCase(
       instance(mockEmailMessageService),
+      instance(mockEmailConfigService),
     )
     when(mockEmailMessageService.updateMessages(anything())).thenResolve({
       status: UpdateEmailMessagesStatus.Success,
     })
+    when(mockEmailConfigService.getConfigurationData()).thenResolve({
+      updateEmailMessagesLimit: mockUpdateLimit,
+    } as EmailConfigurationDataEntity)
   })
 
   describe('execute', () => {
@@ -64,15 +74,17 @@ describe('UpdateEmailMessagesUseCase Test Suite', () => {
       })
     })
 
-    it.each([101, 200, 500, 1000])(
-      'throws LimitExceeded for over 100 (num=%p)',
-      async (num) => {
-        const ids = _.range(num).map(() => v4())
-        await expect(
-          instanceUnderTest.execute({ ids: new Set(ids), values: {} }),
-        ).rejects.toThrow(new LimitExceededError(`Input cannot exceed ${100}`))
-      },
-    )
+    it('updating more than limit email messages fails', async () => {
+      const tooManyIds = EmailMessageDataFactory.generateTestIdSet(
+        mockUpdateLimit + 1,
+      )
+      await expect(
+        instanceUnderTest.execute({ ids: tooManyIds, values: {} }),
+      ).rejects.toThrow(
+        new LimitExceededError(`Input cannot exceed ${mockUpdateLimit}`),
+      )
+      verify(mockEmailConfigService.getConfigurationData()).once()
+    })
 
     it.each([1, 2, 9, 10])(
       'should only call repo once for any number of ids as long as not greater than 10',

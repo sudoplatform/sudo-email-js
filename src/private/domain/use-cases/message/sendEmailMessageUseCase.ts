@@ -9,6 +9,7 @@ import {
   EmailAttachment,
   InNetworkAddressNotFoundError,
   InternetMessageFormatHeader,
+  LimitExceededError,
 } from '../../../../public'
 import { EmailMessageDetails } from '../../../util/rfc822MessageDataProcessor'
 import { EmailAccountService } from '../../entities/account/emailAccountService'
@@ -88,8 +89,12 @@ export class SendEmailMessageUseCase {
       replyingMessageId,
       forwardingMessageId,
     })
-    const { sendEncryptedEmailEnabled, emailMessageMaxOutboundMessageSize } =
-      await this.configurationDataService.getConfigurationData()
+    const {
+      sendEncryptedEmailEnabled,
+      emailMessageMaxOutboundMessageSize,
+      emailMessageRecipientsLimit,
+      encryptedEmailMessageRecipientsLimit,
+    } = await this.configurationDataService.getConfigurationData()
 
     const { from, to, cc, bcc, replyTo, subject } = emailMessageHeader
     const message: EmailMessageDetails = {
@@ -112,7 +117,17 @@ export class SendEmailMessageUseCase {
       message.replyMessageId = replyingMessageId
     }
 
+    const allRecipients: string[] = []
+    to?.forEach((addr) => allRecipients.push(addr.emailAddress))
+    cc?.forEach((addr) => allRecipients.push(addr.emailAddress))
+    bcc?.forEach((addr) => allRecipients.push(addr.emailAddress))
+
     if (!sendEncryptedEmailEnabled) {
+      if (allRecipients.length > emailMessageRecipientsLimit) {
+        throw new LimitExceededError(
+          `Cannot send message to more than ${emailMessageRecipientsLimit} recipients`,
+        )
+      }
       // Process non-encrypted email message
       return await this.messageService.sendMessage({
         message,
@@ -123,38 +138,33 @@ export class SendEmailMessageUseCase {
 
     const domains = await this.domainService.getConfiguredEmailDomains({})
 
-    const allRecipients: string[] = []
-    to?.forEach((addr) => allRecipients.push(addr.emailAddress))
-    cc?.forEach((addr) => allRecipients.push(addr.emailAddress))
-    bcc?.forEach((addr) => allRecipients.push(addr.emailAddress))
+    // Check if any recipient's domain is not one of ours
+    const allRecipientsInternal =
+      allRecipients.length > 0 &&
+      allRecipients.every((address) =>
+        domains.some((domain) => address.includes(domain.domain)),
+      )
 
-    // Identify whether recipients are internal or external based on their domains
-    const internalRecipients: string[] = []
-    const externalRecipients: string[] = []
-    allRecipients.forEach((address) => {
-      if (domains.some((domain) => address.includes(domain.domain))) {
-        internalRecipients.push(address)
-      } else {
-        externalRecipients.push(address)
-      }
-    })
-
-    if (internalRecipients.length) {
-      // Lookup public key information for each internal recipient and sender
+    if (allRecipientsInternal) {
+      // If we do not have an external recipient, lookup public key information for each recipient and sender
       const emailAddressesPublicInfo =
         await this.accountService.lookupPublicInfo({
-          emailAddresses: [...internalRecipients, from.emailAddress],
+          emailAddresses: [...allRecipients, from.emailAddress],
         })
-      // Check whether internal recipient addresses and associated public keys exist in the platform
-      const isInNetwork = internalRecipients.every((r) =>
+      // Check whether recipient addresses and associated public keys exist in the platform
+      const isInNetwork = allRecipients.every((r) =>
         emailAddressesPublicInfo.some((p) => p.emailAddress === r),
       )
       if (!isInNetwork) {
         throw new InNetworkAddressNotFoundError(
           'At least one email address does not exist in network',
         )
-      }
-      if (!externalRecipients.length) {
+      } else {
+        if (allRecipients.length > encryptedEmailMessageRecipientsLimit) {
+          throw new LimitExceededError(
+            `Cannot send encrypted message to more than ${encryptedEmailMessageRecipientsLimit} recipients`,
+          )
+        }
         // Process encrypted email message
         return await this.messageService.sendEncryptedMessage({
           message,
@@ -162,15 +172,14 @@ export class SendEmailMessageUseCase {
           emailAddressesPublicInfo,
           emailMessageMaxOutboundMessageSize,
         })
-      } else {
-        // Process non-encrypted email message
-        return await this.messageService.sendMessage({
-          message,
-          senderEmailAddressId,
-          emailMessageMaxOutboundMessageSize,
-        })
       }
     } else {
+      // Otherwise, we must send unencrypted
+      if (allRecipients.length > emailMessageRecipientsLimit) {
+        throw new LimitExceededError(
+          `Cannot send message to more than ${emailMessageRecipientsLimit} recipients`,
+        )
+      }
       // Process non-encrypted email message
       return await this.messageService.sendMessage({
         message,
