@@ -156,7 +156,7 @@ describe('SDK Tests', () => {
     )
 
     // Now reset user client and load keys from user 2
-    userClient.reset()
+    await userClient.reset()
 
     const importer2 = new DefaultSudoKeyArchive(
       Object.values([userKeyManager, profilesKeyManager, emailKeyManager]),
@@ -252,7 +252,7 @@ describe('SDK Tests', () => {
       if (recvdEmailMessage) {
         break
       } else {
-        await delay(500)
+        await delay(700)
       }
     }
     expect(recvdEmailMessage).toBeTruthy()

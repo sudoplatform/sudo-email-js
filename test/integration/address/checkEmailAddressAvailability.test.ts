@@ -45,6 +45,7 @@ describe('SudoEmailClient checkEmailAddressAvailability Test Suite', () => {
     userClientKeyManager = result.keyManagers.user
     sudo = result.sudo
     sudoOwnershipProofToken = result.ownershipProofToken
+    profilesClient = result.profilesClient
 
     supportedDomains = await instanceUnderTest.getSupportedEmailDomains(
       CachePolicy.RemoteOnly,

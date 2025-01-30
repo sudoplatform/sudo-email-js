@@ -30,6 +30,7 @@ import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { getFolderByName } from '../util/folder'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { readAllPages } from '../util/paginator'
+import { sendReceiveEmailMessagePair } from '../util/sendReceiveEmailMessage'
 
 describe('SudoEmailClient ListEmailMessages Test Suite', () => {
   jest.setTimeout(240000)
@@ -60,31 +61,26 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       sudoOwnershipProofToken,
       instanceUnderTest,
     )
+    const subjectRandomizer = v4()
+    const bodyRandomizer = v4()
+
     messageDetails = {
       from: [{ emailAddress: emailAddress.emailAddress }],
       to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
       cc: [],
       bcc: [],
-      replyTo: [],
-      subject: 'Important Subject',
-      body: 'Hello, World',
+      replyTo: [{ emailAddress: emailAddress.emailAddress }],
+      subject: 'Important Subject ' + subjectRandomizer,
+      body: 'Hello, World ' + bodyRandomizer,
       attachments: [],
       encryptionStatus: EncryptionStatus.UNENCRYPTED,
     }
-    await instanceUnderTest.sendEmailMessage({
-      senderEmailAddressId: emailAddress.id,
-      emailMessageHeader: {
-        from: messageDetails.from[0],
-        to: messageDetails.to ?? [],
-        cc: messageDetails.cc ?? [],
-        bcc: messageDetails.bcc ?? [],
-        replyTo: messageDetails.replyTo ?? [],
-        subject: messageDetails.subject ?? 'Important Subject',
-      },
-      body: messageDetails.body ?? 'Hello, World',
-      attachments: messageDetails.attachments ?? [],
-      inlineAttachments: messageDetails.inlineAttachments ?? [],
-    })
+
+    await sendReceiveEmailMessagePair(
+      instanceUnderTest,
+      emailAddress,
+      messageDetails,
+    )
 
     const folder = await getFolderByName({
       emailClient: instanceUnderTest,
@@ -98,23 +94,18 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
 
     inboxFolder = folder
 
-    await waitForExpect(
-      async () => {
-        const result =
-          await instanceUnderTest.listEmailMessagesForEmailFolderId({
-            folderId: inboxFolder.id,
-          })
-        expect(result.status).toEqual(ListOperationResultStatus.Success)
-        if (result.status !== ListOperationResultStatus.Success) {
-          fail(`result status unexpectedly not Success`)
-        }
-        expect(result.items).toHaveLength(1)
-        beforeEachComplete = true
-      },
-      45000,
-      1000,
-    )
-  }, 60000)
+    const messagesList =
+      await instanceUnderTest.listEmailMessagesForEmailFolderId({
+        folderId: inboxFolder.id,
+      })
+
+    expect(messagesList.status).toEqual(ListOperationResultStatus.Success)
+    if (messagesList.status !== ListOperationResultStatus.Success) {
+      fail(`result status unexpectedly not Success`)
+    }
+    expect(messagesList.items).toHaveLength(1)
+    beforeEachComplete = true
+  }, 600000)
 
   afterEach(async () => {
     beforeEachComplete = false
@@ -195,27 +186,18 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
 
     it('lists expected email messages respecting sortDate date range', async () => {
       expectSetupComplete()
-
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject: 'Lists expected email messages respecting sortDate date range',
       })
+
       const dateRange: EmailMessageDateRange = {
         sortDate: {
           startDate: emailAddress.createdAt,
           endDate: new Date(emailAddress.createdAt.getTime() + 100000),
         },
       }
+
       await waitForExpect(
         async () => {
           const messages = await readAllPages((nextToken?: string) =>
@@ -245,19 +227,10 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages respecting updatedAt date range', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject:
+          'Lists expected email messages respecting updatedAt date range',
       })
 
       // List all inbound messages
@@ -322,20 +295,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('returns empty list for out of range sort date', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject: 'Returns empty list for out of range sort date',
       })
+
       await waitForExpect(
         async () => {
           const messages = await readAllPages((nextToken?: string) =>
@@ -363,20 +327,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('returns empty list for out of range updatedAt date', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject: 'Returns empty list for out of range updatedAt date',
       })
+
       await waitForExpect(
         async () => {
           const messages = await readAllPages((nextToken?: string) =>
@@ -404,20 +359,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should throw for multiple date ranges specified', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject: 'Should throw for multiple date ranges specified',
       })
+
       await expect(
         instanceUnderTest.listEmailMessages({
           dateRange: {
@@ -438,20 +384,12 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should throw when input start date greater than end date for sortDate date range', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject:
+          'Should throw when input start date greater than end date for sortDate date range',
       })
+
       await expect(
         instanceUnderTest.listEmailMessages({
           dateRange: {
@@ -468,20 +406,12 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should throw when input start date greater than end date for updatedAt date range', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject:
+          'Should throw when input start date greater than end date for updatedAt date range',
       })
+
       await expect(
         instanceUnderTest.listEmailMessages({
           dateRange: {
@@ -498,20 +428,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages in ascending order', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject: 'List expected email messages in ascending order',
       })
+
       const dateRange: EmailMessageDateRange = {
         sortDate: {
           startDate: emailAddress.createdAt,
@@ -548,20 +469,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages in descending order', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject: 'List expected email messages in descending order',
       })
+
       await waitForExpect(
         async () => {
           const messages = await readAllPages((nextToken?: string) =>
@@ -629,20 +541,15 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should respect includeDeletedMessages flag', async () => {
       expectSetupComplete()
 
-      const sendResult = await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
-      })
+      const sendResult = await sendReceiveEmailMessagePair(
+        instanceUnderTest,
+        emailAddress,
+        { ...messageDetails, subject: 'Deleted messages test' },
+      )
+      expect(sendResult).toBeDefined()
+      if (!sendResult) {
+        fail('unable to sendReceiveEmailMessagePair')
+      }
       await waitForExpect(
         async () => {
           const messages = await readAllPages((nextToken?: string) =>
@@ -766,20 +673,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages respecting sortDate date range', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject: 'Lists expected email messages respecting sortDate date range',
       })
+
       const dateRange: EmailMessageDateRange = {
         sortDate: {
           startDate: emailAddress.createdAt,
@@ -815,19 +713,10 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages respecting updatedAt date range', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject:
+          'Lists expected email messages respecting updatedAt date range',
       })
 
       // List all inbound messages
@@ -889,20 +778,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('returns empty list for out of range sort date', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject: 'Return empty list for out of range sort date',
       })
+
       await waitForExpect(
         async () => {
           const messages =
@@ -930,20 +810,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('returns empty list for out of range updatedAt date', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject: 'Return empty list for out of range updatedAt date',
       })
+
       await waitForExpect(
         async () => {
           const messages =
@@ -971,20 +842,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should throw for multiple date ranges specified', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject: 'Should throw for multiple date ranges specified',
       })
+
       await expect(
         instanceUnderTest.listEmailMessagesForEmailAddressId({
           emailAddressId: emailAddress.id,
@@ -1006,20 +868,12 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should throw when input start date greater than end date for sort date range', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject:
+          'Should throw when input start date greater than end date for sort date range',
       })
+
       await expect(
         instanceUnderTest.listEmailMessagesForEmailAddressId({
           emailAddressId: emailAddress.id,
@@ -1037,20 +891,12 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should throw when input start date greater than end date for updatedAt date range', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject:
+          'Should throw when input start date greater than end date for updatedAt date range',
       })
+
       await expect(
         instanceUnderTest.listEmailMessagesForEmailAddressId({
           emailAddressId: emailAddress.id,
@@ -1068,20 +914,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages in ascending order', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject: 'Lists expected email messages in ascending order',
       })
+
       const dateRange: EmailMessageDateRange = {
         sortDate: {
           startDate: emailAddress.createdAt,
@@ -1118,20 +955,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages in descending order', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject: 'Lists expected email messages in descending order',
       })
+
       await waitForExpect(
         async () => {
           const messages =
@@ -1215,20 +1043,19 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should respect includeDeletedMessages flag', async () => {
       expectSetupComplete()
 
-      const sendResult = await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
+      const sendResult = await sendReceiveEmailMessagePair(
+        instanceUnderTest,
+        emailAddress,
+        {
+          ...messageDetails,
+          subject: 'Should respect includeDeletedMessages flag',
         },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
-      })
+      )
+      expect(sendResult).toBeDefined()
+      if (!sendResult) {
+        fail('sendReceiveEmailMessagePair unexpectedly failed')
+      }
+
       await waitForExpect(
         async () => {
           const messages =
@@ -1350,20 +1177,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages respecting sortDate date range', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject: 'Lists expected email messages respecting sortDate date range',
       })
+
       const dateRange: EmailMessageDateRange = {
         sortDate: {
           startDate: emailAddress.createdAt,
@@ -1400,19 +1218,10 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages respecting updatedAt date range', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject:
+          'Lists expected email messages respecting updatedAt date range',
       })
 
       // List all inbound messages
@@ -1474,19 +1283,9 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('returns empty list for out of range sort date', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject: 'Returns empty list for out of range sort date',
       })
 
       await waitForExpect(
@@ -1516,19 +1315,9 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('returns empty list for out of range updatedAt date', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject: 'Returns empty list for out of range updatedAt date',
       })
 
       await waitForExpect(
@@ -1558,19 +1347,9 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should throw for multiple date ranges specified', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject: 'Should throw for mulitple date ranges specified',
       })
 
       await expect(
@@ -1594,19 +1373,10 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should throw when input start date greater than end date for sort date range', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject:
+          'Should throw when input start date greater than end date for sort date range',
       })
 
       await expect(
@@ -1626,19 +1396,10 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should throw when input start date greater than end date for updatedAt date range', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject:
+          'Should throw when input start date greater than end date for updatedAt date range',
       })
 
       await expect(
@@ -1658,20 +1419,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages in ascending order', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject: 'Lists expected email messages in ascending order',
       })
+
       const dateRange: EmailMessageDateRange = {
         sortDate: {
           startDate: emailAddress.createdAt,
@@ -1709,19 +1461,9 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages in descending order', async () => {
       expectSetupComplete()
 
-      await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
+        ...messageDetails,
+        subject: 'Lists expected email messages in descending order',
       })
 
       await waitForExpect(
@@ -1753,20 +1495,19 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should respect includeDeletedMessages flag', async () => {
       expectSetupComplete()
 
-      const sendResult = await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: messageDetails.to ?? [],
-          cc: messageDetails.cc ?? [],
-          bcc: messageDetails.bcc ?? [],
-          replyTo: messageDetails.replyTo ?? [],
-          subject: messageDetails.subject ?? 'Important Subject',
+      const sendResult = await sendReceiveEmailMessagePair(
+        instanceUnderTest,
+        emailAddress,
+        {
+          ...messageDetails,
+          subject: 'Should respect includeDeletedMessages flag',
         },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
-      })
+      )
+      expect(sendResult).toBeDefined()
+      if (!sendResult) {
+        fail('sendReceiveEmailMessagePair unexpectedly failed')
+      }
+
       const sentFolder = await getFolderByName({
         emailClient: instanceUnderTest,
         emailAddressId: emailAddress.id,

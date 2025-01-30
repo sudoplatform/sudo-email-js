@@ -62,7 +62,7 @@ export class EmailFolderEntityTransformer {
           keyType: KeyType.SymmetricKey,
           algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding,
         })
-      } catch (error) {
+      } catch {
         // Tolerate inability to unseal customFolderName. We have the correct
         // key so this is a decoding error
         return ''

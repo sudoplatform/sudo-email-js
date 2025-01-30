@@ -14,10 +14,8 @@
   "coverageReporters": ["text", "json-summary", "html"],
   "coverageDirectory": "<rootDir>/build/coverage",
   "moduleDirectories": ["node_modules"],
-  "globals": {
-    "ts-jest": {
-      "tsconfig": "tsconfig.test.json"
-    }
+  "transform": {
+    ".*\\.ts$": ["ts-jest", { "tsconfig": "tsconfig.test.json" }]
   },
   "testRunner": "jest-jasmine2",
   "transformIgnorePatterns": ["node_modules/(?!(mimetext)/)"]

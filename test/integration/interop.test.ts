@@ -107,7 +107,10 @@ describe('SudoEmailClient Interoperability Test Suite', () => {
           replyTo: [],
           subject: `Test ${timestamp.toUTCString()}`,
         },
-        body: `Test Body ${timestamp.toUTCString()}`,
+        body:
+          'Hi Alison, \r\n Can you please let me know a good time to discuss your next project?\r\n' +
+          'We need to get moving on it pretty much straight away. \r\nChris\r\n' +
+          ` ${timestamp.toUTCString()}`,
         attachments: [
           {
             mimeType: 'application/pdf',

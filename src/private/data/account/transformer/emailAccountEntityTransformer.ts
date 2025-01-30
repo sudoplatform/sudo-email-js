@@ -81,7 +81,7 @@ export class EmailAccountEntityTransformer {
           keyType: KeyType.SymmetricKey,
           algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding,
         })
-      } catch (error) {
+      } catch {
         // Tolerate inability to unseal alias. We have the correct
         // key so this is a decoding error
         return ''

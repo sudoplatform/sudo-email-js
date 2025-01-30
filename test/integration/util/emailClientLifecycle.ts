@@ -48,10 +48,13 @@ import { DefaultConfigurationDataService } from '../../../src/private/data/confi
 // [START] - Polyfills
 global.fetch = require('node-fetch')
 require('isomorphic-fetch')
-// [END] - Polyfills
-
+// jsdom does some crypto polyfill magic but we want to use crypto.subtle so we need to add it back in
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-global.crypto = require('crypto').webcrypto
+const localCrypto = require('crypto').webcrypto
+global.crypto = localCrypto
+// @ts-ignore
+global.crypto.subtle = localCrypto.subtle
+// [END] - Polyfills
 
 export const sudoIssuer = 'sudoplatform.sudoservice'
 

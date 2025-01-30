@@ -11,10 +11,10 @@ import { DateRange } from './dateRange'
  * 
  * Note that both timestamps cannot be specified otherwise an {@link InvalidArgumentError} will occur.
  *
- * @union EmailMessageDateRange
+ * @type EmailMessageDateRange
  * @property {DateRange} sortDate The specification of the sortDate 
  *  timestamp to perform the date range query on.
  * @property {DateRange} updatedAt The specification of the updatedAt 
  *  timestamp to perform the date range query on.
  */
-export type EmailMessageDateRange = { sortDate: DateRange } | { updatedAt: DateRange } 
+export type EmailMessageDateRange = { sortDate: DateRange } | { updatedAt: DateRange }

@@ -257,6 +257,7 @@ export class Rfc822MessageDataProcessor {
           !attachments.some((a) => a.filename === attachment.filename) &&
           !inlineAttachments.some((a) => a.filename === attachment.filename)
         ) {
+          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
           attachment.inlineAttachment
             ? inlineAttachments.push(attachment)
             : attachments.push(attachment)
