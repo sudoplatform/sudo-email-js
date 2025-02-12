@@ -1,5 +1,5 @@
-/*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -11,6 +11,7 @@ import _ from 'lodash'
 import { EmailAddress, LimitExceededError, SudoEmailClient } from '../../../src'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import { v4 } from 'uuid'
 
 describe('SudoEmailClient LookupEmailAddressesPublicInfo Test Suite', () => {
   jest.setTimeout(240000)
@@ -74,6 +75,11 @@ describe('SudoEmailClient LookupEmailAddressesPublicInfo Test Suite', () => {
         emailAddress: emailAddress.emailAddress,
         keyId: expect.any(String),
         publicKey: expect.any(String),
+        publicKeyDetails: {
+          publicKey: expect.any(String),
+          keyFormat: expect.any(Number),
+          algorithm: expect.any(String),
+        },
       })
     })
   })
@@ -91,9 +97,14 @@ describe('SudoEmailClient LookupEmailAddressesPublicInfo Test Suite', () => {
   it('throws a limit exceeded error if more than 50 email addresses are requested', async () => {
     expectSetupComplete()
 
+    const emailAddresses: string[] = []
+    for (let i = 0; i < 51; i++) {
+      emailAddresses.push(`fake-${v4()}@email.com`)
+    }
+
     await expect(
       instanceUnderTest.lookupEmailAddressesPublicInfo({
-        emailAddresses: Array(51).fill('fake@email.com'),
+        emailAddresses,
       }),
     ).rejects.toThrow(new LimitExceededError())
   })

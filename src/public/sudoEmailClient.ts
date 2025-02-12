@@ -1,5 +1,5 @@
-/*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -27,7 +27,7 @@ import { Mutex } from 'async-mutex'
 import { DefaultEmailAccountService } from '../private/data/account/defaultEmailAccountService'
 import { EmailAddressAPITransformer } from '../private/data/account/transformer/emailAddressAPITransformer'
 import { EmailAddressEntityTransformer } from '../private/data/account/transformer/emailAddressEntityTransformer'
-import { EmailAddressPublicInfoTransformer } from '../private/data/account/transformer/emailAddressPublicInfoTransformer'
+import { EmailAddressPublicInfoAPITransformer } from '../private/data/account/transformer/emailAddressPublicInfoAPITransformer'
 import { ListEmailAddressesAPITransformer } from '../private/data/account/transformer/listEmailAddressesAPITransformer'
 import { DefaultEmailAddressBlocklistService } from '../private/data/blocklist/defaultEmailAddressBlocklistService'
 import { ApiClient } from '../private/data/common/apiClient'
@@ -1388,7 +1388,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const result = await useCase.execute({ emailAddresses })
 
     return result.map((publicInfo) =>
-      EmailAddressPublicInfoTransformer.transformEntity(publicInfo),
+      EmailAddressPublicInfoAPITransformer.transformEntity(publicInfo),
     )
   }
 

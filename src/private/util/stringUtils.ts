@@ -1,5 +1,5 @@
-/*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -25,4 +25,10 @@ export function htmlToPlaintext(html: string): string {
   text = text.replace(/ ,/gi, ',')
   text = text.replace(/ +/gi, ' ')
   return text
+}
+
+export function escapeBackslashesAndDoubleQuotes(unescaped: string): string {
+  return unescaped
+    .replace(/\\/g, '\\\\') // Escape backslashes
+    .replace(/"/g, '\"') // Escape double quotes
 }

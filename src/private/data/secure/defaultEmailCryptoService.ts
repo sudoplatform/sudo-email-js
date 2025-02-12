@@ -1,5 +1,5 @@
-/*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -81,9 +81,10 @@ export class DefaultEmailCryptoService implements EmailCryptoService {
           // Seal the symmetric key using the publicKey and RSA_ECB_OAEPSHA1 algorithm
           const encryptedSymmetricKey =
             await this.deviceKeyWorker.encryptWithPublicKey({
-              key: Base64.decode(publicInfo.publicKey),
+              key: Base64.decode(publicInfo.publicKeyDetails.publicKey),
               data: symmetricKey,
               algorithm: EncryptionAlgorithm.RsaOaepSha1,
+              format: publicInfo.publicKeyDetails.keyFormat,
             })
           const sealedKey: SealedKey = {
             publicKeyId: publicInfo.keyId,

@@ -1,4 +1,8 @@
 /**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
  * @param input The array you want to divide
  * @param chunkSize The max number of items you want in each resulting array
  * @returns An array of arrays where each subarray has at most `chunkSize` items

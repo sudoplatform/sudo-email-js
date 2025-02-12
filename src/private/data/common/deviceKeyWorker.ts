@@ -1,5 +1,5 @@
-/*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -11,6 +11,7 @@ import {
   KeyNotFoundError,
   Logger,
   PublicKey,
+  PublicKeyFormat,
   SudoKeyManager,
   SymmetricEncryptionOptions,
 } from '@sudoplatform/sudo-common'
@@ -103,11 +104,13 @@ export interface EncryptWithSymmetricKeyInput {
  * @property {ArrayBuffer} key The public key used to encrypt the data.
  * @property {ArrayBuffer} data Data to encrypted.
  * @property {EncryptionAlgorithm} algorithm Algorithm used to encrypt the data.
+ * @property {PublicKeyFormat} format The format of the public key.
  */
 export interface EncryptWithPublicKeyInput {
   key: ArrayBuffer
   data: ArrayBuffer
   algorithm: EncryptionAlgorithm
+  format: PublicKeyFormat
 }
 
 export const SYMMETRIC_KEY_ID = 'email-symmetric-key'
@@ -367,6 +370,7 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
     try {
       return await this.keyManager.encryptWithPublicKey(input.key, input.data, {
         algorithm: input.algorithm,
+        publicKeyFormat: input.format,
       })
     } catch (err) {
       const message = 'Failed to encrypt with public key'

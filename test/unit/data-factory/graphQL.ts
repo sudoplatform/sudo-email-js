@@ -1,5 +1,5 @@
-/*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -214,11 +214,23 @@ export class GraphQLDataFactory {
       emailAddress: GraphQLDataFactory.emailAddress.emailAddress,
       keyId: GraphQLDataFactory.publicKey.keyId,
       publicKey: GraphQLDataFactory.publicKey.publicKey,
+      publicKeyDetails: {
+        __typename: 'EmailAddressPublicKey',
+        publicKey: GraphQLDataFactory.publicKey.publicKey,
+        keyFormat: KeyFormat.RsaPublicKey,
+        algorithm: 'testAlgorithm',
+      },
     },
     {
       emailAddress: `${GraphQLDataFactory.emailAddress.emailAddress}_2`,
       keyId: `${GraphQLDataFactory.publicKey.keyId}_2`,
       publicKey: `${GraphQLDataFactory.publicKey.publicKey}_2`,
+      publicKeyDetails: {
+        __typename: 'EmailAddressPublicKey',
+        publicKey: `${GraphQLDataFactory.publicKey.publicKey}_2`,
+        keyFormat: KeyFormat.Spki,
+        algorithm: 'testAlgorithm_2',
+      },
     },
   ]
 }

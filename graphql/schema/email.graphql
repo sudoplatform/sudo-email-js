@@ -351,10 +351,17 @@ type EmailMessageConnection {
   nextToken: String
 }
 
+type EmailAddressPublicKey {
+  publicKey: String!
+  keyFormat: KeyFormat!
+  algorithm: String!
+}
+
 type EmailAddressPublicInfo {
   emailAddress: String!
   keyId: String!
   publicKey: String!
+  publicKeyDetails: EmailAddressPublicKey!
 }
 
 type LookupEmailAddressesPublicInfoResponse {

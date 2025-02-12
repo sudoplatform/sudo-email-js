@@ -14,7 +14,7 @@ module.exports = {
         project: './tsconfig.test.json',
       },
       excludedFiles: ['test/**/*.ts'],
-      plugins: ['@typescript-eslint', 'tree-shaking'],
+      plugins: ['@typescript-eslint', 'tree-shaking', 'headers'],
       extends: ['plugin:@typescript-eslint/recommended', 'prettier', 'plugin:prettier/recommended'],
       rules: {
         '@typescript-eslint/explicit-function-return-type': 'off',
@@ -47,6 +47,14 @@ module.exports = {
             avoidEscape: true,
           },
         ],
+        'headers/header-format': [
+          'error',
+          {
+            source: 'string',
+            style: 'jsdoc',
+            content: 'Copyright © 2025 Anonyome Labs, Inc. All rights reserved.\n\nSPDX-License-Identifier: Apache-2.0'
+          },
+        ],
       },
     },
     {
@@ -66,11 +74,20 @@ module.exports = {
       parserOptions: {
         project: './tsconfig.test.json',
       },
+      plugins: ['headers'],
       rules: {
         '@typescript-eslint/no-explicit-any': 'off',
         '@typescript-eslint/no-non-null-assertion': 'off',
         '@typescript-eslint/no-floating-promises': 'error',
-        '@tree-shaking/no-side-effects-in-initialization': 'off'
+        '@tree-shaking/no-side-effects-in-initialization': 'off',
+        'headers/header-format': [
+          'error',
+          {
+            source: 'string',
+            style: 'jsdoc',
+            content: 'Copyright © 2025 Anonyome Labs, Inc. All rights reserved.\n\nSPDX-License-Identifier: Apache-2.0'
+          },
+        ],
       },
     }
   ]

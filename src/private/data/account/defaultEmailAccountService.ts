@@ -1,5 +1,5 @@
-/*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -39,7 +39,7 @@ import {
 import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransformer'
 import { EmailAccountEntityTransformer } from './transformer/emailAccountEntityTransformer'
 import { EmailAddressEntityTransformer } from './transformer/emailAddressEntityTransformer'
-import { EmailAddressPublicInfoTransformer } from './transformer/emailAddressPublicInfoTransformer'
+import { EmailAddressPublicInfoEntityTransformer } from './transformer/emailAddressPublicInfoEntityTransformer'
 
 export type EmailAccountServiceConfig = {
   enforceSingletonPublicKey?: boolean
@@ -204,7 +204,7 @@ export class DefaultEmailAccountService implements EmailAccountService {
       await this.appSync.lookupEmailAddressesPublicInfo(emailAddresses)
 
     return result.items.map((publicInfo) =>
-      EmailAddressPublicInfoTransformer.transformGraphQL(publicInfo),
+      EmailAddressPublicInfoEntityTransformer.transformGraphQL(publicInfo),
     )
   }
 

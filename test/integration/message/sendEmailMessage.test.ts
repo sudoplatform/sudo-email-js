@@ -1,5 +1,5 @@
-/*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -415,6 +415,61 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     )
   })
 
+  it('can send to recipients with commas in display names', async () => {
+    const result = await instanceUnderTest.sendEmailMessage({
+      senderEmailAddressId: emailAddress1.id,
+      emailMessageHeader: {
+        from: draft.from[0],
+        to: [
+          {
+            emailAddress: ootoSimulatorAddress,
+            displayName: 'ooto, simulator',
+          },
+        ],
+        cc: draft.cc ?? [],
+        bcc: draft.bcc ?? [],
+        replyTo: draft.replyTo ?? [],
+        subject: draft.subject ?? '',
+      },
+      body: draft.body ?? '',
+      attachments: draft.attachments ?? [],
+      inlineAttachments: draft.inlineAttachments ?? [],
+    })
+    const { id: sentId } = result
+
+    expect(sentId).toMatch(
+      /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
+    )
+
+    let sent
+    await waitForExpect(async () => {
+      sent = await instanceUnderTest.getEmailMessage({
+        id: sentId,
+        cachePolicy: CachePolicy.RemoteOnly,
+      })
+      expect(sent).toBeDefined()
+    })
+
+    expect(sent).toMatchObject({
+      ..._.omit(draft, 'body', 'attachments'),
+      id: sentId,
+      hasAttachments: false,
+      date: expect.any(Date),
+    })
+
+    const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
+      id: sentId,
+      emailAddressId: emailAddress1.id,
+    })
+
+    const sentRfc822DataStr = new TextDecoder().decode(
+      sentRFC822Data?.rfc822Data,
+    )
+    expect(sentRfc822DataStr).toContain(
+      `To: "ooto, simulator" <${draft.to![0].emailAddress}>`,
+    )
+  })
+
   it('returns unencrypted status when sending with mixture of recipients', async () => {
     const result = await instanceUnderTest.sendEmailMessage({
       senderEmailAddressId: emailAddress1.id,
@@ -767,6 +822,65 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
           : EncryptionStatus.UNENCRYPTED,
         date: expect.any(Date),
       })
+    })
+
+    it('can send to recipients with commas in display names', async () => {
+      const commaDisplayNameDraft: EmailMessageDetails = {
+        ...encryptedDraft,
+        to: [
+          {
+            emailAddress: emailAddress1.emailAddress,
+            displayName: 'Kent, Clark',
+          },
+        ],
+      }
+      const result = await instanceUnderTest.sendEmailMessage({
+        senderEmailAddressId: emailAddress1.id,
+        emailMessageHeader: {
+          from: commaDisplayNameDraft.from[0],
+          to: commaDisplayNameDraft.to ?? [],
+          cc: commaDisplayNameDraft.cc ?? [],
+          bcc: commaDisplayNameDraft.bcc ?? [],
+          replyTo: commaDisplayNameDraft.replyTo ?? [],
+          subject: commaDisplayNameDraft.subject ?? '',
+        },
+        body: commaDisplayNameDraft.body ?? '',
+        attachments: commaDisplayNameDraft.attachments ?? [],
+        inlineAttachments: commaDisplayNameDraft.inlineAttachments ?? [],
+      })
+      const { id: sentId } = result
+
+      expect(sentId).toMatch(
+        /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
+      )
+
+      let sent
+      await waitForExpect(async () => {
+        sent = await instanceUnderTest.getEmailMessage({
+          id: sentId,
+          cachePolicy: CachePolicy.RemoteOnly,
+        })
+        expect(sent).toBeDefined()
+      })
+
+      expect(sent).toMatchObject({
+        ..._.omit(commaDisplayNameDraft, 'body', 'attachments'),
+        id: sentId,
+        hasAttachments: false,
+        date: expect.any(Date),
+      })
+
+      const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
+        id: sentId,
+        emailAddressId: emailAddress1.id,
+      })
+
+      const sentRfc822DataStr = new TextDecoder().decode(
+        sentRFC822Data?.rfc822Data,
+      )
+      expect(sentRfc822DataStr).toContain(
+        `To: "Kent, Clark" <${commaDisplayNameDraft.to![0].emailAddress}>`,
+      )
     })
 
     runTestsIf(

@@ -1,5 +1,5 @@
-/*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -8,6 +8,7 @@ import {
   CachePolicy,
   DecodeError,
   KeyNotFoundError,
+  PublicKeyFormat,
 } from '@sudoplatform/sudo-common'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import {
@@ -291,7 +292,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
         {
           emailAddress: `to-${v4()}`,
           keyId: `keyID-${v4()}`,
-          publicKey: `keyData-${v4()}`,
+          publicKeyDetails: {
+            publicKey: `keyData-${v4()}`,
+            keyFormat: PublicKeyFormat.RSAPublicKey,
+            algorithm: 'testAlgorithm',
+          },
         },
       ]
       senderEmailAddressId = v4()

@@ -1,5 +1,5 @@
-/*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -63,7 +63,7 @@ export const sendReceiveEmailMessagePair = async (
           (message) => message.subject === `Out of the Office: ${sentSubject}`,
         ) !== undefined
       if (!responseItemFound) {
-        await delay(1500)
+        await delay(2500)
         --readRetriesRemaining
         continue
       }

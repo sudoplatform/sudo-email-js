@@ -1,7 +1,13 @@
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 import {
   Base64,
   DecodeError,
   EncryptionAlgorithm,
+  PublicKeyFormat,
 } from '@sudoplatform/sudo-common'
 import {
   anything,
@@ -56,12 +62,20 @@ describe('DefaultEmailCryptoService Test Suite', () => {
       {
         emailAddress: 'foobar@example.com',
         keyId: `keyId-${v4()}`,
-        publicKey: 'mockPublicKey1',
+        publicKeyDetails: {
+          publicKey: 'mockPublicKey1',
+          keyFormat: PublicKeyFormat.RSAPublicKey,
+          algorithm: 'mockAlgorithm1',
+        },
       },
       {
         emailAddress: 'foobar2@example.com',
         keyId: `keyId-${v4()}`,
-        publicKey: 'mockPublicKey2',
+        publicKeyDetails: {
+          publicKey: 'mockPublicKey2',
+          keyFormat: PublicKeyFormat.SPKI,
+          algorithm: 'mockAlgorithm2',
+        },
       },
     ]
 
@@ -119,10 +133,13 @@ describe('DefaultEmailCryptoService Test Suite', () => {
         mockDeviceKeyWorker.encryptWithPublicKey,
       ).first()
       expect(pubKeyArg.key).toEqual(
-        Base64.decode(mockEmailAddressPublicInfo[0].publicKey),
+        Base64.decode(mockEmailAddressPublicInfo[0].publicKeyDetails.publicKey),
       )
       expect(pubKeyArg.data).toEqual(mockData)
       expect(pubKeyArg.algorithm).toEqual(EncryptionAlgorithm.RsaOaepSha1)
+      expect(pubKeyArg.format).toEqual(
+        mockEmailAddressPublicInfo[0].publicKeyDetails.keyFormat,
+      )
     })
 
     it('returns a SecurePackage containing the sealed body and sealed keys as attachments', async () => {

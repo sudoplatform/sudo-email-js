@@ -1,5 +1,5 @@
-/*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -21,6 +21,7 @@ import {
 } from 'mimetext'
 import { extract, parse } from 'letterparser'
 import { LetterparserMailbox } from 'letterparser/lib/esm/extractor'
+import { escapeBackslashesAndDoubleQuotes } from './stringUtils'
 
 export interface EmailMessageDetails {
   from: EmailAddressDetail[]
@@ -309,9 +310,13 @@ export class Rfc822MessageDataProcessor {
   public static emailAddressDetailToString(
     address: EmailAddressDetail,
   ): string {
-    return address.displayName
-      ? `${address.displayName} <${address.emailAddress}>`
-      : address.emailAddress
+    if (address.displayName) {
+      const name = escapeBackslashesAndDoubleQuotes(address.displayName)
+
+      return `"${name}" <${address.emailAddress}>` // Wrap display name in double quotes and construct address
+    } else {
+      return address.emailAddress
+    }
   }
 
   /**
@@ -322,9 +327,16 @@ export class Rfc822MessageDataProcessor {
   private static emailAddressDetailToMailboxAddrObject(
     address: EmailAddressDetail,
   ): MailboxAddrObject {
-    return {
-      addr: address.emailAddress,
-      name: address.displayName,
+    if (address.displayName) {
+      const name = escapeBackslashesAndDoubleQuotes(address.displayName)
+      return {
+        addr: address.emailAddress,
+        name: `"${name}"`, // Wrap display name in double quotes
+      }
+    } else {
+      return {
+        addr: address.emailAddress,
+      }
     }
   }
 

@@ -24,7 +24,7 @@ type PublicKey {
   keyId: String!
   keyRingId: String!
   algorithm: String!
-  keyFormat: KeyFormat
+  keyFormat: KeyFormat!
   publicKey: String!
   owner: ID!
   version: Int!

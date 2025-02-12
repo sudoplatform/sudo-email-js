@@ -12,3 +12,4 @@ build
 package.json.old
 .dccache
 .env
+.idea/

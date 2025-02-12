@@ -1,3 +1,8 @@
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 import { v4 } from 'uuid'
 import {
   CANNED_TEXT_BODY,
@@ -68,7 +73,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
-          `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
+          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
         )
         expect(resultString).toContain(`To: ${eol}`)
         expect(resultString).toContain(`Cc: ${eol}`)
@@ -92,7 +97,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
-          `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
+          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
         )
         expect(resultString).toContain(
           `To: <${toAddresses[0].emailAddress}>${eol}`,
@@ -118,7 +123,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
-          `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
+          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
         )
         expect(resultString).toContain(
           `To: <${toAddresses[0].emailAddress}>,${eol} <${toAddresses[1].emailAddress}>${eol}`,
@@ -147,10 +152,10 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
-          `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
+          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
         )
         expect(resultString).toContain(
-          `To: <${toAddresses[0].emailAddress}>,${eol} ${toAddresses[1].displayName} <${toAddresses[1].emailAddress}>${eol}`,
+          `To: <${toAddresses[0].emailAddress}>,${eol} "${toAddresses[1].displayName}" <${toAddresses[1].emailAddress}>${eol}`,
         )
         expect(resultString).toContain(`Cc: ${eol}`)
         expect(resultString).toContain(`Bcc: ${eol}`)
@@ -172,7 +177,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
-          `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
+          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
         )
         expect(resultString).toContain(`To: ${eol}`)
         expect(resultString).toContain(
@@ -198,7 +203,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
-          `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
+          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
         )
         expect(resultString).toContain(`To: ${eol}`)
         expect(resultString).toContain(
@@ -225,13 +230,13 @@ describe('rfc822MessageDataProcessor unit tests', () => {
 
         const resultString =
           Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
-
+        console.debug(resultString)
         expect(resultString).toContain(
-          `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
+          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
         )
         expect(resultString).toContain(`To: ${eol}`)
         expect(resultString).toContain(
-          `Cc: ${ccAddresses[0].displayName} <${ccAddresses[0].emailAddress}>,${eol} <${ccAddresses[1].emailAddress}>${eol}`,
+          `Cc: "${ccAddresses[0].displayName}" <${ccAddresses[0].emailAddress}>,${eol} <${ccAddresses[1].emailAddress}>${eol}`,
         )
         expect(resultString).toContain(`Bcc: ${eol}`)
         expect(resultString).toContain(`Subject: ${eol}`)
@@ -252,7 +257,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
-          `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
+          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
         )
         expect(resultString).toContain(`To: ${eol}`)
         expect(resultString).toContain(`Cc: ${eol}`)
@@ -278,7 +283,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
-          `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
+          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
         )
         expect(resultString).toContain(`To: ${eol}`)
         expect(resultString).toContain(`Cc: ${eol}`)
@@ -307,12 +312,12 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
-          `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
+          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
         )
         expect(resultString).toContain(`To: ${eol}`)
         expect(resultString).toContain(`Cc: ${eol}`)
         expect(resultString).toContain(
-          `Bcc: <${bccAddresses[0].emailAddress}>,${eol} ${bccAddresses[1].displayName} <${bccAddresses[1].emailAddress}>${eol}`,
+          `Bcc: <${bccAddresses[0].emailAddress}>,${eol} "${bccAddresses[1].displayName}" <${bccAddresses[1].emailAddress}>${eol}`,
         )
         expect(resultString).toContain(`Subject: ${eol}`)
         expect(resultString).toContain(
@@ -332,7 +337,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
-          `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
+          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
         )
         expect(resultString).toContain(`To: ${eol}`)
         expect(resultString).toContain(`Cc: ${eol}`)
@@ -361,7 +366,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
-          `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
+          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
         )
         expect(resultString).toContain(`To: ${eol}`)
         expect(resultString).toContain(`Cc: ${eol}`)
@@ -393,7 +398,7 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
-          `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
+          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
         )
         expect(resultString).toContain(`To: ${eol}`)
         expect(resultString).toContain(`Cc: ${eol}`)
@@ -891,13 +896,13 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
       expect(resultString).toContain(
-        `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
+        `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
       )
       expect(resultString).toContain(
-        `To: <${toAddresses[0].emailAddress}>,${eol} ${toAddresses[1].displayName} <${toAddresses[1].emailAddress}>${eol}`,
+        `To: <${toAddresses[0].emailAddress}>,${eol} "${toAddresses[1].displayName}" <${toAddresses[1].emailAddress}>${eol}`,
       )
       expect(resultString).toContain(
-        `Cc: ${ccAddresses[0].displayName} <${ccAddresses[0].emailAddress}>,${eol} <${ccAddresses[1].emailAddress}>${eol}`,
+        `Cc: "${ccAddresses[0].displayName}" <${ccAddresses[0].emailAddress}>,${eol} <${ccAddresses[1].emailAddress}>${eol}`,
       )
       expect(resultString).toContain(
         `Bcc: <${bccAddresses[0].emailAddress}>,${eol} <${bccAddresses[1].emailAddress}>${eol}`,
@@ -1012,13 +1017,13 @@ describe('rfc822MessageDataProcessor unit tests', () => {
       // We can't test for a match against another buffer because each message includes some randomly generated ids
       const resultString = arrayBufferToString(resultBuffer)
       expect(resultString).toContain(
-        `From: ${fromAddress.displayName} <${fromAddress.emailAddress}>${eol}`,
+        `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
       )
       expect(resultString).toContain(
-        `To: <${toAddresses[0].emailAddress}>,${eol} ${toAddresses[1].displayName} <${toAddresses[1].emailAddress}>${eol}`,
+        `To: <${toAddresses[0].emailAddress}>,${eol} "${toAddresses[1].displayName}" <${toAddresses[1].emailAddress}>${eol}`,
       )
       expect(resultString).toContain(
-        `Cc: ${ccAddresses[0].displayName} <${ccAddresses[0].emailAddress}>,${eol} <${ccAddresses[1].emailAddress}>${eol}`,
+        `Cc: "${ccAddresses[0].displayName}" <${ccAddresses[0].emailAddress}>,${eol} <${ccAddresses[1].emailAddress}>${eol}`,
       )
       expect(resultString).toContain(
         `Bcc: <${bccAddresses[0].emailAddress}>,${eol} <${bccAddresses[1].emailAddress}>${eol}`,

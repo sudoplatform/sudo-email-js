@@ -1,10 +1,10 @@
-/*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ListOutput, Owner } from '@sudoplatform/sudo-common'
+import { ListOutput, Owner, PublicKeyFormat } from '@sudoplatform/sudo-common'
 import { ConfigurationData } from '../../../src/public/typings/configurationData'
 import { EmailAddress } from '../../../src/public/typings/emailAddress'
 import { EmailAddressPublicInfo } from '../../../src/public/typings/emailAddressPublicInfo'
@@ -70,6 +70,11 @@ export class APIDataFactory {
     emailAddress: APIDataFactory.emailAddress.emailAddress,
     keyId: 'testKeyId',
     publicKey: 'testPublicKey',
+    publicKeyDetails: {
+      publicKey: 'testPublicKey',
+      keyFormat: PublicKeyFormat.RSAPublicKey,
+      algorithm: 'testAlgorithm',
+    },
   }
 
   static readonly emailFolderListOutput: ListOutput<EmailFolder> = {

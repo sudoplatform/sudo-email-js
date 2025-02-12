@@ -161,6 +161,14 @@ export type EmailAddressPublicInfo = {
   emailAddress: Scalars['String']['output']
   keyId: Scalars['String']['output']
   publicKey: Scalars['String']['output']
+  publicKeyDetails: EmailAddressPublicKey
+}
+
+export type EmailAddressPublicKey = {
+  __typename?: 'EmailAddressPublicKey'
+  algorithm: Scalars['String']['output']
+  keyFormat: KeyFormat
+  publicKey: Scalars['String']['output']
 }
 
 export type EmailConfigurationData = {
@@ -408,7 +416,7 @@ export type PublicKey = {
   algorithm: Scalars['String']['output']
   createdAtEpochMs: Scalars['Float']['output']
   id: Scalars['ID']['output']
-  keyFormat?: Maybe<KeyFormat>
+  keyFormat: KeyFormat
   keyId: Scalars['String']['output']
   keyRingId: Scalars['String']['output']
   owner: Scalars['ID']['output']
@@ -759,11 +767,24 @@ export type EmailAddressFragment = {
   } | null
 }
 
+export type EmailAddressPublicKeyFragment = {
+  __typename?: 'EmailAddressPublicKey'
+  publicKey: string
+  keyFormat: KeyFormat
+  algorithm: string
+}
+
 export type EmailAddressPublicInfoFragment = {
   __typename?: 'EmailAddressPublicInfo'
   emailAddress: string
   keyId: string
   publicKey: string
+  publicKeyDetails: {
+    __typename?: 'EmailAddressPublicKey'
+    publicKey: string
+    keyFormat: KeyFormat
+    algorithm: string
+  }
 }
 
 export type EmailConfigurationDataFragment = {
@@ -810,7 +831,7 @@ export type PaginatedPublicKeyFragment = {
     keyId: string
     keyRingId: string
     algorithm: string
-    keyFormat?: KeyFormat | null
+    keyFormat: KeyFormat
     publicKey: string
     owner: string
     version: number
@@ -825,7 +846,7 @@ export type PublicKeyFragment = {
   keyId: string
   keyRingId: string
   algorithm: string
-  keyFormat?: KeyFormat | null
+  keyFormat: KeyFormat
   publicKey: string
   owner: string
   version: number
@@ -1178,7 +1199,7 @@ export type CreatePublicKeyForEmailMutation = {
     keyId: string
     keyRingId: string
     algorithm: string
-    keyFormat?: KeyFormat | null
+    keyFormat: KeyFormat
     publicKey: string
     owner: string
     version: number
@@ -1411,6 +1432,12 @@ export type LookupEmailAddressesPublicInfoQuery = {
       emailAddress: string
       keyId: string
       publicKey: string
+      publicKeyDetails: {
+        __typename?: 'EmailAddressPublicKey'
+        publicKey: string
+        keyFormat: KeyFormat
+        algorithm: string
+      }
     }>
   }
 }
@@ -1621,7 +1648,7 @@ export type GetKeyRingForEmailQuery = {
       keyId: string
       keyRingId: string
       algorithm: string
-      keyFormat?: KeyFormat | null
+      keyFormat: KeyFormat
       publicKey: string
       owner: string
       version: number
@@ -1643,7 +1670,7 @@ export type GetPublicKeyForEmailQuery = {
     keyId: string
     keyRingId: string
     algorithm: string
-    keyFormat?: KeyFormat | null
+    keyFormat: KeyFormat
     publicKey: string
     owner: string
     version: number
@@ -1668,7 +1695,7 @@ export type GetPublicKeysForEmailQuery = {
       keyId: string
       keyRingId: string
       algorithm: string
-      keyFormat?: KeyFormat | null
+      keyFormat: KeyFormat
       publicKey: string
       owner: string
       version: number
@@ -2298,6 +2325,27 @@ export const EmailAddressFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<EmailAddressFragment, unknown>
+export const EmailAddressPublicKeyFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EmailAddressPublicKey' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EmailAddressPublicKey' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'publicKey' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyFormat' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<EmailAddressPublicKeyFragment, unknown>
 export const EmailAddressPublicInfoFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -2314,6 +2362,35 @@ export const EmailAddressPublicInfoFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'emailAddress' } },
           { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'publicKey' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publicKeyDetails' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'EmailAddressPublicKey' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EmailAddressPublicKey' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EmailAddressPublicKey' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'publicKey' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyFormat' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
         ],
       },
     },
@@ -4826,6 +4903,22 @@ export const LookupEmailAddressesPublicInfoDocument = {
     },
     {
       kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EmailAddressPublicKey' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EmailAddressPublicKey' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'publicKey' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyFormat' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
       name: { kind: 'Name', value: 'EmailAddressPublicInfo' },
       typeCondition: {
         kind: 'NamedType',
@@ -4837,6 +4930,19 @@ export const LookupEmailAddressesPublicInfoDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'emailAddress' } },
           { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'publicKey' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publicKeyDetails' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'EmailAddressPublicKey' },
+                },
+              ],
+            },
+          },
         ],
       },
     },

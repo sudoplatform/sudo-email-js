@@ -1,5 +1,5 @@
-/*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -513,6 +513,7 @@ describe('DeviceKeyWorker Test Suite', () => {
         await instanceUnderTest.encryptWithPublicKey({
           key,
           data: payload,
+          format: PublicKeyFormat.RSAPublicKey,
           algorithm: EncryptionAlgorithm.RsaOaepSha1,
         }),
       ).toEqual(encryptedData)

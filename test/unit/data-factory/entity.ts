@@ -1,5 +1,5 @@
-/*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -19,6 +19,7 @@ import { EmailMessageEntity } from '../../../src/private/domain/entities/message
 import { SealedEmailMessageEntity } from '../../../src/private/domain/entities/message/sealedEmailMessageEntity'
 import { EncryptionStatus } from '../../../src/public'
 import { Direction, State } from '../../../src/public/typings/emailMessage'
+import { PublicKeyFormat } from '@sudoplatform/sudo-common'
 
 export class EntityDataFactory {
   private static readonly commonProps = {
@@ -52,12 +53,20 @@ export class EntityDataFactory {
     {
       emailAddress: EntityDataFactory.emailAddress.emailAddress,
       keyId: 'testKeyId',
-      publicKey: 'testPublicKey',
+      publicKeyDetails: {
+        publicKey: 'testPublicKey',
+        keyFormat: PublicKeyFormat.RSAPublicKey,
+        algorithm: 'testAlgorithm',
+      },
     },
     {
       emailAddress: `${EntityDataFactory.emailAddress.emailAddress}_2`,
       keyId: 'testKeyId_2',
-      publicKey: 'testPublicKey_2',
+      publicKeyDetails: {
+        publicKey: 'testPublicKey_2',
+        keyFormat: PublicKeyFormat.SPKI,
+        algorithm: 'testAlgorithm_2',
+      },
     },
   ]
 

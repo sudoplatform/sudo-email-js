@@ -1,5 +1,5 @@
-/*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -541,15 +541,20 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should respect includeDeletedMessages flag', async () => {
       expectSetupComplete()
 
-      const sendResult = await sendReceiveEmailMessagePair(
-        instanceUnderTest,
-        emailAddress,
-        { ...messageDetails, subject: 'Deleted messages test' },
-      )
-      expect(sendResult).toBeDefined()
-      if (!sendResult) {
-        fail('unable to sendReceiveEmailMessagePair')
-      }
+      const sendResult = await instanceUnderTest.sendEmailMessage({
+        senderEmailAddressId: emailAddress.id,
+        emailMessageHeader: {
+          from: messageDetails.from[0],
+          to: [{ emailAddress: 'success@simulator.amazonses.com' }],
+          cc: [],
+          bcc: [],
+          replyTo: [],
+          subject: 'Should respect includeDeletedMessages flag',
+        },
+        body: messageDetails.body ?? 'Hello, World',
+        attachments: messageDetails.attachments ?? [],
+        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      })
       await waitForExpect(
         async () => {
           const messages = await readAllPages((nextToken?: string) =>
@@ -562,7 +567,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
           }
-          expect(messages.items).toHaveLength(4)
+          expect(messages.items).toHaveLength(3)
         },
         30000,
         1000,
@@ -581,7 +586,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
           }
-          expect(messages.items).toHaveLength(3)
+          expect(messages.items).toHaveLength(2)
         },
         30000,
         1000,
@@ -598,7 +603,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
           }
-          expect(messages.items).toHaveLength(4)
+          expect(messages.items).toHaveLength(3)
         },
         30000,
         1000,
@@ -1043,18 +1048,20 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should respect includeDeletedMessages flag', async () => {
       expectSetupComplete()
 
-      const sendResult = await sendReceiveEmailMessagePair(
-        instanceUnderTest,
-        emailAddress,
-        {
-          ...messageDetails,
+      const sendResult = await instanceUnderTest.sendEmailMessage({
+        senderEmailAddressId: emailAddress.id,
+        emailMessageHeader: {
+          from: messageDetails.from[0],
+          to: [{ emailAddress: 'success@simulator.amazonses.com' }],
+          cc: [],
+          bcc: [],
+          replyTo: [],
           subject: 'Should respect includeDeletedMessages flag',
         },
-      )
-      expect(sendResult).toBeDefined()
-      if (!sendResult) {
-        fail('sendReceiveEmailMessagePair unexpectedly failed')
-      }
+        body: messageDetails.body ?? 'Hello, World',
+        attachments: messageDetails.attachments ?? [],
+        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      })
 
       await waitForExpect(
         async () => {
@@ -1067,9 +1074,9 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(4)
+          expect(messages.items).toHaveLength(3)
         },
-        30000,
+        40000,
         1000,
       )
       await expect(
@@ -1086,9 +1093,9 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(3)
+          expect(messages.items).toHaveLength(2)
         },
-        30000,
+        40000,
         1000,
       )
       await waitForExpect(
@@ -1103,9 +1110,9 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(4)
+          expect(messages.items).toHaveLength(3)
         },
-        30000,
+        40000,
         1000,
       )
     })
@@ -1495,29 +1502,34 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should respect includeDeletedMessages flag', async () => {
       expectSetupComplete()
 
-      const sendResult = await sendReceiveEmailMessagePair(
-        instanceUnderTest,
-        emailAddress,
-        {
-          ...messageDetails,
+      const sendResult = await instanceUnderTest.sendEmailMessage({
+        senderEmailAddressId: emailAddress.id,
+        emailMessageHeader: {
+          from: messageDetails.from[0],
+          to: [{ emailAddress: 'success@simulator.amazonses.com' }],
+          cc: [],
+          bcc: [],
+          replyTo: [],
           subject: 'Should respect includeDeletedMessages flag',
         },
-      )
-      expect(sendResult).toBeDefined()
-      if (!sendResult) {
-        fail('sendReceiveEmailMessagePair unexpectedly failed')
-      }
+        body: messageDetails.body ?? 'Hello, World',
+        attachments: messageDetails.attachments ?? [],
+        inlineAttachments: messageDetails.inlineAttachments ?? [],
+      })
 
       const sentFolder = await getFolderByName({
         emailClient: instanceUnderTest,
         emailAddressId: emailAddress.id,
         folderName: 'SENT',
       })
+      if (!sentFolder) {
+        fail('Could not find sent folder')
+      }
       await waitForExpect(
         async () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailFolderId({
-              folderId: sentFolder?.id ?? '',
+              folderId: sentFolder.id,
               cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
@@ -1536,7 +1548,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         async () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailFolderId({
-              folderId: sentFolder?.id ?? '',
+              folderId: sentFolder.id,
               cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
@@ -1552,7 +1564,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         async () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailFolderId({
-              folderId: sentFolder?.id ?? '',
+              folderId: sentFolder.id,
               cachePolicy: CachePolicy.RemoteOnly,
               includeDeletedMessages: true,
             })

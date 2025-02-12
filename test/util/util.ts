@@ -1,4 +1,10 @@
 /**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
  * Wrapper to conditionally instantiate and run tests only if a particular
  * condition is met.
  *

@@ -1,5 +1,5 @@
-/*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -26,6 +26,7 @@ import {
 } from '../../../../../../src/public'
 import { EntityDataFactory } from '../../../../data-factory/entity'
 import { EmailDomainService } from '../../../../../../src/private/domain/entities/emailDomain/emailDomainService'
+import { PublicKeyFormat } from '@sudoplatform/sudo-common'
 
 describe('SendEmailMessageUseCase', () => {
   const emailMessageMaxOutboundMessageSize = 9999999
@@ -134,7 +135,11 @@ describe('SendEmailMessageUseCase', () => {
         {
           emailAddress: EntityDataFactory.emailAddress.emailAddress,
           keyId: 'mockKeyId',
-          publicKey: 'mockPublicKey',
+          publicKeyDetails: {
+            publicKey: 'mockPublicKey',
+            keyFormat: PublicKeyFormat.RSAPublicKey,
+            algorithm: 'mockAlgorithm',
+          },
         },
       ])
       when(mockMessageService.sendMessage(anything())).thenResolve({
@@ -191,12 +196,20 @@ describe('SendEmailMessageUseCase', () => {
         {
           emailAddress: EntityDataFactory.emailAddress.emailAddress,
           keyId: 'mockKeyId',
-          publicKey: 'mockPublicKey',
+          publicKeyDetails: {
+            publicKey: 'mockPublicKey',
+            keyFormat: PublicKeyFormat.RSAPublicKey,
+            algorithm: 'mockAlgorithm',
+          },
         },
         {
           emailAddress: fromAddress,
           keyId: 'mockKeyId',
-          publicKey: 'mockPublicKey',
+          publicKeyDetails: {
+            publicKey: 'mockPublicKey',
+            keyFormat: PublicKeyFormat.RSAPublicKey,
+            algorithm: 'mockAlgorithm',
+          },
         },
       ])
     })
@@ -238,12 +251,20 @@ describe('SendEmailMessageUseCase', () => {
           {
             emailAddress: EntityDataFactory.emailAddress.emailAddress,
             keyId: 'mockKeyId',
-            publicKey: 'mockPublicKey',
+            publicKeyDetails: {
+              publicKey: 'mockPublicKey',
+              keyFormat: PublicKeyFormat.RSAPublicKey,
+              algorithm: 'mockAlgorithm',
+            },
           },
           {
             emailAddress: fromAddress,
             keyId: 'mockKeyId',
-            publicKey: 'mockPublicKey',
+            publicKeyDetails: {
+              publicKey: 'mockPublicKey',
+              keyFormat: PublicKeyFormat.RSAPublicKey,
+              algorithm: 'mockAlgorithm',
+            },
           },
         ],
         emailMessageMaxOutboundMessageSize,

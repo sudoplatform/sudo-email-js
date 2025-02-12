@@ -1,5 +1,5 @@
-/*
- * Copyright © 2024 Anonyome Labs, Inc. All rights reserved.
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,6 +13,7 @@ export * from './draftEmailMessage'
 export * from './draftEmailMessageMetadata'
 export * from './emailAddress'
 export * from './emailAddressPublicInfo'
+export * from './emailAddressPublicKey'
 export * from './emailAttachment'
 export * from './emailFolder'
 export * from './emailMessage'
