@@ -21,6 +21,7 @@ import {
   EmailFolder,
   EncryptionStatus,
   InvalidArgumentError,
+  SendEmailMessageResult,
   SudoEmailClient,
 } from '../../../src'
 import { EmailMessageDetails } from '../../../src/private/util/rfc822MessageDataProcessor'
@@ -28,9 +29,11 @@ import { EmailMessageDateRange } from '../../../src/public/typings/emailMessageD
 import { SortOrder } from '../../../src/public/typings/sortOrder'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { getFolderByName } from '../util/folder'
-import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import {
+  generateSafeLocalPart,
+  provisionEmailAddress,
+} from '../util/provisionEmailAddress'
 import { readAllPages } from '../util/paginator'
-import { sendReceiveEmailMessagePair } from '../util/sendReceiveEmailMessage'
 
 describe('SudoEmailClient ListEmailMessages Test Suite', () => {
   jest.setTimeout(240000)
@@ -42,85 +45,106 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
   let sudo: Sudo
   let sudoOwnershipProofToken: string
 
-  let emailAddress: EmailAddress
+  let senderAddress: EmailAddress
+  let receiverAddress: EmailAddress
   let inboxFolder: EmailFolder
 
   let messageDetails: EmailMessageDetails
-  const simAddress = { emailAddress: 'MAILER-DAEMON@amazonses.com' }
+  const totalMessagesSent = 2
+  let sendResult: SendEmailMessageResult | undefined
 
   let beforeEachComplete = false
-
-  beforeEach(async () => {
-    const result = await setupEmailClient(log)
-    instanceUnderTest = result.emailClient
-    profilesClient = result.profilesClient
-    userClient = result.userClient
-    sudo = result.sudo
-    sudoOwnershipProofToken = result.ownershipProofToken
-    emailAddress = await provisionEmailAddress(
-      sudoOwnershipProofToken,
-      instanceUnderTest,
-    )
-    const subjectRandomizer = v4()
-    const bodyRandomizer = v4()
-
-    messageDetails = {
-      from: [{ emailAddress: emailAddress.emailAddress }],
-      to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
-      cc: [],
-      bcc: [],
-      replyTo: [{ emailAddress: emailAddress.emailAddress }],
-      subject: 'Important Subject ' + subjectRandomizer,
-      body: 'Hello, World ' + bodyRandomizer,
-      attachments: [],
-      encryptionStatus: EncryptionStatus.UNENCRYPTED,
-    }
-
-    await sendReceiveEmailMessagePair(
-      instanceUnderTest,
-      emailAddress,
-      messageDetails,
-    )
-
-    const folder = await getFolderByName({
-      emailClient: instanceUnderTest,
-      emailAddressId: emailAddress.id,
-      folderName: 'INBOX',
-    })
-    expect(folder).toBeDefined()
-    if (!folder) {
-      fail('Unable to get INBOX folder in setup')
-    }
-
-    inboxFolder = folder
-
-    const messagesList =
-      await instanceUnderTest.listEmailMessagesForEmailFolderId({
-        folderId: inboxFolder.id,
-      })
-
-    expect(messagesList.status).toEqual(ListOperationResultStatus.Success)
-    if (messagesList.status !== ListOperationResultStatus.Success) {
-      fail(`result status unexpectedly not Success`)
-    }
-    expect(messagesList.items).toHaveLength(1)
-    beforeEachComplete = true
-  }, 600000)
-
-  afterEach(async () => {
-    beforeEachComplete = false
-
-    await teardown(
-      { emailAddresses: [emailAddress], sudos: [sudo] },
-      { emailClient: instanceUnderTest, profilesClient, userClient },
-    )
-  })
 
   function expectSetupComplete() {
     expect({ beforeEachComplete }).toEqual({ beforeEachComplete: true })
   }
 
   describe('listEmailMessages', () => {
+    beforeAll(async () => {
+      const result = await setupEmailClient(log)
+      instanceUnderTest = result.emailClient
+      profilesClient = result.profilesClient
+      userClient = result.userClient
+      sudo = result.sudo
+      sudoOwnershipProofToken = result.ownershipProofToken
+      senderAddress = await provisionEmailAddress(
+        sudoOwnershipProofToken,
+        instanceUnderTest,
+        { localPart: generateSafeLocalPart('list-test-sender') },
+      )
+      receiverAddress = await provisionEmailAddress(
+        sudoOwnershipProofToken,
+        instanceUnderTest,
+        { localPart: generateSafeLocalPart('list-test-receiver') },
+      )
+      for (let i = 0; i < totalMessagesSent; i++) {
+        const subjectRandomizer = v4()
+        const bodyRandomizer = v4()
+
+        messageDetails = {
+          from: [{ emailAddress: senderAddress.emailAddress }],
+          to: [{ emailAddress: receiverAddress.emailAddress }],
+          cc: [],
+          bcc: [],
+          replyTo: [{ emailAddress: senderAddress.emailAddress }],
+          subject: 'Important Subject ' + subjectRandomizer,
+          body: 'Hello, World ' + bodyRandomizer,
+          attachments: [],
+          encryptionStatus: EncryptionStatus.ENCRYPTED,
+        }
+
+        sendResult = await instanceUnderTest.sendEmailMessage({
+          senderEmailAddressId: senderAddress.id,
+          emailMessageHeader: {
+            from: messageDetails.from[0],
+            to: messageDetails.to ?? [],
+            cc: messageDetails.cc ?? [],
+            bcc: messageDetails.bcc ?? [],
+            replyTo: messageDetails.replyTo ?? [],
+            subject: messageDetails.subject ?? '',
+          },
+          body: messageDetails.body ?? 'Hello, World',
+          attachments: messageDetails.attachments ?? [],
+          inlineAttachments: messageDetails.inlineAttachments ?? [],
+        })
+      }
+
+      const folder = await getFolderByName({
+        emailClient: instanceUnderTest,
+        emailAddressId: receiverAddress.id,
+        folderName: 'INBOX',
+      })
+      expect(folder).toBeDefined()
+      if (!folder) {
+        fail('Unable to get INBOX folder in setup')
+      }
+
+      inboxFolder = folder
+
+      await waitForExpect(async () => {
+        const messagesList =
+          await instanceUnderTest.listEmailMessagesForEmailFolderId({
+            folderId: inboxFolder.id,
+          })
+
+        expect(messagesList.status).toEqual(ListOperationResultStatus.Success)
+        if (messagesList.status !== ListOperationResultStatus.Success) {
+          fail(`result status unexpectedly not Success`)
+        }
+        expect(messagesList.items).toHaveLength(2)
+      })
+      beforeEachComplete = true
+    })
+
+    afterAll(async () => {
+      beforeEachComplete = false
+
+      await teardown(
+        { emailAddresses: [senderAddress, receiverAddress], sudos: [sudo] },
+        { emailClient: instanceUnderTest, profilesClient, userClient },
+      )
+    })
+
     it('lists expected email messages', async () => {
       expectSetupComplete()
 
@@ -137,26 +161,26 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(2)
+          expect(messages.items).toHaveLength(totalMessagesSent * 2)
           const inbound = messages.items.filter(
             (message) => message.direction === Direction.Inbound,
           )
           const outbound = messages.items.filter(
             (message) => message.direction === Direction.Outbound,
           )
-          expect(outbound).toHaveLength(1)
+          expect(outbound).toHaveLength(totalMessagesSent)
           expect(outbound[0].from).toEqual(messageDetails.from)
           expect(outbound[0].to).toEqual(messageDetails.to)
           expect(outbound[0].hasAttachments).toEqual(false)
           expect(outbound[0].size).toBeGreaterThan(0)
 
-          expect(inbound).toHaveLength(1)
-          expect(inbound[0].from).toEqual([simAddress])
-          expect(inbound[0].to).toEqual(messageDetails.from)
+          expect(inbound).toHaveLength(totalMessagesSent)
+          expect(inbound[0].from).toEqual(messageDetails.from)
+          expect(inbound[0].to).toEqual(messageDetails.to)
           expect(inbound[0].hasAttachments).toEqual(false)
           expect(inbound[0].size).toBeGreaterThan(0)
           expect(inbound[0].encryptionStatus).toEqual(
-            EncryptionStatus.UNENCRYPTED,
+            EncryptionStatus.ENCRYPTED,
           )
         },
         10000,
@@ -186,15 +210,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
 
     it('lists expected email messages respecting sortDate date range', async () => {
       expectSetupComplete()
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject: 'Lists expected email messages respecting sortDate date range',
-      })
 
       const dateRange: EmailMessageDateRange = {
         sortDate: {
-          startDate: emailAddress.createdAt,
-          endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+          startDate: senderAddress.createdAt,
+          endDate: new Date(senderAddress.createdAt.getTime() + 100000),
         },
       }
 
@@ -226,12 +246,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
 
     it('lists expected email messages respecting updatedAt date range', async () => {
       expectSetupComplete()
-
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject:
-          'Lists expected email messages respecting updatedAt date range',
-      })
 
       // List all inbound messages
       let inboundMessageIds: string[] = []
@@ -295,11 +309,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('returns empty list for out of range sort date', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject: 'Returns empty list for out of range sort date',
-      })
-
       await waitForExpect(
         async () => {
           const messages = await readAllPages((nextToken?: string) =>
@@ -307,7 +316,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               dateRange: {
                 sortDate: {
                   startDate: sudo.createdAt,
-                  endDate: emailAddress.createdAt,
+                  endDate: senderAddress.createdAt,
                 },
               },
               cachePolicy: CachePolicy.RemoteOnly,
@@ -327,11 +336,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('returns empty list for out of range updatedAt date', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject: 'Returns empty list for out of range updatedAt date',
-      })
-
       await waitForExpect(
         async () => {
           const messages = await readAllPages((nextToken?: string) =>
@@ -339,7 +343,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               dateRange: {
                 updatedAt: {
                   startDate: sudo.createdAt,
-                  endDate: emailAddress.createdAt,
+                  endDate: senderAddress.createdAt,
                 },
               },
               cachePolicy: CachePolicy.RemoteOnly,
@@ -359,21 +363,16 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should throw for multiple date ranges specified', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject: 'Should throw for multiple date ranges specified',
-      })
-
       await expect(
         instanceUnderTest.listEmailMessages({
           dateRange: {
             sortDate: {
-              startDate: emailAddress.createdAt,
-              endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+              startDate: senderAddress.createdAt,
+              endDate: new Date(senderAddress.createdAt.getTime() + 100000),
             },
             updatedAt: {
-              startDate: emailAddress.createdAt,
-              endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+              startDate: senderAddress.createdAt,
+              endDate: new Date(senderAddress.createdAt.getTime() + 100000),
             },
           },
           cachePolicy: CachePolicy.RemoteOnly,
@@ -384,18 +383,12 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should throw when input start date greater than end date for sortDate date range', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject:
-          'Should throw when input start date greater than end date for sortDate date range',
-      })
-
       await expect(
         instanceUnderTest.listEmailMessages({
           dateRange: {
             sortDate: {
-              startDate: new Date(emailAddress.createdAt.getTime() + 100000),
-              endDate: emailAddress.createdAt,
+              startDate: new Date(senderAddress.createdAt.getTime() + 100000),
+              endDate: senderAddress.createdAt,
             },
           },
           cachePolicy: CachePolicy.RemoteOnly,
@@ -406,18 +399,12 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should throw when input start date greater than end date for updatedAt date range', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject:
-          'Should throw when input start date greater than end date for updatedAt date range',
-      })
-
       await expect(
         instanceUnderTest.listEmailMessages({
           dateRange: {
             updatedAt: {
-              startDate: new Date(emailAddress.createdAt.getTime() + 100000),
-              endDate: emailAddress.createdAt,
+              startDate: new Date(senderAddress.createdAt.getTime() + 100000),
+              endDate: senderAddress.createdAt,
             },
           },
           cachePolicy: CachePolicy.RemoteOnly,
@@ -428,15 +415,10 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages in ascending order', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject: 'List expected email messages in ascending order',
-      })
-
       const dateRange: EmailMessageDateRange = {
         sortDate: {
-          startDate: emailAddress.createdAt,
-          endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+          startDate: senderAddress.createdAt,
+          endDate: new Date(senderAddress.createdAt.getTime() + 100000),
         },
       }
       await waitForExpect(
@@ -468,11 +450,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
 
     it('lists expected email messages in descending order', async () => {
       expectSetupComplete()
-
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject: 'List expected email messages in descending order',
-      })
 
       await waitForExpect(
         async () => {
@@ -505,6 +482,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
 
       await waitForExpect(
         async () => {
+          const keyArchive = await instanceUnderTest.exportKeys()
           await instanceUnderTest.reset()
           const messages = await readAllPages((nextToken?: string) =>
             instanceUnderTest.listEmailMessages({
@@ -520,18 +498,19 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           }
 
           expect(messages.items).toHaveLength(0)
-          expect(messages.failed).toHaveLength(2)
+          expect(messages.failed).toHaveLength(totalMessagesSent * 2)
           const inbound = messages.failed.filter(
             (message) => message.item.direction === Direction.Inbound,
           )
           const outbound = messages.failed.filter(
             (message) => message.item.direction === Direction.Outbound,
           )
-          expect(outbound).toHaveLength(1)
-          expect(inbound).toHaveLength(1)
+          expect(outbound).toHaveLength(totalMessagesSent)
+          expect(inbound).toHaveLength(totalMessagesSent)
 
           expect(outbound[0].cause).toBeInstanceOf(KeyNotFoundError)
           expect(inbound[0].cause).toBeInstanceOf(KeyNotFoundError)
+          await instanceUnderTest.importKeys(keyArchive)
         },
         20000,
         1000,
@@ -540,21 +519,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
 
     it('should respect includeDeletedMessages flag', async () => {
       expectSetupComplete()
-
-      const sendResult = await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: [{ emailAddress: 'success@simulator.amazonses.com' }],
-          cc: [],
-          bcc: [],
-          replyTo: [],
-          subject: 'Should respect includeDeletedMessages flag',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
-      })
       await waitForExpect(
         async () => {
           const messages = await readAllPages((nextToken?: string) =>
@@ -567,14 +531,14 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
           }
-          expect(messages.items).toHaveLength(3)
+          expect(messages.items).toHaveLength(totalMessagesSent * 2)
         },
         30000,
         1000,
       )
       await expect(
-        instanceUnderTest.deleteEmailMessage(sendResult.id),
-      ).resolves.toEqual({ id: sendResult.id })
+        instanceUnderTest.deleteEmailMessage(sendResult!.id),
+      ).resolves.toEqual({ id: sendResult!.id })
       await waitForExpect(
         async () => {
           const messages = await readAllPages((nextToken?: string) =>
@@ -586,7 +550,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
           }
-          expect(messages.items).toHaveLength(2)
+          expect(messages.items).toHaveLength(totalMessagesSent * 2 - 1)
         },
         30000,
         1000,
@@ -603,7 +567,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
           }
-          expect(messages.items).toHaveLength(3)
+          expect(messages.items).toHaveLength(totalMessagesSent * 2)
         },
         30000,
         1000,
@@ -612,6 +576,90 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
   })
 
   describe('listEmailMessagesForEmailAddressId', () => {
+    beforeAll(async () => {
+      const result = await setupEmailClient(log)
+      instanceUnderTest = result.emailClient
+      profilesClient = result.profilesClient
+      userClient = result.userClient
+      sudo = result.sudo
+      sudoOwnershipProofToken = result.ownershipProofToken
+      senderAddress = await provisionEmailAddress(
+        sudoOwnershipProofToken,
+        instanceUnderTest,
+        { localPart: generateSafeLocalPart('list-test-sender') },
+      )
+      receiverAddress = await provisionEmailAddress(
+        sudoOwnershipProofToken,
+        instanceUnderTest,
+        { localPart: generateSafeLocalPart('list-test-receiver') },
+      )
+      for (let i = 0; i < totalMessagesSent; i++) {
+        const subjectRandomizer = v4()
+        const bodyRandomizer = v4()
+
+        messageDetails = {
+          from: [{ emailAddress: senderAddress.emailAddress }],
+          to: [{ emailAddress: receiverAddress.emailAddress }],
+          cc: [],
+          bcc: [],
+          replyTo: [{ emailAddress: senderAddress.emailAddress }],
+          subject: 'Important Subject ' + subjectRandomizer,
+          body: 'Hello, World ' + bodyRandomizer,
+          attachments: [],
+          encryptionStatus: EncryptionStatus.ENCRYPTED,
+        }
+
+        sendResult = await instanceUnderTest.sendEmailMessage({
+          senderEmailAddressId: senderAddress.id,
+          emailMessageHeader: {
+            from: messageDetails.from[0],
+            to: messageDetails.to ?? [],
+            cc: messageDetails.cc ?? [],
+            bcc: messageDetails.bcc ?? [],
+            replyTo: messageDetails.replyTo ?? [],
+            subject: messageDetails.subject ?? '',
+          },
+          body: messageDetails.body ?? 'Hello, World',
+          attachments: messageDetails.attachments ?? [],
+          inlineAttachments: messageDetails.inlineAttachments ?? [],
+        })
+      }
+
+      const folder = await getFolderByName({
+        emailClient: instanceUnderTest,
+        emailAddressId: receiverAddress.id,
+        folderName: 'INBOX',
+      })
+      expect(folder).toBeDefined()
+      if (!folder) {
+        fail('Unable to get INBOX folder in setup')
+      }
+
+      inboxFolder = folder
+
+      await waitForExpect(async () => {
+        const messagesList =
+          await instanceUnderTest.listEmailMessagesForEmailFolderId({
+            folderId: inboxFolder.id,
+          })
+
+        expect(messagesList.status).toEqual(ListOperationResultStatus.Success)
+        if (messagesList.status !== ListOperationResultStatus.Success) {
+          fail(`result status unexpectedly not Success`)
+        }
+        expect(messagesList.items).toHaveLength(2)
+      })
+      beforeEachComplete = true
+    })
+
+    afterAll(async () => {
+      beforeEachComplete = false
+
+      await teardown(
+        { emailAddresses: [senderAddress, receiverAddress], sudos: [sudo] },
+        { emailClient: instanceUnderTest, profilesClient, userClient },
+      )
+    })
     it('lists expected email messages', async () => {
       expectSetupComplete()
 
@@ -619,34 +667,57 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         async () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
-              emailAddressId: emailAddress.id,
+              emailAddressId: senderAddress.id,
               cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(2)
+          expect(messages.items).toHaveLength(totalMessagesSent)
           const inbound = messages.items.filter(
             (message) => message.direction === Direction.Inbound,
           )
           const outbound = messages.items.filter(
             (message) => message.direction === Direction.Outbound,
           )
-          expect(outbound).toHaveLength(1)
+          expect(outbound).toHaveLength(totalMessagesSent)
           expect(outbound[0].from).toEqual(messageDetails.from)
           expect(outbound[0].to).toEqual(messageDetails.to)
           expect(outbound[0].hasAttachments).toEqual(false)
           expect(outbound[0].size).toBeGreaterThan(0)
 
-          expect(inbound).toHaveLength(1)
-          expect(inbound[0].from).toEqual([simAddress])
-          expect(inbound[0].to).toEqual(messageDetails.from)
+          expect(inbound).toHaveLength(0)
+        },
+        10000,
+        1000,
+      )
+
+      await waitForExpect(
+        async () => {
+          const messages =
+            await instanceUnderTest.listEmailMessagesForEmailAddressId({
+              emailAddressId: receiverAddress.id,
+              cachePolicy: CachePolicy.RemoteOnly,
+            })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            fail(`Expect result not returned: ${messages}`)
+          }
+          expect(messages.nextToken).toBeFalsy()
+          expect(messages.items).toHaveLength(totalMessagesSent)
+          const inbound = messages.items.filter(
+            (message) => message.direction === Direction.Inbound,
+          )
+          const outbound = messages.items.filter(
+            (message) => message.direction === Direction.Outbound,
+          )
+          expect(outbound).toHaveLength(0)
+
+          expect(inbound).toHaveLength(totalMessagesSent)
+          expect(inbound[0].from).toEqual(messageDetails.from)
+          expect(inbound[0].to).toEqual(messageDetails.to)
           expect(inbound[0].hasAttachments).toEqual(false)
           expect(inbound[0].size).toBeGreaterThan(0)
-          expect(inbound[0].encryptionStatus).toEqual(
-            EncryptionStatus.UNENCRYPTED,
-          )
         },
         10000,
         1000,
@@ -660,7 +731,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         async () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
-              emailAddressId: emailAddress.id,
+              emailAddressId: senderAddress.id,
               cachePolicy: CachePolicy.RemoteOnly,
               limit: 1,
             })
@@ -678,22 +749,17 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages respecting sortDate date range', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject: 'Lists expected email messages respecting sortDate date range',
-      })
-
       const dateRange: EmailMessageDateRange = {
         sortDate: {
-          startDate: emailAddress.createdAt,
-          endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+          startDate: senderAddress.createdAt,
+          endDate: new Date(senderAddress.createdAt.getTime() + 100000),
         },
       }
       await waitForExpect(
         async () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
-              emailAddressId: emailAddress.id,
+              emailAddressId: senderAddress.id,
               dateRange,
               cachePolicy: CachePolicy.RemoteOnly,
             })
@@ -701,7 +767,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(4)
+          expect(messages.items).toHaveLength(totalMessagesSent)
           messages.items.forEach((item, index) => {
             if (index < messages.items.length - 1) {
               expect(item.sortDate.getTime()).toBeGreaterThan(
@@ -718,12 +784,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages respecting updatedAt date range', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject:
-          'Lists expected email messages respecting updatedAt date range',
-      })
-
       // List all inbound messages
       let inboundMessageIds: string[] = []
       await waitForExpect(
@@ -734,7 +794,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           if (allMessages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${allMessages}`)
           }
-          expect(allMessages.items).toHaveLength(4)
+          expect(allMessages.items).toHaveLength(totalMessagesSent * 2)
 
           inboundMessageIds = allMessages.items
             .filter((m) => m.direction == Direction.Inbound)
@@ -760,7 +820,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         async () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
-              emailAddressId: emailAddress.id,
+              emailAddressId: receiverAddress.id,
               dateRange: {
                 updatedAt: {
                   startDate: timestamp,
@@ -773,7 +833,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(2)
+          expect(messages.items).toHaveLength(totalMessagesSent)
         },
         20000,
         1000,
@@ -783,20 +843,15 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('returns empty list for out of range sort date', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject: 'Return empty list for out of range sort date',
-      })
-
       await waitForExpect(
         async () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
-              emailAddressId: emailAddress.id,
+              emailAddressId: senderAddress.id,
               dateRange: {
                 sortDate: {
                   startDate: sudo.createdAt,
-                  endDate: emailAddress.createdAt,
+                  endDate: senderAddress.createdAt,
                 },
               },
               cachePolicy: CachePolicy.RemoteOnly,
@@ -815,20 +870,15 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('returns empty list for out of range updatedAt date', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject: 'Return empty list for out of range updatedAt date',
-      })
-
       await waitForExpect(
         async () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
-              emailAddressId: emailAddress.id,
+              emailAddressId: senderAddress.id,
               dateRange: {
                 updatedAt: {
                   startDate: sudo.createdAt,
-                  endDate: emailAddress.createdAt,
+                  endDate: senderAddress.createdAt,
                 },
               },
               cachePolicy: CachePolicy.RemoteOnly,
@@ -847,22 +897,17 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should throw for multiple date ranges specified', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject: 'Should throw for multiple date ranges specified',
-      })
-
       await expect(
         instanceUnderTest.listEmailMessagesForEmailAddressId({
-          emailAddressId: emailAddress.id,
+          emailAddressId: senderAddress.id,
           dateRange: {
             sortDate: {
-              startDate: emailAddress.createdAt,
-              endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+              startDate: senderAddress.createdAt,
+              endDate: new Date(senderAddress.createdAt.getTime() + 100000),
             },
             updatedAt: {
-              startDate: emailAddress.createdAt,
-              endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+              startDate: senderAddress.createdAt,
+              endDate: new Date(senderAddress.createdAt.getTime() + 100000),
             },
           },
           cachePolicy: CachePolicy.RemoteOnly,
@@ -873,19 +918,13 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should throw when input start date greater than end date for sort date range', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject:
-          'Should throw when input start date greater than end date for sort date range',
-      })
-
       await expect(
         instanceUnderTest.listEmailMessagesForEmailAddressId({
-          emailAddressId: emailAddress.id,
+          emailAddressId: senderAddress.id,
           dateRange: {
             sortDate: {
-              startDate: new Date(emailAddress.createdAt.getTime() + 100000),
-              endDate: emailAddress.createdAt,
+              startDate: new Date(senderAddress.createdAt.getTime() + 100000),
+              endDate: senderAddress.createdAt,
             },
           },
           cachePolicy: CachePolicy.RemoteOnly,
@@ -896,19 +935,13 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should throw when input start date greater than end date for updatedAt date range', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject:
-          'Should throw when input start date greater than end date for updatedAt date range',
-      })
-
       await expect(
         instanceUnderTest.listEmailMessagesForEmailAddressId({
-          emailAddressId: emailAddress.id,
+          emailAddressId: senderAddress.id,
           dateRange: {
             updatedAt: {
-              startDate: new Date(emailAddress.createdAt.getTime() + 100000),
-              endDate: emailAddress.createdAt,
+              startDate: new Date(senderAddress.createdAt.getTime() + 100000),
+              endDate: senderAddress.createdAt,
             },
           },
           cachePolicy: CachePolicy.RemoteOnly,
@@ -919,22 +952,17 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages in ascending order', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject: 'Lists expected email messages in ascending order',
-      })
-
       const dateRange: EmailMessageDateRange = {
         sortDate: {
-          startDate: emailAddress.createdAt,
-          endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+          startDate: senderAddress.createdAt,
+          endDate: new Date(senderAddress.createdAt.getTime() + 100000),
         },
       }
       await waitForExpect(
         async () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
-              emailAddressId: emailAddress.id,
+              emailAddressId: senderAddress.id,
               dateRange,
               cachePolicy: CachePolicy.RemoteOnly,
               sortOrder: SortOrder.Asc,
@@ -943,7 +971,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(4)
+          expect(messages.items).toHaveLength(totalMessagesSent)
           messages.items.forEach((item, index) => {
             if (index < messages.items.length - 1) {
               expect(item.sortDate.getTime()).toBeLessThan(
@@ -960,16 +988,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages in descending order', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject: 'Lists expected email messages in descending order',
-      })
-
       await waitForExpect(
         async () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
-              emailAddressId: emailAddress.id,
+              emailAddressId: senderAddress.id,
               cachePolicy: CachePolicy.RemoteOnly,
               sortOrder: SortOrder.Desc,
             })
@@ -977,7 +1000,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(4)
+          expect(messages.items).toHaveLength(totalMessagesSent)
           messages.items.forEach((item, index) => {
             if (index < messages.items.length - 1) {
               expect(item.sortDate.getTime()).toBeGreaterThan(
@@ -1010,10 +1033,11 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
 
       await waitForExpect(
         async () => {
+          const keyArchive = await instanceUnderTest.exportKeys()
           await instanceUnderTest.reset()
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
-              emailAddressId: emailAddress.id,
+              emailAddressId: senderAddress.id,
               cachePolicy: CachePolicy.RemoteOnly,
             })
 
@@ -1027,18 +1051,19 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
 
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(0)
-          expect(messages.failed).toHaveLength(2)
+          expect(messages.failed).toHaveLength(totalMessagesSent)
           const inbound = messages.failed.filter(
             (message) => message.item.direction === Direction.Inbound,
           )
           const outbound = messages.failed.filter(
             (message) => message.item.direction === Direction.Outbound,
           )
-          expect(outbound).toHaveLength(1)
-          expect(inbound).toHaveLength(1)
+          expect(outbound).toHaveLength(totalMessagesSent)
+          expect(inbound).toHaveLength(0)
 
           expect(outbound[0].cause).toBeInstanceOf(KeyNotFoundError)
-          expect(inbound[0].cause).toBeInstanceOf(KeyNotFoundError)
+          expect(outbound[1].cause).toBeInstanceOf(KeyNotFoundError)
+          await instanceUnderTest.importKeys(keyArchive)
         },
         20000,
         1000,
@@ -1048,52 +1073,37 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should respect includeDeletedMessages flag', async () => {
       expectSetupComplete()
 
-      const sendResult = await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: [{ emailAddress: 'success@simulator.amazonses.com' }],
-          cc: [],
-          bcc: [],
-          replyTo: [],
-          subject: 'Should respect includeDeletedMessages flag',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
-      })
-
       await waitForExpect(
         async () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
-              emailAddressId: emailAddress.id,
+              emailAddressId: senderAddress.id,
               cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(3)
+          expect(messages.items).toHaveLength(totalMessagesSent)
         },
         40000,
         1000,
       )
       await expect(
-        instanceUnderTest.deleteEmailMessage(sendResult.id),
-      ).resolves.toEqual({ id: sendResult.id })
+        instanceUnderTest.deleteEmailMessage(sendResult!.id),
+      ).resolves.toEqual({ id: sendResult!.id })
       await waitForExpect(
         async () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
-              emailAddressId: emailAddress.id,
+              emailAddressId: senderAddress.id,
               cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(2)
+          expect(messages.items).toHaveLength(totalMessagesSent - 1)
         },
         40000,
         1000,
@@ -1102,7 +1112,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         async () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
-              emailAddressId: emailAddress.id,
+              emailAddressId: senderAddress.id,
               cachePolicy: CachePolicy.RemoteOnly,
               includeDeletedMessages: true,
             })
@@ -1110,7 +1120,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(3)
+          expect(messages.items).toHaveLength(totalMessagesSent)
         },
         40000,
         1000,
@@ -1119,6 +1129,82 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
   })
 
   describe('listEmailMessagesForEmailFolderId', () => {
+    beforeAll(async () => {
+      const result = await setupEmailClient(log)
+      instanceUnderTest = result.emailClient
+      profilesClient = result.profilesClient
+      userClient = result.userClient
+      sudo = result.sudo
+      sudoOwnershipProofToken = result.ownershipProofToken
+      senderAddress = await provisionEmailAddress(
+        sudoOwnershipProofToken,
+        instanceUnderTest,
+        { localPart: generateSafeLocalPart('list-test-sender') },
+      )
+      receiverAddress = await provisionEmailAddress(
+        sudoOwnershipProofToken,
+        instanceUnderTest,
+        { localPart: generateSafeLocalPart('list-test-receiver') },
+      )
+      for (let i = 0; i < totalMessagesSent; i++) {
+        const subjectRandomizer = v4()
+        const bodyRandomizer = v4()
+
+        messageDetails = {
+          from: [{ emailAddress: senderAddress.emailAddress }],
+          to: [{ emailAddress: receiverAddress.emailAddress }],
+          cc: [],
+          bcc: [],
+          replyTo: [{ emailAddress: senderAddress.emailAddress }],
+          subject: 'Important Subject ' + subjectRandomizer,
+          body: 'Hello, World ' + bodyRandomizer,
+          attachments: [],
+          encryptionStatus: EncryptionStatus.ENCRYPTED,
+        }
+
+        sendResult = await instanceUnderTest.sendEmailMessage({
+          senderEmailAddressId: senderAddress.id,
+          emailMessageHeader: {
+            from: messageDetails.from[0],
+            to: messageDetails.to ?? [],
+            cc: messageDetails.cc ?? [],
+            bcc: messageDetails.bcc ?? [],
+            replyTo: messageDetails.replyTo ?? [],
+            subject: messageDetails.subject ?? '',
+          },
+          body: messageDetails.body ?? 'Hello, World',
+          attachments: messageDetails.attachments ?? [],
+          inlineAttachments: messageDetails.inlineAttachments ?? [],
+        })
+      }
+
+      const folder = await getFolderByName({
+        emailClient: instanceUnderTest,
+        emailAddressId: receiverAddress.id,
+        folderName: 'INBOX',
+      })
+      expect(folder).toBeDefined()
+      if (!folder) {
+        fail('Unable to get INBOX folder in setup')
+      }
+
+      inboxFolder = folder
+
+      await waitForExpect(async () => {
+        const messagesList =
+          await instanceUnderTest.listEmailMessagesForEmailFolderId({
+            folderId: inboxFolder.id,
+          })
+
+        expect(messagesList.status).toEqual(ListOperationResultStatus.Success)
+        if (messagesList.status !== ListOperationResultStatus.Success) {
+          fail(`result status unexpectedly not Success`)
+        }
+        expect(messagesList.items).toHaveLength(2)
+      })
+      beforeEachComplete = true
+    })
+
     it('lists expected email messages', async () => {
       expectSetupComplete()
 
@@ -1133,14 +1219,14 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(1)
+          expect(messages.items).toHaveLength(totalMessagesSent)
           expect(messages.items[0].folderId).toEqual(
             expect.stringContaining('INBOX'),
           )
-          expect(messages.items[0].from).toEqual([simAddress])
-          expect(messages.items[0].to).toEqual(messageDetails.from)
+          expect(messages.items[0].from).toEqual(messageDetails.from)
+          expect(messages.items[0].to).toEqual(messageDetails.to)
           expect(messages.items[0].encryptionStatus).toEqual(
-            EncryptionStatus.UNENCRYPTED,
+            EncryptionStatus.ENCRYPTED,
           )
         },
         10000,
@@ -1167,7 +1253,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
 
       const trashFolder = await getFolderByName({
         emailClient: instanceUnderTest,
-        emailAddressId: emailAddress.id,
+        emailAddressId: senderAddress.id,
         folderName: 'TRASH',
       })
       await expect(
@@ -1184,15 +1270,10 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages respecting sortDate date range', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject: 'Lists expected email messages respecting sortDate date range',
-      })
-
       const dateRange: EmailMessageDateRange = {
         sortDate: {
-          startDate: emailAddress.createdAt,
-          endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+          startDate: receiverAddress.createdAt,
+          endDate: new Date(receiverAddress.createdAt.getTime() + 100000),
         },
       }
 
@@ -1208,7 +1289,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(2)
+          expect(messages.items).toHaveLength(totalMessagesSent)
           messages.items.forEach((item, index) => {
             if (index < messages.items.length - 1) {
               expect(item.sortDate.getTime()).toBeGreaterThan(
@@ -1225,12 +1306,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages respecting updatedAt date range', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject:
-          'Lists expected email messages respecting updatedAt date range',
-      })
-
       // List all inbound messages
       let inboundMessageIds: string[] = []
       await waitForExpect(
@@ -1241,7 +1316,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           if (allMessages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${allMessages}`)
           }
-          expect(allMessages.items).toHaveLength(4)
+          expect(allMessages.items).toHaveLength(totalMessagesSent * 2)
 
           inboundMessageIds = allMessages.items
             .filter((m) => m.direction == Direction.Inbound)
@@ -1280,7 +1355,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(2)
+          expect(messages.items).toHaveLength(totalMessagesSent)
         },
         20000,
         1000,
@@ -1290,11 +1365,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('returns empty list for out of range sort date', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject: 'Returns empty list for out of range sort date',
-      })
-
       await waitForExpect(
         async () => {
           const messages =
@@ -1303,7 +1373,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               dateRange: {
                 sortDate: {
                   startDate: sudo.createdAt,
-                  endDate: emailAddress.createdAt,
+                  endDate: receiverAddress.createdAt,
                 },
               },
               cachePolicy: CachePolicy.RemoteOnly,
@@ -1322,11 +1392,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('returns empty list for out of range updatedAt date', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject: 'Returns empty list for out of range updatedAt date',
-      })
-
       await waitForExpect(
         async () => {
           const messages =
@@ -1335,7 +1400,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               dateRange: {
                 updatedAt: {
                   startDate: sudo.createdAt,
-                  endDate: emailAddress.createdAt,
+                  endDate: receiverAddress.createdAt,
                 },
               },
               cachePolicy: CachePolicy.RemoteOnly,
@@ -1354,22 +1419,17 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should throw for multiple date ranges specified', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject: 'Should throw for mulitple date ranges specified',
-      })
-
       await expect(
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: inboxFolder?.id ?? '',
           dateRange: {
             sortDate: {
-              startDate: emailAddress.createdAt,
-              endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+              startDate: receiverAddress.createdAt,
+              endDate: new Date(senderAddress.createdAt.getTime() + 100000),
             },
             updatedAt: {
-              startDate: emailAddress.createdAt,
-              endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+              startDate: receiverAddress.createdAt,
+              endDate: new Date(senderAddress.createdAt.getTime() + 100000),
             },
           },
           cachePolicy: CachePolicy.RemoteOnly,
@@ -1380,19 +1440,13 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should throw when input start date greater than end date for sort date range', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject:
-          'Should throw when input start date greater than end date for sort date range',
-      })
-
       await expect(
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: inboxFolder?.id ?? '',
           dateRange: {
             sortDate: {
-              startDate: new Date(emailAddress.createdAt.getTime() + 100000),
-              endDate: emailAddress.createdAt,
+              startDate: new Date(receiverAddress.createdAt.getTime() + 100000),
+              endDate: receiverAddress.createdAt,
             },
           },
           cachePolicy: CachePolicy.RemoteOnly,
@@ -1403,19 +1457,13 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should throw when input start date greater than end date for updatedAt date range', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject:
-          'Should throw when input start date greater than end date for updatedAt date range',
-      })
-
       await expect(
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: inboxFolder?.id ?? '',
           dateRange: {
             updatedAt: {
-              startDate: new Date(emailAddress.createdAt.getTime() + 100000),
-              endDate: emailAddress.createdAt,
+              startDate: new Date(receiverAddress.createdAt.getTime() + 100000),
+              endDate: receiverAddress.createdAt,
             },
           },
           cachePolicy: CachePolicy.RemoteOnly,
@@ -1426,15 +1474,10 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages in ascending order', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject: 'Lists expected email messages in ascending order',
-      })
-
       const dateRange: EmailMessageDateRange = {
         sortDate: {
-          startDate: emailAddress.createdAt,
-          endDate: new Date(emailAddress.createdAt.getTime() + 100000),
+          startDate: receiverAddress.createdAt,
+          endDate: new Date(receiverAddress.createdAt.getTime() + 100000),
         },
       }
 
@@ -1451,7 +1494,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(2)
+          expect(messages.items).toHaveLength(totalMessagesSent)
           messages.items.forEach((item, index) => {
             if (index < messages.items.length - 1) {
               expect(item.sortDate.getTime()).toBeLessThan(
@@ -1468,11 +1511,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages in descending order', async () => {
       expectSetupComplete()
 
-      await sendReceiveEmailMessagePair(instanceUnderTest, emailAddress, {
-        ...messageDetails,
-        subject: 'Lists expected email messages in descending order',
-      })
-
       await waitForExpect(
         async () => {
           const messages =
@@ -1485,7 +1523,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(2)
+          expect(messages.items).toHaveLength(totalMessagesSent)
           messages.items.forEach((item, index) => {
             if (index < messages.items.length - 1) {
               expect(item.sortDate.getTime()).toBeGreaterThan(
@@ -1502,24 +1540,9 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('should respect includeDeletedMessages flag', async () => {
       expectSetupComplete()
 
-      const sendResult = await instanceUnderTest.sendEmailMessage({
-        senderEmailAddressId: emailAddress.id,
-        emailMessageHeader: {
-          from: messageDetails.from[0],
-          to: [{ emailAddress: 'success@simulator.amazonses.com' }],
-          cc: [],
-          bcc: [],
-          replyTo: [],
-          subject: 'Should respect includeDeletedMessages flag',
-        },
-        body: messageDetails.body ?? 'Hello, World',
-        attachments: messageDetails.attachments ?? [],
-        inlineAttachments: messageDetails.inlineAttachments ?? [],
-      })
-
       const sentFolder = await getFolderByName({
         emailClient: instanceUnderTest,
-        emailAddressId: emailAddress.id,
+        emailAddressId: senderAddress.id,
         folderName: 'SENT',
       })
       if (!sentFolder) {
@@ -1536,14 +1559,14 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(2)
+          expect(messages.items).toHaveLength(totalMessagesSent)
         },
         30000,
         1000,
       )
       await expect(
-        instanceUnderTest.deleteEmailMessage(sendResult.id),
-      ).resolves.toEqual({ id: sendResult.id })
+        instanceUnderTest.deleteEmailMessage(sendResult!.id),
+      ).resolves.toEqual({ id: sendResult!.id })
       await waitForExpect(
         async () => {
           const messages =
@@ -1555,7 +1578,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(1)
+          expect(messages.items).toHaveLength(totalMessagesSent - 1)
         },
         30000,
         1000,
@@ -1572,7 +1595,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
-          expect(messages.items).toHaveLength(2)
+          expect(messages.items).toHaveLength(totalMessagesSent)
         },
         30000,
         1000,

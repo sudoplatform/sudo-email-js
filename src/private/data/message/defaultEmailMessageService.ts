@@ -42,10 +42,10 @@ import { DraftEmailMessageEntity } from '../../domain/entities/message/draftEmai
 import { DraftEmailMessageMetadataEntity } from '../../domain/entities/message/draftEmailMessageMetadataEntity'
 import { EmailMessageEntity } from '../../domain/entities/message/emailMessageEntity'
 import {
-  DeleteDraftInput,
+  DeleteDraftsInput,
   DeleteEmailMessagesInput,
   EmailMessageService,
-  EmailMessageServiceDeleteDraftError,
+  EmailMessageServiceDeleteDraftsError,
   EmailMessageServiceSubscribeToEmailMessagesInput,
   EmailMessageServiceUnsubscribeFromEmailMessagesInput,
   GetDraftInput,
@@ -82,8 +82,8 @@ import { ApiClient } from '../common/apiClient'
 import { EmailServiceConfig } from '../common/config'
 import { DeviceKeyWorker, KeyType } from '../common/deviceKeyWorker'
 import {
+  S3BulkDeleteError,
   S3Client,
-  S3DeleteError,
   S3DownloadError,
   S3Error,
 } from '../common/s3Client'
@@ -223,25 +223,31 @@ export class DefaultEmailMessageService implements EmailMessageService {
     }
   }
 
-  async deleteDraft({ id, emailAddressId }: DeleteDraftInput): Promise<string> {
+  async deleteDrafts({
+    ids,
+    emailAddressId,
+  }: DeleteDraftsInput): Promise<{ id: string; reason: string }[]> {
     const keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
-    const key = `${keyPrefix}/draft/${id}`
+    const keys = ids.map((id) => `${keyPrefix}/draft/${id}`)
     try {
-      await this.s3Client.delete({
+      const failedIds = await this.s3Client.bulkDelete({
         bucket: this.emailServiceConfig.bucket,
         region: this.emailServiceConfig.region,
-        key,
+        keys,
       })
+      return failedIds.map((val) => ({
+        id: val.key.substring(val.key.lastIndexOf('/') + 1),
+        reason: val.reason,
+      }))
     } catch (error) {
-      if (error instanceof S3DeleteError) {
-        throw new EmailMessageServiceDeleteDraftError(
-          id,
+      if (error instanceof S3BulkDeleteError) {
+        throw new EmailMessageServiceDeleteDraftsError(
+          ids,
           error.msg ?? error.message ?? 'Unknown error',
         )
       }
       throw error
     }
-    return id
   }
 
   async getDraft({

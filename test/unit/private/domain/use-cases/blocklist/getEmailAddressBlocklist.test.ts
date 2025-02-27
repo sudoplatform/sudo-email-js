@@ -9,7 +9,10 @@ import { DefaultEmailAddressBlocklistService } from '../../../../../../src/priva
 import { GetEmailAddressBlocklistUseCase } from '../../../../../../src/private/domain/use-cases/blocklist/getEmailAddressBlocklist'
 import { v4 } from 'uuid'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
-import { UnsealedBlockedAddress } from '../../../../../../src/public'
+import {
+  BlockedEmailAddressAction,
+  UnsealedBlockedAddress,
+} from '../../../../../../src/public'
 
 describe('GetEmailAddressBlocklistUseCase Test Suite', () => {
   const mockBlockedEmailAddressService =
@@ -23,6 +26,7 @@ describe('GetEmailAddressBlocklistUseCase Test Suite', () => {
       address: `spammyMcSpamface-${v4()}@spambot.com`,
       hashedBlockedValue: 'dummyHashedValue',
       status: { type: 'Completed' },
+      action: BlockedEmailAddressAction.DROP,
     },
   ]
 
@@ -45,6 +49,20 @@ describe('GetEmailAddressBlocklistUseCase Test Suite', () => {
     it('returns successful requests correctly', async () => {
       const result = await instanceUnderTest.execute()
       expect(result).toEqual(blockedAddresses)
+    })
+
+    it('returns successful requests correctly with emailAddressId', async () => {
+      const expected = blockedAddresses.map((blockedAddress) => ({
+        ...blockedAddress,
+        emailAddressId: 'mockEmailAddressId',
+      }))
+      when(
+        mockBlockedEmailAddressService.getEmailAddressBlocklistForOwner(
+          anything(),
+        ),
+      ).thenResolve(expected)
+      const result = await instanceUnderTest.execute()
+      expect(result).toEqual(expected)
     })
 
     it('returns successfully with an empty list', async () => {

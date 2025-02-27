@@ -175,7 +175,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
         cc: [],
         bcc: [],
         replyTo: [],
-        body: 'test draft message',
+        body: `test draft message ${v4()}`,
         attachments: [],
       }),
     )

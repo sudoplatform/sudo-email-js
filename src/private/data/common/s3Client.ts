@@ -60,6 +60,12 @@ interface S3ClientDeleteInput {
   key: string
 }
 
+interface S3ClientBulkDeleteInput {
+  bucket: string
+  region: string
+  keys: string[]
+}
+
 interface S3ClientListInput {
   bucket: string
   region: string
@@ -81,6 +87,16 @@ export class S3DeleteError extends Error {
   constructor({ key, msg }: S3ErrorOptions) {
     super(`Failed to delete Key: ${key}`)
     this.key = key
+    this.msg = msg
+  }
+}
+
+export class S3BulkDeleteError extends Error {
+  readonly keys: string[]
+  readonly msg?: string
+  constructor({ keys, msg }: { keys: string[]; msg?: string }) {
+    super(`Failed to delete Keys: ${keys}`)
+    this.keys = keys
     this.msg = msg
   }
 }
@@ -284,6 +300,44 @@ export class S3Client {
 
       this.log.error(`${error.name}: ${error.message}`)
       throw new S3DeleteError({ key: key, msg: error.message })
+    }
+  }
+
+  /**
+   * Deletes the objects with the given keys. Returns the key and reason for any failed deletions.
+   *
+   * @param {S3ClientBulkDeleteInput} input Input to delete
+   * @returns Array of objects each containing the key and reason for a failed deletion
+   */
+  async bulkDelete({
+    bucket,
+    region,
+    keys,
+  }: S3ClientBulkDeleteInput): Promise<{ key: string; reason: string }[]> {
+    try {
+      const awsS3 = await this.getAWSS3({ region })
+      const result = await awsS3.deleteObjects({
+        Bucket: bucket,
+        Delete: {
+          Objects: keys.map((key) => ({
+            Key: key,
+          })),
+        },
+      })
+      const failed: { key: string; reason: string }[] = []
+      result.Errors?.forEach((err) => {
+        this.log.error(`${err.Code}: ${err.Message} Key: ${err.Key}`)
+        failed.push({
+          key: err.Key ?? '',
+          reason: err.Message ?? 'Unknown error',
+        })
+      })
+      return failed
+    } catch (err: unknown) {
+      const error = err as Error
+
+      this.log.error(`${error.name}: ${error.message}`)
+      throw new S3BulkDeleteError({ keys, msg: error.message })
     }
   }
 }

@@ -11,7 +11,7 @@ import {
 } from '@sudoplatform/sudo-common'
 import { EmailAddressBlocklistService } from '../../entities/blocklist/emailAddressBlocklistService'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
-import { UnsealedBlockedAddress } from '../../../../public/typings/blockedAddresses'
+import { UnsealedBlockedAddress } from '../../entities/blocklist/blockedEmailEntity'
 
 /**
  * Application business logic for getting email address blocklist
@@ -27,7 +27,6 @@ export class GetEmailAddressBlocklistUseCase {
 
   async execute(): Promise<UnsealedBlockedAddress[]> {
     this.log.debug(this.constructor.name)
-    // Blocklists are 'owned' by the user for now.
     const owner = await this.userClient.getSubject()
 
     if (!owner) {

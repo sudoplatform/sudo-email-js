@@ -112,7 +112,7 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
       senderEmailAddressId: emailAddress.id,
       emailMessageHeader: {
         from: { emailAddress: emailAddress.emailAddress },
-        to: [{ emailAddress: ootoSimulatorAddress }],
+        to: [{ emailAddress: emailAddress.emailAddress }],
         cc: [],
         bcc: [],
         replyTo: [],
@@ -129,21 +129,15 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
     )
     const ids = results.map((r) => r.id)
     await delay(2000)
-    let updatedEmailAddress = await instanceUnderTest.getEmailAddress({
-      id: emailAddress.id,
-    })
-    for (let i = 0; i < 5; i++) {
-      if (updatedEmailAddress!.numberOfEmailMessages === numberEmailsSent * 2) {
-        break
-      }
-      await delay(1000)
+    let updatedEmailAddress: EmailAddress | undefined
+    await waitForExpect(async () => {
       updatedEmailAddress = await instanceUnderTest.getEmailAddress({
         id: emailAddress.id,
       })
-    }
-    expect(updatedEmailAddress!.numberOfEmailMessages).toStrictEqual(
-      numberEmailsSent * 2,
-    )
+      expect(updatedEmailAddress!.numberOfEmailMessages).toEqual(
+        numberEmailsSent * 2,
+      )
+    })
     await expect(
       instanceUnderTest.deleteEmailMessages(ids),
     ).resolves.toStrictEqual({
@@ -151,18 +145,14 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
       successValues: expect.arrayContaining(mapIdsToSuccessIds(ids)),
       failureValues: [],
     })
-    for (let i = 0; i < 5; i++) {
-      if (updatedEmailAddress!.numberOfEmailMessages === numberEmailsSent) {
-        break
-      }
-      await delay(1000)
+    await waitForExpect(async () => {
       updatedEmailAddress = await instanceUnderTest.getEmailAddress({
         id: emailAddress.id,
       })
-    }
-    expect(updatedEmailAddress!.numberOfEmailMessages).toStrictEqual(
-      numberEmailsSent,
-    )
+      expect(updatedEmailAddress!.numberOfEmailMessages).toEqual(
+        numberEmailsSent,
+      )
+    })
   })
 
   it("returns partial result when deleting messages that do and don't exist simultaneously", async () => {

@@ -53,7 +53,13 @@ export type BlockEmailAddressesBulkUpdateResult = {
 
 export type BlockEmailAddressesInput = {
   blockedAddresses: Array<BlockedEmailAddressInput>
+  emailAddressId?: InputMaybe<Scalars['String']['input']>
   owner: Scalars['ID']['input']
+}
+
+export enum BlockedAddressAction {
+  Drop = 'DROP',
+  Spam = 'SPAM',
 }
 
 export enum BlockedAddressHashAlgorithm {
@@ -62,7 +68,9 @@ export enum BlockedAddressHashAlgorithm {
 
 export type BlockedEmailAddress = {
   __typename?: 'BlockedEmailAddress'
+  action?: Maybe<BlockedAddressAction>
   createdAtEpochMs: Scalars['Float']['output']
+  emailAddressId?: Maybe<Scalars['String']['output']>
   hashAlgorithm: BlockedAddressHashAlgorithm
   hashedBlockedValue: Scalars['String']['output']
   owner: Scalars['ID']['output']
@@ -73,6 +81,7 @@ export type BlockedEmailAddress = {
 }
 
 export type BlockedEmailAddressInput = {
+  action?: InputMaybe<BlockedAddressAction>
   hashAlgorithm: BlockedAddressHashAlgorithm
   hashedBlockedValue: Scalars['String']['input']
   sealedValue: SealedAttributeInput
@@ -666,6 +675,8 @@ export type BlockedAddressFragment = {
   updatedAtEpochMs: number
   hashAlgorithm: BlockedAddressHashAlgorithm
   hashedBlockedValue: string
+  action?: BlockedAddressAction | null
+  emailAddressId?: string | null
   owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
   sealedValue: {
     __typename?: 'SealedAttribute'
@@ -688,6 +699,8 @@ export type GetEmailAddressBlocklistResponseFragment = {
   blockedAddresses: Array<{
     __typename?: 'BlockedEmailAddress'
     hashedBlockedValue: string
+    action?: BlockedAddressAction | null
+    emailAddressId?: string | null
     sealedValue: {
       __typename?: 'SealedAttribute'
       algorithm: string
@@ -1716,6 +1729,8 @@ export type GetEmailAddressBlocklistQuery = {
     blockedAddresses: Array<{
       __typename?: 'BlockedEmailAddress'
       hashedBlockedValue: string
+      action?: BlockedAddressAction | null
+      emailAddressId?: string | null
       sealedValue: {
         __typename?: 'SealedAttribute'
         algorithm: string
@@ -1906,6 +1921,8 @@ export const BlockedAddressFragmentDoc = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
         ],
       },
     },
@@ -1987,6 +2004,11 @@ export const GetEmailAddressBlocklistResponseFragmentDoc = {
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'hashedBlockedValue' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'emailAddressId' },
                 },
               ],
             },
@@ -6029,6 +6051,11 @@ export const GetEmailAddressBlocklistDocument = {
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'hashedBlockedValue' },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'emailAddressId' },
                 },
               ],
             },

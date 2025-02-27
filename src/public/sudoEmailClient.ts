@@ -92,7 +92,10 @@ import {
   BatchOperationResultStatus,
   EmailMessageOperationFailureResult,
 } from './typings/batchOperationResult'
-import { UnsealedBlockedAddress } from './typings/blockedAddresses'
+import {
+  BlockedEmailAddressAction,
+  UnsealedBlockedAddress,
+} from './typings/blockedAddresses'
 import { ConfigurationData } from './typings/configurationData'
 import { DraftEmailMessage } from './typings/draftEmailMessage'
 import { DraftEmailMessageMetadata } from './typings/draftEmailMessageMetadata'
@@ -236,10 +239,14 @@ export interface UpdateCustomEmailFolderInput {
  * Input for `SudoEmailClient.BlockEmailAddresses`
  *
  * @interface BlockEmailAddressesInput
- * @property {string[]} addresses List of addresses to be blocked in the [local-part]@[domain] format
+ * @property {string[]} addresses List of addresses to be blocked in the [local-part]@[domain] format.
+ * @property {BlockedEmailAddressAction} action Action to take when receiving messages from blocked addresses.
+ * @property {string} emailAddressId If included, the block will only affect the indicated email address.
  */
 export interface BlockEmailAddressesInput {
   addressesToBlock: string[]
+  action?: BlockedEmailAddressAction
+  emailAddressId?: string
 }
 
 /**
@@ -757,8 +764,6 @@ export interface SudoEmailClient {
 
   /**
    * Delete the draft email messages identified by the list of ids.
-   *
-   * Draft email messages can only be deleted in batches of 10. Anything greater will throw a {@link LimitExceededError}.
    *
    * Any draft email message ids that do not exist will be marked as success.
    * Any emailAddressId that is not owned or does not exist, will throw an error.
@@ -1487,9 +1492,12 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const useCase = new BlockEmailAddressesUseCase(
       this.emailAddressBlocklistService,
       this.userClient,
+      this.emailAccountService,
     )
     const result = await useCase.execute({
       blockedAddresses: input.addressesToBlock,
+      action: input.action ?? BlockedEmailAddressAction.DROP,
+      emailAddressId: input.emailAddressId,
     })
 
     switch (result.status) {

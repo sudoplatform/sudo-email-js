@@ -59,12 +59,12 @@ export interface ListDraftsMetadataForEmailAddressIdInput {
 /**
  * Input for `EmailMessageService.deleteDrafts` method.
  *
- * @interface DeleteDraftInput
- * @property {string} id Identifier of the draft email message to be deleted.
- * @property {string} emailAddressId Identifier of the email address associated with the draft email message.
+ * @interface DeleteDraftsInput
+ * @property {string[]} ids Identifiers of the draft email messages to be deleted.
+ * @property {string} emailAddressId Identifier of the email address associated with the draft email messages.
  */
-export interface DeleteDraftInput {
-  id: string
+export interface DeleteDraftsInput {
+  ids: string[]
   emailAddressId: string
 }
 
@@ -306,12 +306,12 @@ export interface EmailMessageServiceUnsubscribeFromEmailMessagesInput {
   subscriptionId: string
 }
 
-export class EmailMessageServiceDeleteDraftError extends Error {
-  readonly id: string
+export class EmailMessageServiceDeleteDraftsError extends Error {
+  readonly ids: string[]
   readonly message: string
-  constructor(id: string, message: string) {
-    super(id)
-    this.id = id
+  constructor(ids: string[], message: string) {
+    super(`Failed to delete ids: ${ids}`)
+    this.ids = ids
     this.message = message
   }
 }
@@ -331,12 +331,14 @@ export interface EmailMessageService {
   saveDraft(input: SaveDraftInput): Promise<DraftEmailMessageMetadataEntity>
 
   /**
-   * Delete a single draft email message.
+   * Delete draft email messages.
    *
-   * @param {DeleteDraftInput} input Parameters used to delete a draft email message.
-   * @returns {string} The identifier of the draft email message that was deleted.
+   * @param {DeleteDraftsInput} input Parameters used to delete draft email messages.
+   * @returns {{ id: string; reason: string }[]} The id and reason for any failed deletes.
    */
-  deleteDraft(input: DeleteDraftInput): Promise<string>
+  deleteDrafts(
+    input: DeleteDraftsInput,
+  ): Promise<{ id: string; reason: string }[]>
 
   /**
    * Get a saved draft email message.

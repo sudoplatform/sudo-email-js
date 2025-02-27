@@ -7,12 +7,8 @@
 import { CachePolicy, DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { AddressNotFoundError } from '../../../../public/errors'
 import { EmailAccountService } from '../../entities/account/emailAccountService'
-import {
-  EmailMessageService,
-  EmailMessageServiceDeleteDraftError,
-} from '../../entities/message/emailMessageService'
+import { EmailMessageService } from '../../entities/message/emailMessageService'
 import { EmailMessageOperationFailureResult } from '../../../../public'
-import { divideArray } from '../../../util/array'
 
 /**
  * Input for `DeleteDraftEmailMessagesUseCase` use case.
@@ -46,10 +42,6 @@ interface DeleteDraftEmailMessagesUseCaseOutput {
  */
 export class DeleteDraftEmailMessagesUseCase {
   private readonly log: Logger
-  private readonly Configuration = {
-    // Max limit of number of ids that can be deleted per request.
-    IdsSizeLimit: 10,
-  }
 
   constructor(
     private readonly emailAccountService: EmailAccountService,
@@ -62,7 +54,7 @@ export class DeleteDraftEmailMessagesUseCase {
     ids,
     emailAddressId,
   }: DeleteDraftEmailMessagesUseCaseInput): Promise<DeleteDraftEmailMessagesUseCaseOutput> {
-    this.log.debug(this.constructor.name, { ids })
+    this.log.debug(this.constructor.name, { ids, emailAddressId })
     const account = await this.emailAccountService.get({
       id: emailAddressId,
       cachePolicy: CachePolicy.RemoteOnly,
@@ -73,35 +65,26 @@ export class DeleteDraftEmailMessagesUseCase {
     if (!ids.size) {
       return { successIds: [], failureMessages: [] }
     }
-    const batches = divideArray([...ids], 10)
 
     const successIds: string[] = []
     const failureIds: EmailMessageOperationFailureResult[] = []
-    while (batches.length > 0) {
-      const batch = batches.pop()
-      if (batch && batch.length) {
-        const results = await Promise.allSettled(
-          batch?.map((id) =>
-            this.emailMessageService.deleteDraft({ id, emailAddressId }),
-          ),
-        )
-        results.forEach((r) => {
-          if (r.status === 'fulfilled') {
-            successIds.push(r.value)
-          } else {
-            if (r.reason instanceof EmailMessageServiceDeleteDraftError) {
-              failureIds.push({ id: r.reason.id, errorType: r.reason.message })
-            } else {
-              this.log.error(
-                'Unexpected error received while deleting draft message',
-                { error: r.reason },
-              )
-            }
-          }
+    const results = await this.emailMessageService.deleteDrafts({
+      emailAddressId,
+      ids: [...ids],
+    })
+    const errorMap: Map<string, string> = new Map()
+    results.forEach((result) => errorMap.set(result.id, result.reason))
+    ids.forEach((id) => {
+      const errorType = errorMap.get(id)
+      if (errorType) {
+        failureIds.push({
+          id,
+          errorType,
         })
+      } else {
+        successIds.push(id)
       }
-    }
-
+    })
     return {
       failureMessages: failureIds,
       successIds,

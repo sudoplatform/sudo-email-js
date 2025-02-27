@@ -4,14 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SealedAttributeInput } from '../../../../gen/graphqlTypes'
+export type UnsealedBlockedAddressStatus =
+  | { type: 'Completed' }
+  | { type: 'Failed'; cause: Error }
 
 export enum BlockedAddressHashAlgorithm {
-  SHA256,
+  SHA256 = 'SHA256',
 }
 
-export interface BlockedAddress {
+export enum BlockedEmailAddressAction {
+  DROP = 'DROP',
+  SPAM = 'SPAM',
+}
+
+export interface UnsealedBlockedAddress {
   hashedBlockedValue: string
-  hashAlgorithm: BlockedAddressHashAlgorithm
-  sealedValue: SealedAttributeInput
+  address: string
+  status: UnsealedBlockedAddressStatus
+  action: BlockedEmailAddressAction
+  emailAddressId?: string
 }

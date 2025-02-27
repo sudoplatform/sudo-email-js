@@ -25,6 +25,7 @@ import {
 import { v4 } from 'uuid'
 
 import {
+  BlockedEmailAddressAction,
   EmailMessage,
   EmailMessageDateRange,
   InvalidArgumentError,
@@ -998,7 +999,7 @@ describe('SudoEmailClient Test Suite', () => {
       expect(JestMockBlockEmailAddressesUseCase).toHaveBeenCalledTimes(1)
     })
 
-    it('calls use case as expected', async () => {
+    it('calls use case as expected with default action', async () => {
       const addressesToBlock = [
         `spammyMcSpamface${v4()}@spambot.com`,
         `spammyMcSpamface${v4()}@spambot.com`,
@@ -1011,6 +1012,62 @@ describe('SudoEmailClient Test Suite', () => {
       const [args] = capture(mockBlockEmailAddressesUseCase.execute).first()
       expect(args).toEqual({
         blockedAddresses: addressesToBlock,
+        action: BlockedEmailAddressAction.DROP,
+      })
+    })
+
+    it('calls use case as expected with explicit DROP action', async () => {
+      const addressesToBlock = [
+        `spammyMcSpamface${v4()}@spambot.com`,
+        `spammyMcSpamface${v4()}@spambot.com`,
+        `spammyMcSpamface${v4()}@spambot.com`,
+      ]
+      await instanceUnderTest.blockEmailAddresses({
+        addressesToBlock,
+        action: BlockedEmailAddressAction.DROP,
+      })
+      verify(mockBlockEmailAddressesUseCase.execute(anything())).once()
+      const [args] = capture(mockBlockEmailAddressesUseCase.execute).first()
+      expect(args).toEqual({
+        blockedAddresses: addressesToBlock,
+        action: BlockedEmailAddressAction.DROP,
+      })
+    })
+
+    it('calls use case as expected with SPAM action', async () => {
+      const addressesToBlock = [
+        `spammyMcSpamface${v4()}@spambot.com`,
+        `spammyMcSpamface${v4()}@spambot.com`,
+        `spammyMcSpamface${v4()}@spambot.com`,
+      ]
+      await instanceUnderTest.blockEmailAddresses({
+        addressesToBlock,
+        action: BlockedEmailAddressAction.SPAM,
+      })
+      verify(mockBlockEmailAddressesUseCase.execute(anything())).once()
+      const [args] = capture(mockBlockEmailAddressesUseCase.execute).first()
+      expect(args).toEqual({
+        blockedAddresses: addressesToBlock,
+        action: BlockedEmailAddressAction.SPAM,
+      })
+    })
+
+    it('calls use case as expected with emailAddressId', async () => {
+      const addressesToBlock = [
+        `spammyMcSpamface${v4()}@spambot.com`,
+        `spammyMcSpamface${v4()}@spambot.com`,
+        `spammyMcSpamface${v4()}@spambot.com`,
+      ]
+      await instanceUnderTest.blockEmailAddresses({
+        addressesToBlock,
+        emailAddressId: 'mockEmailAddressId',
+      })
+      verify(mockBlockEmailAddressesUseCase.execute(anything())).once()
+      const [args] = capture(mockBlockEmailAddressesUseCase.execute).first()
+      expect(args).toEqual({
+        blockedAddresses: addressesToBlock,
+        action: BlockedEmailAddressAction.DROP,
+        emailAddressId: 'mockEmailAddressId',
       })
     })
 
@@ -1261,11 +1318,13 @@ describe('SudoEmailClient Test Suite', () => {
         address: `spammyMcSpamface-${v4()}@spambot.com`,
         hashedBlockedValue: 'dummyHashedValue',
         status: { type: 'Completed' },
+        action: BlockedEmailAddressAction.DROP,
       },
       {
         address: `spammyMcSpamface-${v4()}@spambot.com`,
         hashedBlockedValue: 'dummyHashedValue',
         status: { type: 'Completed' },
+        action: BlockedEmailAddressAction.DROP,
       },
     ]
     beforeEach(() => {
@@ -1291,6 +1350,17 @@ describe('SudoEmailClient Test Suite', () => {
       await expect(
         instanceUnderTest.getEmailAddressBlocklist(),
       ).resolves.toEqual(blockedAddresses)
+    })
+
+    it('returns expected list of blocked addresses including emailAddressId', async () => {
+      const expected = blockedAddresses.map((blockedAddress) => ({
+        ...blockedAddress,
+        emailAddressId: 'mockEmailAddressId',
+      }))
+      when(mockGetEmailAddressBlocklistUseCase.execute()).thenResolve(expected)
+      await expect(
+        instanceUnderTest.getEmailAddressBlocklist(),
+      ).resolves.toEqual(expected)
     })
   })
 

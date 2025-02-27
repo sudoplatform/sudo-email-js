@@ -38,6 +38,7 @@ import {
   KeyType,
 } from '../../../../../src/private/data/common/deviceKeyWorker'
 import {
+  S3BulkDeleteError,
   S3Client,
   S3ClientListOutput,
   S3DeleteError,
@@ -48,7 +49,7 @@ import { SubscriptionManager } from '../../../../../src/private/data/common/subs
 import { DefaultEmailMessageService } from '../../../../../src/private/data/message/defaultEmailMessageService'
 import { DraftEmailMessageEntity } from '../../../../../src/private/domain/entities/message/draftEmailMessageEntity'
 import { DraftEmailMessageMetadataEntity } from '../../../../../src/private/domain/entities/message/draftEmailMessageMetadataEntity'
-import { EmailMessageServiceDeleteDraftError } from '../../../../../src/private/domain/entities/message/emailMessageService'
+import { EmailMessageServiceDeleteDraftsError } from '../../../../../src/private/domain/entities/message/emailMessageService'
 import {
   InternalError,
   MessageSizeLimitExceededError,
@@ -1903,42 +1904,53 @@ describe('DefaultEmailMessageService Test Suite', () => {
     })
   })
 
-  describe('deleteDraft', () => {
+  describe('deleteDrafts', () => {
     it('deletes draft successfully', async () => {
       const draftIdToDelete = 'draftIdToDelete'
-      when(mockS3Client.delete(anything())).thenResolve(draftIdToDelete)
+      when(mockS3Client.bulkDelete(anything())).thenResolve([])
       await expect(
-        instanceUnderTest.deleteDraft({
-          id: draftIdToDelete,
+        instanceUnderTest.deleteDrafts({
+          ids: [draftIdToDelete],
           emailAddressId: 'emailAddressId',
         }),
-      ).resolves.toStrictEqual(draftIdToDelete)
+      ).resolves.toStrictEqual([])
     })
 
-    it('throws EmailMessageServiceDeleteDraftError if s3 delete throws S3DeleteError', async () => {
-      when(mockS3Client.delete(anything())).thenThrow(
-        new S3DeleteError({ key: 'deleteKey' }),
+    it('deletes multiple drafts successfully', async () => {
+      const draftIdsToDelete = [v4(), v4()]
+      when(mockS3Client.bulkDelete(anything())).thenResolve([])
+      await expect(
+        instanceUnderTest.deleteDrafts({
+          ids: draftIdsToDelete,
+          emailAddressId: 'emailAddressId',
+        }),
+      ).resolves.toStrictEqual([])
+    })
+
+    it('throws EmailMessageServiceDeleteDraftsError if s3 delete throws S3BulkDeleteError', async () => {
+      when(mockS3Client.bulkDelete(anything())).thenThrow(
+        new S3BulkDeleteError({ keys: ['deleteKey'] }),
       )
       await expect(
-        instanceUnderTest.deleteDraft({
-          id: 'draftIdToDelete',
+        instanceUnderTest.deleteDrafts({
+          ids: ['draftIdToDelete'],
           emailAddressId: 'emailAddressId',
         }),
       ).rejects.toThrow(
-        new EmailMessageServiceDeleteDraftError(
-          'deleteKey',
-          'Failed to delete Key: deleteKey',
+        new EmailMessageServiceDeleteDraftsError(
+          ['deleteKey'],
+          'Failed to delete Keys: deleteKey',
         ),
       )
     })
 
     it('rethrows error if s3 delete throws other than S3DeleteError', async () => {
-      when(mockS3Client.delete(anything())).thenThrow(
+      when(mockS3Client.bulkDelete(anything())).thenThrow(
         new InternalError('delete error'),
       )
       await expect(
-        instanceUnderTest.deleteDraft({
-          id: 'draftIdToDelete',
+        instanceUnderTest.deleteDrafts({
+          ids: ['draftIdToDelete'],
           emailAddressId: 'emailAddressId',
         }),
       ).rejects.toThrow(new InternalError('delete error'))

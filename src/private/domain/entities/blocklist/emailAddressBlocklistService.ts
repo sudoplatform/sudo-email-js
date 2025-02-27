@@ -4,8 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { UnsealedBlockedAddress } from '../../../../public/typings/blockedAddresses'
 import { UpdateEmailMessagesStatus } from '../message/updateEmailMessagesStatus'
+import {
+  BlockedEmailAddressAction,
+  UnsealedBlockedAddress,
+} from './blockedEmailEntity'
 
 /**
  * Input for `EmailAddressBlocklistService.blockEmailAddressesForOwner` method
@@ -13,10 +16,28 @@ import { UpdateEmailMessagesStatus } from '../message/updateEmailMessagesStatus'
  * @interface BlockEmailAddressesForOwnerInput
  * @property {string} owner The id of the owner of the user creating the blocklist
  * @property {string[]} blockedAddresses List of the addresses to block
+ * @property {BlockedEmailAddressAction} action Action to take on incoming emails
  */
 export interface BlockEmailAddressesForOwnerInput {
   owner: string
   blockedAddresses: string[]
+  action: BlockedEmailAddressAction
+}
+
+/**
+ * Input for `EmailAddressBlocklistService.blockEmailAddressesForEmailAddressId` method
+ *
+ * @interface BlockEmailAddressesForEmailAddressIdInput
+ * @property {string} owner The id of the owner of the user creating the blocklist
+ * @property {string} emailAddressId The id of the email address creating the blocklist
+ * @property {string[]} blockedAddresses List of the addresses to block
+ * @property {BlockedEmailAddressAction} action Action to take on incoming emails
+ */
+export interface BlockEmailAddressesForEmailAddressIdInput {
+  owner: string
+  emailAddressId: string
+  blockedAddresses: string[]
+  action: BlockedEmailAddressAction
 }
 
 /**
@@ -71,6 +92,16 @@ export interface EmailAddressBlocklistService {
    */
   blockEmailAddressesForOwner(
     input: BlockEmailAddressesForOwnerInput,
+  ): Promise<BlockEmailAddressesBulkUpdateOutput>
+
+  /**
+   * Block email addresses for the give email address
+   *
+   * @param {BlockEmailAddressesForEmailAddressIdInput} input Parameters used to block email addresses
+   * @returns {BlockEmailAddressesBulkUpdateOutput} The response indicating if the address(es) were blocked successfully
+   */
+  blockEmailAddressesForEmailAddressId(
+    input: BlockEmailAddressesForEmailAddressIdInput,
   ): Promise<BlockEmailAddressesBulkUpdateOutput>
 
   /**
