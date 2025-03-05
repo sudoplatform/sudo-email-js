@@ -5,6 +5,7 @@
  */
 
 import {
+  Base64,
   CachePolicy,
   DefaultLogger,
   ListOperationResultStatus,
@@ -18,6 +19,7 @@ import {
   EmailAddress,
   EmailFolder,
   EmailMessage,
+  EmailMessageRfc822Data,
   EmailMessageWithBody,
   EncryptionStatus,
   InNetworkAddressNotFoundError,
@@ -30,12 +32,17 @@ import {
 } from '../../../src'
 import { EmailConfigurationDataService } from '../../../src/private/domain/entities/configuration/configurationDataService'
 import { arrayBufferToString } from '../../../src/private/util/buffer'
-import { EmailMessageDetails } from '../../../src/private/util/rfc822MessageDataProcessor'
+import {
+  EmailMessageDetails,
+  Rfc822MessageDataProcessor,
+} from '../../../src/private/util/rfc822MessageDataProcessor'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { readAllPages } from '../util/paginator'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { runTestsIf } from '../../util/util'
 import { delay } from '../../util/delay'
+import fs from 'node:fs/promises'
+import { insertLinebreaks } from '../../../src/private/util/stringUtils'
 
 describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   jest.setTimeout(240000)
@@ -107,6 +114,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       replyTo: [],
       body: 'Hello, World',
       attachments: [],
+      subject: 'Send Email Message Test',
     }
     draftWithAttachments = {
       ...draft,
@@ -115,7 +123,9 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
           mimeType: 'application/pdf',
           contentTransferEncoding: 'base64',
           filename: 'attachment-1.pdf',
-          data: Buffer.from('Content of attachment 1').toString('base64'),
+          data: Buffer.from(
+            'Content of attachment 1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+          ).toString('base64'),
           inlineAttachment: false,
         },
         {
@@ -134,7 +144,9 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
           mimeType: 'application/pdf',
           contentTransferEncoding: 'base64',
           filename: 'attachment-1.pdf',
-          data: Buffer.from('Content of attachment 1').toString('base64'),
+          data: Buffer.from(
+            'Content of attachment 1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+          ).toString('base64'),
           inlineAttachment: false,
         },
         {
@@ -262,6 +274,14 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       `Subject: ${draftWithAttachments.subject}`,
     )
     expect(sentRfc822DataStr).toContain(draftWithAttachments.body)
+    const expectedAttachment1Data = insertLinebreaks(
+      draftWithAttachments.attachments![0].data,
+    )
+    expect(sentRfc822DataStr).toContain(expectedAttachment1Data)
+    const expectedAttachment2Data = insertLinebreaks(
+      draftWithAttachments.attachments![1].data,
+    )
+    expect(sentRfc822DataStr).toContain(expectedAttachment2Data)
   })
 
   it('returns expected output when sending to cc', async () => {
@@ -712,24 +732,34 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
       )
 
-      let sent
+      let sent: EmailMessageRfc822Data | undefined
       await waitForExpect(async () => {
-        sent = await instanceUnderTest.getEmailMessage({
+        sent = await instanceUnderTest.getEmailMessageRfc822Data({
           id: sentId,
-          cachePolicy: CachePolicy.RemoteOnly,
+          emailAddressId: emailAddress1.id,
         })
         expect(sent).toBeDefined()
       })
 
-      expect(sent).toMatchObject({
-        ..._.omit(encryptedDraftWithAttachments, 'body', 'attachments'),
-        id: sentId,
-        hasAttachments: true,
-        encryptionStatus: sendEncryptedEmailEnabled
-          ? EncryptionStatus.ENCRYPTED
-          : EncryptionStatus.UNENCRYPTED,
-        date: expect.any(Date),
-      })
+      const sentRfc822DataStr = new TextDecoder().decode(sent?.rfc822Data)
+      expect(sentRfc822DataStr).toContain(
+        `From: <${encryptedDraftWithAttachments.from[0].emailAddress}>`,
+      )
+      expect(sentRfc822DataStr).toContain(
+        `To: <${encryptedDraftWithAttachments.to![0].emailAddress}>`,
+      )
+      expect(sentRfc822DataStr).toContain(
+        `Subject: ${encryptedDraftWithAttachments.subject}`,
+      )
+      expect(sentRfc822DataStr).toContain(encryptedDraftWithAttachments.body)
+      const expectedAttachment1Data = insertLinebreaks(
+        encryptedDraftWithAttachments.attachments![0].data,
+      )
+      expect(sentRfc822DataStr).toContain(expectedAttachment1Data)
+      const expectedAttachment2Data = insertLinebreaks(
+        encryptedDraftWithAttachments.attachments![1].data,
+      )
+      expect(sentRfc822DataStr).toContain(expectedAttachment2Data)
     })
 
     it('returns expected output when sending to cc', async () => {

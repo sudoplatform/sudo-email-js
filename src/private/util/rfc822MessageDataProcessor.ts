@@ -21,7 +21,10 @@ import {
 } from 'mimetext'
 import { extract, parse } from 'letterparser'
 import { LetterparserMailbox } from 'letterparser/lib/esm/extractor'
-import { escapeBackslashesAndDoubleQuotes } from './stringUtils'
+import {
+  escapeBackslashesAndDoubleQuotes,
+  insertLinebreaks,
+} from './stringUtils'
 
 export interface EmailMessageDetails {
   from: EmailAddressDetail[]
@@ -129,10 +132,12 @@ export class Rfc822MessageDataProcessor {
       msg.setHeader('Reply-To', mailbox)
     }
 
+    let addLinebreaksToAttachmentData = true
     if (encryptionStatus === EncryptionStatus.ENCRYPTED) {
       msg.setHeader(EMAIL_HEADER_NAME_ENCRYPTION, PLATFORM_ENCRYPTION)
       body = CANNED_TEXT_BODY
       isHtml = false
+      addLinebreaksToAttachmentData = false
     } else {
       if (forwardMessageId) {
         msg.setHeader(REFERENCES_HEADER_NAME, `<${forwardMessageId}>`)
@@ -152,6 +157,7 @@ export class Rfc822MessageDataProcessor {
       msg.addAttachment(
         Rfc822MessageDataProcessor.emailAttachmentToAttachmentOptions(
           attachment,
+          addLinebreaksToAttachmentData,
         ),
       )
     })
@@ -160,6 +166,7 @@ export class Rfc822MessageDataProcessor {
       msg.addAttachment(
         Rfc822MessageDataProcessor.emailAttachmentToAttachmentOptions(
           attachment,
+          addLinebreaksToAttachmentData,
         ),
       )
     })
@@ -342,14 +349,19 @@ export class Rfc822MessageDataProcessor {
 
   /**
    * Converts an EmailAttachment object to an AttachmentOptions for use in mail-mime-builder functions
+   * In most cases, we want to add linebreaks to the data every 78 characters as per RFC5322
+   * https://www.ietf.org/rfc/rfc5322.txt#:~:text=Each%20line%20of%20characters%20MUST,998%20characters%20on%20a%20line.
+   * For those cases that we don't, like for our internal E2E-encryption attachments, the addLinebreaks param should be set to false
    * @param {EmailAttachment} attachment
+   * @param {boolean} addLinebreaks
    * @returns AttachmentOptions
    */
   private static emailAttachmentToAttachmentOptions(
     attachment: EmailAttachment,
+    addLinebreaks: boolean = true,
   ): AttachmentOptions {
     return {
-      data: attachment.data,
+      data: addLinebreaks ? insertLinebreaks(attachment.data) : attachment.data,
       contentType: attachment.mimeType,
       filename: attachment.filename,
       inline: attachment.inlineAttachment,

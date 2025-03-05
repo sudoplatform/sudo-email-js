@@ -18,6 +18,8 @@ import {
 } from '../../../../src/public'
 import { Base64 } from '@sudoplatform/sudo-common'
 import { arrayBufferToString } from '../../../../src/private/util/buffer'
+import { insertLinebreaks } from '../../../../src/private/util/stringUtils'
+import fs from 'node:fs/promises'
 
 const eol = '\n'
 describe('rfc822MessageDataProcessor unit tests', () => {
@@ -718,6 +720,50 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         )
         expect(resultString).toContain(attachments[1].data)
       })
+
+      it('inserts linebreaks into attachment data every 78 characters', () => {
+        const body = 'Message body'
+        const buffer = new ArrayBuffer(780)
+        crypto.getRandomValues(new Uint8Array(buffer))
+        const attachmentData = Base64.encode(buffer)
+
+        const attachment: EmailAttachment = {
+          filename: 'attachment1.jpg',
+          contentTransferEncoding: 'base64',
+          inlineAttachment: false,
+          mimeType: 'image/jpg',
+          data: attachmentData,
+        }
+
+        const messageDetails: EmailMessageDetails = {
+          from: [{ emailAddress: fromAddress.emailAddress }],
+          body,
+          attachments: [attachment],
+        }
+        const expectedData = insertLinebreaks(attachmentData, 78)
+
+        const resultString =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+
+        expect(resultString).toContain(
+          `From: <${fromAddress.emailAddress}>${eol}`,
+        )
+        expect(resultString).toContain(`To: ${eol}`)
+        expect(resultString).toContain(`Cc: ${eol}`)
+        expect(resultString).toContain(`Bcc: ${eol}`)
+        expect(resultString).toContain(`Subject: ${eol}`)
+        expect(resultString).toContain(body)
+        expect(resultString).toContain(
+          `Content-Type: multipart/mixed; boundary=`,
+        )
+        expect(resultString).toContain(
+          `Content-Type: ${attachment.mimeType}; name="${attachment.filename}"${eol}`,
+        )
+        expect(resultString).toContain(
+          `Content-Transfer-Encoding: ${attachment.contentTransferEncoding}${eol}`,
+        )
+        expect(resultString).toContain(expectedData)
+      })
     })
 
     describe('inlineAttachments', () => {
@@ -761,6 +807,51 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           `Content-Transfer-Encoding: ${attachment.contentTransferEncoding}${eol}`,
         )
         expect(resultString).toContain(attachment.data)
+      })
+
+      it('inserts linebreaks into attachment data every 78 characters', () => {
+        const buffer = new ArrayBuffer(780)
+        crypto.getRandomValues(new Uint8Array(buffer))
+        const attachmentData = Base64.encode(buffer)
+        const contentId = v4()
+        const attachment: EmailAttachment = {
+          filename: 'attachment1.jpg',
+          contentTransferEncoding: 'base64',
+          inlineAttachment: true,
+          mimeType: 'image/jpg',
+          data: attachmentData,
+          contentId,
+        }
+        const body = `Message body <img src="cid:${contentId}">`
+
+        const messageDetails: EmailMessageDetails = {
+          from: [{ emailAddress: fromAddress.emailAddress }],
+          body,
+          inlineAttachments: [attachment],
+        }
+        const expectedData = insertLinebreaks(attachmentData, 78)
+
+        const resultString =
+          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+
+        expect(resultString).toContain(
+          `From: <${fromAddress.emailAddress}>${eol}`,
+        )
+        expect(resultString).toContain(`To: ${eol}`)
+        expect(resultString).toContain(`Cc: ${eol}`)
+        expect(resultString).toContain(`Bcc: ${eol}`)
+        expect(resultString).toContain(`Subject: ${eol}`)
+        expect(resultString).toContain(body)
+        expect(resultString).toContain(
+          `Content-Type: multipart/mixed; boundary=`,
+        )
+        expect(resultString).toContain(
+          `Content-Type: ${attachment.mimeType}; name="${attachment.filename}"${eol}`,
+        )
+        expect(resultString).toContain(
+          `Content-Transfer-Encoding: ${attachment.contentTransferEncoding}${eol}`,
+        )
+        expect(resultString).toContain(expectedData)
       })
     })
 
