@@ -419,4 +419,49 @@ describe('DefaultEmailFolderService Test Suite', () => {
       verify(mockDeviceKeyWorker.unsealString(anything())).once()
     })
   })
+
+  describe('deleteMessagesByFolderId', () => {
+    it('calls appSync correctly', async () => {
+      when(mockAppSync.deleteMessagesByFolderId(anything())).thenResolve(
+        GraphQLDataFactory.emailFolder.id,
+      )
+
+      const result = await instanceUnderTest.deleteMessagesByFolderId({
+        emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
+        emailFolderId: EntityDataFactory.emailFolder.id,
+      })
+
+      expect(result).toEqual(GraphQLDataFactory.emailFolder.id)
+
+      verify(mockAppSync.deleteMessagesByFolderId(anything())).once()
+      const [inputArgs] = capture(mockAppSync.deleteMessagesByFolderId).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
+        folderId: EntityDataFactory.emailFolder.id,
+        hardDelete: undefined,
+      })
+    })
+
+    it('passes hardDelete parameter properly', async () => {
+      when(mockAppSync.deleteMessagesByFolderId(anything())).thenResolve(
+        GraphQLDataFactory.emailFolder.id,
+      )
+
+      const result = await instanceUnderTest.deleteMessagesByFolderId({
+        emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
+        emailFolderId: EntityDataFactory.emailFolder.id,
+        hardDelete: false,
+      })
+
+      expect(result).toEqual(GraphQLDataFactory.emailFolder.id)
+
+      verify(mockAppSync.deleteMessagesByFolderId(anything())).once()
+      const [inputArgs] = capture(mockAppSync.deleteMessagesByFolderId).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
+        folderId: EntityDataFactory.emailFolder.id,
+        hardDelete: false,
+      })
+    })
+  })
 })

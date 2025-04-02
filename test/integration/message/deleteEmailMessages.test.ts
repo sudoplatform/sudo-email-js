@@ -24,7 +24,7 @@ import { provisionEmailAddress } from '../util/provisionEmailAddress'
 describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
   jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
-  const ootoSimulatorAddress = 'ooto@simulator.amazonses.com'
+  const successSimulatorAddress = 'success@simulator.amazonses.com'
 
   let emailAddresses: EmailAddress[] = []
 
@@ -160,7 +160,7 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
       senderEmailAddressId: emailAddress.id,
       emailMessageHeader: {
         from: { emailAddress: emailAddress.emailAddress },
-        to: [{ emailAddress: ootoSimulatorAddress }],
+        to: [{ emailAddress: successSimulatorAddress }],
         cc: [],
         bcc: [],
         replyTo: [],

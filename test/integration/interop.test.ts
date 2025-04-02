@@ -147,6 +147,8 @@ describe('SudoEmailClient Interoperability Test Suite', () => {
       expect(sent.subject).toEqual(`Test ${timestamp.toUTCString()}`)
 
       if (
+        // Disabling this for now. Keep getting sent to spam in Gmail and Outlook
+        false &&
         // Auto-replies are a paid feature in proton, so not looking for it here
         !externalAccount.endsWith('proton.me') &&
         // And yahoo keeps sending us to spam and not sending the auto-reply

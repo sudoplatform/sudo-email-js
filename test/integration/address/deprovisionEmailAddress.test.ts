@@ -18,7 +18,6 @@ import {
   EmailAddress,
   SudoEmailClient,
 } from '../../../src'
-import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 
@@ -58,7 +57,7 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
       senderEmailAddressId: emailAddress.id,
       emailMessageHeader: {
         from: { emailAddress: emailAddress.emailAddress },
-        to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
+        to: [{ emailAddress: 'success@simulator.amazonses.com' }],
         cc: [],
         bcc: [],
         replyTo: [],
@@ -128,7 +127,7 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
       await waitForExpect(
         async () => {
           await expect(
-            instanceUnderTest.getEmailMessageRfc822Data({
+            instanceUnderTest.getEmailMessageWithBody({
               id: emailMessageId,
               emailAddressId: emailAddress.id,
             }),

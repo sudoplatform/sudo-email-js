@@ -47,7 +47,7 @@ import { insertLinebreaks } from '../../../src/private/util/stringUtils'
 describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
-  const ootoSimulatorAddress = 'ooto@simulator.amazonses.com'
+  const successSimulatorAddress = 'success@simulator.amazonses.com'
 
   let emailAddresses: EmailAddress[] = []
 
@@ -60,7 +60,8 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
   let emailAddress1: EmailAddress
   let emailAddress2: EmailAddress
-  let inboxFolder: EmailFolder
+  let inboxFolder1: EmailFolder
+  let inboxFolder2: EmailFolder
   let draft: EmailMessageDetails
   let encryptedDraft: EmailMessageDetails
   let draftWithAttachments: EmailMessageDetails
@@ -90,15 +91,20 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     )
     emailAddresses.push(emailAddress2)
 
-    const folder = emailAddress1.folders.find((f) => f.folderName === 'INBOX')
+    let folder = emailAddress1.folders.find((f) => f.folderName === 'INBOX')
     if (!folder) {
       fail(`Could not find INBOX folder for ${emailAddress1.id}`)
     }
-    inboxFolder = folder
+    inboxFolder1 = folder
+    folder = emailAddress2.folders.find((f) => f.folderName === 'INBOX')
+    if (!folder) {
+      fail(`Could not find INBOX folder for ${emailAddress2.id}`)
+    }
+    inboxFolder2 = folder
 
     draft = {
       from: [{ emailAddress: emailAddress1.emailAddress }],
-      to: [{ emailAddress: ootoSimulatorAddress }],
+      to: [{ emailAddress: successSimulatorAddress }],
       cc: [],
       bcc: [],
       replyTo: [],
@@ -288,7 +294,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     const ccDraft = {
       ...draft,
       to: [],
-      cc: [{ emailAddress: ootoSimulatorAddress }],
+      cc: [{ emailAddress: emailAddress2.emailAddress }],
     }
     const result = await instanceUnderTest.sendEmailMessage({
       senderEmailAddressId: emailAddress1.id,
@@ -325,25 +331,25 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       date: expect.any(Date),
     })
 
-    const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
+    const emailMessage = await instanceUnderTest.getEmailMessage({
+      id: sentId,
+    })
+    const emailMessageBody = await instanceUnderTest.getEmailMessageWithBody({
       id: sentId,
       emailAddressId: emailAddress1.id,
     })
 
-    const sentRfc822DataStr = new TextDecoder().decode(
-      sentRFC822Data?.rfc822Data,
+    expect(emailMessage?.from[0].emailAddress).toEqual(
+      ccDraft.from[0].emailAddress,
     )
-    expect(sentRfc822DataStr).toContain(
-      `From: <${ccDraft.from[0].emailAddress}>`,
-    )
-    expect(sentRfc822DataStr).toContain(`Cc: <${ccDraft.cc[0].emailAddress}>`)
-    expect(sentRfc822DataStr).toContain(`Subject: ${ccDraft.subject}`)
-    expect(sentRfc822DataStr).toContain(ccDraft.body)
+    expect(emailMessage?.cc[0].emailAddress).toEqual(ccDraft.cc[0].emailAddress)
+    expect(emailMessage?.subject).toEqual(ccDraft.subject)
+    expect(emailMessageBody?.body).toEqual(ccDraft.body)
 
     await waitForExpect(async () => {
       const result = await readAllPages((nextToken?: string) =>
         instanceUnderTest.listEmailMessagesForEmailFolderId({
-          folderId: inboxFolder.id,
+          folderId: inboxFolder2.id,
           cachePolicy: CachePolicy.RemoteOnly,
           nextToken,
         }),
@@ -360,7 +366,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     const bccDraft = {
       ...draft,
       to: [],
-      bcc: [{ emailAddress: ootoSimulatorAddress }],
+      bcc: [{ emailAddress: emailAddress2.emailAddress }],
     }
     const result = await instanceUnderTest.sendEmailMessage({
       senderEmailAddressId: emailAddress1.id,
@@ -396,28 +402,29 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       id: sentId,
     })
 
-    const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
+    const sentEmailMessage = await instanceUnderTest.getEmailMessage({
       id: sentId,
-      emailAddressId: emailAddress1.id,
     })
+    const sentEmailMessageBody =
+      await instanceUnderTest.getEmailMessageWithBody({
+        id: sentId,
+        emailAddressId: emailAddress1.id,
+      })
 
-    const sentRfc822DataStr = new TextDecoder().decode(
-      sentRFC822Data?.rfc822Data,
+    expect(sentEmailMessage?.from[0].emailAddress).toEqual(
+      bccDraft.from[0].emailAddress,
     )
-    expect(sentRfc822DataStr).toContain(
-      `From: <${bccDraft.from[0].emailAddress}>`,
+    expect(sentEmailMessage?.bcc[0].emailAddress).toEqual(
+      bccDraft.bcc[0].emailAddress,
     )
-    expect(sentRfc822DataStr).toContain(
-      `Bcc: <${bccDraft.bcc[0].emailAddress}>`,
-    )
-    expect(sentRfc822DataStr).toContain(`Subject: ${bccDraft.subject}`)
-    expect(sentRfc822DataStr).toContain(bccDraft.body)
+    expect(sentEmailMessage?.subject).toEqual(bccDraft.subject)
+    expect(sentEmailMessageBody?.body).toEqual(bccDraft.body)
 
     await waitForExpect(
       async () => {
         const result = await readAllPages((nextToken?: string) =>
           instanceUnderTest.listEmailMessagesForEmailFolderId({
-            folderId: inboxFolder.id,
+            folderId: inboxFolder2.id,
             cachePolicy: CachePolicy.RemoteOnly,
             nextToken,
           }),
@@ -442,8 +449,8 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         from: draft.from[0],
         to: [
           {
-            emailAddress: ootoSimulatorAddress,
-            displayName: 'ooto, simulator',
+            emailAddress: successSimulatorAddress,
+            displayName: 'success, simulator',
           },
         ],
         cc: draft.cc ?? [],
@@ -477,17 +484,12 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       date: expect.any(Date),
     })
 
-    const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
+    const emailMessage = await instanceUnderTest.getEmailMessage({
       id: sentId,
-      emailAddressId: emailAddress1.id,
     })
 
-    const sentRfc822DataStr = new TextDecoder().decode(
-      sentRFC822Data?.rfc822Data,
-    )
-    expect(sentRfc822DataStr).toContain(
-      `To: "ooto, simulator" <${draft.to![0].emailAddress}>`,
-    )
+    expect(emailMessage?.to[0].displayName).toEqual('success, simulator')
+    expect(emailMessage?.to[0].emailAddress).toEqual(draft.to![0].emailAddress)
   })
 
   it('returns unencrypted status when sending with mixture of recipients', async () => {
@@ -528,18 +530,20 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       encryptionStatus: EncryptionStatus.UNENCRYPTED,
     })
 
-    const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
+    const emailMessageBody = await instanceUnderTest.getEmailMessageWithBody({
       id: sentId,
       emailAddressId: emailAddress1.id,
     })
+    const emailMessage = await instanceUnderTest.getEmailMessage({
+      id: sentId,
+    })
 
-    const sentRfc822DataStr = new TextDecoder().decode(
-      sentRFC822Data?.rfc822Data,
+    expect(emailMessage?.from[0].emailAddress).toEqual(
+      draft.from[0].emailAddress,
     )
-    expect(sentRfc822DataStr).toContain(`From: <${draft.from[0].emailAddress}>`)
-    expect(sentRfc822DataStr).toContain(`To: <${draft.to![0].emailAddress}>`)
-    expect(sentRfc822DataStr).toContain(`Subject: ${draft.subject}`)
-    expect(sentRfc822DataStr).toContain(draft.body)
+    expect(emailMessage?.to[0].emailAddress).toEqual(draft.to![0].emailAddress)
+    expect(emailMessage?.subject).toEqual(draft.subject)
+    expect(emailMessageBody?.body).toEqual(draft.body)
   })
 
   it('throws an error if unknown address is used', async () => {

@@ -78,6 +78,20 @@ export interface UpdateCustomEmailFolderForEmailAddressIdInput {
 }
 
 /**
+ * Input for `EmailFolderService.deleteMessagesByFolderId`.
+ *
+ * @interface DeleteMessagesByFolderIdInput
+ * @property {string} emailFolderId The identifier of the folder to delete messages from
+ * @property {string} emailAddressId The identifier of the email address associated with the folder.
+ * @property {boolean} hardDelete If true (default), messages will be completely deleted. If false, messages will be moved to TRASH, unless the folder itself is TRASH.
+ */
+export interface DeleteMessagesByFolderIdInput {
+  emailFolderId: string
+  emailAddressId: string
+  hardDelete?: boolean
+}
+
+/**
  * Core entity representation of an email folder service used in business logic. Used to perform operations for email folders.
  *
  * @interface EmailFolderService
@@ -122,4 +136,14 @@ export interface EmailFolderService {
   updateCustomEmailFolderForEmailAddressId(
     input: UpdateCustomEmailFolderForEmailAddressIdInput,
   ): Promise<EmailFolderEntity>
+
+  /**
+   * Delete all messages from a folder with the given folderId
+   *
+   * @param {DeleteMessagesByFolderIdInput} input Parameters used to delete messages from a folder
+   * @return {string} The id of the folder
+   */
+  deleteMessagesByFolderId(
+    input: DeleteMessagesByFolderIdInput,
+  ): Promise<string>
 }

@@ -33,7 +33,7 @@ describe('SudoEmailClient DeleteCustomEmailFolder Test Suite', () => {
   jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
 
-  const ootoSimulatorAddress = 'ooto@simulator.amazonses.com'
+  const successSimulatorAddress = 'success@simulator.amazonses.com'
   let instanceUnderTest: SudoEmailClient
   let profilesClient: SudoProfilesClient
   let userClient: SudoUserClient
@@ -90,7 +90,7 @@ describe('SudoEmailClient DeleteCustomEmailFolder Test Suite', () => {
       senderEmailAddressId: emailAddress.id,
       emailMessageHeader: {
         from: { emailAddress: emailAddress.emailAddress },
-        to: [{ emailAddress: ootoSimulatorAddress }],
+        to: [{ emailAddress: successSimulatorAddress }],
         cc: [],
         bcc: [],
         replyTo: [],

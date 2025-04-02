@@ -33,7 +33,7 @@ import { EmailCryptoService } from '../../../src/private/domain/entities/secure/
 describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
   jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
-  const ootoSimulatorAddress = 'ooto@simulator.amazonses.com'
+  const successSimulatorAddress = 'success@simulator.amazonses.com'
 
   let instanceUnderTest: SudoEmailClient
   let profilesClient: SudoProfilesClient
@@ -65,7 +65,7 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
    */
   const sendEmailMessage = async (
     senderEmailAddress?: EmailAddress,
-    toAddress: string = ootoSimulatorAddress,
+    toAddress: string = successSimulatorAddress,
   ) => {
     if (!senderEmailAddress) {
       fail('Cannot send email message (no provisioned email address)')

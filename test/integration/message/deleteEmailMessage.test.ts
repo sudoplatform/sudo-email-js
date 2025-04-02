@@ -59,7 +59,7 @@ describe('SudoEmailClient DeleteEmailMessage Test Suite', () => {
       senderEmailAddressId: emailAddress.id,
       emailMessageHeader: {
         from: { emailAddress: emailAddress.emailAddress },
-        to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
+        to: [{ emailAddress: 'success@simulator.amazonses.com' }],
         cc: [],
         bcc: [],
         replyTo: [],

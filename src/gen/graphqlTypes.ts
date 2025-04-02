@@ -132,6 +132,12 @@ export type DeleteEmailMessagesInput = {
   messageIds: Array<Scalars['ID']['input']>
 }
 
+export type DeleteMessagesByFolderIdInput = {
+  emailAddressId: Scalars['ID']['input']
+  folderId: Scalars['ID']['input']
+  hardDelete?: InputMaybe<Scalars['Boolean']['input']>
+}
+
 export type DeprovisionEmailAddressInput = {
   emailAddressId: Scalars['ID']['input']
 }
@@ -323,6 +329,7 @@ export type Mutation = {
   deleteCustomEmailFolder?: Maybe<EmailFolder>
   deleteEmailMessage: Scalars['ID']['output']
   deleteEmailMessages: Array<Scalars['ID']['output']>
+  deleteMessagesByFolderId: Scalars['ID']['output']
   deprovisionEmailAddress: EmailAddress
   provisionEmailAddress: EmailAddress
   sendEmailMessageV2: SendEmailMessageResult
@@ -355,6 +362,10 @@ export type MutationDeleteEmailMessageArgs = {
 
 export type MutationDeleteEmailMessagesArgs = {
   input: DeleteEmailMessagesInput
+}
+
+export type MutationDeleteMessagesByFolderIdArgs = {
+  input: DeleteMessagesByFolderIdInput
 }
 
 export type MutationDeprovisionEmailAddressArgs = {
@@ -1198,6 +1209,15 @@ export type UnblockEmailAddressesMutation = {
     failedAddresses?: Array<string> | null
     successAddresses?: Array<string> | null
   }
+}
+
+export type DeleteMessagesByFolderIdMutationVariables = Exact<{
+  input: DeleteMessagesByFolderIdInput
+}>
+
+export type DeleteMessagesByFolderIdMutation = {
+  __typename?: 'Mutation'
+  deleteMessagesByFolderId: string
 }
 
 export type CreatePublicKeyForEmailMutationVariables = Exact<{
@@ -3949,6 +3969,54 @@ export const UnblockEmailAddressesDocument = {
 } as unknown as DocumentNode<
   UnblockEmailAddressesMutation,
   UnblockEmailAddressesMutationVariables
+>
+export const DeleteMessagesByFolderIdDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DeleteMessagesByFolderId' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'DeleteMessagesByFolderIdInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'deleteMessagesByFolderId' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  DeleteMessagesByFolderIdMutation,
+  DeleteMessagesByFolderIdMutationVariables
 >
 export const CreatePublicKeyForEmailDocument = {
   kind: 'Document',

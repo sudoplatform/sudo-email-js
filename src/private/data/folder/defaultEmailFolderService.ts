@@ -8,6 +8,7 @@ import { EmailFolderEntity } from '../../domain/entities/folder/emailFolderEntit
 import {
   CreateCustomEmailFolderForEmailAddressIdInput,
   DeleteCustomEmailFolderForEmailAddressIdInput,
+  DeleteMessagesByFolderIdInput,
   EmailFolderService,
   ListEmailFoldersForEmailAddressIdInput,
   ListEmailFoldersForEmailAddressIdOutput,
@@ -19,6 +20,7 @@ import {
   CreateCustomEmailFolderInput,
   DeleteCustomEmailFolderInput,
   UpdateCustomEmailFolderInput,
+  DeleteMessagesByFolderIdInput as DeleteMessagesByFolderIdRequest,
 } from '../../../gen/graphqlTypes'
 import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransformer'
 import { EmailFolderEntityTransformer } from './transformer/emailFolderEntityTransformer'
@@ -146,5 +148,19 @@ export class DefaultEmailFolderService implements EmailFolderService {
       updateCustomEmailFolderInput,
     )
     return await this.transformer.transformGraphQL(result)
+  }
+
+  async deleteMessagesByFolderId(
+    input: DeleteMessagesByFolderIdInput,
+  ): Promise<string> {
+    const deleteMessagesByFolderIdRequest: DeleteMessagesByFolderIdRequest = {
+      folderId: input.emailFolderId,
+      emailAddressId: input.emailAddressId,
+      hardDelete: input.hardDelete,
+    }
+
+    return await this.appSync.deleteMessagesByFolderId(
+      deleteMessagesByFolderIdRequest,
+    )
   }
 }

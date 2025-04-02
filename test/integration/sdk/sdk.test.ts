@@ -190,10 +190,15 @@ describe('SDK Tests', () => {
       emailClient,
       { alias: 'Export/Import' },
     )
+    const toEmailAddress = await provisionEmailAddress(
+      testEmailClient.ownershipProofToken,
+      emailClient,
+      { alias: 'Receiver' },
+    )
     const draftBuffer =
       Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
         from: [{ emailAddress: emailAddress.emailAddress }],
-        to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
+        to: [{ emailAddress: toEmailAddress.emailAddress }],
         cc: [],
         bcc: [],
         replyTo: [],
@@ -238,7 +243,7 @@ describe('SDK Tests', () => {
       senderEmailAddressId: emailAddress.id,
       emailMessageHeader: {
         from: { emailAddress: emailAddress.emailAddress },
-        to: [{ emailAddress: 'ooto@simulator.amazonses.com' }],
+        to: [{ emailAddress: toEmailAddress.emailAddress }],
         cc: [],
         bcc: [],
         replyTo: [],

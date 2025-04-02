@@ -102,6 +102,7 @@ import { GetConfiguredEmailDomainsUseCase } from '../../../src/private/domain/us
 import { DefaultEmailDomainService } from '../../../src/private/data/emailDomain/defaultEmailDomainService'
 import { DeleteCustomEmailFolderUseCase } from '../../../src/private/domain/use-cases/folder/deleteCustomEmailFolderUseCase'
 import { UpdateCustomEmailFolderUseCase } from '../../../src/private/domain/use-cases/folder/updateCustomEmailFolderUseCase'
+import { DeleteMessagesByFolderIdUseCase } from '../../../src/private/domain/use-cases/folder/deleteMessagesByFolderIdUseCase'
 
 // Constructor mocks
 
@@ -412,6 +413,13 @@ const JestMockGetEmailAddressBlocklistUseCase =
 jest.mock(
   '../../../src/private/domain/use-cases/blocklist/getEmailAddressBlocklist',
 )
+const JestMockDeleteMessagesByFolderIdUseCase =
+  DeleteMessagesByFolderIdUseCase as jest.MockedClass<
+    typeof DeleteMessagesByFolderIdUseCase
+  >
+jest.mock(
+  '../../../src/private/domain/use-cases/folder/deleteMessagesByFolderIdUseCase',
+)
 
 describe('SudoEmailClient Test Suite', () => {
   // Opt Mocks
@@ -493,6 +501,8 @@ describe('SudoEmailClient Test Suite', () => {
     mock<UnblockEmailAddressesByHashedValueUseCase>()
   const mockGetEmailAddressBlocklistUseCase =
     mock<GetEmailAddressBlocklistUseCase>()
+  const mockDeleteMessagesByFolderIdUseCase =
+    mock<DeleteMessagesByFolderIdUseCase>()
 
   let instanceUnderTest: SudoEmailClient
 
@@ -564,6 +574,7 @@ describe('SudoEmailClient Test Suite', () => {
     reset(mockUnblockEmailAddressesUseCase)
     reset(mockUnblockEmailAddressesByHashedValueUseCase)
     reset(mockGetEmailAddressBlocklistUseCase)
+    reset(mockDeleteMessagesByFolderIdUseCase)
 
     JestMockDefaultEmailAccountService.mockClear()
     JestMockDefaultEmailDomainService.mockClear()
@@ -613,6 +624,7 @@ describe('SudoEmailClient Test Suite', () => {
     JestMockUnblockEmailAddressesUseCase.mockClear()
     JestMockUnblockEmailAddressesByHashedValueUseCase.mockClear()
     JestMockGetEmailAddressBlocklistUseCase.mockClear()
+    JestMockDeleteMessagesByFolderIdUseCase.mockClear()
 
     JestMockDefaultConfigurationDataService.mockImplementation(() =>
       instance(mockConfigurationDataService),
@@ -749,6 +761,9 @@ describe('SudoEmailClient Test Suite', () => {
     )
     JestMockGetEmailAddressBlocklistUseCase.mockImplementation(() =>
       instance(mockGetEmailAddressBlocklistUseCase),
+    )
+    JestMockDeleteMessagesByFolderIdUseCase.mockImplementation(() =>
+      instance(mockDeleteMessagesByFolderIdUseCase),
     )
   }
 
@@ -3035,6 +3050,58 @@ describe('SudoEmailClient Test Suite', () => {
         status: BatchOperationResultStatus.Partial,
         successValues: successResult,
         failureValues: failureResult,
+      })
+    })
+  })
+
+  describe('deleteMessagesForFolderId', () => {
+    beforeEach(() => {
+      when(mockDeleteMessagesByFolderIdUseCase.execute(anything())).thenResolve(
+        EntityDataFactory.emailFolder.id,
+      )
+    })
+    it('generates use case', async () => {
+      await instanceUnderTest.deleteMessagesForFolderId({
+        emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
+        emailFolderId: EntityDataFactory.emailFolder.id,
+      })
+      expect(JestMockDeleteMessagesByFolderIdUseCase).toHaveBeenCalledTimes(1)
+    })
+
+    it('calls use case as expected', async () => {
+      await expect(
+        instanceUnderTest.deleteMessagesForFolderId({
+          emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
+          emailFolderId: EntityDataFactory.emailFolder.id,
+        }),
+      ).resolves.toEqual(EntityDataFactory.emailFolder.id)
+      verify(mockDeleteMessagesByFolderIdUseCase.execute(anything())).once()
+      const [inputArgs] = capture(
+        mockDeleteMessagesByFolderIdUseCase.execute,
+      ).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
+        emailFolderId: EntityDataFactory.emailFolder.id,
+        hardDelete: undefined,
+      })
+    })
+
+    it('passes hardDelete parameter properly', async () => {
+      await expect(
+        instanceUnderTest.deleteMessagesForFolderId({
+          emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
+          emailFolderId: EntityDataFactory.emailFolder.id,
+          hardDelete: false,
+        }),
+      ).resolves.toEqual(EntityDataFactory.emailFolder.id)
+      verify(mockDeleteMessagesByFolderIdUseCase.execute(anything())).once()
+      const [inputArgs] = capture(
+        mockDeleteMessagesByFolderIdUseCase.execute,
+      ).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
+        emailFolderId: EntityDataFactory.emailFolder.id,
+        hardDelete: false,
       })
     })
   })

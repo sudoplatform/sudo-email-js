@@ -122,6 +122,7 @@ import { EmailDomainEntityTransformer } from '../private/data/emailDomain/transf
 import { DeleteEmailMessageSuccessResult } from './typings/deleteEmailMessageSuccessResult'
 import { DeleteCustomEmailFolderUseCase } from '../private/domain/use-cases/folder/deleteCustomEmailFolderUseCase'
 import { UpdateCustomEmailFolderUseCase } from '../private/domain/use-cases/folder/updateCustomEmailFolderUseCase'
+import { DeleteMessagesByFolderIdUseCase } from '../private/domain/use-cases/folder/deleteMessagesByFolderIdUseCase'
 
 /**
  * Pagination interface designed to be extended for list interfaces.
@@ -520,6 +521,20 @@ export interface GetEmailMessageRfc822DataInput {
 export interface GetEmailMessageWithBodyInput {
   id: string
   emailAddressId: string
+}
+
+/**
+ * Input for `SudoEmailClient.deleteMessagesForFolderId`.
+ *
+ * @interface DeleteMessagesForFolderIdInput
+ * @property {string} emailFolderId The identifier of the folder to delete messages from
+ * @property {string} emailAddressId The identifier of the email address associated with the folder.
+ * @property {boolean} hardDelete If true (default), messages will be completely deleted. If false, messages will be moved to TRASH, unless the folder itself is TRASH.
+ */
+export interface DeleteMessagesForFolderIdInput {
+  emailFolderId: string
+  emailAddressId: string
+  hardDelete?: boolean
 }
 
 export interface SudoEmailClient {
@@ -924,6 +939,18 @@ export interface SudoEmailClient {
   ): Promise<DeleteEmailMessageSuccessResult | undefined>
 
   /**
+   * Delete all messages for in an email folder.
+   * Deletion will be processed asynchronously since it may take a substantial amount of time.
+   * This method does not wait for deletion to complete. To check for completion, listen for subscriptions or check list endpoints.
+   *
+   * @param {DeleteMessagesForFolderIdInput} input Parameters used to delete messages from a folder
+   * @returns {string} The id of the folder
+   */
+  deleteMessagesForFolderId(
+    input: DeleteMessagesForFolderIdInput,
+  ): Promise<string>
+
+  /**
    * Get an email message identified by id.
    *
    * @param {GetEmailMessageInput} input Parameters used to retrieve an email message.
@@ -1241,6 +1268,19 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     )
     const { successIds } = await deleteEmailMessageUseCase.execute(idSet)
     return successIds.length === idSet.size ? { id } : undefined
+  }
+
+  public async deleteMessagesForFolderId(
+    input: DeleteMessagesForFolderIdInput,
+  ): Promise<string> {
+    const deleteMessagesByFolderIdUseCase = new DeleteMessagesByFolderIdUseCase(
+      this.emailFolderService,
+    )
+    return await deleteMessagesByFolderIdUseCase.execute({
+      emailAddressId: input.emailAddressId,
+      emailFolderId: input.emailFolderId,
+      hardDelete: input.hardDelete,
+    })
   }
 
   public async deleteEmailMessages(

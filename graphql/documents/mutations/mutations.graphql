@@ -70,6 +70,10 @@ mutation UnblockEmailAddresses($input: UnblockEmailAddressesInput!) {
   }
 }
 
+mutation DeleteMessagesByFolderId($input: DeleteMessagesByFolderIdInput!) {
+  deleteMessagesByFolderId(input: $input)
+}
+
 ##########
 # Keys
 ##########

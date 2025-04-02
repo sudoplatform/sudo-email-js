@@ -135,6 +135,12 @@ input UpdateCustomEmailFolderInput {
   values: CustomEmailFolderUpdateValuesInput!
 }
 
+input DeleteMessagesByFolderIdInput {
+  folderId: ID!
+  emailAddressId: ID!
+  hardDelete: Boolean
+}
+
 input LookupEmailAddressesPublicInfoInput {
   emailAddresses: [String!]!
 }
@@ -503,6 +509,8 @@ type Mutation {
   unblockEmailAddresses(
     input: UnblockEmailAddressesInput!
   ): BlockEmailAddressesBulkUpdateResult!
+
+  deleteMessagesByFolderId(input: DeleteMessagesByFolderIdInput!): ID!
 }
 
 type Subscription {

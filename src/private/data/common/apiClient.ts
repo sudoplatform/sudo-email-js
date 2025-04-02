@@ -127,6 +127,9 @@ import {
   UpdateCustomEmailFolderInput,
   UpdateCustomEmailFolderMutation,
   UpdateCustomEmailFolderDocument,
+  DeleteMessagesByFolderIdInput,
+  DeleteMessagesByFolderIdMutation,
+  DeleteMessagesByFolderIdDocument,
 } from '../../../gen/graphqlTypes'
 import { ErrorTransformer } from './transformer/errorTransformer'
 
@@ -189,6 +192,17 @@ export class ApiClient {
       calleeName: this.updateCustomEmailFolder.name,
     })
     return data.updateCustomEmailFolder
+  }
+
+  public async deleteMessagesByFolderId(
+    input: DeleteMessagesByFolderIdInput,
+  ): Promise<string> {
+    const data = await this.performMutation<DeleteMessagesByFolderIdMutation>({
+      mutation: DeleteMessagesByFolderIdDocument,
+      variables: { input },
+      calleeName: this.deleteMessagesByFolderId.name,
+    })
+    return data.deleteMessagesByFolderId
   }
 
   public async blockEmailAddresses(
