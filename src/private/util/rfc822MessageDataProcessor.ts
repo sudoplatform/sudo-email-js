@@ -42,6 +42,10 @@ export interface EmailMessageDetails {
   replyMessageId?: string
 }
 
+export interface EmailMessageEncodingOptions {
+  decodeEncodedFields?: boolean // defaults to encryptionStatus === EncryptionStatus.ENCRYPTED
+}
+
 export const EMAIL_HEADER_NAME_ENCRYPTION = 'X-Sudoplatform-Encryption'
 export const PLATFORM_ENCRYPTION = 'sudoplatform'
 
@@ -65,14 +69,18 @@ export class Rfc822MessageDataProcessor {
   /**
    * Encodes the given email into an RFC822 compliant buffer
    *
-   * @param {EmailMessageDetails} email The email to be encoded
+   * @param {EmailMessageDetails} emailMessage The email to be encoded
+   * @param options Any options to control the encoding process
    * @returns ArrayBuffer
    */
   public static encodeToInternetMessageBuffer(
     emailMessage: EmailMessageDetails,
+    options: EmailMessageEncodingOptions = {},
   ): ArrayBuffer {
-    const parsed =
-      Rfc822MessageDataProcessor.encodeToInternetMessageStr(emailMessage)
+    const parsed = Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+      emailMessage,
+      options,
+    )
     return new TextEncoder().encode(parsed)
   }
 
@@ -80,44 +88,62 @@ export class Rfc822MessageDataProcessor {
    * Encodes the given email into an RFC822 compliant string
    *
    * @param {EmailMessageDetails} email The email to be encoded
+   * @param options Any options to control the encoding process
    * @returns string
    */
-  public static encodeToInternetMessageStr({
-    from,
-    to,
-    cc,
-    bcc,
-    replyTo,
-    subject = '',
-    body = '',
-    isHtml = true,
-    attachments,
-    inlineAttachments,
-    encryptionStatus = EncryptionStatus.UNENCRYPTED,
-    forwardMessageId,
-    replyMessageId,
-  }: EmailMessageDetails): string {
+  public static encodeToInternetMessageStr(
+    {
+      from,
+      to,
+      cc,
+      bcc,
+      replyTo,
+      subject = '',
+      body = '',
+      isHtml = true,
+      attachments,
+      inlineAttachments,
+      encryptionStatus = EncryptionStatus.UNENCRYPTED,
+      forwardMessageId,
+      replyMessageId,
+    }: EmailMessageDetails,
+    options?: EmailMessageEncodingOptions,
+  ): string {
+    const sendFieldsDecoded =
+      (options?.decodeEncodedFields ?? false) ||
+      encryptionStatus === EncryptionStatus.ENCRYPTED
+
     const msg = createMimeMessage()
     if (from && from.length > 0) {
       msg.setSender(
         Rfc822MessageDataProcessor.emailAddressDetailToMailboxAddrObject(
           from[0],
+          sendFieldsDecoded,
         ),
       )
     }
     msg.setRecipients(
-      to?.map(
-        Rfc822MessageDataProcessor.emailAddressDetailToMailboxAddrObject,
+      to?.map((addressDetail) =>
+        Rfc822MessageDataProcessor.emailAddressDetailToMailboxAddrObject(
+          addressDetail,
+          sendFieldsDecoded,
+        ),
       ) ?? [],
     )
     msg.setCc(
-      cc?.map(
-        Rfc822MessageDataProcessor.emailAddressDetailToMailboxAddrObject,
+      cc?.map((addressDetail) =>
+        Rfc822MessageDataProcessor.emailAddressDetailToMailboxAddrObject(
+          addressDetail,
+          sendFieldsDecoded,
+        ),
       ) ?? [],
     )
     msg.setBcc(
-      bcc?.map(
-        Rfc822MessageDataProcessor.emailAddressDetailToMailboxAddrObject,
+      bcc?.map((addressDetail) =>
+        Rfc822MessageDataProcessor.emailAddressDetailToMailboxAddrObject(
+          addressDetail,
+          sendFieldsDecoded,
+        ),
       ) ?? [],
     )
 
@@ -138,12 +164,15 @@ export class Rfc822MessageDataProcessor {
       body = CANNED_TEXT_BODY
       isHtml = false
       addLinebreaksToAttachmentData = false
-    } else {
-      if (forwardMessageId) {
-        msg.setHeader(REFERENCES_HEADER_NAME, `<${forwardMessageId}>`)
-      } else if (replyMessageId) {
-        msg.setHeader(IN_REPLY_TO_HEADER_NAME, `<${replyMessageId}>`)
-      }
+    }
+
+    // Note that these headers are set in the sendEncryptedMessage function
+    // for e2e encrypted messages so they are also available when not encrypted.
+    if (forwardMessageId) {
+      msg.setHeader(REFERENCES_HEADER_NAME, `<${forwardMessageId}>`)
+    }
+    if (replyMessageId) {
+      msg.setHeader(IN_REPLY_TO_HEADER_NAME, `<${replyMessageId}>`)
     }
 
     msg.setSubject(subject)
@@ -173,8 +202,10 @@ export class Rfc822MessageDataProcessor {
 
     try {
       const rawMsg = msg.asRaw()
-      // Decode and encoded words in the email i.e. Subject, display names
-      return Rfc822MessageDataProcessor.decodeEncodedWords(rawMsg)
+      // Decode any encoded words in the email i.e. Subject, display names for e2e encrypted emails
+      return sendFieldsDecoded
+        ? Rfc822MessageDataProcessor.decodeEncodedWords(rawMsg)
+        : rawMsg
     } catch (e) {
       console.error('Error encoding rfc822 data', { e })
       if (e instanceof MIMETextError) {
@@ -329,16 +360,18 @@ export class Rfc822MessageDataProcessor {
   /**
    * Converts an EmailAddressDetail object to a MailboxAddrObject for use in mail-mime-builder functions
    * @param {EmailAddressDetail} address
+   * @param sendFieldsDecoded set to true if we know we are going to send these address details unencoded.
    * @returns MailboxAddrObject
    */
   private static emailAddressDetailToMailboxAddrObject(
     address: EmailAddressDetail,
+    sendFieldsDecoded: boolean,
   ): MailboxAddrObject {
     if (address.displayName) {
       const name = escapeBackslashesAndDoubleQuotes(address.displayName)
       return {
         addr: address.emailAddress,
-        name: `"${name}"`, // Wrap display name in double quotes
+        name: sendFieldsDecoded ? `"${name}"` : name, // Wrap display name in double quotes iff we are going to send it not encoded
       }
     } else {
       return {
@@ -420,7 +453,7 @@ export class Rfc822MessageDataProcessor {
    * I can say with some confidence that the outer loop of the nested loop below will
    * only run once.
    *
-   * @param {AddressObject | AddressObject[] | undefined} addressObject The value of the `from`, `replyTo`, `to` `cc` or `bcc` properties of the `ParsedMail` object
+   * @param {LetterparserMailbox | LetterparserMailbox[] | undefined} addressObject The value of the `from`, `replyTo`, `to` `cc` or `bcc` properties of the `ParsedMail` object
    * @return {EmailAddressDetail[]}
    */
   private static addressObjectToEmailAddressDetailArray(

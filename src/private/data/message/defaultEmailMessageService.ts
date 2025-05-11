@@ -5,6 +5,7 @@
  */
 
 import {
+  Base64,
   DecodeError,
   DefaultLogger,
   FatalError,
@@ -36,12 +37,15 @@ import {
 } from '../../../public'
 import {
   InternalError,
+  MessageNotFoundError,
   MessageSizeLimitExceededError,
+  UnsupportedKeyTypeError,
 } from '../../../public/errors'
 import { DraftEmailMessageEntity } from '../../domain/entities/message/draftEmailMessageEntity'
 import { DraftEmailMessageMetadataEntity } from '../../domain/entities/message/draftEmailMessageMetadataEntity'
 import { EmailMessageEntity } from '../../domain/entities/message/emailMessageEntity'
 import {
+  CancelScheduledDraftMessageInput,
   DeleteDraftsInput,
   DeleteEmailMessagesInput,
   EmailMessageService,
@@ -60,6 +64,7 @@ import {
   ListEmailMessagesInput,
   ListEmailMessagesOutput,
   SaveDraftInput,
+  ScheduleSendDraftMessageInput,
   SendEmailMessageOutput,
   SendEncryptedMessageInput,
   SendMessageInput,
@@ -86,6 +91,7 @@ import {
   S3Client,
   S3DownloadError,
   S3Error,
+  S3GetHeadObjectDataError,
 } from '../common/s3Client'
 import {
   Subscribable,
@@ -98,6 +104,8 @@ import { withDefault } from '../common/withDefault'
 import { SealedEmailMessageEntityTransformer } from './transformer/sealedEmailMessageEntityTransformer'
 import { SendEmailMessageResultTransformer } from './transformer/sendEmailMessageResultTransformer'
 import { EmailAddressPublicInfoEntity } from '../../domain/entities/account/emailAddressPublicInfoEntity'
+import { ScheduledDraftMessageEntity } from '../../domain/entities/message/scheduledDraftMessageEntity'
+import { ScheduledDraftMessageTransformer } from './transformer/scheduledDraftMessageTransformer'
 
 const EmailAddressEntityCodec = t.intersection(
   [t.type({ emailAddress: t.string }), t.partial({ displayName: t.string })],
@@ -322,6 +330,86 @@ export class DefaultEmailMessageService implements EmailMessageService {
     }))
   }
 
+  async scheduleSendDraftMessage({
+    id,
+    emailAddressId,
+    sendAt,
+  }: ScheduleSendDraftMessageInput): Promise<ScheduledDraftMessageEntity> {
+    const keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
+    const key = `${keyPrefix}/draft/${id}`
+    let keyId: string | undefined
+    let algorithm: string | undefined
+
+    try {
+      const headObjectData = await this.s3Client.getHeadObjectData({
+        bucket: this.emailServiceConfig.bucket,
+        region: this.emailServiceConfig.region,
+        key,
+      })
+
+      if (!headObjectData) {
+        this.log.error('Draft message not found', { id, emailAddressId, key })
+        throw new MessageNotFoundError(`Draft message not found ${id}`)
+      }
+      keyId = headObjectData.metadata?.[this.Defaults.Metadata.KeyIdName]
+      algorithm =
+        headObjectData.metadata?.[this.Defaults.Metadata.AlgorithmName]
+    } catch (error: unknown) {
+      const s3GetHeadObjectError = error as S3GetHeadObjectDataError
+      if (s3GetHeadObjectError.code === S3Error.NoSuchKey) {
+        this.log.error('Draft message not found', { id, emailAddressId, key })
+        throw new MessageNotFoundError(`Draft message not found ${id}`)
+      }
+      this.log.error('Error getting draft message metadata', { error })
+      throw error
+    }
+
+    if (!keyId) {
+      throw new InternalError('No sealed keyId associated with s3 object')
+    }
+    if (!algorithm) {
+      throw new InternalError('No sealed algorithm associated with s3 object')
+    }
+    const keyType =
+      algorithm === this.Defaults.SymmetricKeyEncryptionAlgorithm
+        ? KeyType.SymmetricKey
+        : KeyType.KeyPair
+
+    if (keyType === KeyType.KeyPair) {
+      throw new UnsupportedKeyTypeError(
+        `Key Type not supported for schedule sending drafts ${keyType}`,
+      )
+    }
+    const symmetricKey = await this.deviceKeyWorker.getKeyData(keyId, keyType)
+
+    if (!symmetricKey) {
+      throw new KeyNotFoundError(`Could not find symmetric key ${keyId}`)
+    }
+
+    const result = await this.appSync.scheduleSendDraftMessage({
+      draftMessageKey: key,
+      emailAddressId,
+      sendAtEpochMs: sendAt.getTime(),
+      symmetricKey: Base64.encode(symmetricKey),
+    })
+    const transformer = new ScheduledDraftMessageTransformer()
+    return transformer.toEntity(result)
+  }
+
+  async cancelScheduledDraftMessage({
+    id,
+    emailAddressId,
+  }: CancelScheduledDraftMessageInput): Promise<string> {
+    const keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
+    const key = `${keyPrefix}/draft/${id}`
+
+    const result = await this.appSync.cancelScheduledDraftMessage({
+      draftMessageKey: key,
+      emailAddressId,
+    })
+    return result.substring(result.lastIndexOf('/') + 1)
+  }
+
   async sendMessage({
     message,
     senderEmailAddressId,
@@ -370,8 +458,10 @@ export class DefaultEmailMessageService implements EmailMessageService {
       senderEmailAddressId,
     })
 
-    const rfc822Data =
-      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer(message)
+    const rfc822Data = Rfc822MessageDataProcessor.encodeToInternetMessageBuffer(
+      message,
+      { decodeEncodedFields: true },
+    )
 
     const uniqueEmailAddressPublicInfo: EmailAddressPublicInfoEntity[] = []
     emailAddressesPublicInfo.forEach((info) => {
@@ -948,6 +1038,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     input: EmailMessageServiceUnsubscribeFromEmailMessagesInput,
   ): void {
     this.createSubscriptionManager.unsubscribe(input.subscriptionId)
+    this.updateSubscriptionManager.unsubscribe(input.subscriptionId)
     this.deleteSubscriptionManager.unsubscribe(input.subscriptionId)
   }
 
@@ -1159,16 +1250,12 @@ export class DefaultEmailMessageService implements EmailMessageService {
     const key = `${keyPrefix}/${id}`
     const bucket = this.emailServiceConfig.transientBucket
     const region = this.emailServiceConfig.region
-    let binary = ''
-    const bytes = new Uint8Array(data)
-    for (const byte of bytes) {
-      binary += String.fromCharCode(byte)
-    }
+    const body = new TextDecoder().decode(data)
     await this.s3Client.upload({
       bucket,
       region,
       key,
-      body: binary,
+      body,
     })
     return {
       bucket,

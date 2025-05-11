@@ -24,7 +24,7 @@ import { v4 } from 'uuid'
 import fs from 'node:fs/promises'
 import { delay } from '../util/delay'
 
-const externalAccounts = [
+export const externalAccounts = [
   'sudo.platform.testing@gmail.com',
   'sudo_platform_testing@yahoo.com',
   'sudo.platform.testing@outlook.com',

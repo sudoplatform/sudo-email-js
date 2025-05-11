@@ -154,6 +154,8 @@ export interface DeviceKeyWorker {
   unsealString(input: UnsealInput): Promise<string>
 
   unsealWithKeyPairId(input: UnsealWithKeyPairIdInput): Promise<ArrayBuffer>
+
+  getKeyData(id: string, type: KeyType): Promise<ArrayBuffer | undefined>
 }
 
 export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
@@ -422,6 +424,19 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
     } catch (e) {
       console.error('error decrypting', { e })
       throw e
+    }
+  }
+
+  async getKeyData(
+    id: string,
+    type: KeyType,
+  ): Promise<ArrayBuffer | undefined> {
+    switch (type) {
+      case KeyType.SymmetricKey:
+        return await this.keyManager.getSymmetricKey(id)
+      default:
+        this.log.info('Case not implemented', { type })
+        return undefined
     }
   }
 

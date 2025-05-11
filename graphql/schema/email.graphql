@@ -214,6 +214,18 @@ input S3EmailObjectInput {
   region: String!
 }
 
+input ScheduleSendDraftMessageInput {
+  draftMessageKey: String!
+  emailAddressId: ID!
+  sendAtEpochMs: Float!
+  symmetricKey: String!
+}
+
+input CancelScheduledDraftMessageInput {
+  draftMessageKey: String!
+  emailAddressId: String!
+}
+
 input SealedAttributeInput {
   algorithm: String!
   keyId: String!
@@ -338,6 +350,28 @@ type UpdateEmailMessagesV2Result {
   status: UpdateEmailMessagesStatus!
   failedMessages: [UpdatedEmailMessageFailure!]
   successMessages: [UpdatedEmailMessageSuccess!]
+}
+
+enum ScheduledDraftMessageState {
+  # Scheduled to be sent.
+  SCHEDULED
+  # Has failed to be sent. May be retried if there are retries remaining.
+  FAILED
+  # Has successfully been sent.
+  SENT
+  # Has been cancelled.
+  CANCELLED
+}
+
+type ScheduledDraftMessage {
+  draftMessageKey: String!
+  emailAddressId: ID!
+  sendAtEpochMs: Float!
+  state: ScheduledDraftMessageState!
+  createdAtEpochMs: Float!
+  updatedAtEpochMs: Float!
+  owner: ID!
+  owners: [Owner!]!
 }
 
 # Array of email domains.
@@ -511,6 +545,12 @@ type Mutation {
   ): BlockEmailAddressesBulkUpdateResult!
 
   deleteMessagesByFolderId(input: DeleteMessagesByFolderIdInput!): ID!
+
+  scheduleSendDraftMessage(
+    input: ScheduleSendDraftMessageInput!
+  ): ScheduledDraftMessage!
+
+  cancelScheduledDraftMessage(input: CancelScheduledDraftMessageInput!): String!
 }
 
 type Subscription {

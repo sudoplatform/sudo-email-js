@@ -15,7 +15,7 @@ export class DraftEmailMessageDataFactory {
   static readonly s3ClientDownloadOutput: S3ClientDownloadOutput = {
     lastModified: new Date(),
     body: 'downloadedDraft',
-    metadata: { 'key-id': 'testKeyId', algorithm: 'testAlgorithm' },
+    metadata: { 'key-id': 'testKeyId', algorithm: 'AES/CBC/PKCS7Padding' },
   }
 
   static readonly identityServiceConfig: SudoUserInternal.IdentityServiceConfig =

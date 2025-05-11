@@ -19,7 +19,10 @@ import {
 import { Base64 } from '@sudoplatform/sudo-common'
 import { arrayBufferToString } from '../../../../src/private/util/buffer'
 import { insertLinebreaks } from '../../../../src/private/util/stringUtils'
-import fs from 'node:fs/promises'
+import {
+  encodeWordIfRequired,
+  expectedDisplayName,
+} from '../../../util/encoding'
 
 const eol = '\n'
 describe('rfc822MessageDataProcessor unit tests', () => {
@@ -44,524 +47,641 @@ describe('rfc822MessageDataProcessor unit tests', () => {
     { emailAddress: 'replyTo2@example.com', displayName: '2OtYlper' },
   ]
 
-  describe('encodeToInternetMessageStr', () => {
-    describe('from', () => {
-      it('works with no display name', () => {
-        const messageDetails: EmailMessageDetails = {
-          from: [{ emailAddress: fromAddress.emailAddress }],
-        }
+  describe.each`
+    encryptionStatus                | statusName
+    ${EncryptionStatus.ENCRYPTED}   | ${'ENCRYPTED'}
+    ${EncryptionStatus.UNENCRYPTED} | ${'UNENCRYPTED'}
+  `(
+    'encodeToInternetMessageStr with encryptionStatus $statusName',
+    ({ encryptionStatus }) => {
+      const expectedContentType =
+        encryptionStatus == EncryptionStatus.ENCRYPTED
+          ? 'text/plain'
+          : 'text/html'
 
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+      describe('from', () => {
+        it('works with no display name', () => {
+          const messageDetails: EmailMessageDetails = {
+            from: [{ emailAddress: fromAddress.emailAddress }],
+            encryptionStatus,
+          }
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
 
-        expect(resultString).toContain(
-          `From: <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
+          expect(resultString).toContain(
+            `From: <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+        })
+
+        it('works with a display name', () => {
+          const messageDetails: EmailMessageDetails = {
+            from: [fromAddress],
+            encryptionStatus,
+          }
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
+
+          expect(resultString).toContain(
+            `From: ${expectedDisplayName(fromAddress.displayName, encryptionStatus)} <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          // expect(resultString).toContain(`Reply-To: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+        })
       })
 
-      it('works with a display name', () => {
-        const messageDetails: EmailMessageDetails = {
-          from: [fromAddress],
-        }
+      describe('to', () => {
+        test('works with one address', () => {
+          const messageDetails: EmailMessageDetails = {
+            from: [fromAddress],
+            to: [{ emailAddress: toAddresses[0].emailAddress }],
+            encryptionStatus,
+          }
 
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
 
-        expect(resultString).toContain(
-          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
-      })
-    })
+          expect(resultString).toContain(
+            `From: ${expectedDisplayName(fromAddress.displayName, encryptionStatus)} <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(
+            `To: <${toAddresses[0].emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+        })
 
-    describe('to', () => {
-      test('works with one address', () => {
-        const messageDetails: EmailMessageDetails = {
-          from: [fromAddress],
-          to: [{ emailAddress: toAddresses[0].emailAddress }],
-        }
+        test('works with two addresses', () => {
+          const messageDetails: EmailMessageDetails = {
+            from: [fromAddress],
+            to: [
+              { emailAddress: toAddresses[0].emailAddress },
+              { emailAddress: toAddresses[1].emailAddress },
+            ],
+            encryptionStatus,
+          }
 
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
 
-        expect(resultString).toContain(
-          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(
-          `To: <${toAddresses[0].emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
-      })
+          expect(resultString).toContain(
+            `From: ${expectedDisplayName(fromAddress.displayName, encryptionStatus)} <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(
+            `To: <${toAddresses[0].emailAddress}>,${eol} <${toAddresses[1].emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+        })
 
-      test('works with two addresses', () => {
-        const messageDetails: EmailMessageDetails = {
-          from: [fromAddress],
-          to: [
-            { emailAddress: toAddresses[0].emailAddress },
-            { emailAddress: toAddresses[1].emailAddress },
-          ],
-        }
+        test('works with or without display name', () => {
+          const messageDetails: EmailMessageDetails = {
+            from: [fromAddress],
+            to: [
+              { emailAddress: toAddresses[0].emailAddress },
+              {
+                emailAddress: toAddresses[1].emailAddress,
+                displayName: toAddresses[1].displayName,
+              },
+            ],
+            encryptionStatus,
+          }
 
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+          const expectedContentType =
+            encryptionStatus == EncryptionStatus.ENCRYPTED
+              ? 'text/plain'
+              : 'text/html'
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
 
-        expect(resultString).toContain(
-          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(
-          `To: <${toAddresses[0].emailAddress}>,${eol} <${toAddresses[1].emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
-      })
-
-      test('works with or without display name', () => {
-        const messageDetails: EmailMessageDetails = {
-          from: [fromAddress],
-          to: [
-            { emailAddress: toAddresses[0].emailAddress },
-            {
-              emailAddress: toAddresses[1].emailAddress,
-              displayName: toAddresses[1].displayName,
-            },
-          ],
-        }
-
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
-
-        expect(resultString).toContain(
-          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(
-          `To: <${toAddresses[0].emailAddress}>,${eol} "${toAddresses[1].displayName}" <${toAddresses[1].emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
-      })
-    })
-
-    describe('cc', () => {
-      test('works with one address', () => {
-        const messageDetails: EmailMessageDetails = {
-          from: [fromAddress],
-          cc: [{ emailAddress: ccAddresses[0].emailAddress }],
-        }
-
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
-
-        expect(resultString).toContain(
-          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(
-          `Cc: <${ccAddresses[0].emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
+          expect(resultString).toContain(
+            `From: ${expectedDisplayName(fromAddress.displayName, encryptionStatus)} <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(
+            `To: <${toAddresses[0].emailAddress}>,${eol} ${expectedDisplayName(toAddresses[1].displayName, encryptionStatus)} <${toAddresses[1].emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+        })
       })
 
-      test('works with two addresses', () => {
-        const messageDetails: EmailMessageDetails = {
-          from: [fromAddress],
-          cc: [
-            { emailAddress: ccAddresses[0].emailAddress },
-            { emailAddress: ccAddresses[1].emailAddress },
-          ],
-        }
+      describe('cc', () => {
+        test('works with one address', () => {
+          const messageDetails: EmailMessageDetails = {
+            from: [fromAddress],
+            cc: [{ emailAddress: ccAddresses[0].emailAddress }],
+            encryptionStatus,
+          }
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
 
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+          expect(resultString).toContain(
+            `From: ${expectedDisplayName(fromAddress.displayName, encryptionStatus)} <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(
+            `Cc: <${ccAddresses[0].emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+        })
 
-        expect(resultString).toContain(
-          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(
-          `Cc: <${ccAddresses[0].emailAddress}>,${eol} <${ccAddresses[1].emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
+        test('works with two addresses', () => {
+          const messageDetails: EmailMessageDetails = {
+            from: [fromAddress],
+            cc: [
+              { emailAddress: ccAddresses[0].emailAddress },
+              { emailAddress: ccAddresses[1].emailAddress },
+            ],
+            encryptionStatus,
+          }
+
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
+
+          expect(resultString).toContain(
+            `From: ${expectedDisplayName(fromAddress.displayName, encryptionStatus)} <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(
+            `Cc: <${ccAddresses[0].emailAddress}>,${eol} <${ccAddresses[1].emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+        })
+
+        test('works with or without display name', () => {
+          const messageDetails: EmailMessageDetails = {
+            from: [fromAddress],
+            cc: [
+              {
+                emailAddress: ccAddresses[0].emailAddress,
+                displayName: ccAddresses[0].displayName,
+              },
+              { emailAddress: ccAddresses[1].emailAddress },
+            ],
+            encryptionStatus,
+          }
+
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
+
+          expect(resultString).toContain(
+            `From: ${expectedDisplayName(fromAddress.displayName, encryptionStatus)} <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(
+            `Cc: ${expectedDisplayName(ccAddresses[0].displayName, encryptionStatus)} <${ccAddresses[0].emailAddress}>,${eol} <${ccAddresses[1].emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+        })
       })
 
-      test('works with or without display name', () => {
-        const messageDetails: EmailMessageDetails = {
-          from: [fromAddress],
-          cc: [
-            {
-              emailAddress: ccAddresses[0].emailAddress,
-              displayName: ccAddresses[0].displayName,
-            },
-            { emailAddress: ccAddresses[1].emailAddress },
-          ],
-        }
+      describe('bcc', () => {
+        test('works with one address', () => {
+          const messageDetails: EmailMessageDetails = {
+            from: [fromAddress],
+            bcc: [{ emailAddress: bccAddresses[0].emailAddress }],
+            encryptionStatus,
+          }
 
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
-        console.debug(resultString)
-        expect(resultString).toContain(
-          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(
-          `Cc: "${ccAddresses[0].displayName}" <${ccAddresses[0].emailAddress}>,${eol} <${ccAddresses[1].emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
-      })
-    })
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
 
-    describe('bcc', () => {
-      test('works with one address', () => {
-        const messageDetails: EmailMessageDetails = {
-          from: [fromAddress],
-          bcc: [{ emailAddress: bccAddresses[0].emailAddress }],
-        }
+          expect(resultString).toContain(
+            `From: ${expectedDisplayName(fromAddress.displayName, encryptionStatus)} <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(
+            `Bcc: <${bccAddresses[0].emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+        })
 
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+        test('works with two addresses', () => {
+          const messageDetails: EmailMessageDetails = {
+            from: [fromAddress],
+            bcc: [
+              { emailAddress: bccAddresses[0].emailAddress },
+              { emailAddress: bccAddresses[1].emailAddress },
+            ],
+            encryptionStatus,
+          }
 
-        expect(resultString).toContain(
-          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(
-          `Bcc: <${bccAddresses[0].emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
-      })
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
 
-      test('works with two addresses', () => {
-        const messageDetails: EmailMessageDetails = {
-          from: [fromAddress],
-          bcc: [
-            { emailAddress: bccAddresses[0].emailAddress },
-            { emailAddress: bccAddresses[1].emailAddress },
-          ],
-        }
+          expect(resultString).toContain(
+            `From: ${expectedDisplayName(fromAddress.displayName, encryptionStatus)} <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(
+            `Bcc: <${bccAddresses[0].emailAddress}>,${eol} <${bccAddresses[1].emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+        })
 
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+        test('works with or without display name', () => {
+          const messageDetails: EmailMessageDetails = {
+            from: [fromAddress],
+            bcc: [
+              { emailAddress: bccAddresses[0].emailAddress },
+              {
+                emailAddress: bccAddresses[1].emailAddress,
+                displayName: bccAddresses[1].displayName,
+              },
+            ],
+            encryptionStatus,
+          }
 
-        expect(resultString).toContain(
-          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(
-          `Bcc: <${bccAddresses[0].emailAddress}>,${eol} <${bccAddresses[1].emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
-      })
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
 
-      test('works with or without display name', () => {
-        const messageDetails: EmailMessageDetails = {
-          from: [fromAddress],
-          bcc: [
-            { emailAddress: bccAddresses[0].emailAddress },
-            {
-              emailAddress: bccAddresses[1].emailAddress,
-              displayName: bccAddresses[1].displayName,
-            },
-          ],
-        }
-
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
-
-        expect(resultString).toContain(
-          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(
-          `Bcc: <${bccAddresses[0].emailAddress}>,${eol} "${bccAddresses[1].displayName}" <${bccAddresses[1].emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
-      })
-    })
-
-    describe('replyTo', () => {
-      test('works with one address', () => {
-        const messageDetails: EmailMessageDetails = {
-          from: [fromAddress],
-          replyTo: [{ emailAddress: replyToAddresses[0].emailAddress }],
-        }
-
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
-
-        expect(resultString).toContain(
-          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        expect(resultString).toContain(
-          `Reply-To: <${replyToAddresses[0].emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
+          expect(resultString).toContain(
+            `From: ${expectedDisplayName(fromAddress.displayName, encryptionStatus)} <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(
+            `Bcc: <${bccAddresses[0].emailAddress}>,${eol} ${expectedDisplayName(bccAddresses[1].displayName, encryptionStatus)} <${bccAddresses[1].emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+        })
       })
 
-      // mimetext currently only supports a single `replyTo` address
-      // https://github.com/muratgozel/MIMEText/issues/69
-      test.skip('works with two addresses', () => {
-        const messageDetails: EmailMessageDetails = {
-          from: [fromAddress],
-          replyTo: [
-            { emailAddress: replyToAddresses[0].emailAddress },
-            { emailAddress: replyToAddresses[1].emailAddress },
-          ],
-        }
+      describe('replyTo', () => {
+        test('works with one address', () => {
+          const messageDetails: EmailMessageDetails = {
+            from: [fromAddress],
+            replyTo: [{ emailAddress: replyToAddresses[0].emailAddress }],
+            encryptionStatus,
+          }
 
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
 
-        expect(resultString).toContain(
-          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        expect(resultString).toContain(
-          `Reply-To: <${replyToAddresses[0].emailAddress}>,${eol} <${replyToAddresses[1].emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
+          expect(resultString).toContain(
+            `From: ${expectedDisplayName(fromAddress.displayName, encryptionStatus)} <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          expect(resultString).toContain(
+            `Reply-To: <${replyToAddresses[0].emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+        })
+
+        // mimetext currently only supports a single `replyTo` address
+        // https://github.com/muratgozel/MIMEText/issues/69
+        test.skip('works with two addresses', () => {
+          const messageDetails: EmailMessageDetails = {
+            from: [fromAddress],
+            replyTo: [
+              { emailAddress: replyToAddresses[0].emailAddress },
+              { emailAddress: replyToAddresses[1].emailAddress },
+            ],
+            encryptionStatus,
+          }
+
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
+
+          expect(resultString).toContain(
+            `From: ${encodeWordIfRequired(`"${fromAddress.displayName}"`, encryptionStatus)} <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          expect(resultString).toContain(
+            `Reply-To: <${replyToAddresses[0].emailAddress}>,${eol} <${replyToAddresses[1].emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+        })
+
+        test('works with display name', () => {
+          const messageDetails: EmailMessageDetails = {
+            from: [fromAddress],
+            replyTo: [
+              // mimetext currently only supports a single `replyTo` address
+              // https://github.com/muratgozel/MIMEText/issues/69
+              // { emailAddress: replyToAddresses[0].emailAddress },
+              {
+                emailAddress: replyToAddresses[1].emailAddress,
+                displayName: replyToAddresses[1].displayName,
+              },
+            ],
+            encryptionStatus,
+          }
+
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
+
+          expect(resultString).toContain(
+            `From: ${expectedDisplayName(fromAddress.displayName, encryptionStatus)} <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          expect(resultString).toContain(
+            `Reply-To: ${encodeWordIfRequired(`${replyToAddresses[1].displayName}`, encryptionStatus)} <${replyToAddresses[1].emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+        })
       })
 
-      test('works with display name', () => {
-        const messageDetails: EmailMessageDetails = {
-          from: [fromAddress],
-          replyTo: [
-            // mimetext currently only supports a single `replyTo` address
-            // https://github.com/muratgozel/MIMEText/issues/69
-            // { emailAddress: replyToAddresses[0].emailAddress },
-            {
-              emailAddress: replyToAddresses[1].emailAddress,
-              displayName: replyToAddresses[1].displayName,
-            },
-          ],
-        }
+      describe('subject', () => {
+        it('works with a short subject', () => {
+          const subject = 'This is a short subject'
+          const messageDetails: EmailMessageDetails = {
+            from: [{ emailAddress: fromAddress.emailAddress }],
+            subject,
+            encryptionStatus,
+          }
 
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
 
-        expect(resultString).toContain(
-          `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        expect(resultString).toContain(
-          `Reply-To: ${replyToAddresses[1].displayName} <${replyToAddresses[1].emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
-      })
-    })
+          expect(resultString).toContain(
+            `From: <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          // expect(resultString).toContain(`Reply-To: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired(subject, encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+        })
 
-    describe('subject', () => {
-      it('works with a short subject', () => {
-        const subject = 'This is a short subject'
-        const messageDetails: EmailMessageDetails = {
-          from: [{ emailAddress: fromAddress.emailAddress }],
-          subject,
-        }
+        it('works with a long subject', () => {
+          const subject = `Is this the real life? Is this just fantasy? Caught in a landslide, no escape from reality Open your eyes, look up to the skies and see I'm just a poor boy, I need no sympathy`
+          const messageDetails: EmailMessageDetails = {
+            from: [{ emailAddress: fromAddress.emailAddress }],
+            subject,
+            encryptionStatus,
+          }
 
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
 
-        expect(resultString).toContain(
-          `From: <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
-        expect(resultString).toContain(`Subject: ${subject}${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
-      })
+          expect(resultString).toContain(
+            `From: <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          // expect(resultString).toContain(`Reply-To: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired(subject, encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+        })
 
-      it('works with a long subject', () => {
-        const subject = `Is this the real life? Is this just fantasy? Caught in a landslide, no escape from reality Open your eyes, look up to the skies and see I'm just a poor boy, I need no sympathy`
-        const messageDetails: EmailMessageDetails = {
-          from: [{ emailAddress: fromAddress.emailAddress }],
-          subject,
-        }
+        it('works with emojis 😎', () => {
+          const subject = `Is this the real life? Is this just fantasy? 🤔 Caught in a landslide, no escape from reality 😱 Open your eyes, look up to the skies and see 👀 I'm just a poor boy, I need no sympathy 💐`
+          const messageDetails: EmailMessageDetails = {
+            from: [{ emailAddress: fromAddress.emailAddress }],
+            subject,
+            encryptionStatus,
+          }
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
 
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
-
-        expect(resultString).toContain(
-          `From: <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
-        expect(resultString).toContain(`Subject: ${subject}${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
-      })
-
-      it('works with emojis 😎', () => {
-        const subject = `Is this the real life? Is this just fantasy? 🤔 Caught in a landslide, no escape from reality 😱 Open your eyes, look up to the skies and see 👀 I'm just a poor boy, I need no sympathy 💐`
-        const messageDetails: EmailMessageDetails = {
-          from: [{ emailAddress: fromAddress.emailAddress }],
-          subject,
-        }
-
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
-
-        expect(resultString).toContain(
-          `From: <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
-        expect(resultString).toContain(`Subject: ${subject}${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
-      })
-    })
-
-    describe('body', () => {
-      it('works with a short body', () => {
-        const body = 'This is a short body'
-        const messageDetails: EmailMessageDetails = {
-          from: [{ emailAddress: fromAddress.emailAddress }],
-          body,
-        }
-
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
-
-        expect(resultString).toContain(
-          `From: <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
-        expect(resultString).toContain(body)
+          expect(resultString).toContain(
+            `From: <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          // expect(resultString).toContain(`Reply-To: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired(subject, encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+        })
       })
 
-      it('works with a long body', () => {
-        const body =
-          "Is this the real life? Is this just fantasy? Caught in a landslide, no escape from reality Open your eyes, look up to the skies and see I'm just a poor boy, I need no sympathy"
-        const messageDetails: EmailMessageDetails = {
-          from: [{ emailAddress: fromAddress.emailAddress }],
-          body,
-        }
+      describe('body', () => {
+        it('works with a short body', () => {
+          const body = 'This is a short body'
+          const messageDetails: EmailMessageDetails = {
+            from: [{ emailAddress: fromAddress.emailAddress }],
+            body,
+            encryptionStatus,
+          }
 
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
 
-        expect(resultString).toContain(
-          `From: <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
-        expect(resultString).toContain(body)
-      })
+          expect(resultString).toContain(
+            `From: <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          // expect(resultString).toContain(`Reply-To: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+          if (encryptionStatus === EncryptionStatus.UNENCRYPTED) {
+            expect(resultString).toContain(body)
+          }
+        })
 
-      it('works with emojis 😎', () => {
-        const body = `Is this the real life? Is this just fantasy? 🤔 Caught in a landslide, no escape from reality 😱 Open your eyes, look up to the skies and see 👀 I'm just a poor boy, I need no sympathy 💐`
-        const messageDetails: EmailMessageDetails = {
-          from: [{ emailAddress: fromAddress.emailAddress }],
-          body,
-        }
+        it('works with a long body', () => {
+          const body =
+            "Is this the real life? Is this just fantasy? Caught in a landslide, no escape from reality Open your eyes, look up to the skies and see I'm just a poor boy, I need no sympathy"
+          const messageDetails: EmailMessageDetails = {
+            from: [{ emailAddress: fromAddress.emailAddress }],
+            body,
+            encryptionStatus,
+          }
 
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
 
-        expect(resultString).toContain(
-          `From: <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
-        expect(resultString).toContain(body)
-      })
+          expect(resultString).toContain(
+            `From: <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          // expect(resultString).toContain(`Reply-To: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+          if (encryptionStatus === EncryptionStatus.UNENCRYPTED) {
+            expect(resultString).toContain(body)
+          }
+        })
 
-      it('works with a multiline body', () => {
-        const body = `
+        it('works with emojis 😎', () => {
+          const body = `Is this the real life? Is this just fantasy? 🤔 Caught in a landslide, no escape from reality 😱 Open your eyes, look up to the skies and see 👀 I'm just a poor boy, I need no sympathy 💐`
+          const messageDetails: EmailMessageDetails = {
+            from: [{ emailAddress: fromAddress.emailAddress }],
+            body,
+            encryptionStatus,
+          }
+
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
+
+          expect(resultString).toContain(
+            `From: <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          // expect(resultString).toContain(`Reply-To: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+          if (encryptionStatus === EncryptionStatus.UNENCRYPTED) {
+            expect(resultString).toContain(body)
+          }
+        })
+
+        it('works with a multiline body', () => {
+          const body = `
         Is this the real life? Is this just fantasy?
         Caught in a landslide, no escape from reality
         Open your eyes, look up to the skies and see
@@ -577,95 +697,430 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         If I'm not back again this time tomorrow
         Carry on, carry on as if nothing really matters
         `
-        const messageDetails: EmailMessageDetails = {
-          from: [{ emailAddress: fromAddress.emailAddress }],
-          body,
-        }
+          const messageDetails: EmailMessageDetails = {
+            from: [{ emailAddress: fromAddress.emailAddress }],
+            body,
+            encryptionStatus,
+          }
 
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
 
-        expect(resultString).toContain(
-          `From: <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
-        expect(resultString).toContain(body)
+          expect(resultString).toContain(
+            `From: <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          // expect(resultString).toContain(`Reply-To: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+          if (encryptionStatus === EncryptionStatus.UNENCRYPTED) {
+            expect(resultString).toContain(body)
+          }
+        })
+
+        it('does not set the html body if it trims down to an empty string', () => {
+          const body = '       '
+          const messageDetails: EmailMessageDetails = {
+            from: [{ emailAddress: fromAddress.emailAddress }],
+            body,
+            encryptionStatus,
+          }
+
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
+
+          expect(resultString).toContain(
+            `From: <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          // expect(resultString).toContain(`Reply-To: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${expectedContentType}; charset=UTF-8${eol}`,
+          )
+          if (encryptionStatus === EncryptionStatus.UNENCRYPTED) {
+            expect(resultString).toContain(body)
+          }
+        })
       })
 
-      it('does not set the html body if it trims down to an empty string', () => {
-        const body = '       '
-        const messageDetails: EmailMessageDetails = {
-          from: [{ emailAddress: fromAddress.emailAddress }],
-          body,
-        }
+      describe('attachments', () => {
+        it('works with one attachment', () => {
+          const body = 'Message body'
+          const attachment: EmailAttachment = {
+            filename: 'attachment1.jpg',
+            contentTransferEncoding: 'base64',
+            inlineAttachment: false,
+            mimeType: 'image/jpg',
+            data: Base64.encodeString(`${v4()}-attachment`),
+          }
 
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+          const messageDetails: EmailMessageDetails = {
+            from: [{ emailAddress: fromAddress.emailAddress }],
+            body,
+            attachments: [attachment],
+            encryptionStatus,
+          }
 
-        expect(resultString).toContain(
-          `From: <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `Content-Type: text/html; charset=UTF-8${eol}`,
-        )
-        expect(resultString).toContain(body)
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
+
+          expect(resultString).toContain(
+            `From: <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          // expect(resultString).toContain(`Reply-To: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          if (encryptionStatus === EncryptionStatus.UNENCRYPTED) {
+            expect(resultString).toContain(body)
+          }
+          expect(resultString).toContain(
+            `Content-Type: multipart/mixed; boundary=`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${attachment.mimeType}; name="${attachment.filename}"${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Transfer-Encoding: ${attachment.contentTransferEncoding}${eol}`,
+          )
+          expect(resultString).toContain(attachment.data)
+        })
+
+        it('works with two attachments of different types', () => {
+          const attachments: EmailAttachment[] = [
+            {
+              filename: 'attachment1.jpg',
+              contentTransferEncoding: 'base64',
+              inlineAttachment: false,
+              mimeType: 'image/jpg',
+              data: Base64.encodeString(`${v4()}-attachment`),
+            },
+            {
+              filename: 'attachment2.txt',
+              contentTransferEncoding: 'base64',
+              inlineAttachment: false,
+              mimeType: 'text/plain',
+              data: Base64.encodeString(`${v4()}-attachment`),
+            },
+          ]
+          const body = 'Message body'
+
+          const messageDetails: EmailMessageDetails = {
+            from: [{ emailAddress: fromAddress.emailAddress }],
+            body,
+            attachments,
+            encryptionStatus,
+          }
+
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
+
+          expect(resultString).toContain(
+            `From: <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          // expect(resultString).toContain(`Reply-To: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          if (encryptionStatus === EncryptionStatus.UNENCRYPTED) {
+            expect(resultString).toContain(body)
+          }
+          expect(resultString).toContain(
+            `Content-Type: multipart/mixed; boundary=`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${attachments[0].mimeType}; name="${attachments[0].filename}"${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Transfer-Encoding: ${attachments[0].contentTransferEncoding}${eol}`,
+          )
+          expect(resultString).toContain(attachments[0].data)
+          expect(resultString).toContain(
+            `Content-Type: ${attachments[1].mimeType}; name="${attachments[1].filename}"${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Transfer-Encoding: ${attachments[1].contentTransferEncoding}${eol}`,
+          )
+          expect(resultString).toContain(attachments[1].data)
+        })
+
+        it('inserts linebreaks into attachment data every 78 characters', () => {
+          const body = 'Message body'
+          const buffer = new ArrayBuffer(780)
+          crypto.getRandomValues(new Uint8Array(buffer))
+          const attachmentData = Base64.encode(buffer)
+
+          const attachment: EmailAttachment = {
+            filename: 'attachment1.jpg',
+            contentTransferEncoding: 'base64',
+            inlineAttachment: false,
+            mimeType: 'image/jpg',
+            data: attachmentData,
+          }
+
+          const messageDetails: EmailMessageDetails = {
+            from: [{ emailAddress: fromAddress.emailAddress }],
+            body,
+            attachments: [attachment],
+            encryptionStatus,
+          }
+          const expectedData = insertLinebreaks(attachmentData, 78)
+
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
+
+          expect(resultString).toContain(
+            `From: <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          if (encryptionStatus === EncryptionStatus.UNENCRYPTED) {
+            expect(resultString).toContain(body)
+          }
+          expect(resultString).toContain(
+            `Content-Type: multipart/mixed; boundary=`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${attachment.mimeType}; name="${attachment.filename}"${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Transfer-Encoding: ${attachment.contentTransferEncoding}${eol}`,
+          )
+          if (encryptionStatus === EncryptionStatus.UNENCRYPTED) {
+            expect(resultString).toContain(expectedData)
+          }
+        })
       })
-    })
 
-    describe('attachments', () => {
-      it('works with one attachment', () => {
-        const body = 'Message body'
-        const attachment: EmailAttachment = {
+      describe('inlineAttachments', () => {
+        it('works with one attachment', () => {
+          const contentId = v4()
+          const attachment: EmailAttachment = {
+            filename: 'attachment1.jpg',
+            contentTransferEncoding: 'base64',
+            inlineAttachment: true,
+            mimeType: 'image/jpg',
+            data: Base64.encodeString(`${v4()}-attachment`),
+            contentId,
+          }
+          const body = `Message body <img src="cid:${contentId}">`
+
+          const messageDetails: EmailMessageDetails = {
+            from: [{ emailAddress: fromAddress.emailAddress }],
+            body,
+            inlineAttachments: [attachment],
+            encryptionStatus,
+          }
+
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
+
+          expect(resultString).toContain(
+            `From: <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          // expect(resultString).toContain(`Reply-To: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          if (encryptionStatus === EncryptionStatus.UNENCRYPTED) {
+            expect(resultString).toContain(body)
+          }
+          expect(resultString).toContain(
+            `Content-Type: multipart/mixed; boundary=`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${attachment.mimeType}; name="${attachment.filename}"${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Transfer-Encoding: ${attachment.contentTransferEncoding}${eol}`,
+          )
+          expect(resultString).toContain(attachment.data)
+        })
+
+        it('inserts linebreaks into attachment data every 78 characters', () => {
+          const buffer = new ArrayBuffer(780)
+          crypto.getRandomValues(new Uint8Array(buffer))
+          const attachmentData = Base64.encode(buffer)
+          const contentId = v4()
+          const attachment: EmailAttachment = {
+            filename: 'attachment1.jpg',
+            contentTransferEncoding: 'base64',
+            inlineAttachment: true,
+            mimeType: 'image/jpg',
+            data: attachmentData,
+            contentId,
+          }
+          const body = `Message body <img src="cid:${contentId}">`
+
+          const messageDetails: EmailMessageDetails = {
+            from: [{ emailAddress: fromAddress.emailAddress }],
+            body,
+            inlineAttachments: [attachment],
+            encryptionStatus,
+          }
+          const expectedData = insertLinebreaks(attachmentData, 78)
+
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
+
+          expect(resultString).toContain(
+            `From: <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          expect(resultString).toContain(
+            `Subject: ${encodeWordIfRequired('', encryptionStatus)}${eol}`,
+          )
+          if (encryptionStatus === EncryptionStatus.UNENCRYPTED) {
+            expect(resultString).toContain(body)
+          }
+          expect(resultString).toContain(
+            `Content-Type: multipart/mixed; boundary=`,
+          )
+          expect(resultString).toContain(
+            `Content-Type: ${attachment.mimeType}; name="${attachment.filename}"${eol}`,
+          )
+          expect(resultString).toContain(
+            `Content-Transfer-Encoding: ${attachment.contentTransferEncoding}${eol}`,
+          )
+          if (encryptionStatus === EncryptionStatus.UNENCRYPTED) {
+            expect(resultString).toContain(expectedData)
+          }
+        })
+      })
+
+      describe('encryptionStatus', () => {
+        it('replaces the body and adds appropriate headers', () => {
+          const body = 'This is a secret 🤫'
+          const messageDetails: EmailMessageDetails = {
+            from: [{ emailAddress: fromAddress.emailAddress }],
+            encryptionStatus: EncryptionStatus.ENCRYPTED,
+            body,
+          }
+
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
+
+          expect(resultString).toContain(
+            `From: <${fromAddress.emailAddress}>${eol}`,
+          )
+          expect(resultString).toContain(`To: ${eol}`)
+          expect(resultString).toContain(`Cc: ${eol}`)
+          expect(resultString).toContain(`Bcc: ${eol}`)
+          expect(resultString).toContain(`Subject: ${eol}`)
+          expect(resultString).toContain(
+            `${EMAIL_HEADER_NAME_ENCRYPTION}: ${PLATFORM_ENCRYPTION}${eol}`,
+          )
+          expect(resultString).not.toContain(body)
+          expect(resultString).toContain(CANNED_TEXT_BODY)
+          expect(resultString).toContain(
+            `Content-Type: text/plain; charset=UTF-8${eol}`,
+          )
+        })
+      })
+
+      describe('reply/forward message inclusion', () => {
+        it('adds correct header when replying message id is provided', () => {
+          const messageDetails: EmailMessageDetails = {
+            from: [{ emailAddress: fromAddress.emailAddress }],
+            replyMessageId: 'Dummy reply message id',
+            encryptionStatus,
+          }
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
+          expect(resultString).toContain(
+            `In-Reply-To: <${messageDetails.replyMessageId}>`,
+          )
+        })
+
+        it('adds correct header when forwarding message id is provided', () => {
+          const messageDetails: EmailMessageDetails = {
+            from: [{ emailAddress: fromAddress.emailAddress }],
+            forwardMessageId: 'Dummy forward message id',
+            encryptionStatus,
+          }
+          const resultString =
+            Rfc822MessageDataProcessor.encodeToInternetMessageStr(
+              messageDetails,
+            )
+          expect(resultString).toContain(
+            `References: <${messageDetails.forwardMessageId}>`,
+          )
+        })
+      })
+
+      it('handles a complicated message properly', () => {
+        const contentId = v4()
+        const inlineAttachment: EmailAttachment = {
           filename: 'attachment1.jpg',
           contentTransferEncoding: 'base64',
-          inlineAttachment: false,
+          inlineAttachment: true,
           mimeType: 'image/jpg',
           data: Base64.encodeString(`${v4()}-attachment`),
+          contentId,
         }
+        const subject = `Is this the real life? Is this just fantasy? Caught in a landslide, no escape from reality Open your eyes, look up to the skies and see I'm just a poor boy, I need no sympathy`
+        const body = `
+        🎶🎶🎶🎶
+        Is this the real life? Is this just fantasy?
+        Caught in a landslide, no escape from reality
+        Open your eyes, look up to the skies and see
+        I'm just a poor boy, I need no sympathy
+        Because I'm easy come, easy go, little high, little low
+        Any way the wind blows doesn't really matter to me, to me
 
-        const messageDetails: EmailMessageDetails = {
-          from: [{ emailAddress: fromAddress.emailAddress }],
-          body,
-          attachments: [attachment],
-        }
-
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
-
-        expect(resultString).toContain(
-          `From: <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(body)
-        expect(resultString).toContain(
-          `Content-Type: multipart/mixed; boundary=`,
-        )
-        expect(resultString).toContain(
-          `Content-Type: ${attachment.mimeType}; name="${attachment.filename}"${eol}`,
-        )
-        expect(resultString).toContain(
-          `Content-Transfer-Encoding: ${attachment.contentTransferEncoding}${eol}`,
-        )
-        expect(resultString).toContain(attachment.data)
-      })
-
-      it('works with two attachments of different types', () => {
+        Mama, just killed a man
+        Put a gun against his head, pulled my trigger, now he's dead
+        Mama, life had just begun
+        But now I've gone and thrown it all away
+        Mama, ooh, didn't mean to make you cry
+        If I'm not back again this time tomorrow
+        Carry on, carry on as if nothing really matters
+        <img src="cid:${contentId}">
+        `
         const attachments: EmailAttachment[] = [
           {
             filename: 'attachment1.jpg',
@@ -682,26 +1137,58 @@ describe('rfc822MessageDataProcessor unit tests', () => {
             data: Base64.encodeString(`${v4()}-attachment`),
           },
         ]
-        const body = 'Message body'
-
         const messageDetails: EmailMessageDetails = {
-          from: [{ emailAddress: fromAddress.emailAddress }],
+          from: [fromAddress],
+          to: [
+            { emailAddress: toAddresses[0].emailAddress },
+            {
+              emailAddress: toAddresses[1].emailAddress,
+              displayName: toAddresses[1].displayName,
+            },
+          ],
+          cc: [
+            {
+              emailAddress: ccAddresses[0].emailAddress,
+              displayName: ccAddresses[0].displayName,
+            },
+            { emailAddress: ccAddresses[1].emailAddress },
+          ],
+          bcc: [
+            { emailAddress: bccAddresses[0].emailAddress },
+            { emailAddress: bccAddresses[1].emailAddress },
+          ],
+          replyTo: [{ emailAddress: replyToAddresses[0].emailAddress }],
+          subject,
           body,
           attachments,
+          inlineAttachments: [inlineAttachment],
+          encryptionStatus,
         }
 
         const resultString =
           Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
 
         expect(resultString).toContain(
-          `From: <${fromAddress.emailAddress}>${eol}`,
+          `From: ${expectedDisplayName(fromAddress.displayName, encryptionStatus)} <${fromAddress.emailAddress}>${eol}`,
         )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(body)
+        expect(resultString).toContain(
+          `To: <${toAddresses[0].emailAddress}>,${eol} ${expectedDisplayName(toAddresses[1].displayName, encryptionStatus)} <${toAddresses[1].emailAddress}>${eol}`,
+        )
+        expect(resultString).toContain(
+          `Cc: ${expectedDisplayName(ccAddresses[0].displayName, encryptionStatus)} <${ccAddresses[0].emailAddress}>,${eol} <${ccAddresses[1].emailAddress}>${eol}`,
+        )
+        expect(resultString).toContain(
+          `Bcc: <${bccAddresses[0].emailAddress}>,${eol} <${bccAddresses[1].emailAddress}>${eol}`,
+        )
+        expect(resultString).toContain(
+          `Reply-To: <${replyToAddresses[0].emailAddress}>${eol}`,
+        )
+        expect(resultString).toContain(
+          `Subject: ${encodeWordIfRequired(subject, encryptionStatus)}${eol}`,
+        )
+        if (encryptionStatus === EncryptionStatus.UNENCRYPTED) {
+          expect(resultString).toContain(body)
+        }
         expect(resultString).toContain(
           `Content-Type: multipart/mixed; boundary=`,
         )
@@ -719,210 +1206,37 @@ describe('rfc822MessageDataProcessor unit tests', () => {
           `Content-Transfer-Encoding: ${attachments[1].contentTransferEncoding}${eol}`,
         )
         expect(resultString).toContain(attachments[1].data)
+        expect(resultString).toContain(
+          `Content-Type: ${inlineAttachment.mimeType}; name="${inlineAttachment.filename}"${eol}`,
+        )
+        expect(resultString).toContain(
+          `Content-Transfer-Encoding: ${inlineAttachment.contentTransferEncoding}${eol}`,
+        )
+        expect(resultString).toContain(inlineAttachment.data)
       })
+    },
+  )
 
-      it('inserts linebreaks into attachment data every 78 characters', () => {
-        const body = 'Message body'
-        const buffer = new ArrayBuffer(780)
-        crypto.getRandomValues(new Uint8Array(buffer))
-        const attachmentData = Base64.encode(buffer)
-
-        const attachment: EmailAttachment = {
-          filename: 'attachment1.jpg',
-          contentTransferEncoding: 'base64',
-          inlineAttachment: false,
-          mimeType: 'image/jpg',
-          data: attachmentData,
-        }
-
-        const messageDetails: EmailMessageDetails = {
-          from: [{ emailAddress: fromAddress.emailAddress }],
-          body,
-          attachments: [attachment],
-        }
-        const expectedData = insertLinebreaks(attachmentData, 78)
-
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
-
-        expect(resultString).toContain(
-          `From: <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(body)
-        expect(resultString).toContain(
-          `Content-Type: multipart/mixed; boundary=`,
-        )
-        expect(resultString).toContain(
-          `Content-Type: ${attachment.mimeType}; name="${attachment.filename}"${eol}`,
-        )
-        expect(resultString).toContain(
-          `Content-Transfer-Encoding: ${attachment.contentTransferEncoding}${eol}`,
-        )
-        expect(resultString).toContain(expectedData)
-      })
-    })
-
-    describe('inlineAttachments', () => {
-      it('works with one attachment', () => {
+  describe.each`
+    encryptionStatus                | statusName
+    ${EncryptionStatus.ENCRYPTED}   | ${'ENCRYPTED'}
+    ${EncryptionStatus.UNENCRYPTED} | ${'UNENCRYPTED'}
+  `(
+    'encodeToInternetMessageBuffer for encryptionStatus $statusName',
+    ({ encryptionStatus }) => {
+      it('returns the correct buffer', () => {
+        // Using the exact same message as the test above
         const contentId = v4()
-        const attachment: EmailAttachment = {
-          filename: 'attachment1.jpg',
+        const inlineAttachment: EmailAttachment = {
+          filename: 'inlineAttachment1.jpg',
           contentTransferEncoding: 'base64',
           inlineAttachment: true,
           mimeType: 'image/jpg',
           data: Base64.encodeString(`${v4()}-attachment`),
           contentId,
         }
-        const body = `Message body <img src="cid:${contentId}">`
-
-        const messageDetails: EmailMessageDetails = {
-          from: [{ emailAddress: fromAddress.emailAddress }],
-          body,
-          inlineAttachments: [attachment],
-        }
-
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
-
-        expect(resultString).toContain(
-          `From: <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        // expect(resultString).toContain(`Reply-To: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(body)
-        expect(resultString).toContain(
-          `Content-Type: multipart/mixed; boundary=`,
-        )
-        expect(resultString).toContain(
-          `Content-Type: ${attachment.mimeType}; name="${attachment.filename}"${eol}`,
-        )
-        expect(resultString).toContain(
-          `Content-Transfer-Encoding: ${attachment.contentTransferEncoding}${eol}`,
-        )
-        expect(resultString).toContain(attachment.data)
-      })
-
-      it('inserts linebreaks into attachment data every 78 characters', () => {
-        const buffer = new ArrayBuffer(780)
-        crypto.getRandomValues(new Uint8Array(buffer))
-        const attachmentData = Base64.encode(buffer)
-        const contentId = v4()
-        const attachment: EmailAttachment = {
-          filename: 'attachment1.jpg',
-          contentTransferEncoding: 'base64',
-          inlineAttachment: true,
-          mimeType: 'image/jpg',
-          data: attachmentData,
-          contentId,
-        }
-        const body = `Message body <img src="cid:${contentId}">`
-
-        const messageDetails: EmailMessageDetails = {
-          from: [{ emailAddress: fromAddress.emailAddress }],
-          body,
-          inlineAttachments: [attachment],
-        }
-        const expectedData = insertLinebreaks(attachmentData, 78)
-
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
-
-        expect(resultString).toContain(
-          `From: <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(body)
-        expect(resultString).toContain(
-          `Content-Type: multipart/mixed; boundary=`,
-        )
-        expect(resultString).toContain(
-          `Content-Type: ${attachment.mimeType}; name="${attachment.filename}"${eol}`,
-        )
-        expect(resultString).toContain(
-          `Content-Transfer-Encoding: ${attachment.contentTransferEncoding}${eol}`,
-        )
-        expect(resultString).toContain(expectedData)
-      })
-    })
-
-    describe('encryptionStatus', () => {
-      it('replaces the body and adds appropriate headers', () => {
-        const body = 'This is a secret 🤫'
-        const messageDetails: EmailMessageDetails = {
-          from: [{ emailAddress: fromAddress.emailAddress }],
-          encryptionStatus: EncryptionStatus.ENCRYPTED,
-          body,
-        }
-
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
-
-        expect(resultString).toContain(
-          `From: <${fromAddress.emailAddress}>${eol}`,
-        )
-        expect(resultString).toContain(`To: ${eol}`)
-        expect(resultString).toContain(`Cc: ${eol}`)
-        expect(resultString).toContain(`Bcc: ${eol}`)
-        expect(resultString).toContain(`Subject: ${eol}`)
-        expect(resultString).toContain(
-          `${EMAIL_HEADER_NAME_ENCRYPTION}: ${PLATFORM_ENCRYPTION}${eol}`,
-        )
-        expect(resultString).not.toContain(body)
-        expect(resultString).toContain(CANNED_TEXT_BODY)
-        expect(resultString).toContain(
-          `Content-Type: text/plain; charset=UTF-8${eol}`,
-        )
-      })
-    })
-
-    describe('reply/forward message inclusion', () => {
-      it('adds correct header when replying message id is provided', () => {
-        const messageDetails: EmailMessageDetails = {
-          from: [{ emailAddress: fromAddress.emailAddress }],
-          replyMessageId: 'Dummy reply message id',
-        }
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
-        expect(resultString).toContain(
-          `In-Reply-To: <${messageDetails.replyMessageId}>`,
-        )
-      })
-
-      it('adds correct header when forwarding message id is provided', () => {
-        const messageDetails: EmailMessageDetails = {
-          from: [{ emailAddress: fromAddress.emailAddress }],
-          forwardMessageId: 'Dummy forward message id',
-        }
-        const resultString =
-          Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
-        expect(resultString).toContain(
-          `References: <${messageDetails.forwardMessageId}>`,
-        )
-      })
-    })
-
-    it('handles a complicated message properly', () => {
-      const contentId = v4()
-      const inlineAttachment: EmailAttachment = {
-        filename: 'attachment1.jpg',
-        contentTransferEncoding: 'base64',
-        inlineAttachment: true,
-        mimeType: 'image/jpg',
-        data: Base64.encodeString(`${v4()}-attachment`),
-        contentId,
-      }
-      const subject = `Is this the real life? Is this just fantasy? Caught in a landslide, no escape from reality Open your eyes, look up to the skies and see I'm just a poor boy, I need no sympathy`
-      const body = `
+        const subject = `Is this the real life? Is this just fantasy? Caught in a landslide, no escape from reality Open your eyes, look up to the skies and see I'm just a poor boy, I need no sympathy`
+        const body = `
         🎶🎶🎶🎶
         Is this the real life? Is this just fantasy?
         Caught in a landslide, no escape from reality
@@ -940,214 +1254,104 @@ describe('rfc822MessageDataProcessor unit tests', () => {
         Carry on, carry on as if nothing really matters
         <img src="cid:${contentId}">
         `
-      const attachments: EmailAttachment[] = [
-        {
-          filename: 'attachment1.jpg',
-          contentTransferEncoding: 'base64',
-          inlineAttachment: false,
-          mimeType: 'image/jpg',
-          data: Base64.encodeString(`${v4()}-attachment`),
-        },
-        {
-          filename: 'attachment2.txt',
-          contentTransferEncoding: 'base64',
-          inlineAttachment: false,
-          mimeType: 'text/plain',
-          data: Base64.encodeString(`${v4()}-attachment`),
-        },
-      ]
-      const messageDetails: EmailMessageDetails = {
-        from: [fromAddress],
-        to: [
-          { emailAddress: toAddresses[0].emailAddress },
+        const attachments: EmailAttachment[] = [
           {
-            emailAddress: toAddresses[1].emailAddress,
-            displayName: toAddresses[1].displayName,
+            filename: 'attachment1.jpg',
+            contentTransferEncoding: 'base64',
+            inlineAttachment: false,
+            mimeType: 'image/jpg',
+            data: Base64.encodeString(`${v4()}-attachment`),
           },
-        ],
-        cc: [
           {
-            emailAddress: ccAddresses[0].emailAddress,
-            displayName: ccAddresses[0].displayName,
+            filename: 'attachment2.txt',
+            contentTransferEncoding: 'base64',
+            inlineAttachment: false,
+            mimeType: 'text/plain',
+            data: Base64.encodeString(`${v4()}-attachment`),
           },
-          { emailAddress: ccAddresses[1].emailAddress },
-        ],
-        bcc: [
-          { emailAddress: bccAddresses[0].emailAddress },
-          { emailAddress: bccAddresses[1].emailAddress },
-        ],
-        replyTo: [{ emailAddress: replyToAddresses[0].emailAddress }],
-        subject,
-        body,
-        attachments,
-        inlineAttachments: [inlineAttachment],
-      }
+        ]
+        const messageDetails: EmailMessageDetails = {
+          from: [fromAddress],
+          to: [
+            { emailAddress: toAddresses[0].emailAddress },
+            {
+              emailAddress: toAddresses[1].emailAddress,
+              displayName: toAddresses[1].displayName,
+            },
+          ],
+          cc: [
+            {
+              emailAddress: ccAddresses[0].emailAddress,
+              displayName: ccAddresses[0].displayName,
+            },
+            { emailAddress: ccAddresses[1].emailAddress },
+          ],
+          bcc: [
+            { emailAddress: bccAddresses[0].emailAddress },
+            { emailAddress: bccAddresses[1].emailAddress },
+          ],
+          replyTo: [{ emailAddress: replyToAddresses[0].emailAddress }],
+          subject,
+          body,
+          attachments,
+          inlineAttachments: [inlineAttachment],
+          encryptionStatus,
+        }
+        const expectedSubject = encodeWordIfRequired(subject, encryptionStatus)
 
-      const resultString =
-        Rfc822MessageDataProcessor.encodeToInternetMessageStr(messageDetails)
+        const resultBuffer =
+          Rfc822MessageDataProcessor.encodeToInternetMessageBuffer(
+            messageDetails,
+          )
 
-      expect(resultString).toContain(
-        `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
-      )
-      expect(resultString).toContain(
-        `To: <${toAddresses[0].emailAddress}>,${eol} "${toAddresses[1].displayName}" <${toAddresses[1].emailAddress}>${eol}`,
-      )
-      expect(resultString).toContain(
-        `Cc: "${ccAddresses[0].displayName}" <${ccAddresses[0].emailAddress}>,${eol} <${ccAddresses[1].emailAddress}>${eol}`,
-      )
-      expect(resultString).toContain(
-        `Bcc: <${bccAddresses[0].emailAddress}>,${eol} <${bccAddresses[1].emailAddress}>${eol}`,
-      )
-      expect(resultString).toContain(
-        `Reply-To: <${replyToAddresses[0].emailAddress}>${eol}`,
-      )
-      expect(resultString).toContain(`Subject: ${subject}${eol}`)
-      expect(resultString).toContain(body)
-      expect(resultString).toContain(`Content-Type: multipart/mixed; boundary=`)
-      expect(resultString).toContain(
-        `Content-Type: ${attachments[0].mimeType}; name="${attachments[0].filename}"${eol}`,
-      )
-      expect(resultString).toContain(
-        `Content-Transfer-Encoding: ${attachments[0].contentTransferEncoding}${eol}`,
-      )
-      expect(resultString).toContain(attachments[0].data)
-      expect(resultString).toContain(
-        `Content-Type: ${attachments[1].mimeType}; name="${attachments[1].filename}"${eol}`,
-      )
-      expect(resultString).toContain(
-        `Content-Transfer-Encoding: ${attachments[1].contentTransferEncoding}${eol}`,
-      )
-      expect(resultString).toContain(attachments[1].data)
-      expect(resultString).toContain(
-        `Content-Type: ${inlineAttachment.mimeType}; name="${inlineAttachment.filename}"${eol}`,
-      )
-      expect(resultString).toContain(
-        `Content-Transfer-Encoding: ${inlineAttachment.contentTransferEncoding}${eol}`,
-      )
-      expect(resultString).toContain(inlineAttachment.data)
-    })
-  })
-
-  describe('encodeToInternetMessageBuffer', () => {
-    it('returns the correct buffer', () => {
-      // Using the exact same message as the test above
-      const contentId = v4()
-      const inlineAttachment: EmailAttachment = {
-        filename: 'inlineAttachment1.jpg',
-        contentTransferEncoding: 'base64',
-        inlineAttachment: true,
-        mimeType: 'image/jpg',
-        data: Base64.encodeString(`${v4()}-attachment`),
-        contentId,
-      }
-      const subject = `Is this the real life? Is this just fantasy? Caught in a landslide, no escape from reality Open your eyes, look up to the skies and see I'm just a poor boy, I need no sympathy`
-      const body = `
-        🎶🎶🎶🎶
-        Is this the real life? Is this just fantasy?
-        Caught in a landslide, no escape from reality
-        Open your eyes, look up to the skies and see
-        I'm just a poor boy, I need no sympathy
-        Because I'm easy come, easy go, little high, little low
-        Any way the wind blows doesn't really matter to me, to me
-
-        Mama, just killed a man
-        Put a gun against his head, pulled my trigger, now he's dead
-        Mama, life had just begun
-        But now I've gone and thrown it all away
-        Mama, ooh, didn't mean to make you cry
-        If I'm not back again this time tomorrow
-        Carry on, carry on as if nothing really matters
-        <img src="cid:${contentId}">
-        `
-      const attachments: EmailAttachment[] = [
-        {
-          filename: 'attachment1.jpg',
-          contentTransferEncoding: 'base64',
-          inlineAttachment: false,
-          mimeType: 'image/jpg',
-          data: Base64.encodeString(`${v4()}-attachment`),
-        },
-        {
-          filename: 'attachment2.txt',
-          contentTransferEncoding: 'base64',
-          inlineAttachment: false,
-          mimeType: 'text/plain',
-          data: Base64.encodeString(`${v4()}-attachment`),
-        },
-      ]
-      const messageDetails: EmailMessageDetails = {
-        from: [fromAddress],
-        to: [
-          { emailAddress: toAddresses[0].emailAddress },
-          {
-            emailAddress: toAddresses[1].emailAddress,
-            displayName: toAddresses[1].displayName,
-          },
-        ],
-        cc: [
-          {
-            emailAddress: ccAddresses[0].emailAddress,
-            displayName: ccAddresses[0].displayName,
-          },
-          { emailAddress: ccAddresses[1].emailAddress },
-        ],
-        bcc: [
-          { emailAddress: bccAddresses[0].emailAddress },
-          { emailAddress: bccAddresses[1].emailAddress },
-        ],
-        replyTo: [{ emailAddress: replyToAddresses[0].emailAddress }],
-        subject,
-        body,
-        attachments,
-        inlineAttachments: [inlineAttachment],
-      }
-
-      const resultBuffer =
-        Rfc822MessageDataProcessor.encodeToInternetMessageBuffer(messageDetails)
-
-      // We can't test for a match against another buffer because each message includes some randomly generated ids
-      const resultString = arrayBufferToString(resultBuffer)
-      expect(resultString).toContain(
-        `From: "${fromAddress.displayName}" <${fromAddress.emailAddress}>${eol}`,
-      )
-      expect(resultString).toContain(
-        `To: <${toAddresses[0].emailAddress}>,${eol} "${toAddresses[1].displayName}" <${toAddresses[1].emailAddress}>${eol}`,
-      )
-      expect(resultString).toContain(
-        `Cc: "${ccAddresses[0].displayName}" <${ccAddresses[0].emailAddress}>,${eol} <${ccAddresses[1].emailAddress}>${eol}`,
-      )
-      expect(resultString).toContain(
-        `Bcc: <${bccAddresses[0].emailAddress}>,${eol} <${bccAddresses[1].emailAddress}>${eol}`,
-      )
-      expect(resultString).toContain(
-        `Reply-To: <${replyToAddresses[0].emailAddress}>${eol}`,
-      )
-      expect(resultString).toContain(`Subject: ${subject}${eol}`)
-      expect(resultString).toContain(body)
-      expect(resultString).toContain(`Content-Type: multipart/mixed; boundary=`)
-      expect(resultString).toContain(
-        `Content-Type: ${attachments[0].mimeType}; name="${attachments[0].filename}"${eol}`,
-      )
-      expect(resultString).toContain(
-        `Content-Transfer-Encoding: ${attachments[0].contentTransferEncoding}${eol}`,
-      )
-      expect(resultString).toContain(attachments[0].data)
-      expect(resultString).toContain(
-        `Content-Type: ${attachments[1].mimeType}; name="${attachments[1].filename}"${eol}`,
-      )
-      expect(resultString).toContain(
-        `Content-Transfer-Encoding: ${attachments[1].contentTransferEncoding}${eol}`,
-      )
-      expect(resultString).toContain(attachments[1].data)
-      expect(resultString).toContain(
-        `Content-Type: ${inlineAttachment.mimeType}; name="${inlineAttachment.filename}"${eol}`,
-      )
-      expect(resultString).toContain(
-        `Content-Transfer-Encoding: ${inlineAttachment.contentTransferEncoding}${eol}`,
-      )
-      expect(resultString).toContain(inlineAttachment.data)
-    })
-  })
+        // We can't test for a match against another buffer because each message includes some randomly generated ids
+        const resultString = arrayBufferToString(resultBuffer)
+        expect(resultString).toContain(
+          `From: ${expectedDisplayName(fromAddress.displayName, encryptionStatus)} <${fromAddress.emailAddress}>${eol}`,
+        )
+        expect(resultString).toContain(
+          `To: <${toAddresses[0].emailAddress}>,${eol} ${expectedDisplayName(toAddresses[1].displayName, encryptionStatus)} <${toAddresses[1].emailAddress}>${eol}`,
+        )
+        expect(resultString).toContain(
+          `Cc: ${expectedDisplayName(ccAddresses[0].displayName, encryptionStatus)} <${ccAddresses[0].emailAddress}>,${eol} <${ccAddresses[1].emailAddress}>${eol}`,
+        )
+        expect(resultString).toContain(
+          `Bcc: <${bccAddresses[0].emailAddress}>,${eol} <${bccAddresses[1].emailAddress}>${eol}`,
+        )
+        expect(resultString).toContain(
+          `Reply-To: <${replyToAddresses[0].emailAddress}>${eol}`,
+        )
+        expect(resultString).toContain(`Subject: ${expectedSubject}${eol}`)
+        if (encryptionStatus == EncryptionStatus.UNENCRYPTED) {
+          expect(resultString).toContain(body)
+        }
+        expect(resultString).toContain(
+          `Content-Type: multipart/mixed; boundary=`,
+        )
+        expect(resultString).toContain(
+          `Content-Type: ${attachments[0].mimeType}; name="${attachments[0].filename}"${eol}`,
+        )
+        expect(resultString).toContain(
+          `Content-Transfer-Encoding: ${attachments[0].contentTransferEncoding}${eol}`,
+        )
+        expect(resultString).toContain(attachments[0].data)
+        expect(resultString).toContain(
+          `Content-Type: ${attachments[1].mimeType}; name="${attachments[1].filename}"${eol}`,
+        )
+        expect(resultString).toContain(
+          `Content-Transfer-Encoding: ${attachments[1].contentTransferEncoding}${eol}`,
+        )
+        expect(resultString).toContain(attachments[1].data)
+        expect(resultString).toContain(
+          `Content-Type: ${inlineAttachment.mimeType}; name="${inlineAttachment.filename}"${eol}`,
+        )
+        expect(resultString).toContain(
+          `Content-Transfer-Encoding: ${inlineAttachment.contentTransferEncoding}${eol}`,
+        )
+        expect(resultString).toContain(inlineAttachment.data)
+      })
+    },
+  )
 
   describe('parseInternetMessageData', () => {
     describe('from', () => {

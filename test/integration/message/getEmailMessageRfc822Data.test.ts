@@ -10,12 +10,14 @@ import { SudoUserClient } from '@sudoplatform/sudo-user'
 import waitForExpect from 'wait-for-expect'
 import {
   EmailAddress,
+  EncryptionStatus,
   SendEmailMessageInput,
   SudoEmailClient,
 } from '../../../src'
 import { arrayBufferToString } from '../../../src/private/util/buffer'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import { encodeWordIfRequired } from '../../util/encoding'
 
 describe('getEmailMessageRfc822Data test suite', () => {
   jest.setTimeout(240000)
@@ -119,7 +121,9 @@ describe('getEmailMessageRfc822Data test suite', () => {
           expect(receivedRfc822String).toContain(
             'To: <success@simulator.amazonses.com>',
           )
-          expect(receivedRfc822String).toContain('Subject: Testing rfc822Data')
+          expect(receivedRfc822String).toContain(
+            `Subject: ${encodeWordIfRequired('Testing rfc822Data', EncryptionStatus.UNENCRYPTED)}`,
+          )
           expect(receivedRfc822String).toContain(emailBodies[index])
         }
       }

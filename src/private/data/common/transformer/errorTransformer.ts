@@ -23,6 +23,7 @@ import {
   InvalidEmailDomainError,
   InvalidKeyRingIdError,
   LimitExceededError,
+  RecordNotFoundError,
   UnauthorizedAddressError,
 } from '../../../../public/errors'
 
@@ -60,6 +61,8 @@ export class ErrorTransformer {
         return new InvalidArgumentError(error.message)
       case 'sudoplatform.email.EmailFolderNotFound':
         return new EmailFolderNotFoundError(error.message)
+      case 'sudoplatform.email.RecordNotFound':
+        return new RecordNotFoundError(error.message)
       case 'sudoplatform.ServiceError':
         return new ServiceError(error.message)
       default:

@@ -12,18 +12,17 @@ import {
 } from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
-import _ from 'lodash'
+import _, { sample } from 'lodash'
 import { v4 } from 'uuid'
+import { externalAccounts } from '../interop.test'
 import waitForExpect from 'wait-for-expect'
 import {
   EmailAddress,
   EmailFolder,
   EmailMessage,
   EmailMessageRfc822Data,
-  EmailMessageWithBody,
   EncryptionStatus,
   InNetworkAddressNotFoundError,
-  InvalidArgumentError,
   InvalidEmailContentsError,
   MessageSizeLimitExceededError,
   SendEmailMessageInput,
@@ -32,17 +31,14 @@ import {
 } from '../../../src'
 import { EmailConfigurationDataService } from '../../../src/private/domain/entities/configuration/configurationDataService'
 import { arrayBufferToString } from '../../../src/private/util/buffer'
-import {
-  EmailMessageDetails,
-  Rfc822MessageDataProcessor,
-} from '../../../src/private/util/rfc822MessageDataProcessor'
+import { EmailMessageDetails } from '../../../src/private/util/rfc822MessageDataProcessor'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { readAllPages } from '../util/paginator'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { runTestsIf } from '../../util/util'
 import { delay } from '../../util/delay'
-import fs from 'node:fs/promises'
 import { insertLinebreaks } from '../../../src/private/util/stringUtils'
+import { encodeWordIfRequired } from '../../util/encoding'
 
 describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   jest.setTimeout(240000)
@@ -174,6 +170,73 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     emailAddresses = []
   })
 
+  it.each`
+    toAddress
+    ${sample(externalAccounts)}
+    ${successSimulatorAddress}
+  `('sends valid message with special characters', async ({ toAddress }) => {
+    const emojiSubject = 'emoji me: 😎 ¡ ™ £ ¢ ∞ § ¶ • ª.'
+    const emojiBody =
+      "Let's put emojis in the body as well: for example 😱, 💐 and special chars  ¡ ™ £ ¢ ∞ § ¶ • ª."
+
+    const result = await instanceUnderTest.sendEmailMessage({
+      senderEmailAddressId: emailAddress1.id,
+      emailMessageHeader: {
+        from: draft.from[0],
+        to: [{ emailAddress: toAddress }],
+        cc: draft.cc ?? [],
+        bcc: draft.bcc ?? [],
+        replyTo: draft.replyTo ?? [],
+        subject: emojiSubject,
+      },
+      body: emojiBody,
+      attachments: draft.attachments ?? [],
+      inlineAttachments: draft.inlineAttachments ?? [],
+    })
+    const { id: sentId } = result
+
+    expect(sentId).toMatch(
+      /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
+    )
+
+    let sent
+    await waitForExpect(async () => {
+      sent = await instanceUnderTest.getEmailMessage({
+        id: sentId,
+        cachePolicy: CachePolicy.RemoteOnly,
+      })
+      expect(sent).toBeDefined()
+    })
+
+    expect(sent).toMatchObject({
+      ..._.omit(draft, 'body', 'attachments'),
+      id: sentId,
+      hasAttachments: false,
+      date: expect.any(Date),
+      subject: emojiSubject,
+      to: [{ emailAddress: toAddress }],
+    })
+
+    const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
+      id: sentId,
+      emailAddressId: emailAddress1.id,
+    })
+
+    const sentRfc822DataStr = new TextDecoder().decode(
+      sentRFC822Data?.rfc822Data,
+    )
+    expect(sentRfc822DataStr).toContain(`From: <${draft.from[0].emailAddress}>`)
+    expect(sentRfc822DataStr).toContain(`To: <${toAddress}>`)
+    expect(sentRfc822DataStr).toContain(emojiBody)
+
+    const sentEmailMessageBody =
+      await instanceUnderTest.getEmailMessageWithBody({
+        id: sentId,
+        emailAddressId: emailAddress1.id,
+      })
+    expect(sentEmailMessageBody).toBeDefined()
+  })
+
   it('returns expected output', async () => {
     const result = await instanceUnderTest.sendEmailMessage({
       senderEmailAddressId: emailAddress1.id,
@@ -221,7 +284,9 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     )
     expect(sentRfc822DataStr).toContain(`From: <${draft.from[0].emailAddress}>`)
     expect(sentRfc822DataStr).toContain(`To: <${draft.to![0].emailAddress}>`)
-    expect(sentRfc822DataStr).toContain(`Subject: ${draft.subject}`)
+    expect(sentRfc822DataStr).toContain(
+      `Subject: ${encodeWordIfRequired(draft.subject, EncryptionStatus.UNENCRYPTED)}`,
+    )
     expect(sentRfc822DataStr).toContain(draft.body)
   })
 
@@ -277,7 +342,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       `To: <${draftWithAttachments.to![0].emailAddress}>`,
     )
     expect(sentRfc822DataStr).toContain(
-      `Subject: ${draftWithAttachments.subject}`,
+      `Subject: ${encodeWordIfRequired(draftWithAttachments.subject, EncryptionStatus.UNENCRYPTED)}`,
     )
     expect(sentRfc822DataStr).toContain(draftWithAttachments.body)
     const expectedAttachment1Data = insertLinebreaks(
@@ -479,6 +544,12 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
     expect(sent).toMatchObject({
       ..._.omit(draft, 'body', 'attachments'),
+      to: [
+        {
+          emailAddress: successSimulatorAddress,
+          displayName: 'success, simulator',
+        },
+      ],
       id: sentId,
       hasAttachments: false,
       date: expect.any(Date),

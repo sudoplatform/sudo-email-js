@@ -61,19 +61,18 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
     emailAddresses = []
   })
 
-  it("returns failure when multiple emails that don't exist are attempted to be deleted", async () => {
+  it("returns success when multiple emails that don't exist are attempted to be deleted", async () => {
     const messageIds = ['1', '2', '3']
     await expect(
       instanceUnderTest.deleteEmailMessages(messageIds),
     ).resolves.toStrictEqual({
-      status: BatchOperationResultStatus.Failure,
-      successValues: [],
-      failureValues: expect.arrayContaining(
+      status: BatchOperationResultStatus.Success,
+      successValues: expect.arrayContaining(
         messageIds.map((id) => ({
-          errorType: 'Failed to delete email message',
           id,
         })),
       ),
+      failureValues: [],
     })
   })
 
@@ -82,14 +81,13 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
     await expect(
       instanceUnderTest.deleteEmailMessages(messageIds),
     ).resolves.toStrictEqual({
-      status: BatchOperationResultStatus.Failure,
-      successValues: [],
-      failureValues: expect.arrayContaining(
+      status: BatchOperationResultStatus.Success,
+      successValues: expect.arrayContaining(
         messageIds.map((id) => ({
-          errorType: 'Failed to delete email message',
           id,
         })),
       ),
+      failureValues: [],
     })
   })
 
@@ -155,7 +153,7 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
     })
   })
 
-  it("returns partial result when deleting messages that do and don't exist simultaneously", async () => {
+  it("returns success result when deleting messages that do and don't exist simultaneously", async () => {
     const result = await instanceUnderTest.sendEmailMessage({
       senderEmailAddressId: emailAddress.id,
       emailMessageHeader: {
@@ -182,14 +180,9 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
     await expect(
       instanceUnderTest.deleteEmailMessages([result.id, nonExistentId]),
     ).resolves.toStrictEqual({
-      status: BatchOperationResultStatus.Partial,
-      successValues: mapIdsToSuccessIds([result.id]),
-      failureValues: [
-        {
-          errorType: 'Failed to delete email message',
-          id: nonExistentId,
-        },
-      ],
+      status: BatchOperationResultStatus.Success,
+      successValues: mapIdsToSuccessIds([result.id, nonExistentId]),
+      failureValues: [],
     })
   })
 })

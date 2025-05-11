@@ -7,6 +7,7 @@
 import {
   CompleteMultipartUploadOutput,
   NoSuchKey,
+  NotFound,
   S3,
 } from '@aws-sdk/client-s3'
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers'
@@ -45,6 +46,18 @@ interface S3ClientDownloadInput {
 export interface S3ClientDownloadOutput {
   lastModified: Date
   body: string
+  metadata?: Record<string, string>
+  contentEncoding?: string
+}
+
+interface S3ClientGetHeadObjectDataInput {
+  bucket: string
+  region: string
+  key: string
+}
+
+export interface S3ClientGetHeadObjectDataOutput {
+  lastModified: Date
   metadata?: Record<string, string>
   contentEncoding?: string
 }
@@ -102,6 +115,25 @@ export class S3BulkDeleteError extends Error {
 }
 
 export class S3DownloadError extends Error {
+  readonly code?: number
+  constructor({ code, msg }: S3ErrorOptions) {
+    if (msg) {
+      if (code) {
+        msg = `${msg} - ERRCODE: ${code}`
+      }
+      super(msg)
+    } else {
+      let msg = 'Failed to download'
+      if (code) {
+        msg = `${msg} - ERRCODE: ${code}`
+      }
+      super(msg)
+    }
+    this.code = code
+  }
+}
+
+export class S3GetHeadObjectDataError extends Error {
   readonly code?: number
   constructor({ code, msg }: S3ErrorOptions) {
     if (msg) {
@@ -239,15 +271,14 @@ export class S3Client {
       return result
     } catch (err: unknown) {
       this.log.error('s3Client download error', { err })
-      const error = err as Error & { code?: string | number }
-      if (error.message.includes('The specified key does not exist.')) {
-        const error = err as NoSuchKey
+      if (err instanceof NoSuchKey) {
         throw new S3DownloadError({
-          msg: error.message,
+          msg: err.message,
           code: S3Error.NoSuchKey,
           key,
         })
       }
+      const error = err as Error
 
       throw new S3DownloadError({
         msg: error.message,
@@ -338,6 +369,54 @@ export class S3Client {
 
       this.log.error(`${error.name}: ${error.message}`)
       throw new S3BulkDeleteError({ keys, msg: error.message })
+    }
+  }
+
+  async getHeadObjectData({
+    bucket,
+    region,
+    key,
+  }: S3ClientGetHeadObjectDataInput): Promise<
+    S3ClientGetHeadObjectDataOutput | undefined
+  > {
+    try {
+      const awsS3 = await this.getAWSS3({ region })
+      const result = await awsS3.headObject({
+        Bucket: bucket,
+        Key: key,
+      })
+
+      if (!result) {
+        return undefined
+      }
+
+      if (!result.LastModified) {
+        throw new S3GetHeadObjectDataError({
+          msg: 'No last modified timestamp in response',
+          key,
+        })
+      }
+
+      return {
+        lastModified: result.LastModified,
+        metadata: result.Metadata,
+        contentEncoding: result.ContentEncoding,
+      }
+    } catch (err: unknown) {
+      this.log.error('s3Client get head object error', { err })
+      if (err instanceof NotFound) {
+        throw new S3GetHeadObjectDataError({
+          msg: err.message,
+          code: S3Error.NoSuchKey,
+          key,
+        })
+      }
+      const error = err as Error
+
+      throw new S3GetHeadObjectDataError({
+        msg: error.message,
+        key,
+      })
     }
   }
 }

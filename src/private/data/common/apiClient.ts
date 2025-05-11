@@ -130,6 +130,13 @@ import {
   DeleteMessagesByFolderIdInput,
   DeleteMessagesByFolderIdMutation,
   DeleteMessagesByFolderIdDocument,
+  ScheduleSendDraftMessageInput,
+  ScheduledDraftMessage,
+  ScheduleSendDraftMessageMutation,
+  ScheduleSendDraftMessageDocument,
+  CancelScheduledDraftMessageInput,
+  CancelScheduledDraftMessageMutation,
+  CancelScheduledDraftMessageDocument,
 } from '../../../gen/graphqlTypes'
 import { ErrorTransformer } from './transformer/errorTransformer'
 
@@ -516,6 +523,29 @@ export class ApiClient {
         calleeName: this.listEmailMessagesForEmailFolderId.name,
       })
     return data.listEmailMessagesForEmailFolderId
+  }
+
+  public async scheduleSendDraftMessage(
+    input: ScheduleSendDraftMessageInput,
+  ): Promise<ScheduledDraftMessage> {
+    const data = await this.performMutation<ScheduleSendDraftMessageMutation>({
+      mutation: ScheduleSendDraftMessageDocument,
+      variables: { input },
+      calleeName: this.scheduleSendDraftMessage.name,
+    })
+    return data.scheduleSendDraftMessage
+  }
+
+  public async cancelScheduledDraftMessage(
+    input: CancelScheduledDraftMessageInput,
+  ): Promise<string> {
+    const data =
+      await this.performMutation<CancelScheduledDraftMessageMutation>({
+        mutation: CancelScheduledDraftMessageDocument,
+        variables: { input },
+        calleeName: this.cancelScheduledDraftMessage.name,
+      })
+    return data.cancelScheduledDraftMessage
   }
 
   public onEmailMessageDeleted(

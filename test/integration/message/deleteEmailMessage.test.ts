@@ -49,10 +49,10 @@ describe('SudoEmailClient DeleteEmailMessage Test Suite', () => {
     emailAddresses = []
   })
 
-  it('returns undefined if an email message that does not exist is deleted', async () => {
+  it('returns success if an email message that does not exist is deleted', async () => {
     await expect(
       instanceUnderTest.deleteEmailMessage('does-not-exist'),
-    ).resolves.toBeUndefined()
+    ).resolves.toStrictEqual({ id: 'does-not-exist' })
   })
   it('deletes a single existing email message', async () => {
     const result = await instanceUnderTest.sendEmailMessage({

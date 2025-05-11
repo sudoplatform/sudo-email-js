@@ -17,9 +17,13 @@ import { EmailConfigurationDataEntity } from '../../../src/private/domain/entiti
 import { EmailFolderEntity } from '../../../src/private/domain/entities/folder/emailFolderEntity'
 import { EmailMessageEntity } from '../../../src/private/domain/entities/message/emailMessageEntity'
 import { SealedEmailMessageEntity } from '../../../src/private/domain/entities/message/sealedEmailMessageEntity'
-import { EncryptionStatus } from '../../../src/public'
+import {
+  EncryptionStatus,
+  ScheduledDraftMessageState,
+} from '../../../src/public'
 import { Direction, State } from '../../../src/public/typings/emailMessage'
 import { PublicKeyFormat } from '@sudoplatform/sudo-common'
+import { ScheduledDraftMessageEntity } from '../../../src/private/domain/entities/message/scheduledDraftMessageEntity'
 
 export class EntityDataFactory {
   private static readonly commonProps = {
@@ -178,5 +182,16 @@ export class EntityDataFactory {
     algorithm: 'dummyAlgorithm',
     data: 'dummyPublicKey',
     format: DeviceKeyWorkerKeyFormat.RsaPublicKey,
+  }
+
+  static readonly scheduledDraftMessage: ScheduledDraftMessageEntity = {
+    id: 'dummyId',
+    emailAddressId: 'dummyEmailAddress',
+    owner: 'dummyOwner',
+    owners: [EntityDataFactory.owner],
+    state: ScheduledDraftMessageState.SCHEDULED,
+    sendAt: new Date(1.0),
+    createdAt: new Date(1.0),
+    updatedAt: new Date(1.0),
   }
 }

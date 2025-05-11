@@ -86,7 +86,11 @@ import { SubscribeToEmailMessagesUseCase } from '../private/domain/use-cases/mes
 import { UnsubscribeFromEmailMessagesUseCase } from '../private/domain/use-cases/message/unsubscribeFromEmailMessagesUseCase'
 import { UpdateEmailMessagesUseCase } from '../private/domain/use-cases/message/updateEmailMessagesUseCase'
 import { InvalidArgumentError } from './errors'
-import { EmailAttachment, UpdatedEmailMessageSuccess } from './typings'
+import {
+  EmailAttachment,
+  ScheduledDraftMessage,
+  UpdatedEmailMessageSuccess,
+} from './typings'
 import {
   BatchOperationResult,
   BatchOperationResultStatus,
@@ -123,6 +127,8 @@ import { DeleteEmailMessageSuccessResult } from './typings/deleteEmailMessageSuc
 import { DeleteCustomEmailFolderUseCase } from '../private/domain/use-cases/folder/deleteCustomEmailFolderUseCase'
 import { UpdateCustomEmailFolderUseCase } from '../private/domain/use-cases/folder/updateCustomEmailFolderUseCase'
 import { DeleteMessagesByFolderIdUseCase } from '../private/domain/use-cases/folder/deleteMessagesByFolderIdUseCase'
+import { ScheduleSendDraftMessageUseCase } from '../private/domain/use-cases/draft/scheduleSendDraftMessageUseCase'
+import { CancelScheduledDraftMessageUseCase } from '../private/domain/use-cases/draft/cancelScheduledDraftMessageUseCase'
 
 /**
  * Pagination interface designed to be extended for list interfaces.
@@ -537,6 +543,32 @@ export interface DeleteMessagesForFolderIdInput {
   hardDelete?: boolean
 }
 
+/**
+ * Input for `SudoEmailClient.scheduleSendDraftMessage`.
+ *
+ * @interface ScheduleSendDraftMessageInput
+ * @property {string} id The identifier of the draft message to schedule send.
+ * @property {string} emailAddressId The identifier of the email address to send the message from.
+ * @property {Date} sendAt The timestamp of when to send the message. Must be in the future.
+ */
+export interface ScheduleSendDraftMessageInput {
+  id: string
+  emailAddressId: string
+  sendAt: Date
+}
+
+/**
+ * Input for `SudoEmailClient.cancelScheduledDraftMessage` method.
+ *
+ * @interface CancelScheduledDraftMessageInput
+ * @property {string} id The identifier of the draft message to cancel
+ * @property {string} emailAddressId The identifier of the email address that owns the message.
+ */
+export interface CancelScheduledDraftMessageInput {
+  id: string
+  emailAddressId: string
+}
+
 export interface SudoEmailClient {
   /**
    * Provision an email address.
@@ -849,6 +881,27 @@ export interface SudoEmailClient {
   listDraftEmailMessageMetadataForEmailAddressId(
     emailAddressId: string,
   ): Promise<DraftEmailMessageMetadata[]>
+
+  /**
+   *
+   * @param {ScheduleSendDraftMessageInput} input Parameters used to schedule send a draft message.
+   * @returns {ScheduledDraftMessage}
+   */
+  scheduleSendDraftMessage(
+    input: ScheduleSendDraftMessageInput,
+  ): Promise<ScheduledDraftMessage>
+
+  /**
+   * Cancel a scheduled draft message. If no record of the draft message having been scheduled can be found
+   * a RecordNotFoundError will be thrown
+   *
+   * @param {CancelScheduledDraftMessageInput} input Parameters used to cancel a scheduled draft message
+   * @returns {string}
+   * @throws {RecordNotFoundError}
+   */
+  cancelScheduledDraftMessage(
+    input: CancelScheduledDraftMessageInput,
+  ): Promise<string>
 
   /**
    * Send an email message using RFC 6854 (supersedes RFC 822)(https://tools.ietf.org/html/rfc6854) data.
@@ -1760,6 +1813,46 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const { metadata } = await useCase.execute({ emailAddressId })
 
     return metadata
+  }
+
+  public async scheduleSendDraftMessage({
+    id,
+    emailAddressId,
+    sendAt,
+  }: ScheduleSendDraftMessageInput): Promise<ScheduledDraftMessage> {
+    this.log.debug(this.scheduleSendDraftMessage.name, {
+      id,
+      emailAddressId,
+      sendAt,
+    })
+
+    const useCase = new ScheduleSendDraftMessageUseCase(
+      this.emailAccountService,
+      this.emailMessageService,
+    )
+    const result = await useCase.execute({
+      id,
+      emailAddressId,
+      sendAt,
+    })
+    return result
+  }
+
+  public async cancelScheduledDraftMessage({
+    id,
+    emailAddressId,
+  }: CancelScheduledDraftMessageInput): Promise<string> {
+    this.log.debug(this.cancelScheduledDraftMessage.name, {
+      id,
+      emailAddressId,
+    })
+
+    const useCase = new CancelScheduledDraftMessageUseCase(
+      this.emailAccountService,
+      this.emailMessageService,
+    )
+    const result = await useCase.execute({ id, emailAddressId })
+    return result
   }
 
   public async getEmailMessage({

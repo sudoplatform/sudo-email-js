@@ -19,6 +19,7 @@ import { DraftEmailMessageMetadataEntity } from './draftEmailMessageMetadataEnti
 import { EmailMessageEntity } from './emailMessageEntity'
 import { EmailMessageWithBodyEntity } from './emailMessageWithBodyEntity'
 import { UpdateEmailMessagesStatus } from './updateEmailMessagesStatus'
+import { ScheduledDraftMessageEntity } from './scheduledDraftMessageEntity'
 
 /**
  * Input for `EmailMessageService.saveDraft` method.
@@ -65,6 +66,32 @@ export interface ListDraftsMetadataForEmailAddressIdInput {
  */
 export interface DeleteDraftsInput {
   ids: string[]
+  emailAddressId: string
+}
+
+/**
+ * Input for `EmailMessageService.scheduleSendDraftMessage` method.
+ *
+ * @interface ScheduleSendDraftMessageInput
+ * @property {string} id The identifier of the draft message to schedule send
+ * @property {string} emailAddressId The identifier of the email address to send the draft message from.
+ * @property {Date} sendAt Timestamp of when to send the message.
+ */
+export interface ScheduleSendDraftMessageInput {
+  id: string
+  emailAddressId: string
+  sendAt: Date
+}
+
+/**
+ * Input for `EmailMessageService.cancelScheduledDraftMessage` method.
+ *
+ * @interface CancelScheduledDraftMessageInput
+ * @property {string} id The identifier of the draft message to cancel
+ * @property {string} emailAddressId The identifier of the email address that owns the message.
+ */
+export interface CancelScheduledDraftMessageInput {
+  id: string
   emailAddressId: string
 }
 
@@ -357,6 +384,26 @@ export interface EmailMessageService {
   listDraftsMetadataForEmailAddressId(
     input: ListDraftsMetadataForEmailAddressIdInput,
   ): Promise<DraftEmailMessageMetadataEntity[]>
+
+  /**
+   * Schedule a draft message to be sent
+   *
+   * @param {ScheduleSendDraftMessageInput} input Parameters used to schedule a draft message to be sent.
+   * @returns {ScheduledDraftMessageEntity}
+   */
+  scheduleSendDraftMessage(
+    input: ScheduleSendDraftMessageInput,
+  ): Promise<ScheduledDraftMessageEntity>
+
+  /**
+   * Cancel a scheduled draft message. If the scheduled draft cannot be found, an error will be thrown.
+   *
+   * @param {CancelScheduledDraftMessageInput} input Parameters used to cancel a scheduled draft message
+   * @returns {string} The identifier of the schduled draft that has been cancelled.
+   */
+  cancelScheduledDraftMessage(
+    input: CancelScheduledDraftMessageInput,
+  ): Promise<string>
 
   /**
    * Send an email message.

@@ -44,6 +44,12 @@ export class MissingKeyError extends EmailError {
   }
 }
 
+export class UnsupportedKeyTypeError extends EmailError {
+  constructor(msg?: string) {
+    super(msg)
+  }
+}
+
 export class AddressUnavailableError extends EmailError {
   constructor(msg?: string) {
     super(msg)
@@ -111,6 +117,12 @@ export class S3UploadError extends EmailError {
 }
 
 export class EmailFolderNotFoundError extends EmailError {
+  constructor(msg?: string) {
+    super(msg)
+  }
+}
+
+export class RecordNotFoundError extends EmailError {
   constructor(msg?: string) {
     super(msg)
   }

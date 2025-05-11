@@ -87,6 +87,11 @@ export type BlockedEmailAddressInput = {
   sealedValue: SealedAttributeInput
 }
 
+export type CancelScheduledDraftMessageInput = {
+  draftMessageKey: Scalars['String']['input']
+  emailAddressId: Scalars['String']['input']
+}
+
 export type CheckEmailAddressAvailabilityInput = {
   domains?: InputMaybe<Array<Scalars['String']['input']>>
   localParts: Array<Scalars['String']['input']>
@@ -324,6 +329,7 @@ export type LookupEmailAddressesPublicInfoResponse = {
 export type Mutation = {
   __typename?: 'Mutation'
   blockEmailAddresses: BlockEmailAddressesBulkUpdateResult
+  cancelScheduledDraftMessage: Scalars['String']['output']
   createCustomEmailFolder: EmailFolder
   createPublicKeyForEmail: PublicKey
   deleteCustomEmailFolder?: Maybe<EmailFolder>
@@ -332,6 +338,7 @@ export type Mutation = {
   deleteMessagesByFolderId: Scalars['ID']['output']
   deprovisionEmailAddress: EmailAddress
   provisionEmailAddress: EmailAddress
+  scheduleSendDraftMessage: ScheduledDraftMessage
   sendEmailMessageV2: SendEmailMessageResult
   sendEncryptedEmailMessage: SendEmailMessageResult
   unblockEmailAddresses: BlockEmailAddressesBulkUpdateResult
@@ -342,6 +349,10 @@ export type Mutation = {
 
 export type MutationBlockEmailAddressesArgs = {
   input: BlockEmailAddressesInput
+}
+
+export type MutationCancelScheduledDraftMessageArgs = {
+  input: CancelScheduledDraftMessageInput
 }
 
 export type MutationCreateCustomEmailFolderArgs = {
@@ -374,6 +385,10 @@ export type MutationDeprovisionEmailAddressArgs = {
 
 export type MutationProvisionEmailAddressArgs = {
   input: ProvisionEmailAddressInput
+}
+
+export type MutationScheduleSendDraftMessageArgs = {
+  input: ScheduleSendDraftMessageInput
 }
 
 export type MutationSendEmailMessageV2Args = {
@@ -542,6 +557,32 @@ export type S3EmailObjectInput = {
   bucket: Scalars['String']['input']
   key: Scalars['String']['input']
   region: Scalars['String']['input']
+}
+
+export type ScheduleSendDraftMessageInput = {
+  draftMessageKey: Scalars['String']['input']
+  emailAddressId: Scalars['ID']['input']
+  sendAtEpochMs: Scalars['Float']['input']
+  symmetricKey: Scalars['String']['input']
+}
+
+export type ScheduledDraftMessage = {
+  __typename?: 'ScheduledDraftMessage'
+  createdAtEpochMs: Scalars['Float']['output']
+  draftMessageKey: Scalars['String']['output']
+  emailAddressId: Scalars['ID']['output']
+  owner: Scalars['ID']['output']
+  owners: Array<Owner>
+  sendAtEpochMs: Scalars['Float']['output']
+  state: ScheduledDraftMessageState
+  updatedAtEpochMs: Scalars['Float']['output']
+}
+
+export enum ScheduledDraftMessageState {
+  Cancelled = 'CANCELLED',
+  Failed = 'FAILED',
+  Scheduled = 'SCHEDULED',
+  Sent = 'SENT',
 }
 
 export type SealedAttribute = {
@@ -876,6 +917,18 @@ export type PublicKeyFragment = {
   version: number
   createdAtEpochMs: number
   updatedAtEpochMs: number
+}
+
+export type ScheduledDraftMessageFragment = {
+  __typename?: 'ScheduledDraftMessage'
+  draftMessageKey: string
+  emailAddressId: string
+  sendAtEpochMs: number
+  state: ScheduledDraftMessageState
+  createdAtEpochMs: number
+  updatedAtEpochMs: number
+  owner: string
+  owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
 }
 
 export type SealedAttributeFragment = {
@@ -1218,6 +1271,34 @@ export type DeleteMessagesByFolderIdMutationVariables = Exact<{
 export type DeleteMessagesByFolderIdMutation = {
   __typename?: 'Mutation'
   deleteMessagesByFolderId: string
+}
+
+export type ScheduleSendDraftMessageMutationVariables = Exact<{
+  input: ScheduleSendDraftMessageInput
+}>
+
+export type ScheduleSendDraftMessageMutation = {
+  __typename?: 'Mutation'
+  scheduleSendDraftMessage: {
+    __typename?: 'ScheduledDraftMessage'
+    draftMessageKey: string
+    emailAddressId: string
+    sendAtEpochMs: number
+    state: ScheduledDraftMessageState
+    createdAtEpochMs: number
+    updatedAtEpochMs: number
+    owner: string
+    owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+  }
+}
+
+export type CancelScheduledDraftMessageMutationVariables = Exact<{
+  input: CancelScheduledDraftMessageInput
+}>
+
+export type CancelScheduledDraftMessageMutation = {
+  __typename?: 'Mutation'
+  cancelScheduledDraftMessage: string
 }
 
 export type CreatePublicKeyForEmailMutationVariables = Exact<{
@@ -2590,6 +2671,42 @@ export const PaginatedPublicKeyFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<PaginatedPublicKeyFragment, unknown>
+export const ScheduledDraftMessageFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ScheduledDraftMessage' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ScheduledDraftMessage' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'draftMessageKey' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'sendAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owners' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ScheduledDraftMessageFragment, unknown>
 export const SealedEmailMessageFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -4017,6 +4134,142 @@ export const DeleteMessagesByFolderIdDocument = {
 } as unknown as DocumentNode<
   DeleteMessagesByFolderIdMutation,
   DeleteMessagesByFolderIdMutationVariables
+>
+export const ScheduleSendDraftMessageDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ScheduleSendDraftMessage' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'ScheduleSendDraftMessageInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'scheduleSendDraftMessage' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'ScheduledDraftMessage' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ScheduledDraftMessage' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ScheduledDraftMessage' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'draftMessageKey' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'sendAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owners' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  ScheduleSendDraftMessageMutation,
+  ScheduleSendDraftMessageMutationVariables
+>
+export const CancelScheduledDraftMessageDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CancelScheduledDraftMessage' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'CancelScheduledDraftMessageInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cancelScheduledDraftMessage' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  CancelScheduledDraftMessageMutation,
+  CancelScheduledDraftMessageMutationVariables
 >
 export const CreatePublicKeyForEmailDocument = {
   kind: 'Document',

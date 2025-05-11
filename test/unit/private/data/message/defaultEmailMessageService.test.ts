@@ -5,6 +5,7 @@
  */
 
 import {
+  Base64,
   CachePolicy,
   DecodeError,
   KeyNotFoundError,
@@ -41,9 +42,9 @@ import {
   S3BulkDeleteError,
   S3Client,
   S3ClientListOutput,
-  S3DeleteError,
   S3DownloadError,
   S3Error,
+  S3GetHeadObjectDataError,
 } from '../../../../../src/private/data/common/s3Client'
 import { SubscriptionManager } from '../../../../../src/private/data/common/subscriptionManager'
 import { DefaultEmailMessageService } from '../../../../../src/private/data/message/defaultEmailMessageService'
@@ -52,7 +53,9 @@ import { DraftEmailMessageMetadataEntity } from '../../../../../src/private/doma
 import { EmailMessageServiceDeleteDraftsError } from '../../../../../src/private/domain/entities/message/emailMessageService'
 import {
   InternalError,
+  MessageNotFoundError,
   MessageSizeLimitExceededError,
+  UnsupportedKeyTypeError,
 } from '../../../../../src/public/errors'
 import { UpdateEmailMessagesInput } from '../../../../../src/public/sudoEmailClient'
 import { SortOrder } from '../../../../../src/public/typings/sortOrder'
@@ -73,6 +76,7 @@ import { EmailAddressPublicInfoEntity } from '../../../../../src/private/domain/
 import { SecurePackage } from '../../../../../src/private/domain/entities/secure/securePackage'
 import { SecureEmailAttachmentType } from '../../../../../src/private/domain/entities/secure/secureEmailAttachmentType'
 import { EmailCryptoService } from '../../../../../src/private/domain/entities/secure/emailCryptoService'
+import { DateTime } from 'luxon'
 
 const identityServiceConfig = DraftEmailMessageDataFactory.identityServiceConfig
 
@@ -316,6 +320,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       expect(encodeToInternetMessageBufferSpy).toHaveBeenNthCalledWith(
         1,
         message,
+        { decodeEncodedFields: true },
       )
     })
 
@@ -1954,6 +1959,243 @@ describe('DefaultEmailMessageService Test Suite', () => {
           emailAddressId: 'emailAddressId',
         }),
       ).rejects.toThrow(new InternalError('delete error'))
+    })
+  })
+
+  describe('scheduleSendDraftMessage', () => {
+    let sendAt: Date
+    let mockSymmetricKey: ArrayBuffer
+
+    beforeEach(() => {
+      sendAt = DateTime.now().plus({ day: 1 }).toJSDate()
+      mockSymmetricKey = stringToArrayBuffer(v4())
+
+      when(mockS3Client.getHeadObjectData(anything())).thenResolve(
+        DraftEmailMessageDataFactory.s3ClientDownloadOutput,
+      )
+      when(mockDeviceKeyWorker.getKeyData(anything(), anything())).thenResolve(
+        mockSymmetricKey,
+      )
+      when(mockAppSync.scheduleSendDraftMessage(anything())).thenResolve(
+        GraphQLDataFactory.scheduledDraftMessage,
+      )
+    })
+
+    it('throws MessageNotFoundError is getHeadObjectData returns nothing', async () => {
+      when(mockS3Client.getHeadObjectData(anything())).thenResolve(undefined)
+
+      await expect(
+        instanceUnderTest.scheduleSendDraftMessage({
+          id: EntityDataFactory.scheduledDraftMessage.id,
+          emailAddressId:
+            EntityDataFactory.scheduledDraftMessage.emailAddressId,
+          sendAt,
+        }),
+      ).rejects.toThrow(MessageNotFoundError)
+
+      verify(mockS3Client.getHeadObjectData(anything())).once()
+      verify(mockDeviceKeyWorker.getKeyData(anything(), anything())).never()
+      verify(mockAppSync.scheduleSendDraftMessage(anything())).never()
+    })
+
+    it('throws MessageNotFoundError if getHeadObjectData throws NoSuchKey error', async () => {
+      when(mockS3Client.getHeadObjectData(anything())).thenReject(
+        new S3GetHeadObjectDataError({
+          code: S3Error.NoSuchKey,
+          key: 'key',
+        }),
+      )
+
+      await expect(
+        instanceUnderTest.scheduleSendDraftMessage({
+          id: EntityDataFactory.scheduledDraftMessage.id,
+          emailAddressId:
+            EntityDataFactory.scheduledDraftMessage.emailAddressId,
+          sendAt,
+        }),
+      ).rejects.toThrow(MessageNotFoundError)
+
+      verify(mockS3Client.getHeadObjectData(anything())).once()
+      verify(mockDeviceKeyWorker.getKeyData(anything(), anything())).never()
+      verify(mockAppSync.scheduleSendDraftMessage(anything())).never()
+    })
+
+    it('passes on other S3GetHeadObjetDataError if thrown', async () => {
+      when(mockS3Client.getHeadObjectData(anything())).thenReject(
+        new S3GetHeadObjectDataError({
+          key: 'key',
+        }),
+      )
+
+      await expect(
+        instanceUnderTest.scheduleSendDraftMessage({
+          id: EntityDataFactory.scheduledDraftMessage.id,
+          emailAddressId:
+            EntityDataFactory.scheduledDraftMessage.emailAddressId,
+          sendAt,
+        }),
+      ).rejects.toThrow(S3GetHeadObjectDataError)
+
+      verify(mockS3Client.getHeadObjectData(anything())).once()
+      verify(mockDeviceKeyWorker.getKeyData(anything(), anything())).never()
+      verify(mockAppSync.scheduleSendDraftMessage(anything())).never()
+    })
+
+    it('throws InternalError if no keyId found', async () => {
+      when(mockS3Client.getHeadObjectData(anything())).thenResolve({
+        ...DraftEmailMessageDataFactory.s3ClientDownloadOutput,
+        metadata: {
+          algorithm: 'AES/CBC/PKCS7Padding',
+        },
+      })
+
+      await expect(
+        instanceUnderTest.scheduleSendDraftMessage({
+          id: EntityDataFactory.scheduledDraftMessage.id,
+          emailAddressId:
+            EntityDataFactory.scheduledDraftMessage.emailAddressId,
+          sendAt,
+        }),
+      ).rejects.toThrow(InternalError)
+
+      verify(mockS3Client.getHeadObjectData(anything())).once()
+      verify(mockDeviceKeyWorker.getKeyData(anything(), anything())).never()
+      verify(mockAppSync.scheduleSendDraftMessage(anything())).never()
+    })
+
+    it('throws InternalError if no algorithm found', async () => {
+      when(mockS3Client.getHeadObjectData(anything())).thenResolve({
+        ...DraftEmailMessageDataFactory.s3ClientDownloadOutput,
+        metadata: {
+          'key-id': 'testKeyId',
+        },
+      })
+
+      await expect(
+        instanceUnderTest.scheduleSendDraftMessage({
+          id: EntityDataFactory.scheduledDraftMessage.id,
+          emailAddressId:
+            EntityDataFactory.scheduledDraftMessage.emailAddressId,
+          sendAt,
+        }),
+      ).rejects.toThrow(InternalError)
+
+      verify(mockS3Client.getHeadObjectData(anything())).once()
+      verify(mockDeviceKeyWorker.getKeyData(anything(), anything())).never()
+      verify(mockAppSync.scheduleSendDraftMessage(anything())).never()
+    })
+
+    it('throws UnsupportedKeyTypeError if key is not symmetric', async () => {
+      when(mockS3Client.getHeadObjectData(anything())).thenResolve({
+        ...DraftEmailMessageDataFactory.s3ClientDownloadOutput,
+        metadata: {
+          'key-id': 'testKeyId',
+          algorithm: 'otherAlgorithm',
+        },
+      })
+
+      await expect(
+        instanceUnderTest.scheduleSendDraftMessage({
+          id: EntityDataFactory.scheduledDraftMessage.id,
+          emailAddressId:
+            EntityDataFactory.scheduledDraftMessage.emailAddressId,
+          sendAt,
+        }),
+      ).rejects.toThrow(UnsupportedKeyTypeError)
+
+      verify(mockS3Client.getHeadObjectData(anything())).once()
+      verify(mockDeviceKeyWorker.getKeyData(anything(), anything())).never()
+      verify(mockAppSync.scheduleSendDraftMessage(anything())).never()
+    })
+
+    it('throws KeyNotFoundError if symmetric key not found', async () => {
+      when(mockDeviceKeyWorker.getKeyData(anything(), anything())).thenResolve(
+        undefined,
+      )
+
+      await expect(
+        instanceUnderTest.scheduleSendDraftMessage({
+          id: EntityDataFactory.scheduledDraftMessage.id,
+          emailAddressId:
+            EntityDataFactory.scheduledDraftMessage.emailAddressId,
+          sendAt,
+        }),
+      ).rejects.toThrow(KeyNotFoundError)
+
+      verify(mockS3Client.getHeadObjectData(anything())).once()
+      verify(mockDeviceKeyWorker.getKeyData(anything(), anything())).once()
+      verify(mockAppSync.scheduleSendDraftMessage(anything())).never()
+    })
+
+    it('returns expected result on success', async () => {
+      const result = await instanceUnderTest.scheduleSendDraftMessage({
+        id: EntityDataFactory.scheduledDraftMessage.id,
+        emailAddressId: EntityDataFactory.scheduledDraftMessage.emailAddressId,
+        sendAt,
+      })
+
+      expect(result).toBeDefined()
+      expect(result).toStrictEqual(EntityDataFactory.scheduledDraftMessage)
+
+      verify(mockS3Client.getHeadObjectData(anything())).once()
+      verify(mockDeviceKeyWorker.getKeyData(anything(), anything())).once()
+      verify(mockAppSync.scheduleSendDraftMessage(anything())).once()
+    })
+
+    it('passes correct arguments to appSync', async () => {
+      const { id, emailAddressId } = EntityDataFactory.scheduledDraftMessage
+      await instanceUnderTest.scheduleSendDraftMessage({
+        id,
+        emailAddressId,
+        sendAt,
+      })
+
+      verify(mockS3Client.getHeadObjectData(anything())).once()
+      verify(mockDeviceKeyWorker.getKeyData(anything(), anything())).once()
+      verify(mockAppSync.scheduleSendDraftMessage(anything())).once()
+      const [scheduleArgs] = capture(
+        mockAppSync.scheduleSendDraftMessage,
+      ).first()
+      expect(scheduleArgs).toStrictEqual<typeof scheduleArgs>({
+        draftMessageKey: `identityId/email/${emailAddressId}/draft/${id}`,
+        emailAddressId,
+        sendAtEpochMs: sendAt.getTime(),
+        symmetricKey: Base64.encode(mockSymmetricKey),
+      })
+    })
+  })
+
+  describe('cancelScheduledDraftMessage', () => {
+    beforeEach(() => {
+      when(mockAppSync.cancelScheduledDraftMessage(anything())).thenResolve(
+        GraphQLDataFactory.scheduledDraftMessage.draftMessageKey,
+      )
+    })
+
+    it('returns expected result on success', async () => {
+      const result = await instanceUnderTest.cancelScheduledDraftMessage({
+        id: EntityDataFactory.scheduledDraftMessage.id,
+        emailAddressId: EntityDataFactory.scheduledDraftMessage.emailAddressId,
+      })
+
+      expect(result).toEqual(EntityDataFactory.scheduledDraftMessage.id)
+    })
+
+    it('passes correct arguments to appSync', async () => {
+      const { id, emailAddressId } = EntityDataFactory.scheduledDraftMessage
+      await instanceUnderTest.cancelScheduledDraftMessage({
+        id,
+        emailAddressId,
+      })
+
+      verify(mockAppSync.cancelScheduledDraftMessage(anything())).once()
+      const [cancelArgs] = capture(
+        mockAppSync.cancelScheduledDraftMessage,
+      ).first()
+      expect(cancelArgs).toStrictEqual<typeof cancelArgs>({
+        draftMessageKey: `identityId/email/${emailAddressId}/draft/${id}`,
+        emailAddressId,
+      })
     })
   })
 

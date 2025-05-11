@@ -1,0 +1,13 @@
+fragment ScheduledDraftMessage on ScheduledDraftMessage {
+  draftMessageKey
+  emailAddressId
+  sendAtEpochMs
+  state
+  createdAtEpochMs
+  updatedAtEpochMs
+  owner
+  owners {
+    id
+    issuer
+  }
+}

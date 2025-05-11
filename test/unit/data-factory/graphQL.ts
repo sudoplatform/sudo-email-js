@@ -23,6 +23,8 @@ import {
   Owner,
   ProvisionEmailAddressPublicKeyInput,
   PublicKey,
+  ScheduledDraftMessage,
+  ScheduledDraftMessageState,
   SealedAttribute,
   SealedEmailMessage,
   SupportedDomains,
@@ -233,4 +235,16 @@ export class GraphQLDataFactory {
       },
     },
   ]
+
+  static readonly scheduledDraftMessage: ScheduledDraftMessage = {
+    draftMessageKey: 'dummyPrefix/dummyId',
+    emailAddressId: 'dummyEmailAddress',
+    owner: 'dummyOwner',
+    owners: [GraphQLDataFactory.owner],
+    state: ScheduledDraftMessageState.Scheduled,
+    sendAtEpochMs: new Date(1.0).getTime(),
+    createdAtEpochMs: new Date(1.0).getTime(),
+    updatedAtEpochMs: new Date(1.0).getTime(),
+    __typename: 'ScheduledDraftMessage',
+  }
 }
