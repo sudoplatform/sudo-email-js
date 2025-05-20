@@ -106,6 +106,7 @@ import { DeleteMessagesByFolderIdUseCase } from '../../../src/private/domain/use
 import { ScheduleSendDraftMessageUseCase } from '../../../src/private/domain/use-cases/draft/scheduleSendDraftMessageUseCase'
 import { DateTime } from 'luxon'
 import { CancelScheduledDraftMessageUseCase } from '../../../src/private/domain/use-cases/draft/cancelScheduledDraftMessageUseCase'
+import { ListScheduledDraftMessagesForEmailAddressIdUseCase } from '../../../src/private/domain/use-cases/draft/listScheduledDraftMessagesForEmailAddressIdUseCase'
 
 // Constructor mocks
 
@@ -329,19 +330,27 @@ const JestMockListDraftEmailMessageMetadataForEmailAddressIdUseCase =
     typeof ListDraftEmailMessageMetadataForEmailAddressIdUseCase
   >
 jest.mock(
-  '../../../src/private/domain/use-cases/draft/scheduleSendDraftMessageUseCase.ts',
+  '../../../src/private/domain/use-cases/draft/scheduleSendDraftMessageUseCase',
 )
 const JestMockScheduleSendDraftMessageUseCase =
   ScheduleSendDraftMessageUseCase as jest.MockedClass<
     typeof ScheduleSendDraftMessageUseCase
   >
 jest.mock(
-  '../../../src/private/domain/use-cases/draft/cancelScheduledDraftMessageUseCase.ts',
+  '../../../src/private/domain/use-cases/draft/cancelScheduledDraftMessageUseCase',
 )
 const JestMockCancelScheduledDraftMessageUseCase =
   CancelScheduledDraftMessageUseCase as jest.MockedClass<
     typeof CancelScheduledDraftMessageUseCase
   >
+jest.mock(
+  '../../../src/private/domain/use-cases/draft/listScheduledDraftMessagesForEmailAddressIdUseCase',
+)
+const JestMockListScheduledDraftMessagesForEmailAddressIdUseCase =
+  ListScheduledDraftMessagesForEmailAddressIdUseCase as jest.MockedClass<
+    typeof ListScheduledDraftMessagesForEmailAddressIdUseCase
+  >
+
 jest.mock(
   '../../../src/private/domain/use-cases/message/getEmailMessageUseCase',
 )
@@ -501,6 +510,8 @@ describe('SudoEmailClient Test Suite', () => {
     mock<ScheduleSendDraftMessageUseCase>()
   const mockCancelScheduledDraftMessageUseCase =
     mock<CancelScheduledDraftMessageUseCase>()
+  const mocklistScheduledDraftMessagesForEmailAddressIdUseCase =
+    mock<ListScheduledDraftMessagesForEmailAddressIdUseCase>()
   const mockUpdateEmailMessagesUseCase = mock<UpdateEmailMessagesUseCase>()
   const mockGetEmailMessageUseCase = mock<GetEmailMessageUseCase>()
   const mockListEmailMessagesUseCase = mock<ListEmailMessagesUseCase>()
@@ -582,6 +593,7 @@ describe('SudoEmailClient Test Suite', () => {
     reset(mockListDraftEmailMessageMetadataUseCase)
     reset(mockScheduleSendDraftMessageUseCase)
     reset(mockCancelScheduledDraftMessageUseCase)
+    reset(mocklistScheduledDraftMessagesForEmailAddressIdUseCase)
     reset(mockListDraftEmailMessageMetadataForEmailAddressIdUseCase)
     reset(mockUpdateEmailMessagesUseCase)
     reset(mockGetEmailMessageUseCase)
@@ -636,6 +648,7 @@ describe('SudoEmailClient Test Suite', () => {
     JestMockListDraftEmailMessageMetadataUseCase.mockClear()
     JestMockScheduleSendDraftMessageUseCase.mockClear()
     JestMockCancelScheduledDraftMessageUseCase.mockClear()
+    JestMockListScheduledDraftMessagesForEmailAddressIdUseCase.mockClear()
     JestMockListDraftEmailMessageMetadataForEmailAddressIdUseCase.mockClear()
     JestMockUpdateEmailMessagesUseCase.mockClear()
     JestMockGetEmailMessageUseCase.mockClear()
@@ -750,6 +763,9 @@ describe('SudoEmailClient Test Suite', () => {
     )
     JestMockCancelScheduledDraftMessageUseCase.mockImplementation(() =>
       instance(mockCancelScheduledDraftMessageUseCase),
+    )
+    JestMockListScheduledDraftMessagesForEmailAddressIdUseCase.mockImplementation(
+      () => instance(mocklistScheduledDraftMessagesForEmailAddressIdUseCase),
     )
     JestMockListDraftEmailMessageMetadataForEmailAddressIdUseCase.mockImplementation(
       () => instance(mockListDraftEmailMessageMetadataForEmailAddressIdUseCase),
@@ -2600,6 +2616,47 @@ describe('SudoEmailClient Test Suite', () => {
       expect(useCaseArgs).toStrictEqual<typeof useCaseArgs>({
         id: EntityDataFactory.scheduledDraftMessage.id,
         emailAddressId: EntityDataFactory.scheduledDraftMessage.emailAddressId,
+      })
+    })
+  })
+
+  describe('listScheduledDraftMessagesForEmailAddressId', () => {
+    beforeEach(() => {
+      when(
+        mocklistScheduledDraftMessagesForEmailAddressIdUseCase.execute(
+          anything(),
+        ),
+      ).thenResolve({
+        scheduledDraftMessages: [EntityDataFactory.scheduledDraftMessage],
+      })
+    })
+
+    it('generates use case', async () => {
+      await instanceUnderTest.listScheduledDraftMessagesForEmailAddressId({
+        emailAddressId: EntityDataFactory.emailAccount.id,
+      })
+      expect(
+        ListScheduledDraftMessagesForEmailAddressIdUseCase,
+      ).toHaveBeenCalledTimes(1)
+    })
+
+    it('returns expected output on success', async () => {
+      const result =
+        await instanceUnderTest.listScheduledDraftMessagesForEmailAddressId({
+          emailAddressId: EntityDataFactory.emailAccount.id,
+        })
+
+      expect(result.items).toEqual([EntityDataFactory.scheduledDraftMessage])
+      expect(result.nextToken).toBeFalsy()
+
+      const [useCaseArgs] = capture(
+        mocklistScheduledDraftMessagesForEmailAddressIdUseCase.execute,
+      ).first()
+      expect(useCaseArgs).toStrictEqual<typeof useCaseArgs>({
+        emailAddressId: EntityDataFactory.emailAccount.id,
+        filter: undefined,
+        limit: undefined,
+        nextToken: undefined,
       })
     })
   })

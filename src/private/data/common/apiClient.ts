@@ -137,6 +137,10 @@ import {
   CancelScheduledDraftMessageInput,
   CancelScheduledDraftMessageMutation,
   CancelScheduledDraftMessageDocument,
+  ListScheduledDraftMessagesForEmailAddressIdQuery,
+  ListScheduledDraftMessagesForEmailAddressIdInput,
+  ScheduledDraftMessageConnection,
+  ListScheduledDraftMessagesForEmailAddressIdDocument,
 } from '../../../gen/graphqlTypes'
 import { ErrorTransformer } from './transformer/errorTransformer'
 
@@ -546,6 +550,20 @@ export class ApiClient {
         calleeName: this.cancelScheduledDraftMessage.name,
       })
     return data.cancelScheduledDraftMessage
+  }
+
+  public async listScheduledDraftMessagesForEmailAddressId(
+    input: ListScheduledDraftMessagesForEmailAddressIdInput,
+  ): Promise<ScheduledDraftMessageConnection> {
+    const data =
+      await this.performQuery<ListScheduledDraftMessagesForEmailAddressIdQuery>(
+        {
+          query: ListScheduledDraftMessagesForEmailAddressIdDocument,
+          variables: { input },
+          calleeName: this.listScheduledDraftMessagesForEmailAddressId.name,
+        },
+      )
+    return data.listScheduledDraftMessagesForEmailAddressId
   }
 
   public onEmailMessageDeleted(

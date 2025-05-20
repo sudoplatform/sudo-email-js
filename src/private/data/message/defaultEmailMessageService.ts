@@ -27,6 +27,7 @@ import {
   Rfc822HeaderInput,
   S3EmailObjectInput,
   SealedEmailMessage,
+  ListScheduledDraftMessagesForEmailAddressIdInput as ListScheduledDraftMessagesForEmailAddressIdRequest,
 } from '../../../gen/graphqlTypes'
 import {
   ConnectionState,
@@ -63,6 +64,8 @@ import {
   ListEmailMessagesForEmailFolderIdOutput,
   ListEmailMessagesInput,
   ListEmailMessagesOutput,
+  ListScheduledDraftMessagesForEmailAddressIdInput,
+  ListScheduledDraftMessagesOutput,
   SaveDraftInput,
   ScheduleSendDraftMessageInput,
   SendEmailMessageOutput,
@@ -106,6 +109,7 @@ import { SendEmailMessageResultTransformer } from './transformer/sendEmailMessag
 import { EmailAddressPublicInfoEntity } from '../../domain/entities/account/emailAddressPublicInfoEntity'
 import { ScheduledDraftMessageEntity } from '../../domain/entities/message/scheduledDraftMessageEntity'
 import { ScheduledDraftMessageTransformer } from './transformer/scheduledDraftMessageTransformer'
+import { ScheduledDraftMessageFilterTransformer } from './transformer/scheduledDraftMessageFilterTransformer'
 
 const EmailAddressEntityCodec = t.intersection(
   [t.type({ emailAddress: t.string }), t.partial({ displayName: t.string })],
@@ -335,6 +339,11 @@ export class DefaultEmailMessageService implements EmailMessageService {
     emailAddressId,
     sendAt,
   }: ScheduleSendDraftMessageInput): Promise<ScheduledDraftMessageEntity> {
+    this.log.debug(this.scheduleSendDraftMessage.name, {
+      id,
+      emailAddressId,
+      sendAt,
+    })
     const keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
     const key = `${keyPrefix}/draft/${id}`
     let keyId: string | undefined
@@ -392,14 +401,17 @@ export class DefaultEmailMessageService implements EmailMessageService {
       sendAtEpochMs: sendAt.getTime(),
       symmetricKey: Base64.encode(symmetricKey),
     })
-    const transformer = new ScheduledDraftMessageTransformer()
-    return transformer.toEntity(result)
+    return ScheduledDraftMessageTransformer.toEntity(result)
   }
 
   async cancelScheduledDraftMessage({
     id,
     emailAddressId,
   }: CancelScheduledDraftMessageInput): Promise<string> {
+    this.log.debug(this.cancelScheduledDraftMessage.name, {
+      id,
+      emailAddressId,
+    })
     const keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
     const key = `${keyPrefix}/draft/${id}`
 
@@ -408,6 +420,37 @@ export class DefaultEmailMessageService implements EmailMessageService {
       emailAddressId,
     })
     return result.substring(result.lastIndexOf('/') + 1)
+  }
+
+  async listScheduledDraftMessagesForEmailAddressId({
+    emailAddressId,
+    filter,
+    limit,
+    nextToken,
+  }: ListScheduledDraftMessagesForEmailAddressIdInput): Promise<ListScheduledDraftMessagesOutput> {
+    this.log.debug(this.listScheduledDraftMessagesForEmailAddressId.name, {
+      emailAddressId,
+      filter,
+      limit,
+      nextToken,
+    })
+
+    const input: ListScheduledDraftMessagesForEmailAddressIdRequest = {
+      emailAddressId,
+      limit,
+      nextToken,
+    }
+    if (filter) {
+      input.filter = ScheduledDraftMessageFilterTransformer.toGraphQl(filter)
+    }
+    const result =
+      await this.appSync.listScheduledDraftMessagesForEmailAddressId(input)
+    return {
+      nextToken: result.nextToken ?? undefined,
+      scheduledDraftMessages: result.items.map((s) =>
+        ScheduledDraftMessageTransformer.toEntity(s),
+      ),
+    }
   }
 
   async sendMessage({

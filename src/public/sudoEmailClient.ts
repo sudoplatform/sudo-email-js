@@ -89,6 +89,7 @@ import { InvalidArgumentError } from './errors'
 import {
   EmailAttachment,
   ScheduledDraftMessage,
+  ScheduledDraftMessageState,
   UpdatedEmailMessageSuccess,
 } from './typings'
 import {
@@ -129,6 +130,7 @@ import { UpdateCustomEmailFolderUseCase } from '../private/domain/use-cases/fold
 import { DeleteMessagesByFolderIdUseCase } from '../private/domain/use-cases/folder/deleteMessagesByFolderIdUseCase'
 import { ScheduleSendDraftMessageUseCase } from '../private/domain/use-cases/draft/scheduleSendDraftMessageUseCase'
 import { CancelScheduledDraftMessageUseCase } from '../private/domain/use-cases/draft/cancelScheduledDraftMessageUseCase'
+import { ListScheduledDraftMessagesForEmailAddressIdUseCase } from '../private/domain/use-cases/draft/listScheduledDraftMessagesForEmailAddressIdUseCase'
 
 /**
  * Pagination interface designed to be extended for list interfaces.
@@ -569,6 +571,71 @@ export interface CancelScheduledDraftMessageInput {
   emailAddressId: string
 }
 
+/**
+ * @property {ScheduledDraftMessageState} equal Return only results that match the given state.
+ */
+export interface EqualStateFilter {
+  equal: ScheduledDraftMessageState
+  oneOf?: never
+  notEqual?: never
+  notOneOf?: never
+}
+
+/**
+ * @property {ScheduledDraftMessageState[]} oneOf Return only results that match one of the given states.
+ */
+export interface OneOfStateFilter {
+  oneOf: ScheduledDraftMessageState[]
+  equal?: never
+  notEqual?: never
+  notOneOf?: never
+}
+
+/**
+ * @property {ScheduledDraftMessageState} notEqual Return only results that do not match the given state.
+ */
+export interface NotEqualStateFilter {
+  notEqual: ScheduledDraftMessageState
+  equal?: never
+  oneOf?: never
+  notOneOf?: never
+}
+
+/**
+ * @property {ScheduledDraftMessageState[]} notOneOf Return only results that do not match any of the given states.
+ */
+export interface NotOneOfStateFilter {
+  notOneOf: ScheduledDraftMessageState[]
+  equal?: never
+  oneOf?: never
+  notEqual?: never
+}
+
+/**
+ * @interface ScheduledDraftMessageFilterInput
+ * @property {EqualStateFilter | OneOfStateFilter | NotEqualStateFilter | NotOneOfStateFilter} state Used to filter results based on `state` property
+ */
+export interface ScheduledDraftMessageFilterInput {
+  state?:
+    | EqualStateFilter
+    | OneOfStateFilter
+    | NotEqualStateFilter
+    | NotOneOfStateFilter
+}
+
+/**
+ * Input for `SudoEmailClient.listScheduledDraftMessagesForEmailAddressId` method.
+ *
+ * @interface ListScheduledDraftMessagesForEmailAddressIdInput
+ * @property {string} emailAddressId The identifier of the email address to list for.
+ * @property {ScheduledDraftMessageFilterInput} filter Properties used to filter the results.
+ */
+export interface ListScheduledDraftMessagesForEmailAddressIdInput
+  extends Pagination {
+  emailAddressId: string
+  filter?: ScheduledDraftMessageFilterInput
+}
+
 export interface SudoEmailClient {
   /**
    * Provision an email address.
@@ -902,6 +969,15 @@ export interface SudoEmailClient {
   cancelScheduledDraftMessage(
     input: CancelScheduledDraftMessageInput,
   ): Promise<string>
+
+  /**
+   * List scheduled draft messages associated with an email address.
+   * @param {ListScheduledDraftMessagesForEmailAddressIdInput} input Parameters ued to list scheduled draft messages for an email address
+   * @returns {ListOutput<ScheduledDraftMessage>}
+   */
+  listScheduledDraftMessagesForEmailAddressId(
+    input: ListScheduledDraftMessagesForEmailAddressIdInput,
+  ): Promise<ListOutput<ScheduledDraftMessage>>
 
   /**
    * Send an email message using RFC 6854 (supersedes RFC 822)(https://tools.ietf.org/html/rfc6854) data.
@@ -1853,6 +1929,40 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     )
     const result = await useCase.execute({ id, emailAddressId })
     return result
+  }
+
+  public async listScheduledDraftMessagesForEmailAddressId({
+    emailAddressId,
+    filter,
+    limit,
+    nextToken,
+  }: ListScheduledDraftMessagesForEmailAddressIdInput): Promise<
+    ListOutput<ScheduledDraftMessage>
+  > {
+    this.log.debug(this.listScheduledDraftMessagesForEmailAddressId.name, {
+      emailAddressId,
+      filter,
+      limit,
+      nextToken,
+    })
+
+    const useCase = new ListScheduledDraftMessagesForEmailAddressIdUseCase(
+      this.emailAccountService,
+      this.emailMessageService,
+    )
+
+    const { scheduledDraftMessages, nextToken: resultNextToken } =
+      await useCase.execute({
+        emailAddressId,
+        filter,
+        limit,
+        nextToken,
+      })
+
+    return {
+      items: scheduledDraftMessages,
+      nextToken: resultNextToken,
+    }
   }
 
   public async getEmailMessage({

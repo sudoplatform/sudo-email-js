@@ -317,6 +317,13 @@ export type ListEmailMessagesInput = {
   specifiedDateRange?: InputMaybe<EmailMessageDateRangeInput>
 }
 
+export type ListScheduledDraftMessagesForEmailAddressIdInput = {
+  emailAddressId: Scalars['ID']['input']
+  filter?: InputMaybe<ScheduledDraftMessageFilterInput>
+  limit?: InputMaybe<Scalars['Int']['input']>
+  nextToken?: InputMaybe<Scalars['String']['input']>
+}
+
 export type LookupEmailAddressesPublicInfoInput = {
   emailAddresses: Array<Scalars['String']['input']>
 }
@@ -478,6 +485,7 @@ export type Query = {
   listEmailMessages: EmailMessageConnection
   listEmailMessagesForEmailAddressId: EmailMessageConnection
   listEmailMessagesForEmailFolderId: EmailMessageConnection
+  listScheduledDraftMessagesForEmailAddressId: ScheduledDraftMessageConnection
   lookupEmailAddressesPublicInfo: LookupEmailAddressesPublicInfoResponse
 }
 
@@ -536,6 +544,10 @@ export type QueryListEmailMessagesForEmailFolderIdArgs = {
   input: ListEmailMessagesForEmailFolderIdInput
 }
 
+export type QueryListScheduledDraftMessagesForEmailAddressIdArgs = {
+  input: ListScheduledDraftMessagesForEmailAddressIdInput
+}
+
 export type QueryLookupEmailAddressesPublicInfoArgs = {
   input: LookupEmailAddressesPublicInfoInput
 }
@@ -578,11 +590,31 @@ export type ScheduledDraftMessage = {
   updatedAtEpochMs: Scalars['Float']['output']
 }
 
+export type ScheduledDraftMessageConnection = {
+  __typename?: 'ScheduledDraftMessageConnection'
+  items: Array<ScheduledDraftMessage>
+  nextToken?: Maybe<Scalars['String']['output']>
+}
+
+export type ScheduledDraftMessageFilterInput = {
+  and?: InputMaybe<Array<InputMaybe<ScheduledDraftMessageFilterInput>>>
+  not?: InputMaybe<ScheduledDraftMessageFilterInput>
+  or?: InputMaybe<Array<InputMaybe<ScheduledDraftMessageFilterInput>>>
+  state?: InputMaybe<ScheduledDraftMessageStateFilterInput>
+}
+
 export enum ScheduledDraftMessageState {
   Cancelled = 'CANCELLED',
   Failed = 'FAILED',
   Scheduled = 'SCHEDULED',
   Sent = 'SENT',
+}
+
+export type ScheduledDraftMessageStateFilterInput = {
+  eq?: InputMaybe<ScheduledDraftMessageState>
+  in?: InputMaybe<Array<InputMaybe<ScheduledDraftMessageState>>>
+  ne?: InputMaybe<ScheduledDraftMessageState>
+  notIn?: InputMaybe<Array<InputMaybe<ScheduledDraftMessageState>>>
 }
 
 export type SealedAttribute = {
@@ -1839,6 +1871,29 @@ export type GetEmailAddressBlocklistQuery = {
         plainTextType: string
         base64EncodedSealedData: string
       }
+    }>
+  }
+}
+
+export type ListScheduledDraftMessagesForEmailAddressIdQueryVariables = Exact<{
+  input: ListScheduledDraftMessagesForEmailAddressIdInput
+}>
+
+export type ListScheduledDraftMessagesForEmailAddressIdQuery = {
+  __typename?: 'Query'
+  listScheduledDraftMessagesForEmailAddressId: {
+    __typename?: 'ScheduledDraftMessageConnection'
+    nextToken?: string | null
+    items: Array<{
+      __typename?: 'ScheduledDraftMessage'
+      draftMessageKey: string
+      emailAddressId: string
+      sendAtEpochMs: number
+      state: ScheduledDraftMessageState
+      createdAtEpochMs: number
+      updatedAtEpochMs: number
+      owner: string
+      owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
     }>
   }
 }
@@ -6388,6 +6443,113 @@ export const GetEmailAddressBlocklistDocument = {
 } as unknown as DocumentNode<
   GetEmailAddressBlocklistQuery,
   GetEmailAddressBlocklistQueryVariables
+>
+export const ListScheduledDraftMessagesForEmailAddressIdDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: {
+        kind: 'Name',
+        value: 'ListScheduledDraftMessagesForEmailAddressId',
+      },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: {
+                kind: 'Name',
+                value: 'ListScheduledDraftMessagesForEmailAddressIdInput',
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: {
+              kind: 'Name',
+              value: 'listScheduledDraftMessagesForEmailAddressId',
+            },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'items' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'ScheduledDraftMessage' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'nextToken' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ScheduledDraftMessage' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ScheduledDraftMessage' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'draftMessageKey' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'sendAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owners' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  ListScheduledDraftMessagesForEmailAddressIdQuery,
+  ListScheduledDraftMessagesForEmailAddressIdQueryVariables
 >
 export const OnEmailMessageDeletedDocument = {
   kind: 'Document',

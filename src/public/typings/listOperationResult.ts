@@ -34,7 +34,7 @@ export type ListEmailAddressesResult = ListOperationResult<
  * - On partial success, contains the list of email messages that
  *   were fetched and unsealed successfully as well as the list of
  *   email messages that could not be unsealed successfully and
- *   the error indicating why unsealing failed. An email messages
+ *   the error indicating why unsealing failed. An email message
  *   may fail to unseal if the client version is not up to date
  *   or the required cryptographic key is missing from the client
  *   device.

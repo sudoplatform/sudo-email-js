@@ -28,10 +28,12 @@ import {
   EmailMessage,
   EmailMessageSubscriber,
   EncryptionStatus,
+  ScheduledDraftMessageState,
 } from '../../../../../src'
 import {
   OnEmailMessageDeletedSubscription,
   UpdateEmailMessagesStatus,
+  ScheduledDraftMessageState as ScheduledDraftMessageStateGql,
 } from '../../../../../src/gen/graphqlTypes'
 import { ApiClient } from '../../../../../src/private/data/common/apiClient'
 import {
@@ -2195,6 +2197,60 @@ describe('DefaultEmailMessageService Test Suite', () => {
       expect(cancelArgs).toStrictEqual<typeof cancelArgs>({
         draftMessageKey: `identityId/email/${emailAddressId}/draft/${id}`,
         emailAddressId,
+      })
+    })
+  })
+
+  describe('listScheduledDraftMessagesForEmailAddressId', () => {
+    beforeEach(() => {
+      when(
+        mockAppSync.listScheduledDraftMessagesForEmailAddressId(anything()),
+      ).thenResolve(GraphQLDataFactory.scheduledDraftMessageConnection)
+    })
+
+    it('returns expected result on success', async () => {
+      const result =
+        await instanceUnderTest.listScheduledDraftMessagesForEmailAddressId({
+          emailAddressId: EntityDataFactory.emailAccount.id,
+        })
+
+      expect(result).toEqual<typeof result>({
+        scheduledDraftMessages: [EntityDataFactory.scheduledDraftMessage],
+        nextToken: undefined,
+      })
+    })
+
+    it('passes correct arguments to appSync', async () => {
+      const { emailAddressId } = EntityDataFactory.scheduledDraftMessage
+      const filter = {
+        state: {
+          notEqual: ScheduledDraftMessageState.CANCELLED,
+        },
+      }
+      const limit = 5
+      const nextToken = 'dummyToken'
+      await instanceUnderTest.listScheduledDraftMessagesForEmailAddressId({
+        emailAddressId,
+        filter,
+        limit,
+        nextToken,
+      })
+
+      verify(
+        mockAppSync.listScheduledDraftMessagesForEmailAddressId(anything()),
+      ).once()
+      const [listArgs] = capture(
+        mockAppSync.listScheduledDraftMessagesForEmailAddressId,
+      ).first()
+      expect(listArgs).toStrictEqual<typeof listArgs>({
+        emailAddressId,
+        filter: {
+          state: {
+            ne: ScheduledDraftMessageStateGql.Cancelled,
+          },
+        },
+        limit,
+        nextToken,
       })
     })
   })

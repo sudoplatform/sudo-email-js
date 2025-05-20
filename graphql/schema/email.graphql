@@ -226,6 +226,27 @@ input CancelScheduledDraftMessageInput {
   emailAddressId: String!
 }
 
+input ScheduledDraftMessageStateFilterInput {
+  ne: ScheduledDraftMessageState
+  eq: ScheduledDraftMessageState
+  in: [ScheduledDraftMessageState]
+  notIn: [ScheduledDraftMessageState]
+}
+
+input ScheduledDraftMessageFilterInput {
+  state: ScheduledDraftMessageStateFilterInput
+  and: [ScheduledDraftMessageFilterInput]
+  or: [ScheduledDraftMessageFilterInput]
+  not: ScheduledDraftMessageFilterInput
+}
+
+input ListScheduledDraftMessagesForEmailAddressIdInput {
+  emailAddressId: ID!
+  limit: Int
+  nextToken: String
+  filter: ScheduledDraftMessageFilterInput
+}
+
 input SealedAttributeInput {
   algorithm: String!
   keyId: String!
@@ -398,6 +419,11 @@ type EmailMessageConnection {
   nextToken: String
 }
 
+type ScheduledDraftMessageConnection {
+  items: [ScheduledDraftMessage!]!
+  nextToken: String
+}
+
 type EmailAddressPublicKey {
   publicKey: String!
   keyFormat: KeyFormat!
@@ -503,6 +529,10 @@ type Query {
   getEmailAddressBlocklist(
     input: GetEmailAddressBlocklistInput!
   ): GetEmailAddressBlocklistResponse!
+
+  listScheduledDraftMessagesForEmailAddressId(
+    input: ListScheduledDraftMessagesForEmailAddressIdInput!
+  ): ScheduledDraftMessageConnection!
 }
 
 type Mutation {

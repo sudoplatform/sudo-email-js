@@ -9,13 +9,12 @@ import {
   AddressNotFoundError,
   DraftEmailMessageMetadata,
   EmailAddress,
-  MessageNotFoundError,
   RecordNotFoundError,
   SudoEmailClient,
 } from '../../../src'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
-import { setupEmailClient } from '../util/emailClientLifecycle'
+import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 import { DateTime } from 'luxon'
@@ -73,6 +72,17 @@ describe('CancelScheduledDraftMessage Integration Test Suite', () => {
     })
   })
 
+  afterEach(async () => {
+    await instanceUnderTest.deleteDraftEmailMessages({
+      ids: [draftMetadata.id],
+      emailAddressId: emailAddress.id,
+    })
+    await teardown(
+      { emailAddresses: [emailAddress], sudos: [sudo] },
+      { emailClient: instanceUnderTest, profilesClient, userClient },
+    )
+  })
+
   it('throws AddressNotFoundError if passed invalid emailAddressId', async () => {
     await expect(
       instanceUnderTest.cancelScheduledDraftMessage({
@@ -82,7 +92,7 @@ describe('CancelScheduledDraftMessage Integration Test Suite', () => {
     ).rejects.toThrow(AddressNotFoundError)
   })
 
-  it.only('throws RecordNotFoundError if passed and invalid draftId', async () => {
+  it('throws RecordNotFoundError if passed and invalid draftId', async () => {
     await expect(
       instanceUnderTest.cancelScheduledDraftMessage({
         id: v4(),
@@ -102,7 +112,7 @@ describe('CancelScheduledDraftMessage Integration Test Suite', () => {
         id: v4(),
         emailAddressId: emailAddress2.id,
       }),
-    ).rejects.toThrow(ServiceError)
+    ).rejects.toThrow(RecordNotFoundError)
   })
 
   it('returns expected result on success', async () => {

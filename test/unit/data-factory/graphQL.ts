@@ -24,6 +24,7 @@ import {
   ProvisionEmailAddressPublicKeyInput,
   PublicKey,
   ScheduledDraftMessage,
+  ScheduledDraftMessageConnection,
   ScheduledDraftMessageState,
   SealedAttribute,
   SealedEmailMessage,
@@ -247,4 +248,10 @@ export class GraphQLDataFactory {
     updatedAtEpochMs: new Date(1.0).getTime(),
     __typename: 'ScheduledDraftMessage',
   }
+
+  static readonly scheduledDraftMessageConnection: ScheduledDraftMessageConnection =
+    {
+      items: [GraphQLDataFactory.scheduledDraftMessage],
+      nextToken: undefined,
+    }
 }
