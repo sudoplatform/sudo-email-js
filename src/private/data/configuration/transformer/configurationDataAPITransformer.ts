@@ -22,6 +22,7 @@ export class ConfigurationDataAPITransformer {
       encryptedEmailMessageRecipientsLimit:
         entity.encryptedEmailMessageRecipientsLimit,
       sendEncryptedEmailEnabled: entity.sendEncryptedEmailEnabled,
+      prohibitedFileExtensions: entity.prohibitedFileExtensions,
     }
 
     return transformed
@@ -38,6 +39,7 @@ export class ConfigurationDataAPITransformer {
       encryptedEmailMessageRecipientsLimit:
         data.encryptedEmailMessageRecipientsLimit,
       sendEncryptedEmailEnabled: data.sendEncryptedEmailEnabled,
+      prohibitedFileExtensions: data.prohibitedFileExtensions,
     }
   }
 }

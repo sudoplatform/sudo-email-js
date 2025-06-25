@@ -10,10 +10,10 @@
   "scripts": {
     "prepare": "husky",
     "lint": "npm-run-all --parallel lint:eslint lint:prettier",
-    "lint:eslint": "eslint \"{bin,test,src}/**/*.{js,json,jsx,ts,tsx}\"",
-    "lint:prettier": "prettier -l \"{bin,test,src}/**/*.{js,json,jsx,ts,tsx,yml}\"",
+    "lint:eslint": "eslint \"{bin,test,src}/**/*.{js,jsx,ts,tsx}\"",
+    "lint:prettier": "prettier -l \"{bin,test,src}/**/*.{js,jsx,ts,tsx,yml}\"",
     "codegen": "graphql-codegen -c codegen.yml",
-    "verify": "yarn audit-with-suppressions && yarn lint",
+    "verify": "./node_modules/.bin/audit-with-suppressions && yarn lint",
     "unit-test": "jest --verbose test/unit",
     "integration-test": "jest --verbose test/integration",
     "clean": "rm -rf ./docs ./lib ./cjs ./types",
@@ -81,7 +81,6 @@
     "debug": "^4.4.0",
     "ua-parser-js": "^2.0.0",
     "json5": "^2.2.3",
-    "**/undici": "^5.22.0",
     "fast-xml-parser": "^4.5.1",
     "semver": "^7.5.2",
     "@babel/traverse": "^7.26.5",
@@ -98,9 +97,9 @@
     "@graphql-codegen/typescript-operations": "^4.5.1",
     "@graphql-typed-document-node/apollo-client-2": "^1.0.0",
     "@sudoplatform/sudo-api-client": "^15.0.0",
-    "@sudoplatform/sudo-common": "^10.0.4",
+    "@sudoplatform/sudo-common": "^10.0.5",
     "@sudoplatform/sudo-entitlements": "^17.0.0",
-    "@sudoplatform/sudo-entitlements-admin": "^12.0.0",
+    "@sudoplatform/sudo-entitlements-admin": "^12.0.1",
     "@sudoplatform/sudo-profiles": "^18.0.1",
     "@sudoplatform/sudo-user": "^15.1.1",
     "@types/jest": "^29.5.14",
@@ -144,5 +143,6 @@
   },
   "engines": {
     "node": ">=20"
-  }
+  },
+  "packageManager": "yarn@4.9.2+sha256.ca4310f8ba997b4643a000ce512d9772e01c1485df35511114b325315960acb7"
 }

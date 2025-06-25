@@ -5,7 +5,6 @@
  */
 
 import {
-  Base64,
   CachePolicy,
   DefaultLogger,
   ListOperationResultStatus,
@@ -39,6 +38,7 @@ import { runTestsIf } from '../../util/util'
 import { delay } from '../../util/delay'
 import { insertLinebreaks } from '../../../src/private/util/stringUtils'
 import { encodeWordIfRequired } from '../../util/encoding'
+import { EmailAttachment } from '../../../types'
 
 describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   jest.setTimeout(240000)
@@ -695,6 +695,86 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         inlineAttachments: badDraft.inlineAttachments ?? [],
       }),
     ).rejects.toThrow(InvalidEmailContentsError)
+  })
+
+  describe('ensure all cases with bad attachments throw InvalidEmailContentsError', () => {
+    const pdfAttachment = {
+      mimeType: 'application/pdf',
+      filename: 'attachment-1.pdf',
+      data: Buffer.from(
+        'Content of attachment 1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+      ).toString('base64'),
+      inlineAttachment: false,
+    }
+    const imageAttachment = {
+      mimeType: 'image/jpeg',
+      filename: 'attachment-2.jpeg',
+      data: Buffer.from('Content of attachment 2').toString('base64'),
+      inlineAttachment: false,
+    }
+    const jsAttachment = {
+      mimeType: 'text/javascript',
+      filename: 'attachment-3.js',
+      data: Buffer.from('Content of attachment 3').toString('base64'),
+      inlineAttachment: false,
+    }
+    const infAttachment = {
+      mimeType: 'application/octet-stream',
+      filename: 'attachment-4.inf',
+      data: Buffer.from('Content of attachment 4').toString('base64'),
+      inlineAttachment: false,
+    }
+
+    it('attempts internal/external sendMessage with various attachments', async () => {
+      // Rather than create and tear down a separate test/email address ecosystem
+      // for each case, create a single test with multiple attempts, including both
+      // in and out-of network
+      const addresses: string[] = [
+        emailAddress1.emailAddress,
+        successSimulatorAddress,
+      ]
+      const testCases: {
+        attachments: EmailAttachment[]
+        inlineAttachments: EmailAttachment[]
+      }[] = [
+        {
+          attachments: [pdfAttachment, jsAttachment],
+          inlineAttachments: [],
+        },
+        {
+          attachments: [infAttachment],
+          inlineAttachments: [pdfAttachment],
+        },
+        {
+          attachments: [pdfAttachment],
+          inlineAttachments: [jsAttachment, infAttachment],
+        },
+        {
+          attachments: [],
+          inlineAttachments: [imageAttachment, jsAttachment],
+        },
+      ]
+      addresses.forEach((address) => {
+        testCases.forEach(async (testCase) => {
+          await expect(
+            instanceUnderTest.sendEmailMessage({
+              senderEmailAddressId: emailAddress1.id,
+              emailMessageHeader: {
+                from: draftWithAttachments.from[0],
+                to: [{ emailAddress: address }],
+                cc: draftWithAttachments.cc ?? [],
+                bcc: draftWithAttachments.bcc ?? [],
+                replyTo: draftWithAttachments.replyTo ?? [],
+                subject: draftWithAttachments.subject ?? '',
+              },
+              body: draftWithAttachments.body ?? '',
+              attachments: testCase.attachments,
+              inlineAttachments: testCase.inlineAttachments,
+            }),
+          ).rejects.toThrow(InvalidEmailContentsError)
+        })
+      })
+    })
   })
 
   describe('encrypted path', () => {

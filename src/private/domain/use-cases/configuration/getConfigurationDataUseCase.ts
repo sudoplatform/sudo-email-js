@@ -15,6 +15,7 @@ export interface GetConfigurationDataUseCaseOutput {
   emailMessageRecipientsLimit: number
   encryptedEmailMessageRecipientsLimit: number
   sendEncryptedEmailEnabled: boolean
+  prohibitedFileExtensions: string[]
 }
 
 /**

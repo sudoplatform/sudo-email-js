@@ -59,6 +59,7 @@ export class GraphQLDataFactory {
     emailMessageRecipientsLimit: 10,
     encryptedEmailMessageRecipientsLimit: 10,
     sendEncryptedEmailEnabled: true,
+    prohibitedFileExtensions: ['.js', '.exe', '.lib'],
   }
 
   static readonly emailFolder: EmailFolder = {

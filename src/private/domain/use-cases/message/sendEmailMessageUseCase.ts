@@ -9,6 +9,7 @@ import {
   EmailAttachment,
   InNetworkAddressNotFoundError,
   InternetMessageFormatHeader,
+  InvalidEmailContentsError,
   LimitExceededError,
 } from '../../../../public'
 import { EmailMessageDetails } from '../../../util/rfc822MessageDataProcessor'
@@ -94,6 +95,7 @@ export class SendEmailMessageUseCase {
       emailMessageMaxOutboundMessageSize,
       emailMessageRecipientsLimit,
       encryptedEmailMessageRecipientsLimit,
+      prohibitedFileExtensions,
     } = await this.configurationDataService.getConfigurationData()
 
     const { from, to, cc, bcc, replyTo, subject } = emailMessageHeader
@@ -108,6 +110,12 @@ export class SendEmailMessageUseCase {
       attachments,
       inlineAttachments,
     }
+
+    await this.verifyAttachmentValidity(
+      prohibitedFileExtensions,
+      attachments,
+      inlineAttachments,
+    )
 
     // Indicate if outgoing message is forwarding and/or replying to another message
     if (forwardingMessageId) {
@@ -187,5 +195,22 @@ export class SendEmailMessageUseCase {
         emailMessageMaxOutboundMessageSize,
       })
     }
+  }
+
+  private async verifyAttachmentValidity(
+    prohibitedFileExtensions: string[],
+    attachments: EmailAttachment[],
+    inlineAttachments: EmailAttachment[],
+  ) {
+    ;[...attachments, ...inlineAttachments].forEach((attachment) => {
+      // Note this calculation will prohibit filenames with no extensions that match
+      // a prohibited extension
+      const extension = attachment.filename.split('.').pop()?.toLowerCase()
+      if (extension && prohibitedFileExtensions.includes(`.${extension}`)) {
+        throw new InvalidEmailContentsError(
+          `Unsupported file extension ${extension}`,
+        )
+      }
+    })
   }
 }

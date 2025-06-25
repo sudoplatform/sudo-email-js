@@ -12,16 +12,16 @@ import {
 } from '@sudoplatform/sudo-common'
 import { DefaultSudoUserClient } from '@sudoplatform/sudo-user'
 import { WebSudoCryptoProvider } from '@sudoplatform/sudo-web-crypto-provider'
+import { v4 } from 'uuid'
 import {
   ConnectionState,
   DefaultSudoEmailClient,
   EmailMessage,
 } from '../../../src'
+import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 import { delay } from '../../util/delay'
 import { setupEmailClient } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
-import { v4 } from 'uuid'
-import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 
 describe('SDK Tests', () => {
   jest.setTimeout(240000)

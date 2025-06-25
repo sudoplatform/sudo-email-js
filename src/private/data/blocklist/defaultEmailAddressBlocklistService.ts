@@ -112,7 +112,6 @@ export class DefaultEmailAddressBlocklistService
         emailAddressId,
         BlockedEmailAddressActionTransfomer.fromAPItoGraphQL(action),
       )
-    console.debug({ hashedBlockedValues })
 
     const blockEmailAddressesInput: BlockEmailAddressesInput = {
       owner,

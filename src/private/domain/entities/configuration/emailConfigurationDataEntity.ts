@@ -25,4 +25,5 @@ export interface EmailConfigurationDataEntity {
   emailMessageRecipientsLimit: number
   encryptedEmailMessageRecipientsLimit: number
   sendEncryptedEmailEnabled: boolean
+  prohibitedFileExtensions: string[]
 }

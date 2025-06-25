@@ -25,4 +25,5 @@ export interface ConfigurationData {
   emailMessageRecipientsLimit: number
   encryptedEmailMessageRecipientsLimit: number
   sendEncryptedEmailEnabled: boolean
+  prohibitedFileExtensions: string[]
 }

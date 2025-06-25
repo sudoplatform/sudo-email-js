@@ -271,7 +271,6 @@ export class DefaultEmailAccountService implements EmailAccountService {
         keyId,
         KeyType.KeyPair,
       )
-
       if (!status) {
         transformed.status = {
           type: 'Failed',

@@ -47,6 +47,7 @@ export class EntityDataFactory {
     emailMessageRecipientsLimit: 10,
     encryptedEmailMessageRecipientsLimit: 10,
     sendEncryptedEmailEnabled: true,
+    prohibitedFileExtensions: ['.js', '.exe', '.lib'],
   }
 
   static readonly emailAddress: EmailAddressEntity = {

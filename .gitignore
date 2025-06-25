@@ -13,3 +13,5 @@ package.json.old
 .dccache
 .env
 .idea/
+.yarn/install-state.gz
+

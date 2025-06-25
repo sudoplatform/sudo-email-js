@@ -30,6 +30,7 @@ describe('SudoEmailClient GetConfigurationData Test Suite', () => {
       )
       expect(result.emailMessageRecipientsLimit).toBeGreaterThanOrEqual(1)
       expect(result).toHaveProperty('sendEncryptedEmailEnabled')
+      expect(result.prohibitedFileExtensions.length).toBeGreaterThan(20)
     })
   })
 })
