@@ -26,6 +26,7 @@ import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransfo
 import { EmailFolderEntityTransformer } from './transformer/emailFolderEntityTransformer'
 import { DeviceKeyWorker, KeyType } from '../common/deviceKeyWorker'
 import { EncryptionAlgorithm } from '@sudoplatform/sudo-common'
+import { KeyNotFoundError } from '@sudoplatform/sudo-web-crypto-provider'
 
 export class DefaultEmailFolderService implements EmailFolderService {
   private readonly transformer: EmailFolderEntityTransformer
@@ -71,15 +72,24 @@ export class DefaultEmailFolderService implements EmailFolderService {
     }
   }
 
-  async createCustomEmailFolderForEmailAddressId(
-    input: CreateCustomEmailFolderForEmailAddressIdInput,
-  ): Promise<EmailFolderEntity> {
-    const symmetricKeyId =
-      (await this.deviceKeyWorker.getCurrentSymmetricKeyId()) ??
-      (await this.deviceKeyWorker.generateCurrentSymmetricKey())
+  async createCustomEmailFolderForEmailAddressId({
+    customFolderName,
+    emailAddressId,
+    allowSymmetricKeyGeneration = true,
+  }: CreateCustomEmailFolderForEmailAddressIdInput): Promise<EmailFolderEntity> {
+    let symmetricKeyId = await this.deviceKeyWorker.getCurrentSymmetricKeyId()
+
+    if (!symmetricKeyId) {
+      if (allowSymmetricKeyGeneration) {
+        symmetricKeyId =
+          await this.deviceKeyWorker.generateCurrentSymmetricKey()
+      } else {
+        throw new KeyNotFoundError()
+      }
+    }
 
     const sealedCustomFolderName = await this.deviceKeyWorker.sealString({
-      payload: new TextEncoder().encode(input.customFolderName),
+      payload: new TextEncoder().encode(customFolderName),
       keyId: symmetricKeyId,
       keyType: KeyType.SymmetricKey,
     })
@@ -92,7 +102,7 @@ export class DefaultEmailFolderService implements EmailFolderService {
     }
 
     const createCustomEmailFolderInput: CreateCustomEmailFolderInput = {
-      emailAddressId: input.emailAddressId,
+      emailAddressId: emailAddressId,
       customFolderName: sealedAttribute,
     }
 
@@ -116,17 +126,27 @@ export class DefaultEmailFolderService implements EmailFolderService {
     return result ? await this.transformer.transformGraphQL(result) : result
   }
 
-  async updateCustomEmailFolderForEmailAddressId(
-    input: UpdateCustomEmailFolderForEmailAddressIdInput,
-  ): Promise<EmailFolderEntity> {
+  async updateCustomEmailFolderForEmailAddressId({
+    emailAddressId,
+    emailFolderId,
+    values,
+    allowSymmetricKeyGeneration = true,
+  }: UpdateCustomEmailFolderForEmailAddressIdInput): Promise<EmailFolderEntity> {
     const updateInput: Record<string, SealedAttributeInput> = {}
-    if (input.values.customFolderName) {
-      const symmetricKeyId =
-        (await this.deviceKeyWorker.getCurrentSymmetricKeyId()) ??
-        (await this.deviceKeyWorker.generateCurrentSymmetricKey())
+    if (values.customFolderName) {
+      let symmetricKeyId = await this.deviceKeyWorker.getCurrentSymmetricKeyId()
+
+      if (!symmetricKeyId) {
+        if (allowSymmetricKeyGeneration) {
+          symmetricKeyId =
+            await this.deviceKeyWorker.generateCurrentSymmetricKey()
+        } else {
+          throw new KeyNotFoundError()
+        }
+      }
 
       const sealedCustomFolderName = await this.deviceKeyWorker.sealString({
-        payload: new TextEncoder().encode(input.values.customFolderName),
+        payload: new TextEncoder().encode(values.customFolderName),
         keyId: symmetricKeyId,
         keyType: KeyType.SymmetricKey,
       })
@@ -139,8 +159,8 @@ export class DefaultEmailFolderService implements EmailFolderService {
       }
     }
     const updateCustomEmailFolderInput: UpdateCustomEmailFolderInput = {
-      emailAddressId: input.emailAddressId,
-      emailFolderId: input.emailFolderId,
+      emailAddressId: emailAddressId,
+      emailFolderId: emailFolderId,
       values: updateInput,
     }
 

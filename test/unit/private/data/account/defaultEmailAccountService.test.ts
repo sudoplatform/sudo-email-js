@@ -159,6 +159,70 @@ describe('DefaultEmailAccountService Test Suite', () => {
       verify(mockAppSync.provisionEmailAddress(anything())).once()
       verify(mockDeviceKeyWorker.getSingletonKeyPair()).once()
     })
+
+    it('failed result with KeyNotFoundError if symmetric key does not exist and allowSymmeticKeyGeneration false', async () => {
+      when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve(
+        undefined,
+      )
+      const iat = new DefaultEmailAccountService(
+        instance(mockAppSync),
+        instance(mockDeviceKeyWorker),
+        { enforceSingletonPublicKey: true },
+      )
+      const createEmailAccountInput: CreateEmailAccountInput = {
+        emailAddressEntity: EntityDataFactory.emailAccount.emailAddress,
+        ownershipProofToken: EntityDataFactory.owner.id,
+        allowSymmetricKeyGeneration: false,
+      }
+      await expect(iat.create(createEmailAccountInput)).rejects.toThrow(
+        KeyNotFoundError,
+      )
+
+      verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
+      verify(mockDeviceKeyWorker.generateCurrentSymmetricKey()).never()
+      verify(mockAppSync.provisionEmailAddress(anything())).never()
+    })
+
+    it('succeeds and generates new key if no key id found', async () => {
+      when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve(
+        undefined,
+      )
+      when(mockDeviceKeyWorker.generateCurrentSymmetricKey()).thenResolve(
+        'keyId',
+      )
+      when(mockAppSync.provisionEmailAddress(anything())).thenResolve(
+        GraphQLDataFactory.emailAddress,
+      )
+      const iat = new DefaultEmailAccountService(
+        instance(mockAppSync),
+        instance(mockDeviceKeyWorker),
+        { enforceSingletonPublicKey: true },
+      )
+      const createEmailAccountInput: CreateEmailAccountInput = {
+        emailAddressEntity: EntityDataFactory.emailAccount.emailAddress,
+        ownershipProofToken: EntityDataFactory.owner.id,
+      }
+      const provisionedEmailAccount = await iat.create(createEmailAccountInput)
+      expect(provisionedEmailAccount).toStrictEqual(
+        EntityDataFactory.emailAccount,
+      )
+
+      verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
+      verify(mockDeviceKeyWorker.generateCurrentSymmetricKey()).once()
+      verify(mockAppSync.provisionEmailAddress(anything())).once()
+      verify(mockDeviceKeyWorker.getSingletonKeyPair()).once()
+
+      const [inputArgs] = capture(mockAppSync.provisionEmailAddress).first()
+      const expectedPublicKeyInput = {
+        ...GraphQLDataFactory.provisionKeyInput,
+        publicKey: userPKDeviceKey.data,
+      }
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        emailAddress: EntityDataFactory.emailAddress.emailAddress,
+        ownershipProofTokens: [EntityDataFactory.owner.id],
+        key: expectedPublicKeyInput,
+      })
+    })
   })
 
   it('Update alias', async () => {

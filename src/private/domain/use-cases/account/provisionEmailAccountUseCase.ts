@@ -15,10 +15,12 @@ import { EmailAddressEntity } from '../../entities/account/emailAddressEntity'
  * @interface ProvisionEmailAccountUseCaseInput
  * @property {EmailAddressEntity} emailAddressEntity The email address to provision, in the form `${localPart}@${domain}`.
  * @property {string} ownershipProofToken A signed ownership proof of the Sudo to be associated with the provisioned email address.
+ * @property {boolean} allowSymmetricKeyGeneration (optional) If false and no symmetric key is found, a KeyNotFoundError will be thrown. Defaults to true.
  */
 interface ProvisionEmailAccountUseCaseInput {
   emailAddressEntity: EmailAddressEntity
   ownershipProofToken: string
+  allowSymmetricKeyGeneration?: boolean
 }
 
 /**
@@ -35,14 +37,17 @@ export class ProvisionEmailAccountUseCase {
   async execute({
     emailAddressEntity,
     ownershipProofToken,
+    allowSymmetricKeyGeneration = true,
   }: ProvisionEmailAccountUseCaseInput): Promise<EmailAccountEntity> {
     this.log.debug(this.constructor.name, {
       emailAddressEntity,
       ownershipProofToken,
+      allowSymmetricKeyGeneration,
     })
     return await this.emailAccountService.create({
       emailAddressEntity,
       ownershipProofToken,
+      allowSymmetricKeyGeneration,
     })
   }
 }

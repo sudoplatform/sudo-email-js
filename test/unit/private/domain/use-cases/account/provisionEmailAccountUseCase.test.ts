@@ -41,15 +41,34 @@ describe('ProvisionEmailAccountUseCase Test Suite', () => {
         emailAddressEntity: EntityDataFactory.emailAccount.emailAddress,
         ownershipProofToken: EntityDataFactory.owner.id,
       })
-      log.debug('provisioned email account', { result })
       expect(result).toStrictEqual(EntityDataFactory.emailAccount)
 
       const [inputArgs] = capture(mockEmailAccountService.create).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         emailAddressEntity: EntityDataFactory.emailAccount.emailAddress,
         ownershipProofToken: EntityDataFactory.owner.id,
+        allowSymmetricKeyGeneration: true,
       })
       expect(result).toStrictEqual(EntityDataFactory.emailAccount)
+      verify(mockEmailAccountService.create(anything())).once()
+    })
+
+    it('passes allowSymmetricKeyGeneration properly', async () => {
+      when(mockEmailAccountService.create(anything())).thenResolve(
+        EntityDataFactory.emailAccount,
+      )
+      await instanceUnderTest.execute({
+        emailAddressEntity: EntityDataFactory.emailAccount.emailAddress,
+        ownershipProofToken: EntityDataFactory.owner.id,
+        allowSymmetricKeyGeneration: false,
+      })
+
+      const [inputArgs] = capture(mockEmailAccountService.create).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        emailAddressEntity: EntityDataFactory.emailAccount.emailAddress,
+        ownershipProofToken: EntityDataFactory.owner.id,
+        allowSymmetricKeyGeneration: false,
+      })
       verify(mockEmailAccountService.create(anything())).once()
     })
   })

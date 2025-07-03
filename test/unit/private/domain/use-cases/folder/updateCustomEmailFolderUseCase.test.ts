@@ -57,10 +57,42 @@ describe('UpdateEmailFolderUseCase Test Suite', () => {
         emailAddressId: emailAddressId,
         emailFolderId,
         values: { customFolderName },
+        allowSymmetricKeyGeneration: true,
       })
       expect(result).toStrictEqual(
         EntityDataFactory.emailFolderWithCustomEmailFolderName,
       )
+    })
+
+    it('passes allowSymmetricKeyGeneration properly', async () => {
+      const emailAddressId = v4()
+      const emailFolderId = v4()
+      const customFolderName = 'CUSTOM'
+      when(
+        mockEmailFolderService.updateCustomEmailFolderForEmailAddressId(
+          anything(),
+        ),
+      ).thenResolve(EntityDataFactory.emailFolderWithCustomEmailFolderName)
+      await instanceUnderTest.execute({
+        emailAddressId,
+        emailFolderId,
+        values: { customFolderName },
+        allowSymmetricKeyGeneration: false,
+      })
+      verify(
+        mockEmailFolderService.updateCustomEmailFolderForEmailAddressId(
+          anything(),
+        ),
+      ).once()
+      const [inputArgs] = capture(
+        mockEmailFolderService.updateCustomEmailFolderForEmailAddressId,
+      ).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        emailAddressId: emailAddressId,
+        emailFolderId,
+        values: { customFolderName },
+        allowSymmetricKeyGeneration: false,
+      })
     })
   })
 })

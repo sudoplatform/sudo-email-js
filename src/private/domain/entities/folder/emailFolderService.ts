@@ -41,10 +41,12 @@ export interface ListEmailFoldersForEmailAddressIdOutput {
  * @interface CreateCustomEmailFolderForEmailAddressIdInput
  * @property {string} emailAddressId The identifier of the email address associated with the custom email folder.
  * @property {string} customFolderName The name of the custom email folder to be created.
+ * @property {boolean} allowSymmetricKeyGeneration (optional) If false and no symmetric key is found, a KeyNotFoundError will be thrown. Defaults to true.
  */
 export interface CreateCustomEmailFolderForEmailAddressIdInput {
   emailAddressId: string
   customFolderName: string
+  allowSymmetricKeyGeneration?: boolean
 }
 
 /**
@@ -70,11 +72,13 @@ interface CustomEmailFolderUpdateValuesInput {
  * @property {string} emailFolderId The identifier of the email folder to update
  * @property {string} emailAddressId The identifier of the email address associated with the folder.
  * @property {CustomEmailFolderUpdateValuesInput} values The values to update
+ * @property {boolean} allowSymmetricKeyGeneration (optional) If false and no symmetric key is found, a KeyNotFoundError will be thrown. Defaults to true.
  */
 export interface UpdateCustomEmailFolderForEmailAddressIdInput {
   emailFolderId: string
   emailAddressId: string
   values: CustomEmailFolderUpdateValuesInput
+  allowSymmetricKeyGeneration?: boolean
 }
 
 /**

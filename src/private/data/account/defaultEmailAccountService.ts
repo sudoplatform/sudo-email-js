@@ -60,15 +60,26 @@ export class DefaultEmailAccountService implements EmailAccountService {
     this.emailAddressTransformer = new EmailAddressEntityTransformer()
   }
 
-  async create(input: CreateEmailAccountInput): Promise<EmailAccountEntity> {
+  async create({
+    emailAddressEntity,
+    ownershipProofToken,
+    allowSymmetricKeyGeneration = true,
+  }: CreateEmailAccountInput): Promise<EmailAccountEntity> {
     // Retrieve Public Key to create email account with.
     const key = this.config?.enforceSingletonPublicKey
       ? await this.deviceKeyWorker.getSingletonKeyPair()
       : await this.deviceKeyWorker.generateKeyPair()
 
-    const symmetricKeyId =
-      (await this.deviceKeyWorker.getCurrentSymmetricKeyId()) ??
-      (await this.deviceKeyWorker.generateCurrentSymmetricKey())
+    let symmetricKeyId = await this.deviceKeyWorker.getCurrentSymmetricKeyId()
+
+    if (!symmetricKeyId) {
+      if (allowSymmetricKeyGeneration) {
+        symmetricKeyId =
+          await this.deviceKeyWorker.generateCurrentSymmetricKey()
+      } else {
+        throw new KeyNotFoundError()
+      }
+    }
 
     let keyFormat: GraphQLKeyFormat | undefined
     switch (key.format) {
@@ -81,8 +92,8 @@ export class DefaultEmailAccountService implements EmailAccountService {
     }
 
     const provisionEmailAddressInput: ProvisionEmailAddressInput = {
-      emailAddress: input.emailAddressEntity.emailAddress,
-      ownershipProofTokens: [input.ownershipProofToken],
+      emailAddress: emailAddressEntity.emailAddress,
+      ownershipProofTokens: [ownershipProofToken],
       key: {
         keyId: key.id,
         algorithm: key.algorithm,
@@ -91,9 +102,9 @@ export class DefaultEmailAccountService implements EmailAccountService {
       },
     }
 
-    if (input.emailAddressEntity.alias) {
+    if (emailAddressEntity.alias) {
       const sealedAlias = await this.deviceKeyWorker.sealString({
-        payload: new TextEncoder().encode(input.emailAddressEntity.alias),
+        payload: new TextEncoder().encode(emailAddressEntity.alias),
         keyId: symmetricKeyId,
         keyType: KeyType.SymmetricKey,
       })

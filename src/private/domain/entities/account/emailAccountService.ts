@@ -17,10 +17,12 @@ import { EmailAddressPublicInfoEntity } from './emailAddressPublicInfoEntity'
  * @interface CreateEmailAccountInput
  * @property {EmailAddressEntity} emailAddressEntity The email address to provision.
  * @property {string} ownershipProofToken A signed ownership proof for the specified owners.
+ * @property {boolean} allowSymmetricKeyGeneration (optional) If false and no symmetric key is found, a KeyNotFoundError will be thrown. Defaults to true.
  */
 export interface CreateEmailAccountInput {
   emailAddressEntity: EmailAddressEntity
   ownershipProofToken: string
+  allowSymmetricKeyGeneration?: boolean
 }
 
 /**

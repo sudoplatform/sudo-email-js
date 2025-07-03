@@ -208,10 +208,12 @@ export interface ListEmailFoldersForEmailAddressIdInput extends Pagination {
  * @interface CreateCustomEmailFolderInput
  * @property {string} emailAddressId The identifier of the email address to be associated with the custom email folder.
  * @property {string} customFolderName The name of the custom email folder to be created.
+ * @property {boolean} allowSymmetricKeyGeneration (optional) If false and no symmetric key is found, a KeyNotFoundError will be thrown. Defaults to true.
  */
 export interface CreateCustomEmailFolderInput {
   emailAddressId: string
   customFolderName: string
+  allowSymmetricKeyGeneration?: boolean
 }
 
 /**
@@ -237,11 +239,13 @@ export interface CustomEmailFolderUpdateValuesInput {
  * @property {string} emailFolderId The identifier of the email folder to update
  * @property {string} emailAddressId The identifier of the email address associated with the folder.
  * @property {CustomEmailFolderUpdateValuesInput} values The values to update
+ * @property {boolean} allowSymmetricKeyGeneration (optional) If false and no symmetric key is found, a KeyNotFoundError will be thrown. Defaults to true.
  */
 export interface UpdateCustomEmailFolderInput {
   emailFolderId: string
   emailAddressId: string
   values: CustomEmailFolderUpdateValuesInput
+  allowSymmetricKeyGeneration?: boolean
 }
 
 /**
@@ -285,11 +289,13 @@ export interface UnblockEmailAddressesByHashedValueInput {
  * @property {string} ownershipProofToken The signed ownership proof of the Sudo to be associated with the provisioned email address.
  *  The ownership proof must contain an audience of "sudoplatform".
  * @property {string} alias An alias for the email address.
+ * @property {boolean} allowSymmetricKeyGeneration (optional) If false and no symmetric key is found, a KeyNotFoundError will be thrown. Defaults to true.
  */
 export interface ProvisionEmailAddressInput {
   emailAddress: string
   ownershipProofToken: string
   alias?: string
+  allowSymmetricKeyGeneration?: boolean
 }
 
 /**
@@ -1295,19 +1301,23 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     return apiTransformer.transformEntity(result)
   }
 
-  public async provisionEmailAddress(
-    input: ProvisionEmailAddressInput,
-  ): Promise<EmailAddress> {
+  public async provisionEmailAddress({
+    emailAddress,
+    ownershipProofToken,
+    alias,
+    allowSymmetricKeyGeneration = true,
+  }: ProvisionEmailAddressInput): Promise<EmailAddress> {
     return await this.mutex.runExclusive(async () => {
       const useCase = new ProvisionEmailAccountUseCase(this.emailAccountService)
       const entityTransformer = new EmailAddressEntityTransformer()
       const emailAddressEntity = entityTransformer.transform(
-        input.emailAddress,
-        input.alias,
+        emailAddress,
+        alias,
       )
       const result = await useCase.execute({
         emailAddressEntity,
-        ownershipProofToken: input.ownershipProofToken,
+        ownershipProofToken: ownershipProofToken,
+        allowSymmetricKeyGeneration,
       })
       const apiTransformer = new EmailAddressAPITransformer()
       return apiTransformer.transformEntity(result)
@@ -1599,6 +1609,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async createCustomEmailFolder({
     emailAddressId,
     customFolderName,
+    allowSymmetricKeyGeneration = true,
   }: CreateCustomEmailFolderInput): Promise<EmailFolder> {
     this.log.debug(this.createCustomEmailFolder.name, {
       emailAddressId,
@@ -1609,6 +1620,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const result = await useCase.execute({
       emailAddressId,
       customFolderName,
+      allowSymmetricKeyGeneration,
     })
 
     const apiTransformer = new EmailFolderAPITransformer()
@@ -1635,6 +1647,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     emailAddressId,
     emailFolderId,
     values,
+    allowSymmetricKeyGeneration = true,
   }: UpdateCustomEmailFolderInput): Promise<EmailFolder> {
     this.log.debug(this.updateCustomEmailFolder.name, {
       emailAddressId,
@@ -1647,6 +1660,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       emailAddressId,
       emailFolderId,
       values,
+      allowSymmetricKeyGeneration,
     })
 
     const apiTransformer = new EmailFolderAPITransformer()

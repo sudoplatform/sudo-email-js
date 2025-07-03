@@ -14,10 +14,12 @@ import { EmailFolderEntity } from '../../entities/folder/emailFolderEntity'
  * @interface CreateCustomEmailFolderUseCaseInput
  * @property {string} emailAddressId The identifier of the email address associated with the custom email folder.
  * @property {string} customFolderName The name of the custom email folder to be created.
+ * @property {boolean} allowSymmetricKeyGeneration (optional) If false and no symmetric key is found, a KeyNotFoundError will be thrown. Defaults to true.
  */
 interface CreateCustomEmailFolderUseCaseInput {
   emailAddressId: string
   customFolderName: string
+  allowSymmetricKeyGeneration?: boolean
 }
 
 /**
@@ -32,15 +34,18 @@ export class CreateCustomEmailFolderUseCase {
   async execute({
     emailAddressId,
     customFolderName,
+    allowSymmetricKeyGeneration = true,
   }: CreateCustomEmailFolderUseCaseInput): Promise<EmailFolderEntity> {
     this.log.debug(this.constructor.name, {
       emailAddressId,
       customFolderName,
+      allowSymmetricKeyGeneration,
     })
     return await this.emailFolderService.createCustomEmailFolderForEmailAddressId(
       {
         emailAddressId,
         customFolderName,
+        allowSymmetricKeyGeneration,
       },
     )
   }

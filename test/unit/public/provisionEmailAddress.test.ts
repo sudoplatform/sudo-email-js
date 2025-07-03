@@ -64,9 +64,10 @@ describe('SudoEmailClient.provisionEmailAddress Test Suite', () => {
     })
     verify(mockProvisionEmailAccountUseCase.execute(anything())).once()
     const [args] = capture(mockProvisionEmailAccountUseCase.execute).first()
-    expect(args).toEqual({
+    expect(args).toEqual<typeof args>({
       emailAddressEntity: { emailAddress },
       ownershipProofToken: ownershipProofToken,
+      allowSymmetricKeyGeneration: true,
     })
   })
 
@@ -77,5 +78,39 @@ describe('SudoEmailClient.provisionEmailAddress Test Suite', () => {
         ownershipProofToken: '',
       }),
     ).resolves.toEqual(APIDataFactory.emailAddress)
+  })
+
+  it('passes alias properly', async () => {
+    const emailAddress = v4()
+    const ownershipProofToken = v4()
+    await instanceUnderTest.provisionEmailAddress({
+      emailAddress,
+      ownershipProofToken,
+      alias: 'mockAlias',
+    })
+    verify(mockProvisionEmailAccountUseCase.execute(anything())).once()
+    const [args] = capture(mockProvisionEmailAccountUseCase.execute).first()
+    expect(args).toEqual<typeof args>({
+      emailAddressEntity: { emailAddress, alias: 'mockAlias' },
+      ownershipProofToken: ownershipProofToken,
+      allowSymmetricKeyGeneration: true,
+    })
+  })
+
+  it('passes allowSymmetricKeyGeneration properly', async () => {
+    const emailAddress = v4()
+    const ownershipProofToken = v4()
+    await instanceUnderTest.provisionEmailAddress({
+      emailAddress,
+      ownershipProofToken,
+      allowSymmetricKeyGeneration: false,
+    })
+    verify(mockProvisionEmailAccountUseCase.execute(anything())).once()
+    const [args] = capture(mockProvisionEmailAccountUseCase.execute).first()
+    expect(args).toEqual<typeof args>({
+      emailAddressEntity: { emailAddress },
+      ownershipProofToken: ownershipProofToken,
+      allowSymmetricKeyGeneration: false,
+    })
   })
 })

@@ -69,9 +69,10 @@ describe('SudoEmailClient.createCustomEmailFolder Test Suite', () => {
     })
     verify(mockCreateCustomEmailFolderUseCase.execute(anything())).once()
     const [args] = capture(mockCreateCustomEmailFolderUseCase.execute).first()
-    expect(args).toEqual({
+    expect(args).toEqual<typeof args>({
       emailAddressId: emailAddressId,
       customFolderName: customFolderName,
+      allowSymmetricKeyGeneration: true,
     })
   })
 
@@ -82,5 +83,23 @@ describe('SudoEmailClient.createCustomEmailFolder Test Suite', () => {
         customFolderName: '',
       }),
     ).resolves.toEqual(APIDataFactory.emailFolderWithCustomFolderName)
+  })
+
+  it('passes allowSymmetricKeyGeneration properly', async () => {
+    const emailAddressId = v4()
+    const customFolderName = 'CUSTOM'
+
+    await instanceUnderTest.createCustomEmailFolder({
+      emailAddressId,
+      customFolderName,
+      allowSymmetricKeyGeneration: false,
+    })
+    verify(mockCreateCustomEmailFolderUseCase.execute(anything())).once()
+    const [args] = capture(mockCreateCustomEmailFolderUseCase.execute).first()
+    expect(args).toEqual<typeof args>({
+      emailAddressId: emailAddressId,
+      customFolderName: customFolderName,
+      allowSymmetricKeyGeneration: false,
+    })
   })
 })

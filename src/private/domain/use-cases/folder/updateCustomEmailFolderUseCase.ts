@@ -18,11 +18,13 @@ interface CustomFolderUpdateUseCaseValues {
  * @property {string} emailFolderId The identifier of the email folder to update.
  * @property {string} emailAddressId The identifier of the email address associated with the folder.
  * @property {CustomFolderUpdateUseCaseValues} values The values to update.
+ * @property {boolean} allowSymmetricKeyGeneration (optional) If false and no symmetric key is found, a KeyNotFoundError will be thrown. Defaults to true.
  */
 interface UpdateCustomEmailFolderUseCaseInput {
   emailFolderId: string
   emailAddressId: string
   values: CustomFolderUpdateUseCaseValues
+  allowSymmetricKeyGeneration?: boolean
 }
 
 /**
@@ -38,11 +40,13 @@ export class UpdateCustomEmailFolderUseCase {
     emailAddressId,
     emailFolderId,
     values,
+    allowSymmetricKeyGeneration = true,
   }: UpdateCustomEmailFolderUseCaseInput): Promise<EmailFolderEntity> {
     this.log.debug(this.execute.name, {
       emailAddressId,
       emailFolderId,
       values,
+      allowSymmetricKeyGeneration,
     })
 
     return await this.emailFolderService.updateCustomEmailFolderForEmailAddressId(
@@ -50,6 +54,7 @@ export class UpdateCustomEmailFolderUseCase {
         emailAddressId,
         emailFolderId,
         values,
+        allowSymmetricKeyGeneration,
       },
     )
   }

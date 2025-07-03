@@ -140,12 +140,45 @@ describe('DefaultEmailFolderService Test Suite', () => {
         },
       })
     })
-    it('failed result with KeyNotFoundError if symmetric key does not exist', async () => {
+    it('failed result with KeyNotFoundError if symmetric key does not exist and allowSymmeticKeyGeneration false', async () => {
       when(mockAppSync.createCustomEmailFolder(anything())).thenResolve(
         GraphQLDataFactory.emailFolderWithCustomFolderName,
       )
 
-      when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve('keyId')
+      when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve(
+        undefined,
+      )
+      when(mockDeviceKeyWorker.generateCurrentSymmetricKey()).thenResolve(
+        'keyId',
+      )
+      when(mockDeviceKeyWorker.sealString(anything())).thenResolve(
+        'TxsJ3delkBH2I1t0qQDscg==',
+      )
+
+      await expect(
+        instanceUnderTest.createCustomEmailFolderForEmailAddressId({
+          emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
+          customFolderName: 'CUSTOM',
+          allowSymmetricKeyGeneration: false,
+        }),
+      ).rejects.toThrow(new KeyNotFoundError())
+
+      verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
+      verify(mockDeviceKeyWorker.generateCurrentSymmetricKey()).never()
+      verify(mockAppSync.createCustomEmailFolder(anything())).never()
+    })
+
+    it('succeeds and generates new key if no key id found', async () => {
+      when(mockAppSync.createCustomEmailFolder(anything())).thenResolve(
+        GraphQLDataFactory.emailFolderWithCustomFolderName,
+      )
+
+      when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve(
+        undefined,
+      )
+      when(mockDeviceKeyWorker.generateCurrentSymmetricKey()).thenResolve(
+        'keyId',
+      )
       when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
         false,
       )
@@ -164,6 +197,10 @@ describe('DefaultEmailFolderService Test Suite', () => {
         status: { type: 'Failed', cause: new KeyNotFoundError() },
       })
 
+      verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
+      verify(mockDeviceKeyWorker.generateCurrentSymmetricKey()).once()
+      verify(mockAppSync.createCustomEmailFolder(anything())).once()
+
       const [inputArgs] = capture(mockAppSync.createCustomEmailFolder).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
@@ -174,9 +211,8 @@ describe('DefaultEmailFolderService Test Suite', () => {
           base64EncodedSealedData: 'TxsJ3delkBH2I1t0qQDscg==',
         },
       })
-
-      verify(mockAppSync.createCustomEmailFolder(anything())).once()
     })
+
     it('decoding error should be tolerated and return empty value for customFolderName ', async () => {
       when(mockAppSync.createCustomEmailFolder(anything())).thenResolve(
         GraphQLDataFactory.emailFolderWithCustomFolderName,
@@ -325,12 +361,49 @@ describe('DefaultEmailFolderService Test Suite', () => {
       })
     })
 
-    it('fails result with KeyNotFoundError if symmetric key does not exist', async () => {
+    it('failed result with KeyNotFoundError if symmetric key does not exist and allowSymmeticKeyGeneration false', async () => {
       when(mockAppSync.updateCustomEmailFolder(anything())).thenResolve(
         GraphQLDataFactory.emailFolderWithCustomFolderName,
       )
 
-      when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve('keyId')
+      when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve(
+        undefined,
+      )
+      when(mockDeviceKeyWorker.generateCurrentSymmetricKey()).thenResolve(
+        'keyId',
+      )
+      when(mockDeviceKeyWorker.sealString(anything())).thenResolve(
+        'TxsJ3delkBH2I1t0qQDscg==',
+      )
+
+      await expect(
+        instanceUnderTest.updateCustomEmailFolderForEmailAddressId({
+          emailAddressId:
+            EntityDataFactory.emailFolderWithCustomEmailFolderName
+              .emailAddressId,
+          emailFolderId:
+            EntityDataFactory.emailFolderWithCustomEmailFolderName.id,
+          values: { customFolderName: 'CUSTOM-UPDATED' },
+          allowSymmetricKeyGeneration: false,
+        }),
+      ).rejects.toThrow(new KeyNotFoundError())
+
+      verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
+      verify(mockDeviceKeyWorker.generateCurrentSymmetricKey()).never()
+      verify(mockAppSync.createCustomEmailFolder(anything())).never()
+    })
+
+    it('succeeds and generates new key if no key id found', async () => {
+      when(mockAppSync.updateCustomEmailFolder(anything())).thenResolve(
+        GraphQLDataFactory.emailFolderWithCustomFolderName,
+      )
+
+      when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve(
+        undefined,
+      )
+      when(mockDeviceKeyWorker.generateCurrentSymmetricKey()).thenResolve(
+        'keyId',
+      )
       when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
         false,
       )
@@ -353,7 +426,10 @@ describe('DefaultEmailFolderService Test Suite', () => {
         status: { type: 'Failed', cause: new KeyNotFoundError() },
       })
 
+      verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
+      verify(mockDeviceKeyWorker.generateCurrentSymmetricKey()).once()
       verify(mockAppSync.updateCustomEmailFolder(anything())).once()
+
       const [inputArgs] = capture(mockAppSync.updateCustomEmailFolder).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
