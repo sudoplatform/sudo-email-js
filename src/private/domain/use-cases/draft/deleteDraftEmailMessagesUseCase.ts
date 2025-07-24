@@ -85,6 +85,18 @@ export class DeleteDraftEmailMessagesUseCase {
         successIds.push(id)
       }
     })
+    successIds.forEach((id) => {
+      void (async () => {
+        try {
+          await this.emailMessageService.cancelScheduledDraftMessage({
+            id,
+            emailAddressId,
+          })
+        } catch (e) {
+          this.log.warn(`Failed to cancel scheduled draft ${id}: ${e}`)
+        }
+      })()
+    })
     return {
       failureMessages: failureIds,
       successIds,

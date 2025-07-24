@@ -92,27 +92,27 @@ describe('CancelScheduledDraftMessage Integration Test Suite', () => {
     ).rejects.toThrow(AddressNotFoundError)
   })
 
-  it('throws RecordNotFoundError if passed and invalid draftId', async () => {
+  it('returns success if invalid draftId', async () => {
+    const id = v4()
     await expect(
       instanceUnderTest.cancelScheduledDraftMessage({
-        id: v4(),
+        id: id,
         emailAddressId: emailAddress.id,
       }),
-    ).rejects.toThrow(RecordNotFoundError)
+    ).resolves.toEqual(id)
   })
 
-  it('throws if draft belongs to another address', async () => {
+  it('returns success if draft belongs to another address', async () => {
     const emailAddress2 = await provisionEmailAddress(
       sudoOwnershipProofToken,
       instanceUnderTest,
     )
-
     await expect(
       instanceUnderTest.cancelScheduledDraftMessage({
-        id: v4(),
+        id: draftMetadata.id,
         emailAddressId: emailAddress2.id,
       }),
-    ).rejects.toThrow(RecordNotFoundError)
+    ).resolves.toEqual(draftMetadata.id)
   })
 
   it('returns expected result on success', async () => {

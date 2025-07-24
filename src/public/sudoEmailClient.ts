@@ -965,12 +965,11 @@ export interface SudoEmailClient {
   ): Promise<ScheduledDraftMessage>
 
   /**
-   * Cancel a scheduled draft message. If no record of the draft message having been scheduled can be found
-   * a RecordNotFoundError will be thrown
+   * Cancels a scheduled draft message. If no matching scheduled message is found,
+   * the operation completes successfully without error.
    *
    * @param {CancelScheduledDraftMessageInput} input Parameters used to cancel a scheduled draft message
    * @returns {string}
-   * @throws {RecordNotFoundError}
    */
   cancelScheduledDraftMessage(
     input: CancelScheduledDraftMessageInput,

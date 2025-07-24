@@ -108,4 +108,37 @@ describe('DeleteDraftEmailMessagesUseCase Test Suite', () => {
       { id: 'bad-id2', errorType: 'error' },
     ])
   })
+
+  it('cancels scheduled drafts for successfully deleted messages', async () => {
+    const ids = ['good-id1', 'bad-id1', 'good-id2', 'bad-id2']
+    const emailAddressId = v4()
+
+    when(
+      mockEmailMessageService.deleteDrafts(deepEqual({ ids, emailAddressId })),
+    ).thenResolve([
+      { id: 'bad-id1', reason: 'error' },
+      { id: 'bad-id2', reason: 'error' },
+    ])
+
+    const result = await instanceUnderTest.execute({
+      ids: new Set(ids),
+      emailAddressId,
+    })
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    verify(
+      mockEmailMessageService.cancelScheduledDraftMessage(anything()),
+    ).times(2)
+
+    const [firstCallArg] = capture(
+      mockEmailMessageService.cancelScheduledDraftMessage,
+    ).first()
+    const [secondCallArg] = capture(
+      mockEmailMessageService.cancelScheduledDraftMessage,
+    ).second()
+
+    const calledIds = [firstCallArg.id, secondCallArg.id]
+    expect(calledIds).toEqual(expect.arrayContaining(['good-id1', 'good-id2']))
+  })
 })
