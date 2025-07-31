@@ -71,6 +71,7 @@ describe('SudoEmailClient.listScheduledDraftMessagesForEmailAddressId Test Suite
       filter: undefined,
       limit: undefined,
       nextToken: undefined,
+      cachePolicy: undefined,
     })
   })
 })

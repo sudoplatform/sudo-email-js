@@ -427,6 +427,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     filter,
     limit,
     nextToken,
+    cachePolicy,
   }: ListScheduledDraftMessagesForEmailAddressIdInput): Promise<ListScheduledDraftMessagesOutput> {
     this.log.debug(this.listScheduledDraftMessagesForEmailAddressId.name, {
       emailAddressId,
@@ -434,6 +435,9 @@ export class DefaultEmailMessageService implements EmailMessageService {
       limit,
       nextToken,
     })
+    const fetchPolicy = cachePolicy
+      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
+      : undefined
 
     const input: ListScheduledDraftMessagesForEmailAddressIdRequest = {
       emailAddressId,
@@ -444,7 +448,10 @@ export class DefaultEmailMessageService implements EmailMessageService {
       input.filter = ScheduledDraftMessageFilterTransformer.toGraphQl(filter)
     }
     const result =
-      await this.appSync.listScheduledDraftMessagesForEmailAddressId(input)
+      await this.appSync.listScheduledDraftMessagesForEmailAddressId(
+        input,
+        fetchPolicy,
+      )
     return {
       nextToken: result.nextToken ?? undefined,
       scheduledDraftMessages: result.items.map((s) =>

@@ -554,6 +554,7 @@ export class ApiClient {
 
   public async listScheduledDraftMessagesForEmailAddressId(
     input: ListScheduledDraftMessagesForEmailAddressIdInput,
+    fetchPolicy: FetchPolicy = 'network-only',
   ): Promise<ScheduledDraftMessageConnection> {
     const data =
       await this.performQuery<ListScheduledDraftMessagesForEmailAddressIdQuery>(
@@ -561,6 +562,7 @@ export class ApiClient {
           query: ListScheduledDraftMessagesForEmailAddressIdDocument,
           variables: { input },
           calleeName: this.listScheduledDraftMessagesForEmailAddressId.name,
+          fetchPolicy,
         },
       )
     return data.listScheduledDraftMessagesForEmailAddressId

@@ -635,11 +635,13 @@ export interface ScheduledDraftMessageFilterInput {
  * @interface ListScheduledDraftMessagesForEmailAddressIdInput
  * @property {string} emailAddressId The identifier of the email address to list for.
  * @property {ScheduledDraftMessageFilterInput} filter Properties used to filter the results.
+ * @property {CachePolicy} cachePolicy Determines how the scheduled draft messages will be fetched. Default usage is `remoteOnly`.
  */
 export interface ListScheduledDraftMessagesForEmailAddressIdInput
   extends Pagination {
   emailAddressId: string
   filter?: ScheduledDraftMessageFilterInput
+  cachePolicy?: CachePolicy
 }
 
 export interface SudoEmailClient {
@@ -1949,6 +1951,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     filter,
     limit,
     nextToken,
+    cachePolicy,
   }: ListScheduledDraftMessagesForEmailAddressIdInput): Promise<
     ListOutput<ScheduledDraftMessage>
   > {
@@ -1957,6 +1960,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       filter,
       limit,
       nextToken,
+      cachePolicy,
     })
 
     const useCase = new ListScheduledDraftMessagesForEmailAddressIdUseCase(
@@ -1970,6 +1974,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
         filter,
         limit,
         nextToken,
+        cachePolicy,
       })
 
     return {

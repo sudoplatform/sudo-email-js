@@ -129,6 +129,35 @@ describe('ListScheduledDraftMessagesForEmailAddressId Integration Test Suite', (
     }
   })
 
+  it('returns updated list when called after new draft is scheduled', async () => {
+    // Schedule the first draft message
+    await scheduleSendDraftMessage()
+    const initialResult =
+      await instanceUnderTest.listScheduledDraftMessagesForEmailAddressId({
+        emailAddressId: emailAddress.id,
+      })
+
+    expect(initialResult).toBeDefined()
+    expect(initialResult.items).toHaveLength(1)
+    expect(initialResult.items[0]).toEqual(scheduledDraftMessages[0])
+
+    // Schedule a second draft message
+    await scheduleSendDraftMessage()
+    const updatedResult =
+      await instanceUnderTest.listScheduledDraftMessagesForEmailAddressId({
+        emailAddressId: emailAddress.id,
+      })
+
+    expect(updatedResult).toBeDefined()
+    expect(updatedResult.items).toHaveLength(2)
+    // Both scheduled messages should be present
+    for (const scheduledDraftMessage of scheduledDraftMessages) {
+      expect(
+        updatedResult.items.find((m) => m.id === scheduledDraftMessage.id),
+      ).toBeDefined()
+    }
+  })
+
   it('limits and paginates properly', async () => {
     const numMessages = 5
     const limit = 3

@@ -2204,7 +2204,10 @@ describe('DefaultEmailMessageService Test Suite', () => {
   describe('listScheduledDraftMessagesForEmailAddressId', () => {
     beforeEach(() => {
       when(
-        mockAppSync.listScheduledDraftMessagesForEmailAddressId(anything()),
+        mockAppSync.listScheduledDraftMessagesForEmailAddressId(
+          anything(),
+          anything(),
+        ),
       ).thenResolve(GraphQLDataFactory.scheduledDraftMessageConnection)
     })
 
@@ -2237,7 +2240,10 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
 
       verify(
-        mockAppSync.listScheduledDraftMessagesForEmailAddressId(anything()),
+        mockAppSync.listScheduledDraftMessagesForEmailAddressId(
+          anything(),
+          anything(),
+        ),
       ).once()
       const [listArgs] = capture(
         mockAppSync.listScheduledDraftMessagesForEmailAddressId,

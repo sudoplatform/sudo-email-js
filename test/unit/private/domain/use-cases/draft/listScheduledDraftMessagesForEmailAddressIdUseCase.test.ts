@@ -22,6 +22,7 @@ import {
   AddressNotFoundError,
   ScheduledDraftMessageState,
 } from '../../../../../../src'
+import { CachePolicy } from '@sudoplatform/sudo-common'
 
 describe('ListScheduledDraftMessagesForEmailAddressIdUseCase Test Suite', () => {
   const mockEmailAccountService = mock<EmailAccountService>()
@@ -80,6 +81,7 @@ describe('ListScheduledDraftMessagesForEmailAddressIdUseCase Test Suite', () => 
       filter: undefined,
       limit: undefined,
       nextToken: undefined,
+      cachePolicy: CachePolicy.RemoteOnly,
     })
   })
 
@@ -114,6 +116,7 @@ describe('ListScheduledDraftMessagesForEmailAddressIdUseCase Test Suite', () => 
       filter,
       limit,
       nextToken,
+      cachePolicy: CachePolicy.RemoteOnly,
     })
   })
 })
