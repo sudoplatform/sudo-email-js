@@ -12,7 +12,10 @@ import {
 import { EmailAddressBlocklistService } from '../../entities/blocklist/emailAddressBlocklistService'
 import { BlockEmailAddressesBulkUpdateResult } from '../../../../gen/graphqlTypes'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
-import { BlockedEmailAddressAction } from '../../../../public/typings'
+import {
+  BlockedEmailAddressAction,
+  BlockedEmailAddressLevel,
+} from '../../../../public/typings'
 import { EmailAccountService } from '../../entities/account/emailAccountService'
 import { AddressNotFoundError } from '../../../../public'
 
@@ -21,11 +24,13 @@ import { AddressNotFoundError } from '../../../../public'
  *
  * @interface BlockEmailAddressesUseCaseInput
  * @property {string[]} blockedAddresses List of the addresses to block
+ * @property {BlockedEmailAddressLevel} blockLevel Level at which to block the sender
  * @property {BlockedEmailAddressAction} action Action to take on incoming emails
  * @property {string} emailAddressId If passed, block only effects this email address
  */
 export interface BlockEmailAddressesUseCaseInput {
   blockedAddresses: string[]
+  blockLevel: BlockedEmailAddressLevel
   action: BlockedEmailAddressAction
   emailAddressId?: string
 }
@@ -45,6 +50,7 @@ export class BlockEmailAddressesUseCase {
 
   async execute({
     blockedAddresses,
+    blockLevel,
     action,
     emailAddressId,
   }: BlockEmailAddressesUseCaseInput): Promise<BlockEmailAddressesBulkUpdateResult> {
@@ -71,6 +77,7 @@ export class BlockEmailAddressesUseCase {
           emailAddressId,
           blockedAddresses,
           action,
+          blockLevel,
         },
       )
     } else {
@@ -78,6 +85,7 @@ export class BlockEmailAddressesUseCase {
         owner,
         blockedAddresses,
         action,
+        blockLevel,
       })
     }
   }

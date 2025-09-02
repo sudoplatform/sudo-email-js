@@ -79,12 +79,12 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
     expect(emailAddress.numberOfEmailMessages).toStrictEqual(0)
 
     const toBeDeletedKeys = await cryptoProvider.exportKeys()
-    expect(toBeDeletedKeys.length).toBe(5)
+    expect(toBeDeletedKeys.length).toBe(4)
 
     await provisionEmailAddress(ownershipProofToken, instanceUnderTest)
 
     const allKeys = await cryptoProvider.exportKeys()
-    expect(allKeys.length).toBe(7)
+    expect(allKeys.length).toBe(6)
 
     const deprovisionedEmailAddress =
       await instanceUnderTest.deprovisionEmailAddress(emailAddress.id)

@@ -10,6 +10,7 @@ import {
   EncryptionAlgorithm,
   KeyNotFoundError,
   Logger,
+  Buffer as BufferUtil,
 } from '@sudoplatform/sudo-common'
 import {
   BlockEmailAddressesBulkUpdateOutput,
@@ -34,7 +35,10 @@ import { DefaultEmailAddressParser } from '../common/mechanisms/defaultEmailAddr
 import { InvalidArgumentError, MissingKeyError } from '../../../public'
 import { generateHash } from '../../util/stringUtils'
 import { BlockedEmailAddressActionTransfomer } from './transformer/blockedEmailAddressActionTransformer'
-import { UnsealedBlockedAddress } from '../../domain/entities/blocklist/blockedEmailEntity'
+import {
+  BlockedEmailAddressLevel,
+  UnsealedBlockedAddress,
+} from '../../domain/entities/blocklist/blockedEmailEntity'
 
 export class DefaultEmailAddressBlocklistService
   implements EmailAddressBlocklistService
@@ -53,7 +57,12 @@ export class DefaultEmailAddressBlocklistService
     input: BlockEmailAddressesForOwnerInput,
   ): Promise<BlockEmailAddressesBulkUpdateOutput> {
     this.log.debug('blockEmailAddressesForOwner init', { input })
-    const { blockedAddresses: cleartextBlockedAddresses, owner, action } = input
+    const {
+      blockedAddresses: cleartextBlockedAddresses,
+      owner,
+      action,
+      blockLevel,
+    } = input
     const { blockedAddresses, hashedBlockedValues } =
       await this.createBlockedAddressInputs(
         new Set(
@@ -61,6 +70,7 @@ export class DefaultEmailAddressBlocklistService
         ),
         owner,
         BlockedEmailAddressActionTransfomer.fromAPItoGraphQL(action),
+        blockLevel,
       )
 
     const blockEmailAddressesInput: BlockEmailAddressesInput = {
@@ -103,6 +113,7 @@ export class DefaultEmailAddressBlocklistService
       emailAddressId,
       owner,
       action,
+      blockLevel,
     } = input
     const { blockedAddresses, hashedBlockedValues } =
       await this.createBlockedAddressInputs(
@@ -111,6 +122,7 @@ export class DefaultEmailAddressBlocklistService
         ),
         emailAddressId,
         BlockedEmailAddressActionTransfomer.fromAPItoGraphQL(action),
+        blockLevel,
       )
 
     const blockEmailAddressesInput: BlockEmailAddressesInput = {
@@ -313,6 +325,7 @@ export class DefaultEmailAddressBlocklistService
     cleartextBlockedAddresses: Set<string>,
     prefix: string,
     action: BlockedAddressAction,
+    blockLevel: BlockedEmailAddressLevel,
   ): Promise<{
     blockedAddresses: BlockedEmailAddressInput[]
     hashedBlockedValues: string[]
@@ -331,14 +344,28 @@ export class DefaultEmailAddressBlocklistService
     const sealedBlockedEmailAddressesPromises: Promise<string>[] = []
     const hashedBlockedValues: string[] = []
     clearTextArray.forEach((address) => {
-      sealedBlockedEmailAddressesPromises.push(
-        this.deviceKeyWorker.sealString({
-          keyId: symmetricKeyId,
-          payload: new TextEncoder().encode(address),
-          keyType: KeyType.SymmetricKey,
-        }),
-      )
-      hashedBlockedValues.push(generateHash(`${prefix}|${address}`))
+      if (this.parser.validate(address)) {
+        let cleartext = ''
+        switch (blockLevel) {
+          case BlockedEmailAddressLevel.ADDRESS:
+            cleartext = address
+            break
+          case BlockedEmailAddressLevel.DOMAIN:
+            cleartext = this.parser.getDomain(address)
+            break
+        }
+        sealedBlockedEmailAddressesPromises.push(
+          this.deviceKeyWorker.sealString({
+            keyId: symmetricKeyId,
+            payload: BufferUtil.fromString(cleartext),
+            keyType: KeyType.SymmetricKey,
+          }),
+        )
+        hashedBlockedValues.push(generateHash(`${prefix}|${cleartext}`))
+      } else {
+        this.log.error(`Invalid email address: ${address}`)
+        throw new InvalidArgumentError(`Invalid email address: ${address}`)
+      }
     })
 
     const sealedBlockedEmailAddresses = await Promise.all(

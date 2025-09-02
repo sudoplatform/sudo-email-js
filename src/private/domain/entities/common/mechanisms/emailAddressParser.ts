@@ -20,4 +20,20 @@ export default interface EmailAddressParser {
    * @memberof EmailAddressParser
    */
   normalize(email: string): string
+
+  /**
+   * Get the domain part of an email address.
+   *
+   * @param email Complete address `<localpart>@<domain>`
+   * @returns {string} domain part of the email address
+   * @memberof EmailAddressParser
+   */
+  getDomain(email: string): string
+
+  /**
+   * Validates an email address.
+   *
+   * @param {string} email
+   */
+  validate(email: string): boolean
 }

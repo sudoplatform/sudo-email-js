@@ -17,6 +17,11 @@ export enum BlockedEmailAddressAction {
   SPAM = 'SPAM',
 }
 
+export enum BlockedEmailAddressLevel {
+  ADDRESS = 'ADDRESS',
+  DOMAIN = 'DOMAIN',
+}
+
 export interface UnsealedBlockedAddress {
   hashedBlockedValue: string
   address: string

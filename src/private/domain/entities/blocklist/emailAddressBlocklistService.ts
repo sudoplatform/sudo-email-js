@@ -7,6 +7,7 @@
 import { UpdateEmailMessagesStatus } from '../message/updateEmailMessagesStatus'
 import {
   BlockedEmailAddressAction,
+  BlockedEmailAddressLevel,
   UnsealedBlockedAddress,
 } from './blockedEmailEntity'
 
@@ -17,11 +18,13 @@ import {
  * @property {string} owner The id of the owner of the user creating the blocklist
  * @property {string[]} blockedAddresses List of the addresses to block
  * @property {BlockedEmailAddressAction} action Action to take on incoming emails
+ * @property {BlockedEmailAddressLevel} blockLevel Level at which to block the sender
  */
 export interface BlockEmailAddressesForOwnerInput {
   owner: string
   blockedAddresses: string[]
   action: BlockedEmailAddressAction
+  blockLevel: BlockedEmailAddressLevel
 }
 
 /**
@@ -32,12 +35,14 @@ export interface BlockEmailAddressesForOwnerInput {
  * @property {string} emailAddressId The id of the email address creating the blocklist
  * @property {string[]} blockedAddresses List of the addresses to block
  * @property {BlockedEmailAddressAction} action Action to take on incoming emails
+ * @property {BlockedEmailAddressLevel} blockLevel Level at which to block the sender
  */
 export interface BlockEmailAddressesForEmailAddressIdInput {
   owner: string
   emailAddressId: string
   blockedAddresses: string[]
   action: BlockedEmailAddressAction
+  blockLevel: BlockedEmailAddressLevel
 }
 
 /**

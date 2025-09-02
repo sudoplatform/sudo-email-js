@@ -10,6 +10,7 @@ import {
   DecodeError,
   KeyNotFoundError,
   PublicKeyFormat,
+  Buffer as BufferUtil,
 } from '@sudoplatform/sudo-common'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import {
@@ -233,7 +234,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       const limit = 10485769 // 10mb
       encodeToInternetMessageBufferSpy
         .mockReset()
-        .mockReturnValueOnce(Buffer.alloc(limit + 1))
+        .mockReturnValueOnce(Buffer.alloc(limit + 1).buffer)
 
       await expect(
         instanceUnderTest.sendMessage({
@@ -451,7 +452,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       encodeToInternetMessageBufferSpy
         .mockReset()
         .mockReturnValueOnce(encodedOriginalMessage) // First call
-        .mockReturnValueOnce(Buffer.alloc(limit + 1)) // Second call
+        .mockReturnValueOnce(Buffer.alloc(limit + 1).buffer) // Second call
 
       await expect(
         instanceUnderTest.sendEncryptedMessage({
@@ -1813,7 +1814,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           DraftEmailMessageDataFactory.getDraftInput.emailAddressId,
         updatedAt:
           DraftEmailMessageDataFactory.s3ClientDownloadOutput.lastModified,
-        rfc822Data: new TextEncoder().encode(unsealedDraft),
+        rfc822Data: BufferUtil.fromString(unsealedDraft),
       })
     })
 
@@ -2311,7 +2312,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
   })
 
   describe('getEmailMessageRfc822Data', () => {
-    const unsealedDraft = 'unsealedDraft'
+    const unsealedDraft = Base64.encodeString('unsealedDraft')
     beforeEach(() => {
       when(mockS3Client.download(anything())).thenResolve(
         EmailMessageRfc822DataFactory.s3ClientDownloadOutput,

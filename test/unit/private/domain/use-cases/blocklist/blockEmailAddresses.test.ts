@@ -4,7 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { anything, instance, mock, reset, verify, when } from 'ts-mockito'
+import {
+  anything,
+  capture,
+  instance,
+  mock,
+  reset,
+  verify,
+  when,
+} from 'ts-mockito'
 import { DefaultEmailAddressBlocklistService } from '../../../../../../src/private/data/blocklist/defaultEmailAddressBlocklistService'
 import { BlockEmailAddressesUseCase } from '../../../../../../src/private/domain/use-cases/blocklist/blockEmailAddresses'
 import { UpdateEmailMessagesStatus } from '../../../../../../src/private/domain/entities/message/updateEmailMessagesStatus'
@@ -15,7 +23,10 @@ import {
 } from '../../../../../../src/private/domain/entities/blocklist/emailAddressBlocklistService'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { NotSignedInError } from '@sudoplatform/sudo-common'
-import { BlockedEmailAddressAction } from '../../../../../../src/public'
+import {
+  BlockedEmailAddressAction,
+  BlockedEmailAddressLevel,
+} from '../../../../../../src/public'
 import { DefaultEmailAccountService } from '../../../../../../src/private/data/account/defaultEmailAccountService'
 import { EntityDataFactory } from '../../../../data-factory/entity'
 
@@ -60,6 +71,7 @@ describe('BlockEmailAddressesUseCase Test Suite', () => {
       const result = await instanceUnderTest.execute({
         blockedAddresses: emailAddresses,
         action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
       })
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
         status: UpdateEmailMessagesStatus.Success,
@@ -73,6 +85,15 @@ describe('BlockEmailAddressesUseCase Test Suite', () => {
         ),
       ).never()
       verify(mockEmailAccountService.get(anything())).never()
+      const [blockArgs] = capture(
+        mockBlockedEmailAddressService.blockEmailAddressesForOwner,
+      ).first()
+      expect(blockArgs).toStrictEqual<typeof blockArgs>({
+        blockedAddresses: emailAddresses,
+        action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
+        owner: mockOwner,
+      })
     })
 
     it('handles emailAddressId input properly', async () => {
@@ -80,6 +101,7 @@ describe('BlockEmailAddressesUseCase Test Suite', () => {
         blockedAddresses: emailAddresses,
         action: BlockedEmailAddressAction.DROP,
         emailAddressId: 'mockEmailAddressId',
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
       })
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
         status: UpdateEmailMessagesStatus.Success,
@@ -93,6 +115,74 @@ describe('BlockEmailAddressesUseCase Test Suite', () => {
         ),
       ).once()
       verify(mockEmailAccountService.get(anything())).once()
+      const [blockArgs] = capture(
+        mockBlockedEmailAddressService.blockEmailAddressesForEmailAddressId,
+      ).first()
+      expect(blockArgs).toStrictEqual<typeof blockArgs>({
+        blockedAddresses: emailAddresses,
+        action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
+        owner: mockOwner,
+        emailAddressId: 'mockEmailAddressId',
+      })
+    })
+
+    it('handles blockLevel DOMAIN input properly', async () => {
+      const result = await instanceUnderTest.execute({
+        blockedAddresses: emailAddresses,
+        action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.DOMAIN,
+      })
+      expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
+        status: UpdateEmailMessagesStatus.Success,
+      })
+      verify(
+        mockBlockedEmailAddressService.blockEmailAddressesForOwner(anything()),
+      ).once()
+      verify(
+        mockBlockedEmailAddressService.blockEmailAddressesForEmailAddressId(
+          anything(),
+        ),
+      ).never()
+      verify(mockEmailAccountService.get(anything())).never()
+      const [blockArgs] = capture(
+        mockBlockedEmailAddressService.blockEmailAddressesForOwner,
+      ).first()
+      expect(blockArgs).toStrictEqual<typeof blockArgs>({
+        blockedAddresses: emailAddresses,
+        action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.DOMAIN,
+        owner: mockOwner,
+      })
+    })
+
+    it('handles action SPAM input properly', async () => {
+      const result = await instanceUnderTest.execute({
+        blockedAddresses: emailAddresses,
+        action: BlockedEmailAddressAction.SPAM,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
+      })
+      expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
+        status: UpdateEmailMessagesStatus.Success,
+      })
+      verify(
+        mockBlockedEmailAddressService.blockEmailAddressesForOwner(anything()),
+      ).once()
+      verify(
+        mockBlockedEmailAddressService.blockEmailAddressesForEmailAddressId(
+          anything(),
+        ),
+      ).never()
+      verify(mockEmailAccountService.get(anything())).never()
+      const [blockArgs] = capture(
+        mockBlockedEmailAddressService.blockEmailAddressesForOwner,
+      ).first()
+      expect(blockArgs).toStrictEqual<typeof blockArgs>({
+        blockedAddresses: emailAddresses,
+        action: BlockedEmailAddressAction.SPAM,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
+        owner: mockOwner,
+      })
     })
 
     it('returns failed requests correctly', async () => {
@@ -102,6 +192,7 @@ describe('BlockEmailAddressesUseCase Test Suite', () => {
       const result = await instanceUnderTest.execute({
         blockedAddresses: emailAddresses,
         action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
       })
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
         status: UpdateEmailMessagesStatus.Failed,
@@ -115,6 +206,15 @@ describe('BlockEmailAddressesUseCase Test Suite', () => {
         ),
       ).never()
       verify(mockEmailAccountService.get(anything())).never()
+      const [blockArgs] = capture(
+        mockBlockedEmailAddressService.blockEmailAddressesForOwner,
+      ).first()
+      expect(blockArgs).toStrictEqual<typeof blockArgs>({
+        blockedAddresses: emailAddresses,
+        action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
+        owner: mockOwner,
+      })
     })
 
     it('returns partial requests correctly', async () => {
@@ -131,6 +231,7 @@ describe('BlockEmailAddressesUseCase Test Suite', () => {
       const result = await instanceUnderTest.execute({
         blockedAddresses: emailAddresses,
         action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
       })
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
         status: UpdateEmailMessagesStatus.Partial,
@@ -146,6 +247,15 @@ describe('BlockEmailAddressesUseCase Test Suite', () => {
         ),
       ).never()
       verify(mockEmailAccountService.get(anything())).never()
+      const [blockArgs] = capture(
+        mockBlockedEmailAddressService.blockEmailAddressesForOwner,
+      ).first()
+      expect(blockArgs).toStrictEqual<typeof blockArgs>({
+        blockedAddresses: emailAddresses,
+        action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
+        owner: mockOwner,
+      })
     })
 
     it('throws NotSignedInError if user is not signed in', async () => {
@@ -154,6 +264,7 @@ describe('BlockEmailAddressesUseCase Test Suite', () => {
         instanceUnderTest.execute({
           blockedAddresses: emailAddresses,
           action: BlockedEmailAddressAction.DROP,
+          blockLevel: BlockedEmailAddressLevel.ADDRESS,
         }),
       ).rejects.toThrow(NotSignedInError)
       verify(

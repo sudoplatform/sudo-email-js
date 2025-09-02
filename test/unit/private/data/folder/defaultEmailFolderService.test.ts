@@ -161,7 +161,7 @@ describe('DefaultEmailFolderService Test Suite', () => {
           customFolderName: 'CUSTOM',
           allowSymmetricKeyGeneration: false,
         }),
-      ).rejects.toThrow(new KeyNotFoundError())
+      ).rejects.toEqual(new KeyNotFoundError())
 
       verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
       verify(mockDeviceKeyWorker.generateCurrentSymmetricKey()).never()
@@ -386,7 +386,7 @@ describe('DefaultEmailFolderService Test Suite', () => {
           values: { customFolderName: 'CUSTOM-UPDATED' },
           allowSymmetricKeyGeneration: false,
         }),
-      ).rejects.toThrow(new KeyNotFoundError())
+      ).rejects.toEqual(new KeyNotFoundError())
 
       verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
       verify(mockDeviceKeyWorker.generateCurrentSymmetricKey()).never()

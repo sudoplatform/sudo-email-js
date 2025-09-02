@@ -14,6 +14,8 @@ import {
   PublicKeyFormat,
   SudoKeyManager,
   SymmetricEncryptionOptions,
+  Buffer as BufferUtil,
+  Base64,
 } from '@sudoplatform/sudo-common'
 import { v4 } from 'uuid'
 import { InternalError } from '../../../public/errors'
@@ -218,11 +220,8 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
     // If key id doesn't exist, generate new key and store
     if (!keyId.length) {
       keyId = v4()
-      keyIdBits = new TextEncoder().encode(keyId)
-      await this.keyManager.addPassword(
-        (keyIdBits as Uint8Array).buffer,
-        SINGLETON_PUBLIC_KEY_ID,
-      )
+      keyIdBits = BufferUtil.fromString(keyId)
+      await this.keyManager.addPassword(keyIdBits, SINGLETON_PUBLIC_KEY_ID)
       await this.keyManager.generateKeyPair(keyId)
     }
 
@@ -504,9 +503,7 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
     encrypted: string
     algorithm?: EncryptionAlgorithm
   }): Promise<string> {
-    const decodeEncrypted = Uint8Array.from(atob(encrypted), (c) =>
-      c.charCodeAt(0),
-    )
+    const decodeEncrypted = Base64.decode(encrypted)
     let unsealedBuffer: ArrayBuffer
     try {
       const options = algorithm ? { algorithm } : {}
@@ -536,9 +533,7 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
     keyPairId: string
     encrypted: string
   }): Promise<string> {
-    const decodeEncrypted = Uint8Array.from(atob(encrypted), (c) =>
-      c.charCodeAt(0),
-    )
+    const decodeEncrypted = Base64.decode(encrypted)
     const encryptedCipherKeyB64 = decodeEncrypted.slice(0, RSA_KEY_SIZE)
     const encryptedData = decodeEncrypted.slice(RSA_KEY_SIZE)
     if ((await this.keyManager.getPrivateKey(keyPairId)) === undefined) {

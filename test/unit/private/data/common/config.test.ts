@@ -22,7 +22,7 @@ describe('config tests', () => {
   describe('getEmailServiceConfig', () => {
     it('should throw an EmailServiceConfigNotFoundError if config has no emService stanza', () => {
       DefaultConfigurationManager.getInstance().setConfig(JSON.stringify({}))
-      expect(() => getEmailServiceConfig()).toThrowError(
+      expect(() => getEmailServiceConfig()).toThrow(
         EmailServiceConfigNotFoundError,
       )
     })

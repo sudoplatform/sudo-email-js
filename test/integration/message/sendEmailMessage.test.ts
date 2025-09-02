@@ -8,6 +8,7 @@ import {
   CachePolicy,
   DefaultLogger,
   ListOperationResultStatus,
+  Buffer as BufferUtil,
 } from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
@@ -656,7 +657,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         attachments: [
           {
             contentTransferEncoding: '7bit',
-            data: arrayBufferToString(largeAttachment),
+            data: BufferUtil.toString(largeAttachment),
             filename: 'large-attachment.txt',
             inlineAttachment: false,
             mimeType: 'text/plain',
@@ -1116,7 +1117,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
           attachments: [
             {
               contentTransferEncoding: '7bit',
-              data: arrayBufferToString(largeAttachment),
+              data: BufferUtil.toString(largeAttachment),
               filename: 'large-attachment.txt',
               inlineAttachment: false,
               mimeType: 'text/plain',

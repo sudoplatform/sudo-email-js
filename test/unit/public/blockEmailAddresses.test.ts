@@ -17,6 +17,7 @@ import { v4 } from 'uuid'
 import {
   BatchOperationResultStatus,
   BlockedEmailAddressAction,
+  BlockedEmailAddressLevel,
   SudoEmailClient,
 } from '../../../src'
 
@@ -77,6 +78,7 @@ describe('SudoEmailClient.blockEmailAddresses Test Suite', () => {
     expect(args).toEqual({
       blockedAddresses: addressesToBlock,
       action: BlockedEmailAddressAction.DROP,
+      blockLevel: BlockedEmailAddressLevel.ADDRESS,
     })
   })
 
@@ -95,6 +97,7 @@ describe('SudoEmailClient.blockEmailAddresses Test Suite', () => {
     expect(args).toEqual({
       blockedAddresses: addressesToBlock,
       action: BlockedEmailAddressAction.DROP,
+      blockLevel: BlockedEmailAddressLevel.ADDRESS,
     })
   })
 
@@ -113,6 +116,7 @@ describe('SudoEmailClient.blockEmailAddresses Test Suite', () => {
     expect(args).toEqual({
       blockedAddresses: addressesToBlock,
       action: BlockedEmailAddressAction.SPAM,
+      blockLevel: BlockedEmailAddressLevel.ADDRESS,
     })
   })
 
@@ -132,6 +136,45 @@ describe('SudoEmailClient.blockEmailAddresses Test Suite', () => {
       blockedAddresses: addressesToBlock,
       action: BlockedEmailAddressAction.DROP,
       emailAddressId: 'mockEmailAddressId',
+      blockLevel: BlockedEmailAddressLevel.ADDRESS,
+    })
+  })
+
+  it('calls use case as expected with explicit ADDRESS blockLevel', async () => {
+    const addressesToBlock = [
+      `spammyMcSpamface${v4()}@spambot.com`,
+      `spammyMcSpamface${v4()}@spambot.com`,
+      `spammyMcSpamface${v4()}@spambot.com`,
+    ]
+    await instanceUnderTest.blockEmailAddresses({
+      addressesToBlock,
+      blockLevel: BlockedEmailAddressLevel.ADDRESS,
+    })
+    verify(mockBlockEmailAddressesUseCase.execute(anything())).once()
+    const [args] = capture(mockBlockEmailAddressesUseCase.execute).first()
+    expect(args).toEqual({
+      blockedAddresses: addressesToBlock,
+      action: BlockedEmailAddressAction.DROP,
+      blockLevel: BlockedEmailAddressLevel.ADDRESS,
+    })
+  })
+
+  it('calls use case as expected with DOMAIN blockLevel', async () => {
+    const addressesToBlock = [
+      `spammyMcSpamface${v4()}@spambot.com`,
+      `spammyMcSpamface${v4()}@spambot.com`,
+      `spammyMcSpamface${v4()}@spambot.com`,
+    ]
+    await instanceUnderTest.blockEmailAddresses({
+      addressesToBlock,
+      blockLevel: BlockedEmailAddressLevel.DOMAIN,
+    })
+    verify(mockBlockEmailAddressesUseCase.execute(anything())).once()
+    const [args] = capture(mockBlockEmailAddressesUseCase.execute).first()
+    expect(args).toEqual({
+      blockedAddresses: addressesToBlock,
+      action: BlockedEmailAddressAction.DROP,
+      blockLevel: BlockedEmailAddressLevel.DOMAIN,
     })
   })
 

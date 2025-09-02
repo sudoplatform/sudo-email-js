@@ -25,7 +25,10 @@ import {
 import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransformer'
 import { EmailFolderEntityTransformer } from './transformer/emailFolderEntityTransformer'
 import { DeviceKeyWorker, KeyType } from '../common/deviceKeyWorker'
-import { EncryptionAlgorithm } from '@sudoplatform/sudo-common'
+import {
+  EncryptionAlgorithm,
+  Buffer as BufferUtil,
+} from '@sudoplatform/sudo-common'
 import { KeyNotFoundError } from '@sudoplatform/sudo-web-crypto-provider'
 
 export class DefaultEmailFolderService implements EmailFolderService {
@@ -89,7 +92,7 @@ export class DefaultEmailFolderService implements EmailFolderService {
     }
 
     const sealedCustomFolderName = await this.deviceKeyWorker.sealString({
-      payload: new TextEncoder().encode(customFolderName),
+      payload: BufferUtil.fromString(customFolderName),
       keyId: symmetricKeyId,
       keyType: KeyType.SymmetricKey,
     })
@@ -146,7 +149,7 @@ export class DefaultEmailFolderService implements EmailFolderService {
       }
 
       const sealedCustomFolderName = await this.deviceKeyWorker.sealString({
-        payload: new TextEncoder().encode(values.customFolderName),
+        payload: BufferUtil.fromString(values.customFolderName),
         keyId: symmetricKeyId,
         keyType: KeyType.SymmetricKey,
       })

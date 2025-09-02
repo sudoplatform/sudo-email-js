@@ -7,6 +7,7 @@
 import {
   EncryptionAlgorithm,
   KeyNotFoundError,
+  Buffer as BufferUtil,
 } from '@sudoplatform/sudo-common'
 import {
   EmailAddress,
@@ -104,7 +105,7 @@ export class DefaultEmailAccountService implements EmailAccountService {
 
     if (emailAddressEntity.alias) {
       const sealedAlias = await this.deviceKeyWorker.sealString({
-        payload: new TextEncoder().encode(emailAddressEntity.alias),
+        payload: BufferUtil.fromString(emailAddressEntity.alias),
         keyId: symmetricKeyId,
         keyType: KeyType.SymmetricKey,
       })
@@ -251,7 +252,7 @@ export class DefaultEmailAccountService implements EmailAccountService {
 
     if (input.values.alias) {
       const sealedAlias = await this.deviceKeyWorker.sealString({
-        payload: new TextEncoder().encode(input.values.alias),
+        payload: BufferUtil.fromString(input.values.alias),
         keyId: symmetricKeyId,
         keyType: KeyType.SymmetricKey,
       })

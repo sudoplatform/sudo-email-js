@@ -10,6 +10,7 @@ import {
   KeyNotFoundError,
   PublicKeyFormat,
   SudoKeyManager,
+  Buffer as BufferUtil,
 } from '@sudoplatform/sudo-common'
 import {
   anyString,
@@ -591,9 +592,10 @@ describe('DeviceKeyWorker Test Suite', () => {
         )
       })
       it('calls through everything expected', async () => {
+        const mockCipherKey = BufferUtil.fromString('cipherKey')
         when(
           mockKeyManager.decryptWithPrivateKey(anything(), anything()),
-        ).thenResolve(stringToArrayBuffer('cipherKey'))
+        ).thenResolve(mockCipherKey)
         await expect(
           instanceUnderTest.unsealString({
             encrypted: btoa(`${new Array(256 + 1).join('0')}aabbccddeeff`),
@@ -608,9 +610,10 @@ describe('DeviceKeyWorker Test Suite', () => {
           mockKeyManager.decryptWithPrivateKey,
         ).first()
         expect(inputKeyId).toStrictEqual('keyId')
-        const expectedBuffer = Uint8Array.from(
-          `${new Array(256 + 1).join('0')}`,
-          (c) => c.charCodeAt(0),
+        const expectedBuffer = BufferUtil.toArrayBuffer(
+          Uint8Array.from(`${new Array(256 + 1).join('0')}`, (c) =>
+            c.charCodeAt(0),
+          ),
         )
         // This is expected due to the way buffers need to be converted from Buffer -> ArrayBuffer
         expect(encrypted).toStrictEqual(expectedBuffer)
@@ -624,9 +627,9 @@ describe('DeviceKeyWorker Test Suite', () => {
         const [cipherKey, encryptedData] = capture(
           mockKeyManager.decryptWithSymmetricKey,
         ).first()
-        expect(cipherKey).toStrictEqual(stringToArrayBuffer('cipherKey'))
-        const expectedEncryptedData = Uint8Array.from('aabbccddeeff', (c) =>
-          c.charCodeAt(0),
+        expect(cipherKey).toStrictEqual(mockCipherKey)
+        const expectedEncryptedData = BufferUtil.toArrayBuffer(
+          Uint8Array.from('aabbccddeeff', (c) => c.charCodeAt(0)),
         )
         expect(encryptedData).toStrictEqual(expectedEncryptedData)
       })

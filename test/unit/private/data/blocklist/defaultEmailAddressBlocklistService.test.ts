@@ -36,6 +36,8 @@ import {
   InvalidArgumentError,
 } from '../../../../../src/public'
 import { DecodeError, KeyNotFoundError } from '@sudoplatform/sudo-common'
+import { BlockedEmailAddressLevel } from '../../../../../src/private/domain/entities/blocklist/blockedEmailEntity'
+import { generateHash } from '../../../../../src/private/util/stringUtils'
 
 describe('DefaultEmailAddressBlocklist Test Suite', () => {
   const mockAppSync = mock<ApiClient>()
@@ -72,44 +74,29 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
 
   describe('blockEmailAddressesForOwner', () => {
     const mockOwner = 'mockOwner'
-    it('call appSync correctly', async () => {
-      const input: BlockEmailAddressesForOwnerInput = {
-        owner: mockOwner,
-        blockedAddresses: [`spammyMcSpamface-${v4()}@spambot.com`],
-        action: BlockedEmailAddressAction.DROP,
-      }
-      await instanceUnderTest.blockEmailAddressesForOwner(input)
-      verify(mockAppSync.blockEmailAddresses(anything())).once()
-      const [inputArgs] = capture(mockAppSync.blockEmailAddresses).first()
-      expect(inputArgs.owner).toEqual(mockOwner)
-      expect(inputArgs.blockedAddresses).toHaveLength(
-        input.blockedAddresses.length,
-      )
-    })
 
     it('throws an error if passed an empty array', async () => {
       const input: BlockEmailAddressesForOwnerInput = {
         owner: mockOwner,
         blockedAddresses: [],
         action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
       }
       await expect(
         instanceUnderTest.blockEmailAddressesForOwner(input),
       ).rejects.toThrow(InvalidArgumentError)
     })
 
-    it('filters duplicate addresses', async () => {
-      const emailAddress = `spammyMcSpamface-${v4()}@spambot.com`
+    it('throws an error if passed an invalid address', async () => {
       const input: BlockEmailAddressesForOwnerInput = {
         owner: mockOwner,
-        blockedAddresses: [emailAddress, emailAddress],
+        blockedAddresses: ['foo'],
         action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
       }
-      await instanceUnderTest.blockEmailAddressesForOwner(input)
-      verify(mockAppSync.blockEmailAddresses(anything())).once()
-      const [inputArgs] = capture(mockAppSync.blockEmailAddresses).first()
-      expect(inputArgs.owner).toEqual(mockOwner)
-      expect(inputArgs.blockedAddresses).toHaveLength(1)
+      await expect(
+        instanceUnderTest.blockEmailAddressesForOwner(input),
+      ).rejects.toThrow(InvalidArgumentError)
     })
 
     it('blocks a single email address', async () => {
@@ -118,6 +105,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         owner: mockOwner,
         blockedAddresses: [emailAddress],
         action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
       }
 
       const result = await instanceUnderTest.blockEmailAddressesForOwner(input)
@@ -127,6 +115,32 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       verify(mockAppSync.blockEmailAddresses(anything())).once()
       verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
       verify(mockDeviceKeyWorker.sealString(anything())).once()
+      const [inputArgs] = capture(mockAppSync.blockEmailAddresses).first()
+      expect(inputArgs.owner).toEqual(mockOwner)
+      expect(inputArgs.blockedAddresses).toHaveLength(
+        input.blockedAddresses.length,
+      )
+      expect(inputArgs.blockedAddresses[0].action).toEqual(
+        BlockedEmailAddressAction.DROP,
+      )
+    })
+
+    it('filters duplicate addresses', async () => {
+      const emailAddress = `spammyMcSpamface-${v4()}@spambot.com`
+      const input: BlockEmailAddressesForOwnerInput = {
+        owner: mockOwner,
+        blockedAddresses: [emailAddress, emailAddress],
+        action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
+      }
+      await instanceUnderTest.blockEmailAddressesForOwner(input)
+      verify(mockAppSync.blockEmailAddresses(anything())).once()
+      const [inputArgs] = capture(mockAppSync.blockEmailAddresses).first()
+      expect(inputArgs.owner).toEqual(mockOwner)
+      expect(inputArgs.blockedAddresses).toHaveLength(1)
+      expect(inputArgs.blockedAddresses[0].action).toEqual(
+        BlockedEmailAddressAction.DROP,
+      )
     })
 
     it('blocks multiple email addresses at once', async () => {
@@ -139,6 +153,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         owner: mockOwner,
         blockedAddresses,
         action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
       }
 
       const result = await instanceUnderTest.blockEmailAddressesForOwner(input)
@@ -148,6 +163,14 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       verify(mockAppSync.blockEmailAddresses(anything())).once()
       verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
       verify(mockDeviceKeyWorker.sealString(anything())).times(3)
+      const [inputArgs] = capture(mockAppSync.blockEmailAddresses).first()
+      expect(inputArgs.owner).toEqual(mockOwner)
+      expect(inputArgs.blockedAddresses).toHaveLength(
+        input.blockedAddresses.length,
+      )
+      expect(inputArgs.blockedAddresses[0].action).toEqual(
+        BlockedEmailAddressAction.DROP,
+      )
     })
 
     it('returns failed status requests correctly', async () => {
@@ -163,6 +186,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         owner: mockOwner,
         blockedAddresses,
         action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
       }
 
       const result = await instanceUnderTest.blockEmailAddressesForOwner(input)
@@ -172,6 +196,14 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       verify(mockAppSync.blockEmailAddresses(anything())).once()
       verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
       verify(mockDeviceKeyWorker.sealString(anything())).times(3)
+      const [inputArgs] = capture(mockAppSync.blockEmailAddresses).first()
+      expect(inputArgs.owner).toEqual(mockOwner)
+      expect(inputArgs.blockedAddresses).toHaveLength(
+        input.blockedAddresses.length,
+      )
+      expect(inputArgs.blockedAddresses[0].action).toEqual(
+        BlockedEmailAddressAction.DROP,
+      )
     })
 
     it('returns partial status requests correctly', async () => {
@@ -196,6 +228,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         owner: mockOwner,
         blockedAddresses,
         action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
       }
 
       const result = await instanceUnderTest.blockEmailAddressesForOwner(input)
@@ -207,6 +240,14 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       verify(mockAppSync.blockEmailAddresses(anything())).once()
       verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
       verify(mockDeviceKeyWorker.sealString(anything())).times(3)
+      const [inputArgs] = capture(mockAppSync.blockEmailAddresses).first()
+      expect(inputArgs.owner).toEqual(mockOwner)
+      expect(inputArgs.blockedAddresses).toHaveLength(
+        input.blockedAddresses.length,
+      )
+      expect(inputArgs.blockedAddresses[0].action).toEqual(
+        BlockedEmailAddressAction.DROP,
+      )
     })
 
     it('accepts SPAM action', async () => {
@@ -215,6 +256,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         owner: mockOwner,
         blockedAddresses: [emailAddress],
         action: BlockedEmailAddressAction.SPAM,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
       }
 
       const result = await instanceUnderTest.blockEmailAddressesForOwner(input)
@@ -224,6 +266,45 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       verify(mockAppSync.blockEmailAddresses(anything())).once()
       verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
       verify(mockDeviceKeyWorker.sealString(anything())).once()
+      const [inputArgs] = capture(mockAppSync.blockEmailAddresses).first()
+      expect(inputArgs.owner).toEqual(mockOwner)
+      expect(inputArgs.blockedAddresses).toHaveLength(
+        input.blockedAddresses.length,
+      )
+      expect(inputArgs.blockedAddresses[0].action).toEqual(
+        BlockedEmailAddressAction.SPAM,
+      )
+    })
+
+    it('accepts DOMAIN blockLevel', async () => {
+      const domain = 'spambot.com'
+      const emailAddress = `spammyMcSpamface-${v4()}@${domain}`
+      const input = {
+        owner: mockOwner,
+        blockedAddresses: [emailAddress],
+        action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.DOMAIN,
+      }
+      const expectedHash = generateHash(`${mockOwner}|${domain}`)
+
+      const result = await instanceUnderTest.blockEmailAddressesForOwner(input)
+      expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
+        status: UpdateEmailMessagesStatus.Success,
+      })
+      verify(mockAppSync.blockEmailAddresses(anything())).once()
+      verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
+      verify(mockDeviceKeyWorker.sealString(anything())).once()
+      const [inputArgs] = capture(mockAppSync.blockEmailAddresses).first()
+      expect(inputArgs.owner).toEqual(mockOwner)
+      expect(inputArgs.blockedAddresses).toHaveLength(
+        input.blockedAddresses.length,
+      )
+      expect(inputArgs.blockedAddresses[0].action).toEqual(
+        BlockedEmailAddressAction.DROP,
+      )
+      expect(inputArgs.blockedAddresses[0].hashedBlockedValue).toEqual(
+        expectedHash,
+      )
     })
   })
 
@@ -236,6 +317,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         emailAddressId: mockEmailAddressId,
         blockedAddresses: [`spammyMcSpamface-${v4()}@spambot.com`],
         action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
       }
       await instanceUnderTest.blockEmailAddressesForEmailAddressId(input)
       verify(mockAppSync.blockEmailAddresses(anything())).once()
@@ -253,6 +335,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         emailAddressId: mockEmailAddressId,
         blockedAddresses: [],
         action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
       }
       await expect(
         instanceUnderTest.blockEmailAddressesForEmailAddressId(input),
@@ -266,6 +349,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         emailAddressId: mockEmailAddressId,
         blockedAddresses: [emailAddress, emailAddress],
         action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
       }
       await instanceUnderTest.blockEmailAddressesForEmailAddressId(input)
       verify(mockAppSync.blockEmailAddresses(anything())).once()
@@ -282,6 +366,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         emailAddressId: mockEmailAddressId,
         blockedAddresses: [emailAddress],
         action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
       }
 
       const result =
@@ -305,6 +390,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         emailAddressId: mockEmailAddressId,
         blockedAddresses,
         action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
       }
 
       const result =
@@ -331,6 +417,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         emailAddressId: mockEmailAddressId,
         blockedAddresses,
         action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
       }
 
       const result =
@@ -366,6 +453,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         emailAddressId: mockEmailAddressId,
         blockedAddresses,
         action: BlockedEmailAddressAction.DROP,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
       }
 
       const result =
@@ -387,6 +475,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         emailAddressId: mockEmailAddressId,
         blockedAddresses: [emailAddress],
         action: BlockedEmailAddressAction.SPAM,
+        blockLevel: BlockedEmailAddressLevel.ADDRESS,
       }
 
       const result =

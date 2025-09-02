@@ -11,7 +11,7 @@ import {
   InternalError,
   InvalidEmailContentsError,
 } from '../../public'
-import { Base64 } from '@sudoplatform/sudo-common'
+import { Base64, Buffer as BufferUtil } from '@sudoplatform/sudo-common'
 import {
   AttachmentOptions,
   MIMETextError,
@@ -81,7 +81,7 @@ export class Rfc822MessageDataProcessor {
       emailMessage,
       options,
     )
-    return new TextEncoder().encode(parsed)
+    return BufferUtil.fromString(parsed)
   }
 
   /**
@@ -275,7 +275,9 @@ export class Rfc822MessageDataProcessor {
       parsedMessage.attachments?.forEach((a) => {
         let attachmentData = a.body
         if (typeof attachmentData !== 'string') {
-          attachmentData = Base64.encode(attachmentData)
+          attachmentData = Base64.encode(
+            BufferUtil.toArrayBuffer(attachmentData),
+          )
         } else {
           attachmentData = Base64.encodeString(attachmentData)
         }

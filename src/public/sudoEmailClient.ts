@@ -99,6 +99,7 @@ import {
 } from './typings/batchOperationResult'
 import {
   BlockedEmailAddressAction,
+  BlockedEmailAddressLevel,
   UnsealedBlockedAddress,
 } from './typings/blockedAddresses'
 import { ConfigurationData } from './typings/configurationData'
@@ -253,11 +254,13 @@ export interface UpdateCustomEmailFolderInput {
  *
  * @interface BlockEmailAddressesInput
  * @property {string[]} addresses List of addresses to be blocked in the [local-part]@[domain] format.
+ * @property {BlockedEmailAddressLevel} blockLevel The level at which to block the sender.
  * @property {BlockedEmailAddressAction} action Action to take when receiving messages from blocked addresses.
  * @property {string} emailAddressId If included, the block will only affect the indicated email address.
  */
 export interface BlockEmailAddressesInput {
   addressesToBlock: string[]
+  blockLevel?: BlockedEmailAddressLevel
   action?: BlockedEmailAddressAction
   emailAddressId?: string
 }
@@ -1680,6 +1683,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     )
     const result = await useCase.execute({
       blockedAddresses: input.addressesToBlock,
+      blockLevel: input.blockLevel ?? BlockedEmailAddressLevel.ADDRESS,
       action: input.action ?? BlockedEmailAddressAction.DROP,
       emailAddressId: input.emailAddressId,
     })

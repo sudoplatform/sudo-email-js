@@ -25,6 +25,17 @@ export enum BlockedEmailAddressAction {
   SPAM = 'SPAM',
 }
 
+/**
+ * The Sudo Platform SDK representation of the level at which to block the sender.
+ * 
+ * ADDRESS = Block just the specific email address
+ * DOMAIN = Block all email addresses from the same domain
+ */
+export enum BlockedEmailAddressLevel {
+  ADDRESS = 'ADDRESS',
+  DOMAIN = 'DOMAIN',
+}
+
   /**
    * The Sudo Platform SDK representation of an unsealed blocked address
    * 

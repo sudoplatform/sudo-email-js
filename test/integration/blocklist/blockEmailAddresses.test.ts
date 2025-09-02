@@ -12,7 +12,9 @@ import {
 import {
   BatchOperationResultStatus,
   BlockedEmailAddressAction,
+  BlockedEmailAddressLevel,
   EmailAddress,
+  InvalidArgumentError,
   ListEmailMessagesResult,
   SudoEmailClient,
   UnsealedBlockedAddress,
@@ -28,7 +30,7 @@ import waitForExpect from 'wait-for-expect'
 import { getFolderByName } from '../util/folder'
 import { delay } from '../../util/delay'
 
-describe('SudoEmailClient Email Blocklist Integration Test Suite', () => {
+describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
   jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
   const dummyAddress = 'spammymcspamface@spambot.com'
@@ -68,6 +70,12 @@ describe('SudoEmailClient Email Blocklist Integration Test Suite', () => {
   })
 
   afterEach(async () => {
+    const blocklist = await instanceUnderTest.getEmailAddressBlocklist()
+    if (blocklist.length) {
+      await instanceUnderTest.unblockEmailAddressesByHashedValue({
+        hashedValues: blocklist.map((entry) => entry.hashedBlockedValue),
+      })
+    }
     await teardown(
       {
         emailAddresses,
@@ -107,61 +115,20 @@ describe('SudoEmailClient Email Blocklist Integration Test Suite', () => {
     })
   }
 
-  it('Should allow user to block and unblock email addresses and look up the blocklist', async () => {
-    const expectedlyEmptyBlocklistResult =
-      await instanceUnderTest.getEmailAddressBlocklist()
+  it('Should successfully block a single address', async () => {
+    const blockingResult = await instanceUnderTest.blockEmailAddresses({
+      addressesToBlock: [dummyAddress],
+    })
 
-    expect(expectedlyEmptyBlocklistResult).toHaveLength(0)
+    expect(blockingResult.status).toEqual(BatchOperationResultStatus.Success)
+  })
 
+  it('Should successfully block multiple addresses', async () => {
     const blockingResult = await instanceUnderTest.blockEmailAddresses({
       addressesToBlock: [senderAddress.emailAddress, dummyAddress],
     })
 
     expect(blockingResult.status).toEqual(BatchOperationResultStatus.Success)
-
-    const expectedlyFullBlocklist =
-      await instanceUnderTest.getEmailAddressBlocklist()
-
-    expect(expectedlyFullBlocklist).toHaveLength(2)
-    expect(expectedlyFullBlocklist).toEqual<UnsealedBlockedAddress[]>(
-      expect.arrayContaining<UnsealedBlockedAddress>([
-        {
-          address: senderAddress.emailAddress,
-          hashedBlockedValue: expect.any(String),
-          status: {
-            type: 'Completed',
-          },
-          action: BlockedEmailAddressAction.DROP,
-        },
-        {
-          address: dummyAddress,
-          hashedBlockedValue: expect.any(String),
-          status: {
-            type: 'Completed',
-          },
-          action: BlockedEmailAddressAction.DROP,
-        },
-      ]),
-    )
-
-    const unblockingResult = await instanceUnderTest.unblockEmailAddresses({
-      addresses: [senderAddress.emailAddress, dummyAddress],
-    })
-
-    expect(unblockingResult.status).toEqual(BatchOperationResultStatus.Success)
-
-    const expectedlyAlsoEmptyBlocklistResult =
-      await instanceUnderTest.getEmailAddressBlocklist()
-
-    expect(expectedlyAlsoEmptyBlocklistResult).toHaveLength(0)
-  })
-
-  it('Should treat unblocking addresses that are not blocked as success', async () => {
-    const unblockingResult = await instanceUnderTest.unblockEmailAddresses({
-      addresses: [senderAddress.emailAddress, dummyAddress],
-    })
-
-    expect(unblockingResult.status).toEqual(BatchOperationResultStatus.Success)
   })
 
   it('Should treat blocking addresses that are already blocked as success', async () => {
@@ -176,27 +143,6 @@ describe('SudoEmailClient Email Blocklist Integration Test Suite', () => {
     })
 
     expect(blockingResult2.status).toEqual(BatchOperationResultStatus.Success)
-  })
-
-  it('Allows unblocking by hashedValue', async () => {
-    const blockingResult = await instanceUnderTest.blockEmailAddresses({
-      addressesToBlock: [senderAddress.emailAddress, dummyAddress],
-    })
-
-    expect(blockingResult.status).toEqual(BatchOperationResultStatus.Success)
-
-    const getResult = await instanceUnderTest.getEmailAddressBlocklist()
-
-    expect(getResult.length).toEqual(2)
-
-    const hashedValues = getResult.map((value) => value.hashedBlockedValue)
-
-    const unblockingResult =
-      await instanceUnderTest.unblockEmailAddressesByHashedValue({
-        hashedValues,
-      })
-
-    expect(unblockingResult.status).toEqual(BatchOperationResultStatus.Success)
   })
 
   it('allows blocking by emailAddressId', async () => {
@@ -492,12 +438,67 @@ describe('SudoEmailClient Email Blocklist Integration Test Suite', () => {
           })
 
         if (messages.status !== ListOperationResultStatus.Success) {
-          fail(`Expect result not returned: ${messages}`)
+          fail(`Expect result not returned: ${messages.status}`)
         }
         expect(messages.items).toHaveLength(0)
       },
       30000,
       1000,
     )
+  })
+
+  it('properly blocks with block level as domain', async () => {
+    const sender2 = await provisionEmailAddress(
+      sudoOwnershipProofToken,
+      instanceUnderTest,
+      {
+        localPart: generateSafeLocalPart('sender2'),
+      },
+    )
+    emailAddresses.push(sender2)
+
+    const blockingResult = await instanceUnderTest.blockEmailAddresses({
+      addressesToBlock: [senderAddress.emailAddress],
+      blockLevel: BlockedEmailAddressLevel.DOMAIN,
+    })
+
+    expect(blockingResult.status).toEqual(BatchOperationResultStatus.Success)
+
+    const inboxFolder = await getFolderByName({
+      emailClient: instanceUnderTest,
+      emailAddressId: receiverAddress.id,
+      folderName: 'INBOX',
+    })
+    await sendMessage(
+      sender2,
+      receiverAddress.emailAddress,
+      'Block by domain test',
+    )
+    await delay(3000)
+
+    let messages: ListEmailMessagesResult | undefined
+    await waitForExpect(
+      async () => {
+        messages = await instanceUnderTest.listEmailMessagesForEmailFolderId({
+          folderId: inboxFolder!.id,
+          cachePolicy: CachePolicy.RemoteOnly,
+        })
+
+        if (messages.status !== ListOperationResultStatus.Success) {
+          fail(`Expect result not returned: ${messages.status}`)
+        }
+        expect(messages.items).toHaveLength(0)
+      },
+      30000,
+      1000,
+    )
+  })
+
+  it('throws InvalidArgumentError if passed an invalid email address', async () => {
+    await expect(
+      instanceUnderTest.blockEmailAddresses({
+        addressesToBlock: ['foo'],
+      }),
+    ).rejects.toBeInstanceOf(InvalidArgumentError)
   })
 })

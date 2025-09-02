@@ -11,6 +11,7 @@ import {
   FatalError,
   KeyNotFoundError,
   Logger,
+  Buffer as BufferUtil,
 } from '@sudoplatform/sudo-common'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { FetchResult } from 'apollo-link'
@@ -311,7 +312,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       id,
       emailAddressId,
       updatedAt,
-      rfc822Data: new TextEncoder().encode(unsealedData),
+      rfc822Data: BufferUtil.fromString(unsealedData),
     }
   }
 
@@ -670,9 +671,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       for (const encodingValue of contentEncodingValues) {
         switch (encodingValue.trim().toLowerCase()) {
           case 'sudoplatform-compression':
-            const decompressed = await gunzipAsync(
-              Buffer.from(decodedString, 'base64'),
-            )
+            const decompressed = await gunzipAsync(Base64.decode(decodedString))
             decodedString = new TextDecoder().decode(decompressed)
             break
           case 'sudoplatform-crypto':
