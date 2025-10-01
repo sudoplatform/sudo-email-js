@@ -48,19 +48,6 @@ describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
       sudoOwnershipProofToken,
       instanceUnderTest,
     )
-    draftContents = Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
-      from: [{ emailAddress: emailAddress.emailAddress }],
-      to: [],
-      cc: [],
-      bcc: [],
-      replyTo: [],
-      body: 'test draft message',
-      attachments: [],
-    })
-    draftMetadata = await instanceUnderTest.createDraftEmailMessage({
-      rfc822Data: draftContents,
-      senderEmailAddressId: emailAddress.id,
-    })
   })
 
   afterEach(async () => {
@@ -81,7 +68,49 @@ describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
     )
   })
 
-  it('returns successful draft', async () => {
+  it('returns successful out-network draft', async () => {
+    draftContents = Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+      from: [{ emailAddress: emailAddress.emailAddress }],
+      to: [],
+      cc: [],
+      bcc: [],
+      replyTo: [],
+      body: 'test draft message',
+      attachments: [],
+    })
+    draftMetadata = await instanceUnderTest.createDraftEmailMessage({
+      rfc822Data: draftContents,
+      senderEmailAddressId: emailAddress.id,
+    })
+    const draft = await instanceUnderTest.getDraftEmailMessage({
+      id: draftMetadata.id,
+      emailAddressId: emailAddress.id,
+    })
+
+    expect(draft).toEqual({
+      ...draftMetadata,
+      rfc822Data: draftContents,
+    })
+  })
+
+  it('returns successful in-network draft', async () => {
+    const recipientAddress = await provisionEmailAddress(
+      sudoOwnershipProofToken,
+      instanceUnderTest,
+    )
+    draftContents = Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+      from: [{ emailAddress: emailAddress.emailAddress }],
+      to: [{ emailAddress: recipientAddress.emailAddress }],
+      cc: [],
+      bcc: [],
+      replyTo: [],
+      body: 'test draft message',
+      attachments: [],
+    })
+    draftMetadata = await instanceUnderTest.createDraftEmailMessage({
+      rfc822Data: draftContents,
+      senderEmailAddressId: emailAddress.id,
+    })
     const draft = await instanceUnderTest.getDraftEmailMessage({
       id: draftMetadata.id,
       emailAddressId: emailAddress.id,

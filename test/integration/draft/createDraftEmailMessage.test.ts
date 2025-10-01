@@ -63,7 +63,8 @@ describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
     )
   })
 
-  it('creates a draft successfully', async () => {
+  it('creates an out-network draft successfully', async () => {
+    const body = 'Hello, World'
     const draftBuffer =
       Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
         from: [{ emailAddress: emailAddress.emailAddress }],
@@ -71,7 +72,7 @@ describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
         cc: [],
         bcc: [],
         replyTo: [],
-        body: 'Hello, World',
+        body,
         attachments: [],
         subject: 'draft subject',
       })
@@ -85,12 +86,54 @@ describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
       id: metadata.id,
       emailAddressId: emailAddress.id,
     })
-    const draftResDataStr = arrayBufferToString(draftRes!.rfc822Data)
 
     expect(draftRes).toEqual<DraftEmailMessage>({
       ...metadata,
       rfc822Data: draftBuffer,
     })
+
+    const draftResDataStr = arrayBufferToString(draftRes!.rfc822Data)
+    expect(draftResDataStr).toContain(body)
+    expect(draftResDataStr).toContain(emailAddress.emailAddress)
+  })
+
+  it('creates and in-network draft successfully', async () => {
+    const recipientAddress = await provisionEmailAddress(
+      sudoOwnershipProofToken,
+      instanceUnderTest,
+    )
+    const body = 'Hello, World'
+    const draftBuffer =
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [{ emailAddress: recipientAddress.emailAddress }],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body,
+        attachments: [],
+        subject: 'draft subject',
+      })
+    const metadata = await instanceUnderTest.createDraftEmailMessage({
+      rfc822Data: draftBuffer,
+      senderEmailAddressId: emailAddress.id,
+    })
+    draftMetadata.push(metadata)
+
+    const draftRes = await instanceUnderTest.getDraftEmailMessage({
+      id: metadata.id,
+      emailAddressId: emailAddress.id,
+    })
+
+    expect(draftRes).toEqual<DraftEmailMessage>({
+      ...metadata,
+      rfc822Data: draftBuffer,
+    })
+
+    const draftResDataStr = arrayBufferToString(draftRes!.rfc822Data)
+    expect(draftResDataStr).toContain(body)
+    expect(draftResDataStr).toContain(emailAddress.emailAddress)
+    expect(draftResDataStr).toContain(recipientAddress.emailAddress)
   })
 
   it('throws an error if an non-existent email address id is given', async () => {

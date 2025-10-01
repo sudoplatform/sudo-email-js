@@ -8,6 +8,10 @@ import { CachePolicy, DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { AddressNotFoundError } from '../../../../public/errors'
 import { EmailAccountService } from '../../entities/account/emailAccountService'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
+import { EmailConfigurationDataService } from '../../entities/configuration/configurationDataService'
+import { EmailDomainService } from '../../entities/emailDomain/emailDomainService'
+import { EmailMessageUtil } from '../../../util/emailMessageUtil'
+import { EmailCryptoService } from '../../entities/secure/emailCryptoService'
 
 /**
  * Input for `SaveDraftEmailMessageUseCase` use case.
@@ -35,6 +39,9 @@ export class SaveDraftEmailMessageUseCase {
   constructor(
     private readonly emailAccountService: EmailAccountService,
     private readonly emailMessageService: EmailMessageService,
+    private readonly domainService: EmailDomainService,
+    private readonly configurationDataService: EmailConfigurationDataService,
+    private readonly emailCryptoService: EmailCryptoService,
   ) {
     this.log = new DefaultLogger(this.constructor.name)
   }
@@ -51,8 +58,19 @@ export class SaveDraftEmailMessageUseCase {
     if (!account) {
       throw new AddressNotFoundError()
     }
+    const config = await this.configurationDataService.getConfigurationData()
+
+    const emailMessageUtil = new EmailMessageUtil({
+      accountService: this.emailAccountService,
+      emailCryptoService: this.emailCryptoService,
+      domainService: this.domainService,
+    })
+
+    const processedRfc822Data =
+      await emailMessageUtil.processMessageForS3Upload(rfc822Data, config)
+
     const metadata = await this.emailMessageService.saveDraft({
-      rfc822Data,
+      rfc822Data: processedRfc822Data,
       senderEmailAddressId,
     })
     return metadata

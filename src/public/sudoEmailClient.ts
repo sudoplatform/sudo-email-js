@@ -1780,6 +1780,9 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const useCase = new SaveDraftEmailMessageUseCase(
       this.emailAccountService,
       this.emailMessageService,
+      this.emailDomainService,
+      this.configurationDataService,
+      this.emailCryptoService,
     )
     return await useCase.execute({ rfc822Data, senderEmailAddressId })
   }
@@ -1797,6 +1800,9 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const useCase = new UpdateDraftEmailMessageUseCase(
       this.emailAccountService,
       this.emailMessageService,
+      this.emailDomainService,
+      this.configurationDataService,
+      this.emailCryptoService,
     )
     return await useCase.execute({ id, rfc822Data, senderEmailAddressId })
   }

@@ -80,10 +80,8 @@ import { SealedEmailMessageEntity } from '../../domain/entities/message/sealedEm
 import { EmailCryptoService } from '../../domain/entities/secure/emailCryptoService'
 import {
   LEGACY_BODY_CONTENT_ID,
-  LEGACY_KEY_EXCHANGE_CONTENT_ID,
   SecureEmailAttachmentType,
 } from '../../domain/entities/secure/secureEmailAttachmentType'
-import { SecurePackage } from '../../domain/entities/secure/securePackage'
 import { arrayBufferToString, stringToArrayBuffer } from '../../util/buffer'
 import { Rfc822MessageDataProcessor } from '../../util/rfc822MessageDataProcessor'
 import { gunzipAsync } from '../../util/zlibAsync'
@@ -107,10 +105,10 @@ import { SortOrderTransformer } from '../common/transformer/sortOrderTransformer
 import { withDefault } from '../common/withDefault'
 import { SealedEmailMessageEntityTransformer } from './transformer/sealedEmailMessageEntityTransformer'
 import { SendEmailMessageResultTransformer } from './transformer/sendEmailMessageResultTransformer'
-import { EmailAddressPublicInfoEntity } from '../../domain/entities/account/emailAddressPublicInfoEntity'
 import { ScheduledDraftMessageEntity } from '../../domain/entities/message/scheduledDraftMessageEntity'
 import { ScheduledDraftMessageTransformer } from './transformer/scheduledDraftMessageTransformer'
 import { ScheduledDraftMessageFilterTransformer } from './transformer/scheduledDraftMessageFilterTransformer'
+import { EmailMessageUtil } from '../../util/emailMessageUtil'
 
 const EmailAddressEntityCodec = t.intersection(
   [t.type({ emailAddress: t.string }), t.partial({ displayName: t.string })],
@@ -307,6 +305,23 @@ export class DefaultEmailMessageService implements EmailMessageService {
       keyId,
       encrypted: sealedString,
     })
+
+    if (
+      unsealedData.includes(SecureEmailAttachmentType.BODY.contentId) ||
+      unsealedData.includes(LEGACY_BODY_CONTENT_ID)
+    ) {
+      const emailMessageUtil = new EmailMessageUtil({
+        emailCryptoService: this.emailCryptoService,
+      })
+      const rfc822Data =
+        await emailMessageUtil.processDownloadedEncryptedMessage(unsealedData)
+      return {
+        id,
+        emailAddressId,
+        updatedAt,
+        rfc822Data,
+      }
+    }
 
     return {
       id,
@@ -508,31 +523,14 @@ export class DefaultEmailMessageService implements EmailMessageService {
       emailAddressesPublicInfo,
       senderEmailAddressId,
     })
-
-    const rfc822Data = Rfc822MessageDataProcessor.encodeToInternetMessageBuffer(
-      message,
-      { decodeEncodedFields: true },
-    )
-
-    const uniqueEmailAddressPublicInfo: EmailAddressPublicInfoEntity[] = []
-    emailAddressesPublicInfo.forEach((info) => {
-      if (!uniqueEmailAddressPublicInfo.some((v) => v.keyId === info.keyId)) {
-        uniqueEmailAddressPublicInfo.push(info)
-      }
+    const emailMessageUtil = new EmailMessageUtil({
+      emailCryptoService: this.emailCryptoService,
     })
 
-    const encryptedEmailMessage = await this.emailCryptoService.encrypt(
-      rfc822Data,
-      uniqueEmailAddressPublicInfo,
+    const encryptedRfc822Data = await emailMessageUtil.encryptInNetworkMessage(
+      message,
+      emailAddressesPublicInfo,
     )
-    const secureAttachments = encryptedEmailMessage.toArray()
-
-    const encryptedRfc822Data =
-      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
-        ...message,
-        attachments: secureAttachments,
-        encryptionStatus: EncryptionStatus.ENCRYPTED,
-      })
 
     if (encryptedRfc822Data.byteLength > emailMessageMaxOutboundMessageSize) {
       throw new MessageSizeLimitExceededError(
@@ -695,40 +693,12 @@ export class DefaultEmailMessageService implements EmailMessageService {
         decodedString.includes(SecureEmailAttachmentType.BODY.contentId) ||
         decodedString.includes(LEGACY_BODY_CONTENT_ID)
       ) {
-        const decodedEncryptedMessage =
-          await Rfc822MessageDataProcessor.parseInternetMessageData(
-            decodedString,
-          )
-
-        if (
-          !decodedEncryptedMessage.attachments ||
-          decodedEncryptedMessage.attachments.length === 0
-        ) {
-          throw new DecodeError('Error decoding encrypted mesage')
-        }
-        const keyAttachments = new Set(
-          decodedEncryptedMessage.attachments?.filter(
-            (att) =>
-              att.contentId?.includes(
-                SecureEmailAttachmentType.KEY_EXCHANGE.contentId,
-              ) || att.contentId?.includes(LEGACY_KEY_EXCHANGE_CONTENT_ID),
-          ),
+        const emailMessageUtil = new EmailMessageUtil({
+          emailCryptoService: this.emailCryptoService,
+        })
+        return await emailMessageUtil.processDownloadedEncryptedMessage(
+          decodedString,
         )
-        if (keyAttachments.size === 0) {
-          throw new DecodeError('Could not find key attachments')
-        }
-        const bodyAttachment = decodedEncryptedMessage.attachments.find(
-          (att) =>
-            att.contentId === SecureEmailAttachmentType.BODY.contentId ||
-            att.contentId === LEGACY_BODY_CONTENT_ID,
-        )
-        if (!bodyAttachment) {
-          throw new DecodeError('Could not find body attachment')
-        }
-        const securePackage = new SecurePackage(keyAttachments, bodyAttachment)
-        const decodedUnencryptedMessage =
-          await this.emailCryptoService.decrypt(securePackage)
-        return decodedUnencryptedMessage
       }
       return stringToArrayBuffer(decodedString)
     } catch (error: unknown) {

@@ -24,6 +24,7 @@ import {
 import { Direction, State } from '../../../src/public/typings/emailMessage'
 import { PublicKeyFormat } from '@sudoplatform/sudo-common'
 import { ScheduledDraftMessageEntity } from '../../../src/private/domain/entities/message/scheduledDraftMessageEntity'
+import { EmailAttachmentEntity } from '../../../src/private/domain/entities/message/emailAttachmentEntity'
 
 export class EntityDataFactory {
   private static readonly commonProps = {
@@ -172,6 +173,15 @@ export class EntityDataFactory {
     sortDate: new Date(1.0),
     size: 12345,
     encryptionStatus: EncryptionStatus.UNENCRYPTED,
+  }
+
+  static readonly emailAttachment: EmailAttachmentEntity = {
+    data: 'dummyData',
+    filename: 'dummyFilename.png',
+    mimeType: 'image/png',
+    inlineAttachment: false,
+    contentId: undefined,
+    contentTransferEncoding: undefined,
   }
 
   static readonly uuidV4Regex = new RegExp(

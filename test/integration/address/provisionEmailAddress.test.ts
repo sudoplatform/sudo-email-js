@@ -81,10 +81,21 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
     expect(emailAddress.alias).toBeDefined()
     expect(emailAddress.alias).toStrictEqual(emailAddressAlias)
     expect(emailAddress.numberOfEmailMessages).toStrictEqual(0)
-    expect(emailAddress.folders).toHaveLength(4)
-    expect(emailAddress.folders.map((f) => f.folderName)).toEqual(
-      expect.arrayContaining(['INBOX', 'SENT', 'OUTBOX', 'TRASH']),
-    )
+    if (emailAddress.folders.length === 4) {
+      // Spam folder is not enabled in this instance
+      expect(emailAddress.folders.map((f) => f.folderName)).toEqual(
+        expect.arrayContaining(['INBOX', 'SENT', 'OUTBOX', 'TRASH']),
+      )
+    } else if (emailAddress.folders.length === 5) {
+      // Spam folder is enabled in this instance
+      expect(emailAddress.folders.map((f) => f.folderName)).toEqual(
+        expect.arrayContaining(['INBOX', 'SENT', 'OUTBOX', 'TRASH', 'SPAM']),
+      )
+    } else {
+      fail(
+        `emailAddress.folders has unexpected length ${emailAddress.folders.length}`,
+      )
+    }
   })
 
   it('provisions an address with multi-byte UTF-8 characters in alias', async () => {
@@ -106,10 +117,21 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
     expect(emailAddress.alias).toBeDefined()
     expect(emailAddress.alias).toStrictEqual(emailAddressAlias)
     expect(emailAddress.numberOfEmailMessages).toStrictEqual(0)
-    expect(emailAddress.folders).toHaveLength(4)
-    expect(emailAddress.folders.map((f) => f.folderName)).toEqual(
-      expect.arrayContaining(['INBOX', 'SENT', 'OUTBOX', 'TRASH']),
-    )
+    if (emailAddress.folders.length === 4) {
+      // Spam folder is not enabled in this instance
+      expect(emailAddress.folders.map((f) => f.folderName)).toEqual(
+        expect.arrayContaining(['INBOX', 'SENT', 'OUTBOX', 'TRASH']),
+      )
+    } else if (emailAddress.folders.length === 5) {
+      // Spam folder is enabled in this instance
+      expect(emailAddress.folders.map((f) => f.folderName)).toEqual(
+        expect.arrayContaining(['INBOX', 'SENT', 'OUTBOX', 'TRASH', 'SPAM']),
+      )
+    } else {
+      fail(
+        `emailAddress.folders has unexpected length ${emailAddress.folders.length}`,
+      )
+    }
 
     await waitForExpect(
       async () =>

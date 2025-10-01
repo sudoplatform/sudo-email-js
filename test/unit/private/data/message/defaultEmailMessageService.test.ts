@@ -80,6 +80,7 @@ import { SecurePackage } from '../../../../../src/private/domain/entities/secure
 import { SecureEmailAttachmentType } from '../../../../../src/private/domain/entities/secure/secureEmailAttachmentType'
 import { EmailCryptoService } from '../../../../../src/private/domain/entities/secure/emailCryptoService'
 import { DateTime } from 'luxon'
+import { SecurePackageDataFactory } from '../../../data-factory/securePackage'
 
 const identityServiceConfig = DraftEmailMessageDataFactory.identityServiceConfig
 
@@ -1816,6 +1817,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
           DraftEmailMessageDataFactory.s3ClientDownloadOutput.lastModified,
         rfc822Data: BufferUtil.fromString(unsealedDraft),
       })
+
+      verify(mockS3Client.download(anything())).once()
+      verify(mockDeviceKeyWorker.unsealString(anything())).once()
+      expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(0)
+      verify(mockEmailCryptoService.decrypt(anything())).never()
     })
 
     it('returns undefined if s3 download throws NoSuchKey', async () => {
@@ -1829,6 +1835,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
       await expect(
         instanceUnderTest.getDraft(DraftEmailMessageDataFactory.getDraftInput),
       ).resolves.toBeUndefined()
+
+      verify(mockS3Client.download(anything())).once()
+      verify(mockDeviceKeyWorker.unsealString(anything())).never()
+      expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(0)
+      verify(mockEmailCryptoService.decrypt(anything())).never()
     })
 
     it('throws error if s3 download throws error other than NoSuchKey', async () => {
@@ -1842,6 +1853,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
       await expect(
         instanceUnderTest.getDraft(DraftEmailMessageDataFactory.getDraftInput),
       ).rejects.toThrow('test error')
+
+      verify(mockS3Client.download(anything())).once()
+      verify(mockDeviceKeyWorker.unsealString(anything())).never()
+      expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(0)
+      verify(mockEmailCryptoService.decrypt(anything())).never()
     })
 
     it('throws error if no s3 keyId in metadata', async () => {
@@ -1854,6 +1870,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
       ).rejects.toThrow(
         new InternalError('No sealed keyId associated with s3 object'),
       )
+
+      verify(mockS3Client.download(anything())).once()
+      verify(mockDeviceKeyWorker.unsealString(anything())).never()
+      expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(0)
+      verify(mockEmailCryptoService.decrypt(anything())).never()
     })
 
     it('throws error if no algorithm in metadata', async () => {
@@ -1867,6 +1888,119 @@ describe('DefaultEmailMessageService Test Suite', () => {
       ).rejects.toThrow(
         new InternalError('No sealed algorithm associated with s3 object'),
       )
+
+      verify(mockS3Client.download(anything())).once()
+      verify(mockDeviceKeyWorker.unsealString(anything())).never()
+      expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(0)
+      verify(mockEmailCryptoService.decrypt(anything())).never()
+    })
+
+    describe('E2EE path', () => {
+      const dummyUnsealedWithBodyContentId = `content_${SecureEmailAttachmentType.BODY.contentId}`
+      const unsealedDraft = 'unsealedDraft'
+      beforeEach(() => {
+        when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
+          dummyUnsealedWithBodyContentId,
+        )
+        parseInternetMessageDataSpy.mockResolvedValue(
+          EmailMessageRfc822DataFactory.emailMessageDetails({
+            attachments: SecurePackageDataFactory.securePackage().toArray(),
+          }),
+        )
+        when(mockEmailCryptoService.decrypt(anything())).thenResolve(
+          stringToArrayBuffer(unsealedDraft),
+        )
+      })
+
+      it('gets draft successfully', async () => {
+        when(mockS3Client.download(anything())).thenResolve(
+          DraftEmailMessageDataFactory.s3ClientDownloadOutput,
+        )
+        await expect(
+          instanceUnderTest.getDraft(
+            DraftEmailMessageDataFactory.getDraftInput,
+          ),
+        ).resolves.toEqual<DraftEmailMessageEntity>({
+          id: DraftEmailMessageDataFactory.getDraftInput.id,
+          emailAddressId:
+            DraftEmailMessageDataFactory.getDraftInput.emailAddressId,
+          updatedAt:
+            DraftEmailMessageDataFactory.s3ClientDownloadOutput.lastModified,
+          rfc822Data: BufferUtil.fromString(unsealedDraft),
+        })
+
+        verify(mockS3Client.download(anything())).once()
+        verify(mockDeviceKeyWorker.unsealString(anything())).once()
+        expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(1)
+        verify(mockEmailCryptoService.decrypt(anything())).once()
+      })
+
+      it('throws DecodeError if no attachments found', async () => {
+        when(mockS3Client.download(anything())).thenResolve(
+          DraftEmailMessageDataFactory.s3ClientDownloadOutput,
+        )
+        parseInternetMessageDataSpy.mockResolvedValue(
+          EmailMessageRfc822DataFactory.emailMessageDetails(),
+        )
+
+        await expect(
+          instanceUnderTest.getDraft(
+            DraftEmailMessageDataFactory.getDraftInput,
+          ),
+        ).rejects.toBeInstanceOf(DecodeError)
+
+        verify(mockS3Client.download(anything())).once()
+        verify(mockDeviceKeyWorker.unsealString(anything())).once()
+        expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(1)
+        verify(mockEmailCryptoService.decrypt(anything())).never()
+      })
+
+      it('throws DecodeError if keyAttachments not found', async () => {
+        when(mockS3Client.download(anything())).thenResolve(
+          DraftEmailMessageDataFactory.s3ClientDownloadOutput,
+        )
+        parseInternetMessageDataSpy.mockResolvedValue(
+          EmailMessageRfc822DataFactory.emailMessageDetails({
+            attachments: [
+              SecurePackageDataFactory.securePackage().getBodyAttachment(),
+            ],
+          }),
+        )
+
+        await expect(
+          instanceUnderTest.getDraft(
+            DraftEmailMessageDataFactory.getDraftInput,
+          ),
+        ).rejects.toBeInstanceOf(DecodeError)
+
+        verify(mockS3Client.download(anything())).once()
+        verify(mockDeviceKeyWorker.unsealString(anything())).once()
+        expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(1)
+        verify(mockEmailCryptoService.decrypt(anything())).never()
+      })
+
+      it('throws DecodeError if body attachment not found', async () => {
+        when(mockS3Client.download(anything())).thenResolve(
+          DraftEmailMessageDataFactory.s3ClientDownloadOutput,
+        )
+        parseInternetMessageDataSpy.mockResolvedValue(
+          EmailMessageRfc822DataFactory.emailMessageDetails({
+            attachments:
+              SecurePackageDataFactory.securePackage().getKeyAttachments(),
+          }),
+        )
+
+        await expect(
+          instanceUnderTest.getDraft(
+            DraftEmailMessageDataFactory.getDraftInput,
+          ),
+        ).rejects.toBeInstanceOf(DecodeError)
+
+        verify(mockS3Client.download(anything())).once()
+        verify(mockDeviceKeyWorker.unsealString(anything())).once()
+        expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(1)
+        verify(mockEmailCryptoService.decrypt(anything())).never()
+      })
     })
   })
 

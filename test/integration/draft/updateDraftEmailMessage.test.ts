@@ -10,6 +10,7 @@ import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { v4 } from 'uuid'
 import {
   AddressNotFoundError,
+  DraftEmailMessage,
   DraftEmailMessageMetadata,
   EmailAddress,
   MessageNotFoundError,
@@ -19,6 +20,7 @@ import { delay } from '../../util/delay'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
+import { arrayBufferToString } from '../../../src/private/util/buffer'
 
 describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
   jest.setTimeout(240000)
@@ -60,7 +62,8 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
     )
   })
 
-  it('updates a draft successfully', async () => {
+  it('updates an out-network draft successfully', async () => {
+    const body = 'Hello, World'
     const draftBuffer =
       Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
         from: [{ emailAddress: emailAddress.emailAddress }],
@@ -68,7 +71,7 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
         cc: [],
         bcc: [],
         replyTo: [],
-        body: 'Hello, World',
+        body,
         attachments: [],
       })
     const metadata = await instanceUnderTest.createDraftEmailMessage({
@@ -79,6 +82,7 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
     await delay(1000)
 
     draftMetadata.push(metadata)
+    const updatedBody = 'Goodbye, World'
     const updatedDraftBuffer =
       Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
         from: [{ emailAddress: emailAddress.emailAddress }],
@@ -86,7 +90,7 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
         cc: [],
         bcc: [],
         replyTo: [],
-        body: 'Goodbye, World',
+        body: updatedBody,
         attachments: [],
       })
     const updatedMetadata = await instanceUnderTest.updateDraftEmailMessage({
@@ -99,15 +103,81 @@ describe('SudoEmailClient updateDraftEmailMessage Test Suite', () => {
       metadata.updatedAt.getTime(),
     )
 
-    await expect(
-      instanceUnderTest.getDraftEmailMessage({
-        id: metadata.id,
-        emailAddressId: emailAddress.id,
-      }),
-    ).resolves.toStrictEqual({
-      ...updatedMetadata,
-      rfc822Data: updatedDraftBuffer,
+    const draftRes = await instanceUnderTest.getDraftEmailMessage({
+      id: metadata.id,
+      emailAddressId: emailAddress.id,
     })
+
+    expect(draftRes).toEqual<DraftEmailMessage>({
+      ...metadata,
+      updatedAt: updatedMetadata.updatedAt,
+      rfc822Data: draftBuffer,
+    })
+
+    const draftResDataStr = arrayBufferToString(draftRes!.rfc822Data)
+    expect(draftResDataStr).toContain(updatedBody)
+    expect(draftResDataStr).toContain(emailAddress.emailAddress)
+  })
+
+  it('updates an in-network draft successfully', async () => {
+    const recipientAddress = await provisionEmailAddress(
+      sudoOwnershipProofToken,
+      instanceUnderTest,
+    )
+    const body = 'Hello, World'
+    const draftBuffer =
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [{ emailAddress: recipientAddress.emailAddress }],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body,
+        attachments: [],
+      })
+    const metadata = await instanceUnderTest.createDraftEmailMessage({
+      rfc822Data: draftBuffer,
+      senderEmailAddressId: emailAddress.id,
+    })
+
+    await delay(1000)
+
+    draftMetadata.push(metadata)
+    const updatedBody = 'Goodbye, World'
+    const updatedDraftBuffer =
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [{ emailAddress: recipientAddress.emailAddress }],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body: updatedBody,
+        attachments: [],
+      })
+    const updatedMetadata = await instanceUnderTest.updateDraftEmailMessage({
+      id: metadata.id,
+      rfc822Data: updatedDraftBuffer,
+      senderEmailAddressId: emailAddress.id,
+    })
+    expect(updatedMetadata.id).toEqual(metadata.id)
+    expect(updatedMetadata.updatedAt.getTime()).toBeGreaterThan(
+      metadata.updatedAt.getTime(),
+    )
+
+    const draftRes = await instanceUnderTest.getDraftEmailMessage({
+      id: metadata.id,
+      emailAddressId: emailAddress.id,
+    })
+
+    expect(draftRes).toEqual<DraftEmailMessage>({
+      ...metadata,
+      updatedAt: updatedMetadata.updatedAt,
+      rfc822Data: draftBuffer,
+    })
+
+    const draftResDataStr = arrayBufferToString(draftRes!.rfc822Data)
+    expect(draftResDataStr).toContain(updatedBody)
+    expect(draftResDataStr).toContain(emailAddress.emailAddress)
   })
 
   it('throws an error if a non-existent draft message id is given', async () => {

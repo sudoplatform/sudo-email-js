@@ -13,6 +13,7 @@ import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822Mess
 import { delay } from '../../util/delay'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import { arrayBufferToString } from '../../../src/private/util/buffer'
 
 describe('SudoEmailClient listDraftEmailMessages Test Suite', () => {
   jest.setTimeout(240000)
@@ -56,7 +57,8 @@ describe('SudoEmailClient listDraftEmailMessages Test Suite', () => {
     )
   })
 
-  it('lists multiple draft messages across a user', async () => {
+  it('lists multiple out-network draft messages across a user', async () => {
+    const body = 'test draft message'
     const draftDataArrays = _.range(NUMBER_DRAFTS).map(() =>
       Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
         from: [{ emailAddress: emailAddress.emailAddress }],
@@ -64,7 +66,7 @@ describe('SudoEmailClient listDraftEmailMessages Test Suite', () => {
         cc: [],
         bcc: [],
         replyTo: [],
-        body: 'test draft message',
+        body,
         attachments: [],
       }),
     )
@@ -88,6 +90,9 @@ describe('SudoEmailClient listDraftEmailMessages Test Suite', () => {
         updatedAt: d.updatedAt,
         rfc822Data: expect.anything(),
       })
+      const draftResDataStr = arrayBufferToString(d!.rfc822Data)
+      expect(draftResDataStr).toContain(body)
+      expect(draftResDataStr).toContain(emailAddress.emailAddress)
     })
   })
 
@@ -97,12 +102,13 @@ describe('SudoEmailClient listDraftEmailMessages Test Suite', () => {
     expect(draftMessages).toHaveLength(0)
   })
 
-  it('should list draft metadata for each address', async () => {
+  it('should list out-network drafts for each address', async () => {
     const emailAddress2 = await provisionEmailAddress(
       sudoOwnershipProofToken,
       instanceUnderTest,
     )
 
+    const body = 'test draft message'
     const draftDataArrays = _.range(NUMBER_DRAFTS).map(() =>
       Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
         from: [{ emailAddress: emailAddress.emailAddress }],
@@ -110,7 +116,7 @@ describe('SudoEmailClient listDraftEmailMessages Test Suite', () => {
         cc: [],
         bcc: [],
         replyTo: [],
-        body: 'test draft message',
+        body: `${body} from emailAddress1`,
         attachments: [],
       }),
     )
@@ -131,7 +137,7 @@ describe('SudoEmailClient listDraftEmailMessages Test Suite', () => {
       cc: [],
       bcc: [],
       replyTo: [],
-      body: 'test draft message',
+      body: `${body} from emailAddress2`,
       attachments: [],
     })
     const metadata2 = await instanceUnderTest.createDraftEmailMessage({
@@ -142,5 +148,123 @@ describe('SudoEmailClient listDraftEmailMessages Test Suite', () => {
 
     const result = await instanceUnderTest.listDraftEmailMessages()
     expect(result).toHaveLength(10)
+    result.forEach((d) => {
+      expect(draftData).toContainEqual({
+        ...d,
+        id: d.id,
+        updatedAt: d.updatedAt,
+        rfc822Data: expect.anything(),
+      })
+      const draftResDataStr = arrayBufferToString(d!.rfc822Data)
+      expect(draftResDataStr).toContain(body)
+      if (draftResDataStr.includes('from emailAddress1')) {
+        expect(draftResDataStr).toContain(emailAddress.emailAddress)
+      } else {
+        expect(draftResDataStr).toContain(emailAddress2.emailAddress)
+      }
+    })
+  })
+
+  it('lists multiple in-network draft messages across a user', async () => {
+    const recipientAddress = await provisionEmailAddress(
+      sudoOwnershipProofToken,
+      instanceUnderTest,
+    )
+    const body = 'test draft message'
+    const draftDataArrays = _.range(NUMBER_DRAFTS).map(() =>
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [{ emailAddress: recipientAddress.emailAddress }],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body,
+        attachments: [],
+      }),
+    )
+
+    for (let d of draftDataArrays) {
+      const metadata = await instanceUnderTest.createDraftEmailMessage({
+        senderEmailAddressId: emailAddress.id,
+        rfc822Data: d,
+      })
+      draftData.push({ ...metadata, rfc822Data: d })
+      // delay to avoid hitting request limit
+      await delay(10)
+    }
+
+    const draftMessages = await instanceUnderTest.listDraftEmailMessages()
+
+    draftMessages.forEach((d) => {
+      expect(draftData).toContainEqual({
+        ...d,
+        id: d.id,
+        updatedAt: d.updatedAt,
+        rfc822Data: expect.anything(),
+      })
+      const draftResDataStr = arrayBufferToString(d!.rfc822Data)
+      expect(draftResDataStr).toContain(body)
+      expect(draftResDataStr).toContain(emailAddress.emailAddress)
+      expect(draftResDataStr).toContain(recipientAddress.emailAddress)
+    })
+  })
+
+  it('should list in-network drafts for each address', async () => {
+    const emailAddress2 = await provisionEmailAddress(
+      sudoOwnershipProofToken,
+      instanceUnderTest,
+    )
+    const body = 'test draft message'
+    const draftDataArrays = _.range(NUMBER_DRAFTS).map(() =>
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [{ emailAddress: emailAddress2.emailAddress }],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body,
+        attachments: [],
+      }),
+    )
+
+    for (let d of draftDataArrays) {
+      const metadata = await instanceUnderTest.createDraftEmailMessage({
+        senderEmailAddressId: emailAddress.id,
+        rfc822Data: d,
+      })
+      draftData.push({ ...metadata, rfc822Data: d })
+      // delay to avoid hitting request limit
+      await delay(10)
+    }
+
+    const draft = Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+      from: [{ emailAddress: emailAddress2.emailAddress }],
+      to: [{ emailAddress: emailAddress.emailAddress }],
+      cc: [],
+      bcc: [],
+      replyTo: [],
+      body,
+      attachments: [],
+    })
+    const metadata2 = await instanceUnderTest.createDraftEmailMessage({
+      senderEmailAddressId: emailAddress2.id,
+      rfc822Data: draft,
+    })
+    draftData.push({ ...metadata2, rfc822Data: draft })
+
+    const result = await instanceUnderTest.listDraftEmailMessages()
+    expect(result).toHaveLength(10)
+    result.forEach((d) => {
+      expect(draftData).toContainEqual({
+        ...d,
+        id: d.id,
+        updatedAt: d.updatedAt,
+        rfc822Data: expect.anything(),
+      })
+      const draftResDataStr = arrayBufferToString(d!.rfc822Data)
+      expect(draftResDataStr).toContain(body)
+      expect(draftResDataStr).toContain(emailAddress.emailAddress)
+      expect(draftResDataStr).toContain(emailAddress2.emailAddress)
+    })
   })
 })

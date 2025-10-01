@@ -7,9 +7,7 @@
 import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import {
   EmailAttachment,
-  InNetworkAddressNotFoundError,
   InternetMessageFormatHeader,
-  InvalidEmailContentsError,
   LimitExceededError,
 } from '../../../../public'
 import { EmailMessageDetails } from '../../../util/rfc822MessageDataProcessor'
@@ -17,6 +15,7 @@ import { EmailAccountService } from '../../entities/account/emailAccountService'
 import { EmailConfigurationDataService } from '../../entities/configuration/configurationDataService'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
 import { EmailDomainService } from '../../entities/emailDomain/emailDomainService'
+import { EmailMessageUtil } from '../../../util/emailMessageUtil'
 
 /**
  * Input object containing information required to send an email message.
@@ -98,6 +97,10 @@ export class SendEmailMessageUseCase {
       prohibitedFileExtensions,
     } = await this.configurationDataService.getConfigurationData()
 
+    const emailMessageUtil = new EmailMessageUtil({
+      accountService: this.accountService,
+    })
+
     const { from, to, cc, bcc, replyTo, subject } = emailMessageHeader
     const message: EmailMessageDetails = {
       from: [from],
@@ -111,7 +114,7 @@ export class SendEmailMessageUseCase {
       inlineAttachments,
     }
 
-    await this.verifyAttachmentValidity(
+    emailMessageUtil.verifyAttachmentValidity(
       prohibitedFileExtensions,
       attachments,
       inlineAttachments,
@@ -154,33 +157,24 @@ export class SendEmailMessageUseCase {
       )
 
     if (allRecipientsInternal) {
+      if (allRecipients.length > encryptedEmailMessageRecipientsLimit) {
+        throw new LimitExceededError(
+          `Cannot send encrypted message to more than ${encryptedEmailMessageRecipientsLimit} recipients`,
+        )
+      }
       // If we do not have an external recipient, lookup public key information for each recipient and sender
       const emailAddressesPublicInfo =
-        await this.accountService.lookupPublicInfo({
-          emailAddresses: [...allRecipients, from.emailAddress],
-        })
-      // Check whether recipient addresses and associated public keys exist in the platform
-      const isInNetwork = allRecipients.every((r) =>
-        emailAddressesPublicInfo.some((p) => p.emailAddress === r),
-      )
-      if (!isInNetwork) {
-        throw new InNetworkAddressNotFoundError(
-          'At least one email address does not exist in network',
+        await emailMessageUtil.retrieveAndVerifyPublicInfo(
+          allRecipients,
+          from.emailAddress,
         )
-      } else {
-        if (allRecipients.length > encryptedEmailMessageRecipientsLimit) {
-          throw new LimitExceededError(
-            `Cannot send encrypted message to more than ${encryptedEmailMessageRecipientsLimit} recipients`,
-          )
-        }
-        // Process encrypted email message
-        return await this.messageService.sendEncryptedMessage({
-          message,
-          senderEmailAddressId,
-          emailAddressesPublicInfo,
-          emailMessageMaxOutboundMessageSize,
-        })
-      }
+      // Process encrypted email message
+      return await this.messageService.sendEncryptedMessage({
+        message,
+        senderEmailAddressId,
+        emailAddressesPublicInfo,
+        emailMessageMaxOutboundMessageSize,
+      })
     } else {
       // Otherwise, we must send unencrypted
       if (allRecipients.length > emailMessageRecipientsLimit) {
@@ -195,22 +189,5 @@ export class SendEmailMessageUseCase {
         emailMessageMaxOutboundMessageSize,
       })
     }
-  }
-
-  private async verifyAttachmentValidity(
-    prohibitedFileExtensions: string[],
-    attachments: EmailAttachment[],
-    inlineAttachments: EmailAttachment[],
-  ) {
-    ;[...attachments, ...inlineAttachments].forEach((attachment) => {
-      // Note this calculation will prohibit filenames with no extensions that match
-      // a prohibited extension
-      const extension = attachment.filename.split('.').pop()?.toLowerCase()
-      if (extension && prohibitedFileExtensions.includes(`.${extension}`)) {
-        throw new InvalidEmailContentsError(
-          `Unsupported file extension ${extension}`,
-        )
-      }
-    })
   }
 }

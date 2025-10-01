@@ -7,6 +7,8 @@
 import { internal as SudoUserInternal } from '@sudoplatform/sudo-user'
 import _ from 'lodash'
 import { S3ClientDownloadOutput } from '../../../src/private/data/common/s3Client'
+import { EmailMessageDetails } from '../../../src/private/util/rfc822MessageDataProcessor'
+import { EncryptionStatus } from '../../../src'
 
 export class EmailMessageRfc822DataFactory {
   static readonly s3ClientDownloadOutput: S3ClientDownloadOutput = {
@@ -43,5 +45,26 @@ export class EmailMessageRfc822DataFactory {
     return _.range(numberOfMessages).map(
       (i) => `${prefix}/${emailMessageRfc822Data}${i}`,
     )
+  }
+
+  static emailMessageDetails(
+    overrides?: Partial<EmailMessageDetails>,
+  ): EmailMessageDetails {
+    return {
+      from: [{ emailAddress: 'sender@internal.com' }],
+      to: [{ emailAddress: 'recipient@external.com' }],
+      cc: [],
+      bcc: [],
+      replyTo: [],
+      subject: 'Test Subject',
+      body: 'Test Body',
+      isHtml: false,
+      attachments: [],
+      inlineAttachments: [],
+      encryptionStatus: EncryptionStatus.UNENCRYPTED,
+      forwardMessageId: undefined,
+      replyMessageId: undefined,
+      ...overrides,
+    }
   }
 }
