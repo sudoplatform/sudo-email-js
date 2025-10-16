@@ -25,6 +25,11 @@ import { Direction, State } from '../../../src/public/typings/emailMessage'
 import { PublicKeyFormat } from '@sudoplatform/sudo-common'
 import { ScheduledDraftMessageEntity } from '../../../src/private/domain/entities/message/scheduledDraftMessageEntity'
 import { EmailAttachmentEntity } from '../../../src/private/domain/entities/message/emailAttachmentEntity'
+import {
+  EmailMaskEntity,
+  EmailMaskEntityRealAddressType,
+  EmailMaskEntityStatus,
+} from '../../../src/private/domain/entities/mask/emailMaskEntity'
 
 export class EntityDataFactory {
   private static readonly commonProps = {
@@ -49,6 +54,7 @@ export class EntityDataFactory {
     encryptedEmailMessageRecipientsLimit: 10,
     sendEncryptedEmailEnabled: true,
     prohibitedFileExtensions: ['.js', '.exe', '.lib'],
+    emailMasksEnabled: true,
   }
 
   static readonly emailAddress: EmailAddressEntity = {
@@ -204,5 +210,25 @@ export class EntityDataFactory {
     sendAt: new Date(1.0),
     createdAt: new Date(1.0),
     updatedAt: new Date(1.0),
+  }
+
+  static readonly emailMask: EmailMaskEntity = {
+    ...EntityDataFactory.commonProps,
+    owners: [EntityDataFactory.owner],
+    identityId: 'testIdentityId',
+    maskAddress: 'test-mask@anonyome.com',
+    realAddress: 'test-real@anonyome.com',
+    realAddressType: EmailMaskEntityRealAddressType.INTERNAL,
+    status: EmailMaskEntityStatus.ENABLED,
+    inboundReceived: 0,
+    inboundDelivered: 0,
+    outboundReceived: 0,
+    outboundDelivered: 0,
+    spamCount: 0,
+    virusCount: 0,
+    expiresAt: new Date(1.0),
+    metadata: {
+      test: 'test data',
+    },
   }
 }

@@ -7,4 +7,5 @@ fragment EmailConfigurationData on EmailConfigurationData {
   encryptedEmailMessageRecipientsLimit
   sendEncryptedEmailEnabled
   prohibitedFileExtensions
+  emailMasksEnabled
 }

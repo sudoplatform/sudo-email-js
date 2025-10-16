@@ -43,4 +43,16 @@ export class DefaultEmailDomainService implements EmailDomainService {
       this.emailDomainTransformer.transformGraphQL(domain),
     )
   }
+
+  async getEmailMaskDomains({
+    cachePolicy,
+  }: GetEmailDomainsInput): Promise<EmailDomainEntity[]> {
+    const fetchPolicy = cachePolicy
+      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
+      : undefined
+    const result = await this.appSync.getEmailMaskDomains(fetchPolicy)
+    return result.domains.map((domain) =>
+      this.emailDomainTransformer.transformGraphQL(domain),
+    )
+  }
 }

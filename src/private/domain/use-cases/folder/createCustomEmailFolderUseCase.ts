@@ -5,8 +5,8 @@
  */
 
 import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
-import { EmailFolderService } from '../../entities/folder/emailFolderService'
 import { EmailFolderEntity } from '../../entities/folder/emailFolderEntity'
+import { EmailFolderService } from '../../entities/folder/emailFolderService'
 
 /**
  * Input for `CreateCustomEmailFolderUseCase` use case.

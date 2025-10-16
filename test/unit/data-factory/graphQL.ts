@@ -15,6 +15,10 @@ import {
   EmailConfigurationData,
   EmailFolder,
   EmailFolderConnection,
+  EmailMask,
+  EmailMaskConnection,
+  EmailMaskRealAddressType,
+  EmailMaskStatus,
   EmailMessageConnection,
   EmailMessageDirection,
   EmailMessageState,
@@ -60,6 +64,7 @@ export class GraphQLDataFactory {
     encryptedEmailMessageRecipientsLimit: 10,
     sendEncryptedEmailEnabled: true,
     prohibitedFileExtensions: ['.js', '.exe', '.lib'],
+    emailMasksEnabled: true,
   }
 
   static readonly emailFolder: EmailFolder = {
@@ -255,4 +260,32 @@ export class GraphQLDataFactory {
       items: [GraphQLDataFactory.scheduledDraftMessage],
       nextToken: undefined,
     }
+
+  static readonly emailMask: EmailMask = {
+    ...GraphQLDataFactory.commonProps,
+    owners: [GraphQLDataFactory.owner],
+    identityId: 'testIdentityId',
+    maskAddress: 'test-mask@anonyome.com',
+    realAddress: 'test-real@anonyome.com',
+    realAddressType: EmailMaskRealAddressType.Internal,
+    status: EmailMaskStatus.Enabled,
+    inboundReceived: 0,
+    inboundDelivered: 0,
+    outboundReceived: 0,
+    outboundDelivered: 0,
+    spamCount: 0,
+    virusCount: 0,
+    expiresAtEpochSec: 0.001,
+    metadata: {
+      algorithm: 'AES/CBC/PKCS7Padding',
+      keyId: 'keyId',
+      plainTextType: 'json-string',
+      base64EncodedSealedData: 'dummySealedData',
+    },
+  }
+
+  static readonly emailMaskConnection: EmailMaskConnection = {
+    items: [GraphQLDataFactory.emailMask],
+    nextToken: undefined,
+  }
 }

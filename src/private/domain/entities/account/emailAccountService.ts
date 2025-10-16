@@ -5,9 +5,8 @@
  */
 
 import { CachePolicy } from '@sudoplatform/sudo-common'
-import { UpdateEmailAddressMetadataInput } from '../../../../public/sudoEmailClient'
-import { EmailAccountEntity } from './emailAccountEntity'
 import { EmailAddressEntity } from './emailAddressEntity'
+import { EmailAccountEntity } from './emailAccountEntity'
 import { EmailDomainEntity } from '../emailDomain/emailDomainEntity'
 import { EmailAddressPublicInfoEntity } from './emailAddressPublicInfoEntity'
 
@@ -152,10 +151,10 @@ export interface EmailAccountService {
   /**
    * Update email account metadata.
    *
-   * @param {UpdateEmailAddressMetadataInput} input Parameters used to update the metadata of an email account.
+   * @param {UpdateEmailAccountMetadataInput} input Parameters used to update the metadata of an email account.
    * @returns {string} The identifier of the email account that was updated.
    */
-  updateMetadata(input: UpdateEmailAddressMetadataInput): Promise<string>
+  updateMetadata(input: UpdateEmailAccountMetadataInput): Promise<string>
 
   /**
    * Get an email account.

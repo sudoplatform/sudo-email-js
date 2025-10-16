@@ -36,6 +36,33 @@ enum SortOrder {
   DESC
 }
 
+enum BlockedAddressHashAlgorithm {
+  SHA256
+}
+
+enum BlockedAddressAction {
+  DROP
+  SPAM
+}
+
+enum ScheduledDraftMessageState {
+  SCHEDULED
+  FAILED
+  SENT
+  CANCELLED
+}
+
+enum EmailMaskRealAddressType {
+  INTERNAL
+  EXTERNAL
+}
+
+enum EmailMaskStatus {
+  ENABLED
+  DISABLED
+  LOCKED
+}
+
 input CreatePublicKeyInput {
   keyId: String!
   keyRingId: String!
@@ -254,15 +281,6 @@ input SealedAttributeInput {
   base64EncodedSealedData: String!
 }
 
-enum BlockedAddressHashAlgorithm {
-  SHA256
-}
-
-enum BlockedAddressAction {
-  DROP
-  SPAM
-}
-
 input BlockedEmailAddressInput {
   hashedBlockedValue: String!
   hashAlgorithm: BlockedAddressHashAlgorithm!
@@ -285,6 +303,60 @@ input GetEmailAddressBlocklistInput {
   owner: ID!
 }
 
+input ProvisionEmailMaskInput {
+  maskAddress: String!
+  realAddress: String!
+  metadata: SealedAttributeInput
+  expiresAtEpochSec: Int
+  ownershipProofTokens: [String!]!
+}
+
+input DeprovisionEmailMaskInput {
+  emailMaskId: ID!
+}
+
+input UpdateEmailMaskInput {
+  id: ID!
+  metadata: SealedAttributeInput
+  expiresAtEpochSec: Int
+}
+
+input EnableEmailMaskInput {
+  emailMaskId: ID!
+}
+
+input DisableEmailMaskInput {
+  emailMaskId: ID!
+}
+
+input EmailMaskStatusFilterInput {
+  ne: EmailMaskStatus
+  eq: EmailMaskStatus
+  in: [EmailMaskStatus]
+  notIn: [EmailMaskStatus]
+}
+
+input EmailMaskRealAddressTypeFilterInput {
+  ne: EmailMaskRealAddressType
+  eq: EmailMaskRealAddressType
+  in: [EmailMaskRealAddressType]
+  notIn: [EmailMaskRealAddressType]
+}
+
+input EmailMaskFilterInput {
+  status: EmailMaskStatusFilterInput
+  realAddressType: EmailMaskRealAddressTypeFilterInput
+  and: [EmailMaskFilterInput]
+  or: [EmailMaskFilterInput]
+  not: EmailMaskFilterInput
+}
+
+input ListEmailMasksForOwnerInput {
+  filter: EmailMaskFilterInput
+  limit: Int
+  nextToken: String
+}
+
 type EmailConfigurationData {
   deleteEmailMessagesLimit: Int!
   updateEmailMessagesLimit: Int!
@@ -294,6 +366,7 @@ type EmailConfigurationData {
   encryptedEmailMessageRecipientsLimit: Int!
   sendEncryptedEmailEnabled: Boolean!
   prohibitedFileExtensions: [String!]!
+  emailMasksEnabled: Boolean!
 }
 
 type Owner {
@@ -374,17 +447,6 @@ type UpdateEmailMessagesV2Result {
   successMessages: [UpdatedEmailMessageSuccess!]
 }
 
-enum ScheduledDraftMessageState {
-  # Scheduled to be sent.
-  SCHEDULED
-  # Has failed to be sent. May be retried if there are retries remaining.
-  FAILED
-  # Has successfully been sent.
-  SENT
-  # Has been cancelled.
-  CANCELLED
-}
-
 type ScheduledDraftMessage {
   draftMessageKey: String!
   emailAddressId: ID!
@@ -403,26 +465,6 @@ type SupportedDomains {
 
 type AvailableAddresses {
   addresses: [String!]!
-}
-
-type EmailAddressConnection {
-  items: [EmailAddress!]!
-  nextToken: String
-}
-
-type EmailFolderConnection {
-  items: [EmailFolder!]!
-  nextToken: String
-}
-
-type EmailMessageConnection {
-  items: [SealedEmailMessage!]!
-  nextToken: String
-}
-
-type ScheduledDraftMessageConnection {
-  items: [ScheduledDraftMessage!]!
-  nextToken: String
 }
 
 type EmailAddressPublicKey {
@@ -478,12 +520,65 @@ type ConfiguredDomains {
   domains: [String!]!
 }
 
+type EmailMaskDomains {
+  domains: [String!]!
+}
+
+type EmailMask {
+  id: ID!
+  owner: ID!
+  owners: [Owner!]!
+  identityId: ID!
+  maskAddress: String!
+  realAddress: String!
+  realAddressType: EmailMaskRealAddressType!
+  status: EmailMaskStatus!
+  inboundReceived: Int!
+  inboundDelivered: Int!
+  outboundReceived: Int!
+  outboundDelivered: Int!
+  spamCount: Int!
+  virusCount: Int!
+  metadata: SealedAttribute
+  expiresAtEpochSec: Int
+  createdAtEpochMs: Float!
+  updatedAtEpochMs: Float!
+  version: Int!
+}
+
+type EmailAddressConnection {
+  items: [EmailAddress!]!
+  nextToken: String
+}
+
+type EmailFolderConnection {
+  items: [EmailFolder!]!
+  nextToken: String
+}
+
+type EmailMessageConnection {
+  items: [SealedEmailMessage!]!
+  nextToken: String
+}
+
+type ScheduledDraftMessageConnection {
+  items: [ScheduledDraftMessage!]!
+  nextToken: String
+}
+
+type EmailMaskConnection {
+  items: [EmailMask!]!
+  nextToken: String
+}
+
 type Query {
   getEmailConfig: EmailConfigurationData!
 
   getEmailDomains: SupportedDomains!
 
   getConfiguredEmailDomains: ConfiguredDomains!
+
+  getEmailMaskDomains: EmailMaskDomains!
 
   checkEmailAddressAvailability(
     input: CheckEmailAddressAvailabilityInput!
@@ -534,6 +629,10 @@ type Query {
   listScheduledDraftMessagesForEmailAddressId(
     input: ListScheduledDraftMessagesForEmailAddressIdInput!
   ): ScheduledDraftMessageConnection!
+
+  listEmailMasksForOwner(
+    input: ListEmailMasksForOwnerInput!
+  ): EmailMaskConnection!
 }
 
 type Mutation {
@@ -582,6 +681,16 @@ type Mutation {
   ): ScheduledDraftMessage!
 
   cancelScheduledDraftMessage(input: CancelScheduledDraftMessageInput!): String!
+
+  provisionEmailMask(input: ProvisionEmailMaskInput!): EmailMask!
+
+  deprovisionEmailMask(input: DeprovisionEmailMaskInput!): EmailMask!
+
+  updateEmailMask(input: UpdateEmailMaskInput!): EmailMask!
+
+  enableEmailMask(input: EnableEmailMaskInput!): EmailMask!
+
+  disableEmailMask(input: DisableEmailMaskInput!): EmailMask!
 }
 
 type Subscription {

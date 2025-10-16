@@ -121,6 +121,9 @@ import {
   ConfiguredDomains,
   GetConfiguredEmailDomainsQuery,
   GetConfiguredEmailDomainsDocument,
+  GetEmailMaskDomainsQuery,
+  GetEmailMaskDomainsDocument,
+  EmailMaskDomains,
   DeleteCustomEmailFolderInput,
   DeleteCustomEmailFolderMutation,
   DeleteCustomEmailFolderDocument,
@@ -141,6 +144,26 @@ import {
   ListScheduledDraftMessagesForEmailAddressIdInput,
   ScheduledDraftMessageConnection,
   ListScheduledDraftMessagesForEmailAddressIdDocument,
+  ProvisionEmailMaskInput,
+  EmailMask,
+  ProvisionEmailMaskMutation,
+  ProvisionEmailMaskDocument,
+  DeprovisionEmailMaskInput,
+  DeprovisionEmailMaskMutation,
+  DeprovisionEmailMaskDocument,
+  UpdateEmailMaskInput,
+  UpdateEmailMaskMutation,
+  UpdateEmailMaskDocument,
+  EnableEmailMaskInput,
+  EnableEmailMaskDocument,
+  EnableEmailMaskMutation,
+  DisableEmailMaskDocument,
+  DisableEmailMaskMutation,
+  DisableEmailMaskInput,
+  ListEmailMasksForOwnerInput,
+  EmailMaskConnection,
+  ListEmailMasksForOwnerQuery,
+  ListEmailMasksForOwnerDocument,
 } from '../../../gen/graphqlTypes'
 import { ErrorTransformer } from './transformer/errorTransformer'
 
@@ -296,6 +319,17 @@ export class ApiClient {
       calleeName: this.getConfiguredEmailDomains.name,
     })
     return data.getConfiguredEmailDomains
+  }
+
+  public async getEmailMaskDomains(
+    fetchPolicy: FetchPolicy = 'network-only',
+  ): Promise<EmailMaskDomains> {
+    const data = await this.performQuery<GetEmailMaskDomainsQuery>({
+      query: GetEmailMaskDomainsDocument,
+      fetchPolicy,
+      calleeName: this.getEmailMaskDomains.name,
+    })
+    return data.getEmailMaskDomains
   }
 
   public async checkEmailAddressAvailability(
@@ -568,6 +602,73 @@ export class ApiClient {
     return data.listScheduledDraftMessagesForEmailAddressId
   }
 
+  public async provisionEmailMask(
+    input: ProvisionEmailMaskInput,
+  ): Promise<EmailMask> {
+    const data = await this.performMutation<ProvisionEmailMaskMutation>({
+      mutation: ProvisionEmailMaskDocument,
+      variables: { input },
+      calleeName: this.provisionEmailMask.name,
+    })
+    return data.provisionEmailMask
+  }
+
+  public async deprovisionEmailMask(
+    input: DeprovisionEmailMaskInput,
+  ): Promise<EmailMask> {
+    const data = await this.performMutation<DeprovisionEmailMaskMutation>({
+      mutation: DeprovisionEmailMaskDocument,
+      variables: { input },
+      calleeName: this.deprovisionEmailMask.name,
+    })
+    return data.deprovisionEmailMask
+  }
+
+  public async updateEmailMask(
+    input: UpdateEmailMaskInput,
+  ): Promise<EmailMask> {
+    const data = await this.performMutation<UpdateEmailMaskMutation>({
+      mutation: UpdateEmailMaskDocument,
+      variables: { input },
+      calleeName: this.updateEmailMask.name,
+    })
+    return data.updateEmailMask
+  }
+
+  public async enableEmailMask(
+    input: EnableEmailMaskInput,
+  ): Promise<EmailMask> {
+    const data = await this.performMutation<EnableEmailMaskMutation>({
+      mutation: EnableEmailMaskDocument,
+      variables: { input },
+      calleeName: this.enableEmailMask.name,
+    })
+    return data.enableEmailMask
+  }
+
+  public async disableEmailMask(
+    input: DisableEmailMaskInput,
+  ): Promise<EmailMask> {
+    const data = await this.performMutation<DisableEmailMaskMutation>({
+      mutation: DisableEmailMaskDocument,
+      variables: { input },
+      calleeName: this.disableEmailMask.name,
+    })
+    return data.disableEmailMask
+  }
+
+  public async listEmailMasksForOwner(
+    input: ListEmailMasksForOwnerInput,
+  ): Promise<EmailMaskConnection> {
+    const data = await this.performQuery<ListEmailMasksForOwnerQuery>({
+      query: ListEmailMasksForOwnerDocument,
+      variables: { input },
+      fetchPolicy: 'network-only',
+      calleeName: this.listEmailMasksForOwner.name,
+    })
+    return data.listEmailMasksForOwner
+  }
+
   public onEmailMessageDeleted(
     ownerId: string,
   ): Observable<FetchResult<OnEmailMessageDeletedSubscription>> {
@@ -659,6 +760,7 @@ export class ApiClient {
       this.log.debug('error received', { calleeName, clientError })
       const error = clientError.graphQLErrors?.[0]
       if (error) {
+        console.debug({ error })
         this.log.debug('appSync query failed with error', { error })
         throw this.graphqlErrorTransformer.toClientError(error)
       } else {

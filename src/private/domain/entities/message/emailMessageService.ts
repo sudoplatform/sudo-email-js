@@ -11,16 +11,16 @@ import {
   ScheduledDraftMessageState,
   UpdatedEmailMessageSuccess,
 } from '../../../../public'
-import { EmailMessageDateRange } from '../../../../public/typings/emailMessageDateRange'
 import { SortOrder } from '../../../../public/typings/sortOrder'
 import { EmailMessageDetails } from '../../../util/rfc822MessageDataProcessor'
+import { EmailMessageDateRange } from '../../../../public'
 import { EmailAddressPublicInfoEntity } from '../account/emailAddressPublicInfoEntity'
-import { DraftEmailMessageEntity } from './draftEmailMessageEntity'
-import { DraftEmailMessageMetadataEntity } from './draftEmailMessageMetadataEntity'
-import { EmailMessageEntity } from './emailMessageEntity'
-import { EmailMessageWithBodyEntity } from './emailMessageWithBodyEntity'
 import { UpdateEmailMessagesStatus } from './updateEmailMessagesStatus'
+import { EmailMessageEntity } from './emailMessageEntity'
 import { ScheduledDraftMessageEntity } from './scheduledDraftMessageEntity'
+import { DraftEmailMessageMetadataEntity } from './draftEmailMessageMetadataEntity'
+import { DraftEmailMessageEntity } from './draftEmailMessageEntity'
+import { EmailMessageWithBodyEntity } from './emailMessageWithBodyEntity'
 
 /**
  * Input for `EmailMessageService.saveDraft` method.

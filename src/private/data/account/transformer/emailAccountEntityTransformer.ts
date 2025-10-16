@@ -5,8 +5,10 @@
  */
 
 import {
+  DefaultLogger,
   EncryptionAlgorithm,
   KeyNotFoundError,
+  Logger,
 } from '@sudoplatform/sudo-common'
 import { EmailAddress, SealedAttribute } from '../../../../gen/graphqlTypes'
 import { EmailAccountEntity } from '../../../domain/entities/account/emailAccountEntity'
@@ -15,7 +17,10 @@ import { EmailFolderEntityTransformer } from '../../folder/transformer/emailFold
 import { EmailAddressEntityTransformer } from './emailAddressEntityTransformer'
 
 export class EmailAccountEntityTransformer {
-  constructor(private readonly deviceKeyWorker: DeviceKeyWorker) {}
+  constructor(
+    private readonly deviceKeyWorker: DeviceKeyWorker,
+    private readonly log: Logger = new DefaultLogger(this.constructor.name),
+  ) {}
 
   async transformGraphQL(data: EmailAddress): Promise<EmailAccountEntity> {
     const emailAddressTransformer = new EmailAddressEntityTransformer()
@@ -61,7 +66,7 @@ export class EmailAccountEntityTransformer {
         const alias = await this.unsealAlias(data.alias)
         entity.emailAddress.alias = alias
       } catch (e) {
-        console.error({ e })
+        this.log.error('error ', { e })
         entity.status = { type: 'Failed', cause: e as Error }
       }
     }
@@ -83,7 +88,7 @@ export class EmailAccountEntityTransformer {
           algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding,
         })
       } catch (e) {
-        console.warn('Could not unseal', { e })
+        this.log.warn('Could not unseal', { e })
         // Tolerate inability to unseal alias. We have the correct
         // key so this is a decoding error
         return ''

@@ -5371,9 +5371,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sudoplatform/sudo-api-client@npm:^15.0.0":
-  version: 15.0.0
-  resolution: "@sudoplatform/sudo-api-client@npm:15.0.0"
+"@sudoplatform/sudo-api-client@npm:^15.1.2":
+  version: 15.1.2
+  resolution: "@sudoplatform/sudo-api-client@npm:15.1.2"
   dependencies:
     apollo-cache-inmemory: "npm:^1.6.6"
     apollo-link: "npm:^1.2.14"
@@ -5382,7 +5382,7 @@ __metadata:
     "@sudoplatform/sudo-user": ^15.0.0
     aws-appsync: ^4.1.9
     io-ts: ^2.2.20
-  checksum: 10c0/0d60591d9c951434510f2b238aa06415d07bf894a157f26c88afa5e31e98dd6b2c73e7f37c411f6e0a3cf39940359662295d29356893178be827925bdab61f41
+  checksum: 10c0/7fe2a49e9a998176e6be779e102722e61bc447ad240f74dac15a0210b42cb7e531c34a2f65cb37566fe103f408ceeabad73f64f194a5c53dfb81371dc9d92c3a
   languageName: node
   linkType: hard
 
@@ -5423,12 +5423,12 @@ __metadata:
     "@graphql-codegen/typescript": "npm:^4.1.6"
     "@graphql-codegen/typescript-operations": "npm:^4.6.1"
     "@graphql-typed-document-node/apollo-client-2": "npm:^1.0.0"
-    "@sudoplatform/sudo-api-client": "npm:^15.0.0"
+    "@sudoplatform/sudo-api-client": "npm:^15.1.2"
     "@sudoplatform/sudo-common": "npm:^11.0.0"
     "@sudoplatform/sudo-entitlements": "npm:^17.0.0"
     "@sudoplatform/sudo-entitlements-admin": "npm:^12.1.0"
     "@sudoplatform/sudo-profiles": "npm:^18.0.1"
-    "@sudoplatform/sudo-user": "npm:^15.1.1"
+    "@sudoplatform/sudo-user": "npm:^15.1.2"
     "@sudoplatform/sudo-web-crypto-provider": "npm:11.0.1"
     "@types/jest": "npm:^30.0.0"
     "@types/lodash": "npm:^4.17.20"
@@ -5480,9 +5480,9 @@ __metadata:
     wait-for-expect: "npm:^4.0.0"
     websocket: "npm:^1.0.35"
   peerDependencies:
-    "@sudoplatform/sudo-api-client": ^15.0.0
-    "@sudoplatform/sudo-common": ^10.0.4
-    "@sudoplatform/sudo-user": ^15.1.1
+    "@sudoplatform/sudo-api-client": ^15.1.2
+    "@sudoplatform/sudo-common": ^11.0.0
+    "@sudoplatform/sudo-user": ^15.1.2
   languageName: unknown
   linkType: soft
 
@@ -5560,13 +5560,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sudoplatform/sudo-user@npm:^15.1.1":
-  version: 15.1.1
-  resolution: "@sudoplatform/sudo-user@npm:15.1.1"
+"@sudoplatform/sudo-user@npm:^15.1.2":
+  version: 15.1.2
+  resolution: "@sudoplatform/sudo-user@npm:15.1.2"
   dependencies:
     "@aws-sdk/client-cognito-identity-provider": "npm:<3.633.0"
     "@graphql-typed-document-node/core": "npm:^3.2.0"
-    "@sudoplatform/sudo-web-crypto-provider": "npm:^10.0.0"
+    "@sudoplatform/sudo-web-crypto-provider": "npm:^11.0.1"
     amazon-cognito-auth-js: "npm:^1.3.3"
     apollo-cache-inmemory: "npm:^1.6.6"
     aws-appsync: "npm:^4.1.10"
@@ -5582,11 +5582,11 @@ __metadata:
   peerDependencies:
     "@sudoplatform/sudo-common": ^10.0.0
     io-ts: ^2.2.22
-  checksum: 10c0/20d4c32b39bfa586f92e5b64aebdda89f6f63d8b35e41c17311469d457002acbe842b77f4581f3a238f3ac94b250d594df8a00ffccb2604784acbdb4f0552668
+  checksum: 10c0/33528be594d2da6da8b51c19b73dd8887472da814a6de325b18401c6b82cb14958437533c92675351098fd85694fa4d97e1341d845aa51d2e29b76d4706f86d6
   languageName: node
   linkType: hard
 
-"@sudoplatform/sudo-web-crypto-provider@npm:11.0.1":
+"@sudoplatform/sudo-web-crypto-provider@npm:11.0.1, @sudoplatform/sudo-web-crypto-provider@npm:^11.0.1":
   version: 11.0.1
   resolution: "@sudoplatform/sudo-web-crypto-provider@npm:11.0.1"
   dependencies:
@@ -5597,7 +5597,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sudoplatform/sudo-web-crypto-provider@npm:^10.0.0, @sudoplatform/sudo-web-crypto-provider@npm:^10.0.1":
+"@sudoplatform/sudo-web-crypto-provider@npm:^10.0.1":
   version: 10.0.1
   resolution: "@sudoplatform/sudo-web-crypto-provider@npm:10.0.1"
   dependencies:
@@ -10925,10 +10925,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nodemailer@npm:^7.0.5":
-  version: 7.0.5
-  resolution: "nodemailer@npm:7.0.5"
-  checksum: 10c0/8fcd417a5dc6cdde4193c3f27c8ae07f6998527578c1e70adfa5f2f00121471fcaa14abbf26b2a8c513ac8505c956f437aa2c2a693606eb0e8c68bc712698fa7
+"nodemailer@npm:^7.0.7":
+  version: 7.0.9
+  resolution: "nodemailer@npm:7.0.9"
+  checksum: 10c0/029af0c89d64a521aa9969196e44c13ef289c7f419264eed8d63682610999e06205b0fc264ab8ac65941dc3eefd3c435f23337a32880614cc199744c9be6209a
   languageName: node
   linkType: hard
 

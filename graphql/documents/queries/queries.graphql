@@ -16,6 +16,12 @@ query GetConfiguredEmailDomains {
   }
 }
 
+query GetEmailMaskDomains {
+  getEmailMaskDomains {
+    domains
+  }
+}
+
 query CheckEmailAddressAvailability(
   $input: CheckEmailAddressAvailabilityInput!
 ) {
@@ -101,6 +107,15 @@ query ListEmailMessagesForEmailFolderId(
   listEmailMessagesForEmailFolderId(input: $input) {
     items {
       ...SealedEmailMessage
+    }
+    nextToken
+  }
+}
+
+query ListEmailMasksForOwner($input: ListEmailMasksForOwnerInput!) {
+  listEmailMasksForOwner(input: $input) {
+    items {
+      ...EmailMask
     }
     nextToken
   }

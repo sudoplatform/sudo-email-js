@@ -147,6 +147,14 @@ export type DeprovisionEmailAddressInput = {
   emailAddressId: Scalars['ID']['input']
 }
 
+export type DeprovisionEmailMaskInput = {
+  emailMaskId: Scalars['ID']['input']
+}
+
+export type DisableEmailMaskInput = {
+  emailMaskId: Scalars['ID']['input']
+}
+
 export type EmailAddress = {
   __typename?: 'EmailAddress'
   alias?: Maybe<SealedAttribute>
@@ -194,6 +202,7 @@ export type EmailAddressPublicKey = {
 export type EmailConfigurationData = {
   __typename?: 'EmailConfigurationData'
   deleteEmailMessagesLimit: Scalars['Int']['output']
+  emailMasksEnabled: Scalars['Boolean']['output']
   emailMessageMaxInboundMessageSize: Scalars['Int']['output']
   emailMessageMaxOutboundMessageSize: Scalars['Int']['output']
   emailMessageRecipientsLimit: Scalars['Int']['output']
@@ -223,6 +232,73 @@ export type EmailFolderConnection = {
   __typename?: 'EmailFolderConnection'
   items: Array<EmailFolder>
   nextToken?: Maybe<Scalars['String']['output']>
+}
+
+export type EmailMask = {
+  __typename?: 'EmailMask'
+  createdAtEpochMs: Scalars['Float']['output']
+  expiresAtEpochSec?: Maybe<Scalars['Int']['output']>
+  id: Scalars['ID']['output']
+  identityId: Scalars['ID']['output']
+  inboundDelivered: Scalars['Int']['output']
+  inboundReceived: Scalars['Int']['output']
+  maskAddress: Scalars['String']['output']
+  metadata?: Maybe<SealedAttribute>
+  outboundDelivered: Scalars['Int']['output']
+  outboundReceived: Scalars['Int']['output']
+  owner: Scalars['ID']['output']
+  owners: Array<Owner>
+  realAddress: Scalars['String']['output']
+  realAddressType: EmailMaskRealAddressType
+  spamCount: Scalars['Int']['output']
+  status: EmailMaskStatus
+  updatedAtEpochMs: Scalars['Float']['output']
+  version: Scalars['Int']['output']
+  virusCount: Scalars['Int']['output']
+}
+
+export type EmailMaskConnection = {
+  __typename?: 'EmailMaskConnection'
+  items: Array<EmailMask>
+  nextToken?: Maybe<Scalars['String']['output']>
+}
+
+export type EmailMaskDomains = {
+  __typename?: 'EmailMaskDomains'
+  domains: Array<Scalars['String']['output']>
+}
+
+export type EmailMaskFilterInput = {
+  and?: InputMaybe<Array<InputMaybe<EmailMaskFilterInput>>>
+  not?: InputMaybe<EmailMaskFilterInput>
+  or?: InputMaybe<Array<InputMaybe<EmailMaskFilterInput>>>
+  realAddressType?: InputMaybe<EmailMaskRealAddressTypeFilterInput>
+  status?: InputMaybe<EmailMaskStatusFilterInput>
+}
+
+export enum EmailMaskRealAddressType {
+  External = 'EXTERNAL',
+  Internal = 'INTERNAL',
+}
+
+export type EmailMaskRealAddressTypeFilterInput = {
+  eq?: InputMaybe<EmailMaskRealAddressType>
+  in?: InputMaybe<Array<InputMaybe<EmailMaskRealAddressType>>>
+  ne?: InputMaybe<EmailMaskRealAddressType>
+  notIn?: InputMaybe<Array<InputMaybe<EmailMaskRealAddressType>>>
+}
+
+export enum EmailMaskStatus {
+  Disabled = 'DISABLED',
+  Enabled = 'ENABLED',
+  Locked = 'LOCKED',
+}
+
+export type EmailMaskStatusFilterInput = {
+  eq?: InputMaybe<EmailMaskStatus>
+  in?: InputMaybe<Array<InputMaybe<EmailMaskStatus>>>
+  ne?: InputMaybe<EmailMaskStatus>
+  notIn?: InputMaybe<Array<InputMaybe<EmailMaskStatus>>>
 }
 
 export type EmailMessageConnection = {
@@ -261,6 +337,10 @@ export type EmailMessageUpdateValuesInput = {
   seen?: InputMaybe<Scalars['Boolean']['input']>
 }
 
+export type EnableEmailMaskInput = {
+  emailMaskId: Scalars['ID']['input']
+}
+
 export type GetEmailAddressBlocklistInput = {
   owner: Scalars['ID']['input']
 }
@@ -288,6 +368,12 @@ export type ListEmailAddressesInput = {
 
 export type ListEmailFoldersForEmailAddressIdInput = {
   emailAddressId: Scalars['ID']['input']
+  limit?: InputMaybe<Scalars['Int']['input']>
+  nextToken?: InputMaybe<Scalars['String']['input']>
+}
+
+export type ListEmailMasksForOwnerInput = {
+  filter?: InputMaybe<EmailMaskFilterInput>
   limit?: InputMaybe<Scalars['Int']['input']>
   nextToken?: InputMaybe<Scalars['String']['input']>
 }
@@ -345,13 +431,18 @@ export type Mutation = {
   deleteEmailMessages: Array<Scalars['ID']['output']>
   deleteMessagesByFolderId: Scalars['ID']['output']
   deprovisionEmailAddress: EmailAddress
+  deprovisionEmailMask: EmailMask
+  disableEmailMask: EmailMask
+  enableEmailMask: EmailMask
   provisionEmailAddress: EmailAddress
+  provisionEmailMask: EmailMask
   scheduleSendDraftMessage: ScheduledDraftMessage
   sendEmailMessageV2: SendEmailMessageResult
   sendEncryptedEmailMessage: SendEmailMessageResult
   unblockEmailAddresses: BlockEmailAddressesBulkUpdateResult
   updateCustomEmailFolder: EmailFolder
   updateEmailAddressMetadata: Scalars['ID']['output']
+  updateEmailMask: EmailMask
   updateEmailMessagesV2: UpdateEmailMessagesV2Result
 }
 
@@ -391,8 +482,24 @@ export type MutationDeprovisionEmailAddressArgs = {
   input: DeprovisionEmailAddressInput
 }
 
+export type MutationDeprovisionEmailMaskArgs = {
+  input: DeprovisionEmailMaskInput
+}
+
+export type MutationDisableEmailMaskArgs = {
+  input: DisableEmailMaskInput
+}
+
+export type MutationEnableEmailMaskArgs = {
+  input: EnableEmailMaskInput
+}
+
 export type MutationProvisionEmailAddressArgs = {
   input: ProvisionEmailAddressInput
+}
+
+export type MutationProvisionEmailMaskArgs = {
+  input: ProvisionEmailMaskInput
 }
 
 export type MutationScheduleSendDraftMessageArgs = {
@@ -417,6 +524,10 @@ export type MutationUpdateCustomEmailFolderArgs = {
 
 export type MutationUpdateEmailAddressMetadataArgs = {
   input: UpdateEmailAddressMetadataInput
+}
+
+export type MutationUpdateEmailMaskArgs = {
+  input: UpdateEmailMaskInput
 }
 
 export type MutationUpdateEmailMessagesV2Args = {
@@ -454,6 +565,14 @@ export type ProvisionEmailAddressPublicKeyInput = {
   publicKey: Scalars['String']['input']
 }
 
+export type ProvisionEmailMaskInput = {
+  expiresAtEpochSec?: InputMaybe<Scalars['Int']['input']>
+  maskAddress: Scalars['String']['input']
+  metadata?: InputMaybe<SealedAttributeInput>
+  ownershipProofTokens: Array<Scalars['String']['input']>
+  realAddress: Scalars['String']['input']
+}
+
 export type PublicKey = {
   __typename?: 'PublicKey'
   algorithm: Scalars['String']['output']
@@ -476,6 +595,7 @@ export type Query = {
   getEmailAddressBlocklist: GetEmailAddressBlocklistResponse
   getEmailConfig: EmailConfigurationData
   getEmailDomains: SupportedDomains
+  getEmailMaskDomains: EmailMaskDomains
   getEmailMessage?: Maybe<SealedEmailMessage>
   getKeyRingForEmail: PaginatedPublicKey
   getPublicKeyForEmail?: Maybe<PublicKey>
@@ -483,6 +603,7 @@ export type Query = {
   listEmailAddresses: EmailAddressConnection
   listEmailAddressesForSudoId: EmailAddressConnection
   listEmailFoldersForEmailAddressId: EmailFolderConnection
+  listEmailMasksForOwner: EmailMaskConnection
   listEmailMessages: EmailMessageConnection
   listEmailMessagesForEmailAddressId: EmailMessageConnection
   listEmailMessagesForEmailFolderId: EmailMessageConnection
@@ -531,6 +652,10 @@ export type QueryListEmailAddressesForSudoIdArgs = {
 
 export type QueryListEmailFoldersForEmailAddressIdArgs = {
   input: ListEmailFoldersForEmailAddressIdInput
+}
+
+export type QueryListEmailMasksForOwnerArgs = {
+  input: ListEmailMasksForOwnerInput
 }
 
 export type QueryListEmailMessagesArgs = {
@@ -721,6 +846,12 @@ export type UpdateEmailAddressMetadataInput = {
   values: EmailAddressMetadataUpdateValuesInput
 }
 
+export type UpdateEmailMaskInput = {
+  expiresAtEpochSec?: InputMaybe<Scalars['Int']['input']>
+  id: Scalars['ID']['input']
+  metadata?: InputMaybe<SealedAttributeInput>
+}
+
 export type UpdateEmailMessagesInput = {
   messageIds: Array<Scalars['ID']['input']>
   values: EmailMessageUpdateValuesInput
@@ -895,6 +1026,7 @@ export type EmailConfigurationDataFragment = {
   encryptedEmailMessageRecipientsLimit: number
   sendEncryptedEmailEnabled: boolean
   prohibitedFileExtensions: Array<string>
+  emailMasksEnabled: boolean
 }
 
 export type EmailFolderFragment = {
@@ -911,6 +1043,35 @@ export type EmailFolderFragment = {
   ttl?: number | null
   owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
   customFolderName?: {
+    __typename?: 'SealedAttribute'
+    algorithm: string
+    keyId: string
+    plainTextType: string
+    base64EncodedSealedData: string
+  } | null
+}
+
+export type EmailMaskFragment = {
+  __typename?: 'EmailMask'
+  id: string
+  owner: string
+  identityId: string
+  maskAddress: string
+  realAddress: string
+  realAddressType: EmailMaskRealAddressType
+  status: EmailMaskStatus
+  inboundReceived: number
+  inboundDelivered: number
+  outboundReceived: number
+  outboundDelivered: number
+  spamCount: number
+  virusCount: number
+  expiresAtEpochSec?: number | null
+  version: number
+  createdAtEpochMs: number
+  updatedAtEpochMs: number
+  owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+  metadata?: {
     __typename?: 'SealedAttribute'
     algorithm: string
     keyId: string
@@ -1335,6 +1496,186 @@ export type CancelScheduledDraftMessageMutation = {
   cancelScheduledDraftMessage: string
 }
 
+export type ProvisionEmailMaskMutationVariables = Exact<{
+  input: ProvisionEmailMaskInput
+}>
+
+export type ProvisionEmailMaskMutation = {
+  __typename?: 'Mutation'
+  provisionEmailMask: {
+    __typename?: 'EmailMask'
+    id: string
+    owner: string
+    identityId: string
+    maskAddress: string
+    realAddress: string
+    realAddressType: EmailMaskRealAddressType
+    status: EmailMaskStatus
+    inboundReceived: number
+    inboundDelivered: number
+    outboundReceived: number
+    outboundDelivered: number
+    spamCount: number
+    virusCount: number
+    expiresAtEpochSec?: number | null
+    version: number
+    createdAtEpochMs: number
+    updatedAtEpochMs: number
+    owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+    metadata?: {
+      __typename?: 'SealedAttribute'
+      algorithm: string
+      keyId: string
+      plainTextType: string
+      base64EncodedSealedData: string
+    } | null
+  }
+}
+
+export type DeprovisionEmailMaskMutationVariables = Exact<{
+  input: DeprovisionEmailMaskInput
+}>
+
+export type DeprovisionEmailMaskMutation = {
+  __typename?: 'Mutation'
+  deprovisionEmailMask: {
+    __typename?: 'EmailMask'
+    id: string
+    owner: string
+    identityId: string
+    maskAddress: string
+    realAddress: string
+    realAddressType: EmailMaskRealAddressType
+    status: EmailMaskStatus
+    inboundReceived: number
+    inboundDelivered: number
+    outboundReceived: number
+    outboundDelivered: number
+    spamCount: number
+    virusCount: number
+    expiresAtEpochSec?: number | null
+    version: number
+    createdAtEpochMs: number
+    updatedAtEpochMs: number
+    owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+    metadata?: {
+      __typename?: 'SealedAttribute'
+      algorithm: string
+      keyId: string
+      plainTextType: string
+      base64EncodedSealedData: string
+    } | null
+  }
+}
+
+export type UpdateEmailMaskMutationVariables = Exact<{
+  input: UpdateEmailMaskInput
+}>
+
+export type UpdateEmailMaskMutation = {
+  __typename?: 'Mutation'
+  updateEmailMask: {
+    __typename?: 'EmailMask'
+    id: string
+    owner: string
+    identityId: string
+    maskAddress: string
+    realAddress: string
+    realAddressType: EmailMaskRealAddressType
+    status: EmailMaskStatus
+    inboundReceived: number
+    inboundDelivered: number
+    outboundReceived: number
+    outboundDelivered: number
+    spamCount: number
+    virusCount: number
+    expiresAtEpochSec?: number | null
+    version: number
+    createdAtEpochMs: number
+    updatedAtEpochMs: number
+    owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+    metadata?: {
+      __typename?: 'SealedAttribute'
+      algorithm: string
+      keyId: string
+      plainTextType: string
+      base64EncodedSealedData: string
+    } | null
+  }
+}
+
+export type EnableEmailMaskMutationVariables = Exact<{
+  input: EnableEmailMaskInput
+}>
+
+export type EnableEmailMaskMutation = {
+  __typename?: 'Mutation'
+  enableEmailMask: {
+    __typename?: 'EmailMask'
+    id: string
+    owner: string
+    identityId: string
+    maskAddress: string
+    realAddress: string
+    realAddressType: EmailMaskRealAddressType
+    status: EmailMaskStatus
+    inboundReceived: number
+    inboundDelivered: number
+    outboundReceived: number
+    outboundDelivered: number
+    spamCount: number
+    virusCount: number
+    expiresAtEpochSec?: number | null
+    version: number
+    createdAtEpochMs: number
+    updatedAtEpochMs: number
+    owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+    metadata?: {
+      __typename?: 'SealedAttribute'
+      algorithm: string
+      keyId: string
+      plainTextType: string
+      base64EncodedSealedData: string
+    } | null
+  }
+}
+
+export type DisableEmailMaskMutationVariables = Exact<{
+  input: DisableEmailMaskInput
+}>
+
+export type DisableEmailMaskMutation = {
+  __typename?: 'Mutation'
+  disableEmailMask: {
+    __typename?: 'EmailMask'
+    id: string
+    owner: string
+    identityId: string
+    maskAddress: string
+    realAddress: string
+    realAddressType: EmailMaskRealAddressType
+    status: EmailMaskStatus
+    inboundReceived: number
+    inboundDelivered: number
+    outboundReceived: number
+    outboundDelivered: number
+    spamCount: number
+    virusCount: number
+    expiresAtEpochSec?: number | null
+    version: number
+    createdAtEpochMs: number
+    updatedAtEpochMs: number
+    owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+    metadata?: {
+      __typename?: 'SealedAttribute'
+      algorithm: string
+      keyId: string
+      plainTextType: string
+      base64EncodedSealedData: string
+    } | null
+  }
+}
+
 export type CreatePublicKeyForEmailMutationVariables = Exact<{
   input: CreatePublicKeyInput
 }>
@@ -1370,6 +1711,7 @@ export type GetEmailConfigQuery = {
     encryptedEmailMessageRecipientsLimit: number
     sendEncryptedEmailEnabled: boolean
     prohibitedFileExtensions: Array<string>
+    emailMasksEnabled: boolean
   }
 }
 
@@ -1388,6 +1730,16 @@ export type GetConfiguredEmailDomainsQuery = {
   __typename?: 'Query'
   getConfiguredEmailDomains: {
     __typename?: 'ConfiguredDomains'
+    domains: Array<string>
+  }
+}
+
+export type GetEmailMaskDomainsQueryVariables = Exact<{ [key: string]: never }>
+
+export type GetEmailMaskDomainsQuery = {
+  __typename?: 'Query'
+  getEmailMaskDomains: {
+    __typename?: 'EmailMaskDomains'
     domains: Array<string>
   }
 }
@@ -1776,6 +2128,46 @@ export type ListEmailMessagesForEmailFolderIdQuery = {
         plainTextType: string
         base64EncodedSealedData: string
       }
+    }>
+  }
+}
+
+export type ListEmailMasksForOwnerQueryVariables = Exact<{
+  input: ListEmailMasksForOwnerInput
+}>
+
+export type ListEmailMasksForOwnerQuery = {
+  __typename?: 'Query'
+  listEmailMasksForOwner: {
+    __typename?: 'EmailMaskConnection'
+    nextToken?: string | null
+    items: Array<{
+      __typename?: 'EmailMask'
+      id: string
+      owner: string
+      identityId: string
+      maskAddress: string
+      realAddress: string
+      realAddressType: EmailMaskRealAddressType
+      status: EmailMaskStatus
+      inboundReceived: number
+      inboundDelivered: number
+      outboundReceived: number
+      outboundDelivered: number
+      spamCount: number
+      virusCount: number
+      expiresAtEpochSec?: number | null
+      version: number
+      createdAtEpochMs: number
+      updatedAtEpochMs: number
+      owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
+      metadata?: {
+        __typename?: 'SealedAttribute'
+        algorithm: string
+        keyId: string
+        plainTextType: string
+        base64EncodedSealedData: string
+      } | null
     }>
   }
 }
@@ -2625,11 +3017,91 @@ export const EmailConfigurationDataFragmentDoc = {
             kind: 'Field',
             name: { kind: 'Name', value: 'prohibitedFileExtensions' },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailMasksEnabled' } },
         ],
       },
     },
   ],
 } as unknown as DocumentNode<EmailConfigurationDataFragment, unknown>
+export const EmailMaskFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EmailMask' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EmailMask' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owners' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'identityId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'maskAddress' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'realAddress' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'realAddressType' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'inboundReceived' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'inboundDelivered' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'outboundReceived' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'outboundDelivered' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'spamCount' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'virusCount' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'metadata' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedAttribute' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'expiresAtEpochSec' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SealedAttribute' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SealedAttribute' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainTextType' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'base64EncodedSealedData' },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<EmailMaskFragment, unknown>
 export const OwnerFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -4333,6 +4805,661 @@ export const CancelScheduledDraftMessageDocument = {
   CancelScheduledDraftMessageMutation,
   CancelScheduledDraftMessageMutationVariables
 >
+export const ProvisionEmailMaskDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ProvisionEmailMask' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'ProvisionEmailMaskInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'provisionEmailMask' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'EmailMask' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SealedAttribute' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SealedAttribute' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainTextType' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'base64EncodedSealedData' },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EmailMask' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EmailMask' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owners' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'identityId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'maskAddress' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'realAddress' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'realAddressType' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'inboundReceived' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'inboundDelivered' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'outboundReceived' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'outboundDelivered' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'spamCount' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'virusCount' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'metadata' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedAttribute' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'expiresAtEpochSec' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  ProvisionEmailMaskMutation,
+  ProvisionEmailMaskMutationVariables
+>
+export const DeprovisionEmailMaskDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DeprovisionEmailMask' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'DeprovisionEmailMaskInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'deprovisionEmailMask' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'EmailMask' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SealedAttribute' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SealedAttribute' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainTextType' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'base64EncodedSealedData' },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EmailMask' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EmailMask' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owners' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'identityId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'maskAddress' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'realAddress' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'realAddressType' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'inboundReceived' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'inboundDelivered' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'outboundReceived' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'outboundDelivered' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'spamCount' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'virusCount' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'metadata' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedAttribute' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'expiresAtEpochSec' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  DeprovisionEmailMaskMutation,
+  DeprovisionEmailMaskMutationVariables
+>
+export const UpdateEmailMaskDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'UpdateEmailMask' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'UpdateEmailMaskInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updateEmailMask' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'EmailMask' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SealedAttribute' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SealedAttribute' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainTextType' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'base64EncodedSealedData' },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EmailMask' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EmailMask' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owners' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'identityId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'maskAddress' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'realAddress' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'realAddressType' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'inboundReceived' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'inboundDelivered' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'outboundReceived' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'outboundDelivered' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'spamCount' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'virusCount' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'metadata' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedAttribute' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'expiresAtEpochSec' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  UpdateEmailMaskMutation,
+  UpdateEmailMaskMutationVariables
+>
+export const EnableEmailMaskDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'EnableEmailMask' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'EnableEmailMaskInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'enableEmailMask' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'EmailMask' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SealedAttribute' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SealedAttribute' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainTextType' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'base64EncodedSealedData' },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EmailMask' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EmailMask' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owners' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'identityId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'maskAddress' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'realAddress' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'realAddressType' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'inboundReceived' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'inboundDelivered' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'outboundReceived' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'outboundDelivered' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'spamCount' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'virusCount' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'metadata' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedAttribute' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'expiresAtEpochSec' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  EnableEmailMaskMutation,
+  EnableEmailMaskMutationVariables
+>
+export const DisableEmailMaskDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DisableEmailMask' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'DisableEmailMaskInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'disableEmailMask' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'EmailMask' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SealedAttribute' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SealedAttribute' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainTextType' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'base64EncodedSealedData' },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EmailMask' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EmailMask' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owners' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'identityId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'maskAddress' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'realAddress' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'realAddressType' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'inboundReceived' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'inboundDelivered' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'outboundReceived' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'outboundDelivered' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'spamCount' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'virusCount' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'metadata' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedAttribute' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'expiresAtEpochSec' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  DisableEmailMaskMutation,
+  DisableEmailMaskMutationVariables
+>
 export const CreatePublicKeyForEmailDocument = {
   kind: 'Document',
   definitions: [
@@ -4484,6 +5611,7 @@ export const GetEmailConfigDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'prohibitedFileExtensions' },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailMasksEnabled' } },
         ],
       },
     },
@@ -4544,6 +5672,34 @@ export const GetConfiguredEmailDomainsDocument = {
 } as unknown as DocumentNode<
   GetConfiguredEmailDomainsQuery,
   GetConfiguredEmailDomainsQueryVariables
+>
+export const GetEmailMaskDomainsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetEmailMaskDomains' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'getEmailMaskDomains' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'domains' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  GetEmailMaskDomainsQuery,
+  GetEmailMaskDomainsQueryVariables
 >
 export const CheckEmailAddressAvailabilityDocument = {
   kind: 'Document',
@@ -5994,6 +7150,147 @@ export const ListEmailMessagesForEmailFolderIdDocument = {
 } as unknown as DocumentNode<
   ListEmailMessagesForEmailFolderIdQuery,
   ListEmailMessagesForEmailFolderIdQueryVariables
+>
+export const ListEmailMasksForOwnerDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ListEmailMasksForOwner' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'ListEmailMasksForOwnerInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'listEmailMasksForOwner' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'items' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'EmailMask' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'nextToken' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SealedAttribute' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SealedAttribute' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'algorithm' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainTextType' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'base64EncodedSealedData' },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EmailMask' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EmailMask' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owners' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'identityId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'maskAddress' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'realAddress' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'realAddressType' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'inboundReceived' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'inboundDelivered' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'outboundReceived' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'outboundDelivered' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'spamCount' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'virusCount' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'metadata' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SealedAttribute' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'expiresAtEpochSec' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  ListEmailMasksForOwnerQuery,
+  ListEmailMasksForOwnerQueryVariables
 >
 export const GetKeyRingForEmailDocument = {
   kind: 'Document',

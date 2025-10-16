@@ -5,7 +5,7 @@
  */
 
 import { CachePolicy } from '@sudoplatform/sudo-common'
-import { EmailDomainEntity } from '../emailDomain/emailDomainEntity'
+import { EmailDomainEntity } from './emailDomainEntity'
 
 /**
  * Input for `EmailDomainService.getSupportedEmailDomains` and `EmailDomainService.getConfiguredEmailDomains` method.
@@ -42,4 +42,12 @@ export interface EmailDomainService {
   getConfiguredEmailDomains(
     input: GetEmailDomainsInput,
   ): Promise<EmailDomainEntity[]>
+
+  /**
+   * Get a list of all of the email domains on which email masks may be provisioned.
+   *
+   * @param {GetEmailDomainsInput} input Parameters used to retrieve the list of email mask domains.
+   * @returns {EmailDomainEntity[]} The list of email mask domains.
+   */
+  getEmailMaskDomains(input: GetEmailDomainsInput): Promise<EmailDomainEntity[]>
 }

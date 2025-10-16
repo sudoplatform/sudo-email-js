@@ -35,15 +35,17 @@ import { ApiClient } from '../../../src/private/data/common/apiClient'
 import { PrivateSudoEmailClientOptions } from '../../../src/private/data/common/privateSudoEmailClientOptions'
 import { AddressNotFoundError } from '../../../src/public/errors'
 import {
+  ConfigurationData,
   DefaultSudoEmailClient,
   SudoEmailClient,
   SudoEmailClientConfig,
-} from '../../../src/public/sudoEmailClient'
+} from '../../../src/public'
 import { EmailAddress } from '../../../src/public/typings/emailAddress'
 import { createSudo } from './createSudo'
 import { EntitlementsBuilder } from './entitlements'
-import { EmailConfigurationDataService } from '../../../src/private/domain/entities/configuration/configurationDataService'
+
 import { DefaultConfigurationDataService } from '../../../src/private/data/configuration/defaultConfigurationDataService'
+import { EmailConfigurationDataService } from '../../../src/private/domain/entities/configuration/configurationDataService'
 
 // [START] - Polyfills
 global.fetch = require('node-fetch')
@@ -78,6 +80,9 @@ const testAuthenticationProvider = new TESTAuthenticationProvider(
   registerKeyId,
   { 'custom:entitlementsSet': 'email-integration-test' },
 )
+
+const maskDomains: string[] = []
+let emailConfig: ConfigurationData | undefined
 
 export interface SetupEmailClientOutput {
   sudo: Sudo
@@ -270,4 +275,27 @@ export const teardown = async (
         }),
       ),
   )
+}
+
+export const getEmailMaskDomains = async (
+  emailClient: SudoEmailClient,
+): Promise<string[]> => {
+  if (maskDomains.length > 0) {
+    return maskDomains
+  }
+  const result = await emailClient.getEmailMaskDomains()
+  if (result.length === 0) {
+    throw new Error('No email mask domains available for testing')
+  }
+  maskDomains.push(...result)
+  return maskDomains
+}
+
+export const getEmailConfig = async (emailClient: SudoEmailClient) => {
+  if (emailConfig) {
+    return emailConfig
+  }
+  const config = await emailClient.getConfigurationData()
+  emailConfig = config
+  return emailConfig
 }

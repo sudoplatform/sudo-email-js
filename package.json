@@ -42,9 +42,9 @@
     "docs"
   ],
   "peerDependencies": {
-    "@sudoplatform/sudo-api-client": "^15.0.0",
-    "@sudoplatform/sudo-common": "^10.0.4",
-    "@sudoplatform/sudo-user": "^15.1.1"
+    "@sudoplatform/sudo-api-client": "^15.1.2",
+    "@sudoplatform/sudo-common": "^11.0.0",
+    "@sudoplatform/sudo-user": "^15.1.2"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.369.0",
@@ -88,7 +88,8 @@
     "braces": "^3.0.3",
     "micromatch": "^4.0.8",
     "cross-spawn": "^7.0.5",
-    "tmp": "^0.2.3"
+    "tmp": "^0.2.3",
+    "nodemailer": "^7.0.7"
   },
   "devDependencies": {
     "@graphql-codegen/add": "^5.0.3",
@@ -97,12 +98,12 @@
     "@graphql-codegen/typescript": "^4.1.6",
     "@graphql-codegen/typescript-operations": "^4.6.1",
     "@graphql-typed-document-node/apollo-client-2": "^1.0.0",
-    "@sudoplatform/sudo-api-client": "^15.0.0",
+    "@sudoplatform/sudo-api-client": "^15.1.2",
     "@sudoplatform/sudo-common": "^11.0.0",
     "@sudoplatform/sudo-entitlements": "^17.0.0",
     "@sudoplatform/sudo-entitlements-admin": "^12.1.0",
     "@sudoplatform/sudo-profiles": "^18.0.1",
-    "@sudoplatform/sudo-user": "^15.1.1",
+    "@sudoplatform/sudo-user": "^15.1.2",
     "@types/jest": "^30.0.0",
     "@types/lodash": "^4.17.20",
     "@types/luxon": "^3.7.1",

@@ -16,6 +16,8 @@
  * @property {number} encryptedEmailMessageRecipientsLimit The maximum number of recipients for an in-network encrypted
  *  email message.
  * @property {boolean} sendEncryptedEmailEnabled Flag indicating whether End-to-end encrypted send operations are enabled.
+ * @property {string[]} prohibitedFileExtensions List of file extensions that are prohibited from being attached to an email message.
+ * @property {boolean} emailMasksEnabled Flag indicating whether email masks are enabled.
  */
 export interface ConfigurationData {
   deleteEmailMessagesLimit: number
@@ -26,4 +28,5 @@ export interface ConfigurationData {
   encryptedEmailMessageRecipientsLimit: number
   sendEncryptedEmailEnabled: boolean
   prohibitedFileExtensions: string[]
+  emailMasksEnabled: boolean
 }

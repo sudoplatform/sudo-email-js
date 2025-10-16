@@ -14,7 +14,12 @@ import {
   EmailMessage,
   State,
 } from '../../../src/public/typings/emailMessage'
-import { EncryptionStatus } from '../../../src/public'
+import {
+  EmailMask,
+  EmailMaskRealAddressType,
+  EmailMaskStatus,
+  EncryptionStatus,
+} from '../../../src/public'
 
 export class APIDataFactory {
   private static readonly commonProps = {
@@ -39,6 +44,7 @@ export class APIDataFactory {
     encryptedEmailMessageRecipientsLimit: 10,
     sendEncryptedEmailEnabled: true,
     prohibitedFileExtensions: ['.js', '.exe', '.lib'],
+    emailMasksEnabled: true,
   }
 
   static readonly emailFolder: EmailFolder = {
@@ -106,5 +112,25 @@ export class APIDataFactory {
     size: 12345,
     encryptionStatus: EncryptionStatus.UNENCRYPTED,
     date: new Date(2.0),
+  }
+
+  static readonly emailMask: EmailMask = {
+    ...APIDataFactory.commonProps,
+    owners: [APIDataFactory.owner],
+    identityId: 'testIdentityId',
+    maskAddress: 'test-mask@anonyome.com',
+    realAddress: 'test-real@anonyome.com',
+    realAddressType: EmailMaskRealAddressType.INTERNAL,
+    status: EmailMaskStatus.ENABLED,
+    inboundReceived: 0,
+    inboundDelivered: 0,
+    outboundReceived: 0,
+    outboundDelivered: 0,
+    spamCount: 0,
+    virusCount: 0,
+    expiresAt: new Date(1.0),
+    metadata: {
+      test: 'test data',
+    },
   }
 }

@@ -30,6 +30,7 @@ import {
   EmailMessageSubscriber,
   EncryptionStatus,
   ScheduledDraftMessageState,
+  UpdateEmailMessagesInput,
 } from '../../../../../src'
 import {
   OnEmailMessageDeletedSubscription,
@@ -60,7 +61,6 @@ import {
   MessageSizeLimitExceededError,
   UnsupportedKeyTypeError,
 } from '../../../../../src/public/errors'
-import { UpdateEmailMessagesInput } from '../../../../../src/public/sudoEmailClient'
 import { SortOrder } from '../../../../../src/public/typings/sortOrder'
 import {
   arrayBufferToString,

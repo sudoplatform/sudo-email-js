@@ -1,0 +1,28 @@
+# import SealedAttribute from "sealedAttribute.graphql"
+
+fragment EmailMask on EmailMask {
+  id
+  owner
+  owners {
+    id
+    issuer
+  }
+  identityId
+  maskAddress
+  realAddress
+  realAddressType
+  status
+  inboundReceived
+  inboundDelivered
+  outboundReceived
+  outboundDelivered
+  spamCount
+  virusCount
+  metadata {
+    ...SealedAttribute
+  }
+  expiresAtEpochSec
+  version
+  createdAtEpochMs
+  updatedAtEpochMs
+}

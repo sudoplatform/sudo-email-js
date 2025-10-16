@@ -6,4 +6,6 @@
 
 export * from './errors'
 export * from './sudoEmailClient'
+export * from './defaultSudoEmailClient'
+export * from './inputs'
 export * from './typings'

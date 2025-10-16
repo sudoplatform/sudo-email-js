@@ -22,7 +22,7 @@ import { DefaultConfigurationDataService } from '../../../src/private/data/confi
 import { DefaultEmailDomainService } from '../../../src/private/data/emailDomain/defaultEmailDomainService'
 import { DefaultEmailFolderService } from '../../../src/private/data/folder/defaultEmailFolderService'
 import { DefaultEmailMessageService } from '../../../src/private/data/message/defaultEmailMessageService'
-import { DefaultSudoEmailClient } from '../../../src/public/sudoEmailClient'
+import { DefaultSudoEmailClient } from '../../../src/public'
 
 // Constructor mocks
 

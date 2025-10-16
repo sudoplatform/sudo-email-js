@@ -1,0 +1,154 @@
+/**
+ * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { CachePolicy } from '@sudoplatform/sudo-common'
+import { Pagination } from './common'
+import { ScheduledDraftMessageState } from '../typings'
+
+/**
+ * Input for `SudoEmailClient.createDraftEmailMessage`.
+ *
+ * @interface CreateDraftEmailMessageInput
+ * @property {ArrayBuffer} rfc822Data Email message data formatted under the RFC 6854.
+ * @property {string} senderEmailAddressId The identifier of the email address used to send the email. The identifier
+ *  must match the identifier of the email address of the `from` field in the RFC 6854 data.
+ */
+export interface CreateDraftEmailMessageInput {
+  rfc822Data: ArrayBuffer
+  senderEmailAddressId: string
+}
+
+/**
+ * Input for `SudoEmailClient.updateDraftEmailMessage`.
+ *
+ * @interface UpdateDraftEmailMessageInput
+ * @property {string} id The identifier of the draft email message to update.
+ * @property {ArrayBuffer} rfc822Data Email message data formatted under the RFC 6854. This will completely replace the existing data.
+ * @property {string} senderEmailAddressId The identifier of the email address used to send the email. The identifier
+ *  must match the identifier of the email address of the `from` field in the RFC 6854 data.
+ */
+export interface UpdateDraftEmailMessageInput {
+  id: string
+  rfc822Data: ArrayBuffer
+  senderEmailAddressId: string
+}
+
+/**
+ * Input for `SudoEmailClient.deleteDraftEmailMessages`.
+ *
+ * @interface DeleteDraftEmailMessagesInput
+ * @property {string[]} ids A list of one or more identifiers of the draft email messages to be deleted.
+ * @property {string} emailAddressId The identifier of the email address associated with the draft email message.
+ */
+export interface DeleteDraftEmailMessagesInput {
+  ids: string[]
+  emailAddressId: string
+}
+
+/**
+ * Input for `SudoEmailClient.getDraftEmailMessage`.
+ *
+ * @interface GetDraftEmailMessageInput
+ * @property {string} id The identifier of the draft email message to be retrieved.
+ * @property {string} emailAddressId The identifier of the email address associated with the draft email message.
+ */
+export interface GetDraftEmailMessageInput {
+  id: string
+  emailAddressId: string
+}
+
+/**
+ * Input for `SudoEmailClient.scheduleSendDraftMessage`.
+ *
+ * @interface ScheduleSendDraftMessageInput
+ * @property {string} id The identifier of the draft message to schedule send.
+ * @property {string} emailAddressId The identifier of the email address to send the message from.
+ * @property {Date} sendAt The timestamp of when to send the message. Must be in the future.
+ */
+export interface ScheduleSendDraftMessageInput {
+  id: string
+  emailAddressId: string
+  sendAt: Date
+}
+
+/**
+ * Input for `SudoEmailClient.cancelScheduledDraftMessage` method.
+ *
+ * @interface CancelScheduledDraftMessageInput
+ * @property {string} id The identifier of the draft message to cancel
+ * @property {string} emailAddressId The identifier of the email address that owns the message.
+ */
+export interface CancelScheduledDraftMessageInput {
+  id: string
+  emailAddressId: string
+}
+
+/**
+ * @property {ScheduledDraftMessageState} equal Return only results that match the given state.
+ */
+export interface EqualStateFilter {
+  equal: ScheduledDraftMessageState
+  oneOf?: never
+  notEqual?: never
+  notOneOf?: never
+}
+
+/**
+ * @property {ScheduledDraftMessageState[]} oneOf Return only results that match one of the given states.
+ */
+export interface OneOfStateFilter {
+  oneOf: ScheduledDraftMessageState[]
+  equal?: never
+  notEqual?: never
+  notOneOf?: never
+}
+
+/**
+ * @property {ScheduledDraftMessageState} notEqual Return only results that do not match the given state.
+ */
+export interface NotEqualStateFilter {
+  notEqual: ScheduledDraftMessageState
+  equal?: never
+  oneOf?: never
+  notOneOf?: never
+}
+
+/**
+ * @property {ScheduledDraftMessageState[]} notOneOf Return only results that do not match any of the given states.
+ */
+export interface NotOneOfStateFilter {
+  notOneOf: ScheduledDraftMessageState[]
+  equal?: never
+  oneOf?: never
+  notEqual?: never
+}
+
+/**
+ * @interface ScheduledDraftMessageFilterInput
+ * @property {EqualStateFilter | OneOfStateFilter | NotEqualStateFilter | NotOneOfStateFilter} state Used to filter results based on `state` property
+ */
+export interface ScheduledDraftMessageFilterInput {
+  state?:
+    | EqualStateFilter
+    | OneOfStateFilter
+    | NotEqualStateFilter
+    | NotOneOfStateFilter
+}
+
+/**
+ * Input for `SudoEmailClient.listScheduledDraftMessagesForEmailAddressId` method.
+ *
+ * @interface ListScheduledDraftMessagesForEmailAddressIdInput
+ * @property {string} emailAddressId The identifier of the email address to list for.
+ * @property {ScheduledDraftMessageFilterInput} filter Properties used to filter the results.
+ * @property {CachePolicy} cachePolicy Determines how the scheduled draft messages will be fetched. Default usage is `remoteOnly`.
+ */
+export interface ListScheduledDraftMessagesForEmailAddressIdInput
+  extends Pagination {
+  emailAddressId: string
+  filter?: ScheduledDraftMessageFilterInput
+  cachePolicy?: CachePolicy
+}

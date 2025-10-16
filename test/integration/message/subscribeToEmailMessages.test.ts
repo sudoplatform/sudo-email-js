@@ -27,7 +27,6 @@ import { DefaultEmailMessageService } from '../../../src/private/data/message/de
 import { Observable } from 'apollo-client/util/Observable'
 import { EmailServiceConfig } from '../../../src/private/data/common/config'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
-import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 import { EmailCryptoService } from '../../../src/private/domain/entities/secure/emailCryptoService'
 
 describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {

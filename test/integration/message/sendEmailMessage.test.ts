@@ -30,7 +30,6 @@ import {
   UnauthorizedAddressError,
 } from '../../../src'
 import { EmailConfigurationDataService } from '../../../src/private/domain/entities/configuration/configurationDataService'
-import { arrayBufferToString } from '../../../src/private/util/buffer'
 import { EmailMessageDetails } from '../../../src/private/util/rfc822MessageDataProcessor'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { readAllPages } from '../util/paginator'

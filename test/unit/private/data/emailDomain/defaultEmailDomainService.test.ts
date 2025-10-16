@@ -60,4 +60,26 @@ describe('DefaultEmailDomainService Test Suite', () => {
       },
     )
   })
+
+  describe('getEmailMaskDomains', () => {
+    it.each`
+      cachePolicy               | test
+      ${CachePolicy.CacheOnly}  | ${'cache'}
+      ${CachePolicy.RemoteOnly} | ${'remote'}
+    `(
+      'returns transformed result when calling $test',
+      async ({ cachePolicy }) => {
+        when(mockAppSync.getEmailMaskDomains(anything())).thenResolve({
+          domains: ['mask1.anonyome.com', 'mask2.anonyome.com'],
+        })
+        await expect(
+          instanceUnderTest.getEmailMaskDomains({ cachePolicy }),
+        ).resolves.toStrictEqual([
+          { domain: 'mask1.anonyome.com' },
+          { domain: 'mask2.anonyome.com' },
+        ])
+        verify(mockAppSync.getEmailMaskDomains(anything())).once()
+      },
+    )
+  })
 })
