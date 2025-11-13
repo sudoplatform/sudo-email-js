@@ -159,13 +159,15 @@ export interface ListScheduledDraftMessagesForEmailAddressIdInput {
  *
  * @interface SendMessageInput
  * @property {EmailMessageDetails} message The email message header and contents to be sent.
- * @property {string} senderEmailAddressId Identifier of the sender email address that is composing the email message.
+ * @property {string} senderEmailAddressId Identifier of the sender email address that is composing the email message. Required if not using an email mask.
+ * @property {string} senderEmailMaskId Identifier of the sender email mask that is composing the email message. Required if not using an email address.
  * @property {number} emailMessageMaxOutboundMessageSize The maximum size of an outbound email message.
  */
 export interface SendMessageInput {
   message: EmailMessageDetails
-  senderEmailAddressId: string
   emailMessageMaxOutboundMessageSize: number
+  senderEmailAddressId?: string
+  senderEmailMaskId?: string
 }
 
 /**
@@ -173,15 +175,13 @@ export interface SendMessageInput {
  *
  * @interface SendEncryptedMessageInput
  * @property {EmailMessageDetails} message The email message header and contents to be sent.
- * @property {string} senderEmailAddressId Identifier of the sender email address that is composing the email message.
+ * @property {string} senderEmailAddressId Identifier of the sender email address that is composing the email message. Required if not using an email mask.
+ * @property {string} senderEmailMaskId Identifier of the sender email mask that is composing the email message. Required if not using an email address.
  * @property {EmailAddressPublicInfoEntity[]} emailAddressesPublicInfo The public key information for each recipient and the sender of the email message.
  * @property {number} emailMessageMaxOutboundMessageSize The maximum size of an outbound email message.
  */
-export interface SendEncryptedMessageInput {
-  message: EmailMessageDetails
-  senderEmailAddressId: string
+export interface SendEncryptedMessageInput extends SendMessageInput {
   emailAddressesPublicInfo: EmailAddressPublicInfoEntity[]
-  emailMessageMaxOutboundMessageSize: number
 }
 
 /**

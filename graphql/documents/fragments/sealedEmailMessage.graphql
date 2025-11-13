@@ -26,4 +26,5 @@ fragment SealedEmailMessage on SealedEmailMessage {
   }
   size
   encryptionStatus
+  emailMaskId
 }

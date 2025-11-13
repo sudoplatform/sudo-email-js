@@ -149,6 +149,7 @@ import {
   ListEmailMessagesForEmailFolderIdInput,
   ListEmailMessagesInput,
   SendEmailMessageInput,
+  SendMaskedEmailMessageInput,
   UpdateEmailMessagesInput,
 } from './inputs/emailMessage'
 import { SudoEmailClient, SudoEmailClientOptions } from './sudoEmailClient'
@@ -339,6 +340,32 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     )
     return await sendEmailMessageUseCase.execute({
       senderEmailAddressId,
+      emailMessageHeader,
+      body,
+      attachments,
+      inlineAttachments,
+      replyingMessageId,
+      forwardingMessageId,
+    })
+  }
+
+  public async sendMaskedEmailMessage({
+    senderEmailMaskId,
+    emailMessageHeader,
+    body,
+    attachments,
+    inlineAttachments,
+    replyingMessageId,
+    forwardingMessageId,
+  }: SendMaskedEmailMessageInput): Promise<SendEmailMessageResult> {
+    const sendEmailMessageUseCase = new SendEmailMessageUseCase(
+      this.emailMessageService,
+      this.emailAccountService,
+      this.emailDomainService,
+      this.configurationDataService,
+    )
+    return await sendEmailMessageUseCase.execute({
+      senderEmailMaskId,
       emailMessageHeader,
       body,
       attachments,

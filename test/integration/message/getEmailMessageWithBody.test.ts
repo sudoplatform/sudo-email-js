@@ -8,6 +8,7 @@ import {
   Base64,
   CachePolicy,
   DefaultLogger,
+  ListOperationResultStatus,
   SudoKeyManager,
 } from '@sudoplatform/sudo-common'
 import {
@@ -40,6 +41,15 @@ import {
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers'
 import { Upload } from '@aws-sdk/lib-storage'
 import fs from 'node:fs/promises'
+import { getFolderByName } from '../util/folder'
+import { provisionEmailMask } from '../util/provisionEmailMask'
+import { getImageFileData, getPdfFileData } from '../../util/files/fileData'
+import {
+  EntitlementsBuilder,
+  emailAddressMaxPerSudoEntitlement,
+  emailStorageMaxPerEmailAddressEntitlement,
+  emailStorageMaxPerUserEntitlement,
+} from '../util/entitlements'
 
 describe('getEmailMessageWithBody test suite', () => {
   jest.setTimeout(240000)
@@ -58,10 +68,11 @@ describe('getEmailMessageWithBody test suite', () => {
   let legacyMessageKey = ''
   let bucket = ''
   let region = ''
-  let imageData: string = ''
-  let pdfData: string = ''
+  const imageData = getImageFileData()
+  const pdfData = getPdfFileData()
 
   let emailAddress: EmailAddress
+  let emailMasksEnabled: boolean
 
   beforeAll(async () => {
     const result = await setupEmailClient(log)
@@ -75,6 +86,26 @@ describe('getEmailMessageWithBody test suite', () => {
     const emailServiceConfig = getEmailServiceConfig()
     bucket = emailServiceConfig.bucket
     region = emailServiceConfig.region
+    const config = await instanceUnderTest.getConfigurationData()
+    emailMasksEnabled = config.emailMasksEnabled
+
+    const entitlementsClient = result.entitlementsClient
+    const entitlementsAdminClient = result.entitlementsAdminClient
+
+    await new EntitlementsBuilder()
+      .setEntitlementsAdminClient(entitlementsAdminClient)
+      .setEntitlementsClient(entitlementsClient)
+      .setEntitlement({
+        name: emailStorageMaxPerEmailAddressEntitlement,
+        description: 'Test Max Storage Per Email Address Entitlement',
+        value: 500000 * 5, // Set higher for these tests since we're sending attachments
+      })
+      .setEntitlement({
+        name: emailStorageMaxPerUserEntitlement,
+        description: 'Test Max Storage Per User Entitlement',
+        value: 500000 * 5,
+      })
+      .apply()
 
     s3Client = new S3Client(
       userClient,
@@ -86,12 +117,6 @@ describe('getEmailMessageWithBody test suite', () => {
       instanceUnderTest,
     )
     emailAddresses.push(emailAddress)
-    imageData = await fs.readFile('test/util/files/dogimage.jpeg', {
-      encoding: 'base64',
-    })
-    pdfData = await fs.readFile('test/util/files/lorem-ipsum.pdf', {
-      encoding: 'base64',
-    })
   })
 
   afterAll(async () => {
@@ -113,11 +138,12 @@ describe('getEmailMessageWithBody test suite', () => {
     body: string,
     to = [{ emailAddress: 'success@simulator.amazonses.com' }],
     attachments: EmailAttachment[] = [],
+    from = { emailAddress: emailAddress.emailAddress },
   ): SendEmailMessageInput {
     return {
       senderEmailAddressId: emailAddress.id,
       emailMessageHeader: {
-        from: { emailAddress: emailAddress.emailAddress },
+        from,
         to,
         cc: [],
         bcc: [],
@@ -130,13 +156,16 @@ describe('getEmailMessageWithBody test suite', () => {
     }
   }
 
-  function waitForRfc822Data(emailMessageId: string): Promise<any> {
+  function waitForRfc822Data(
+    emailMessageId: string,
+    emailAddressId?: string,
+  ): Promise<any> {
     return waitForExpect(
       () =>
         expect(
           instanceUnderTest.getEmailMessageRfc822Data({
             id: emailMessageId,
-            emailAddressId: emailAddress.id,
+            emailAddressId: emailAddressId ?? emailAddress.id,
           }),
         ).resolves.toBeDefined(),
       60000,
@@ -254,9 +283,6 @@ describe('getEmailMessageWithBody test suite', () => {
     it('works with attachments', async () => {
       const body = 'This has an attachment'
 
-      const pdfData = await fs.readFile('test/util/files/lorem-ipsum.pdf', {
-        encoding: 'base64',
-      })
       const pdfAttachment: EmailAttachment = {
         data: pdfData,
         filename: 'lorem-ipsum.pdf',
@@ -285,6 +311,186 @@ describe('getEmailMessageWithBody test suite', () => {
         id: sendResult.id,
         body,
         attachments: [pdfAttachment],
+        inlineAttachments: [],
+      })
+    })
+  })
+
+  describe('email masks', () => {
+    it('can get an email sent by a mask', async () => {
+      if (!emailMasksEnabled) {
+        log.debug('Email Masks not enabled. Skipping.')
+        return
+      }
+      const body = 'This message is sent by a mask'
+      const pdfAttachment: EmailAttachment = {
+        data: pdfData,
+        filename: 'lorem-ipsum.pdf',
+        inlineAttachment: false,
+        mimeType: 'application/pdf',
+        contentTransferEncoding: 'base64',
+        contentId: undefined,
+      }
+      const receiverInbox = await getFolderByName({
+        emailClient: instanceUnderTest,
+        emailAddressId: emailAddress.id,
+        folderName: 'INBOX',
+      })
+      if (!receiverInbox) {
+        throw new Error('Receiver INBOX not found')
+      }
+      const senderEmailAddress = await provisionEmailAddress(
+        ownershipProofToken,
+        instanceUnderTest,
+      )
+      emailAddresses.push(senderEmailAddress)
+      const senderEmailMask = await provisionEmailMask(
+        ownershipProofToken,
+        instanceUnderTest,
+        {
+          realAddress: senderEmailAddress.emailAddress,
+        },
+      )
+      const sendInput = generateSendInput(
+        body,
+        [{ emailAddress: emailAddress.emailAddress }],
+        [pdfAttachment],
+        { emailAddress: senderEmailMask.maskAddress },
+      )
+
+      const sendResult = await instanceUnderTest.sendMaskedEmailMessage({
+        ...sendInput,
+        senderEmailMaskId: senderEmailMask.id,
+      })
+      await waitForRfc822Data(sendResult.id, senderEmailAddress.id)
+      const sentMessageWithBody =
+        await instanceUnderTest.getEmailMessageWithBody({
+          id: sendResult.id,
+          emailAddressId: senderEmailAddress.id,
+        })
+
+      expect(sentMessageWithBody).toStrictEqual<EmailMessageWithBody>({
+        id: sendResult.id,
+        body,
+        attachments: [pdfAttachment],
+        inlineAttachments: [],
+      })
+
+      let receivedMessageId: string | undefined = undefined
+      await waitForExpect(async () => {
+        const receiverMessages =
+          await instanceUnderTest.listEmailMessagesForEmailFolderId({
+            folderId: receiverInbox.id,
+          })
+        expect(receiverMessages.status).toEqual(
+          ListOperationResultStatus.Success,
+        )
+        if (receiverMessages.status !== ListOperationResultStatus.Success) {
+          fail(`result status unexpectedly not Success`)
+        }
+        const receivedMessage = receiverMessages.items.find(
+          (m) => m.from[0].emailAddress === senderEmailMask.maskAddress,
+        )
+        expect(receivedMessage).toBeDefined()
+        receivedMessageId = receivedMessage!.id
+      })
+
+      const receivedMessageWithBody =
+        await instanceUnderTest.getEmailMessageWithBody({
+          id: receivedMessageId!,
+          emailAddressId: emailAddress.id,
+        })
+      expect(receivedMessageWithBody).toStrictEqual<EmailMessageWithBody>({
+        id: receivedMessageId!,
+        body,
+        attachments: [pdfAttachment],
+        inlineAttachments: [],
+      })
+    })
+
+    it('can get an email sent to a mask', async () => {
+      if (!emailMasksEnabled) {
+        log.debug('Email Masks not enabled. Skipping.')
+        return
+      }
+      const body = 'This message is sent by a mask'
+      const imageAttachment: EmailAttachment = {
+        data: imageData,
+        filename: 'dogImage.jpg',
+        inlineAttachment: false,
+        mimeType: 'image/jpg',
+        contentTransferEncoding: 'base64',
+        contentId: undefined,
+      }
+      const receiverEmailAddress = await provisionEmailAddress(
+        ownershipProofToken,
+        instanceUnderTest,
+      )
+      emailAddresses.push(receiverEmailAddress)
+      const receiverInbox = await getFolderByName({
+        emailClient: instanceUnderTest,
+        emailAddressId: receiverEmailAddress.id,
+        folderName: 'INBOX',
+      })
+      if (!receiverInbox) {
+        throw new Error('Receiver INBOX not found')
+      }
+      const receiverMask = await provisionEmailMask(
+        ownershipProofToken,
+        instanceUnderTest,
+        {
+          realAddress: receiverEmailAddress.emailAddress,
+        },
+      )
+      const sendInput = generateSendInput(
+        body,
+        [{ emailAddress: receiverMask.maskAddress }],
+        [imageAttachment],
+      )
+
+      const sendResult = await instanceUnderTest.sendEmailMessage(sendInput)
+      await waitForRfc822Data(sendResult.id)
+      const sentMessageWithBody =
+        await instanceUnderTest.getEmailMessageWithBody({
+          id: sendResult.id,
+          emailAddressId: emailAddress.id,
+        })
+
+      expect(sentMessageWithBody).toStrictEqual<EmailMessageWithBody>({
+        id: sendResult.id,
+        body,
+        attachments: [imageAttachment],
+        inlineAttachments: [],
+      })
+
+      let receivedMessageId: string | undefined = undefined
+      await waitForExpect(async () => {
+        const receiverMessages =
+          await instanceUnderTest.listEmailMessagesForEmailFolderId({
+            folderId: receiverInbox.id,
+          })
+        expect(receiverMessages.status).toEqual(
+          ListOperationResultStatus.Success,
+        )
+        if (receiverMessages.status !== ListOperationResultStatus.Success) {
+          fail(`result status unexpectedly not Success`)
+        }
+        const receivedMessage = receiverMessages.items.find(
+          (m) => m.to[0].emailAddress === receiverMask.maskAddress,
+        )
+        expect(receivedMessage).toBeDefined()
+        receivedMessageId = receivedMessage!.id
+      })
+
+      const receivedMessageWithBody =
+        await instanceUnderTest.getEmailMessageWithBody({
+          id: receivedMessageId!,
+          emailAddressId: receiverMask.id,
+        })
+      expect(receivedMessageWithBody).toStrictEqual<EmailMessageWithBody>({
+        id: receivedMessageId!,
+        body,
+        attachments: [imageAttachment],
         inlineAttachments: [],
       })
     })

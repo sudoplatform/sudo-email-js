@@ -31,6 +31,7 @@ import { PublicKeyFormat } from '@sudoplatform/sudo-common'
 describe('SendEmailMessageUseCase', () => {
   const emailMessageMaxOutboundMessageSize = 9999999
   let senderEmailAddressId: string
+  let senderEmailMaskId: string
   let timestamp: Date
   const emailMessageHeader = {
     from: { emailAddress: 'from@example.com' },
@@ -49,6 +50,7 @@ describe('SendEmailMessageUseCase', () => {
 
   beforeEach(() => {
     senderEmailAddressId = v4()
+    senderEmailMaskId = v4()
     timestamp = new Date()
     reset(mockMessageService)
     reset(mockAccountService)
@@ -175,6 +177,59 @@ describe('SendEmailMessageUseCase', () => {
       await expect(
         instanceUnderTest.execute({
           senderEmailAddressId,
+          emailMessageHeader,
+          body,
+          attachments,
+          inlineAttachments,
+        }),
+      ).resolves.toStrictEqual({ id: idResult, createdAt: timestamp })
+      verify(mockEmailConfigurationDataService.getConfigurationData()).once()
+      verify(
+        mockEmailDomainService.getConfiguredEmailDomains(anything()),
+      ).once()
+      verify(mockMessageService.sendMessage(anything())).once()
+    })
+
+    it('calls the message service sendMessage method with senderEmailMaskId', async () => {
+      await instanceUnderTest.execute({
+        senderEmailMaskId,
+        emailMessageHeader,
+        body,
+        attachments,
+        inlineAttachments,
+      })
+      verify(mockEmailConfigurationDataService.getConfigurationData()).once()
+      verify(
+        mockEmailDomainService.getConfiguredEmailDomains(anything()),
+      ).once()
+      verify(mockMessageService.sendMessage(anything())).once()
+      const [actualSendInput] = capture(mockMessageService.sendMessage).first()
+      expect(actualSendInput).toStrictEqual<typeof actualSendInput>({
+        message: {
+          from: [{ emailAddress: 'from@example.com' }],
+          to: [{ emailAddress: 'to@example.com' }],
+          cc: undefined,
+          bcc: undefined,
+          replyTo: undefined,
+          subject: undefined,
+          body: body,
+          attachments,
+          inlineAttachments,
+        },
+        senderEmailMaskId,
+        emailMessageMaxOutboundMessageSize,
+      })
+    })
+
+    it('returns result of service for external recipients with mask', async () => {
+      const idResult = v4()
+      when(mockMessageService.sendMessage(anything())).thenResolve({
+        id: idResult,
+        createdAt: timestamp,
+      })
+      await expect(
+        instanceUnderTest.execute({
+          senderEmailMaskId,
           emailMessageHeader,
           body,
           attachments,
@@ -344,6 +399,91 @@ describe('SendEmailMessageUseCase', () => {
         mockEmailDomainService.getConfiguredEmailDomains(anything()),
       ).once()
       verify(mockAccountService.lookupPublicInfo(anything())).once()
+    })
+
+    it('calls the message service sendEncryptedMessage method with senderEmailMaskId', async () => {
+      const emailMessageHeader = {
+        from: { emailAddress: fromAddress },
+        to: [{ emailAddress: EntityDataFactory.emailAddress.emailAddress }],
+      } as unknown as InternetMessageFormatHeader
+      await instanceUnderTest.execute({
+        senderEmailMaskId,
+        emailMessageHeader,
+        body,
+        attachments,
+        inlineAttachments,
+      })
+      verify(mockEmailConfigurationDataService.getConfigurationData()).once()
+      verify(
+        mockEmailDomainService.getConfiguredEmailDomains(anything()),
+      ).once()
+      verify(mockAccountService.lookupPublicInfo(anything())).once()
+      verify(mockMessageService.sendEncryptedMessage(anything())).once()
+      const [actualSendInput] = capture(
+        mockMessageService.sendEncryptedMessage,
+      ).first()
+      expect(actualSendInput).toStrictEqual<typeof actualSendInput>({
+        message: {
+          from: [{ emailAddress: fromAddress }],
+          to: [{ emailAddress: EntityDataFactory.emailAddress.emailAddress }],
+          cc: undefined,
+          bcc: undefined,
+          replyTo: undefined,
+          subject: undefined,
+          body: body,
+          attachments,
+          inlineAttachments,
+        },
+        senderEmailMaskId,
+        emailAddressesPublicInfo: [
+          {
+            emailAddress: EntityDataFactory.emailAddress.emailAddress,
+            keyId: 'mockKeyId',
+            publicKeyDetails: {
+              publicKey: 'mockPublicKey',
+              keyFormat: PublicKeyFormat.RSAPublicKey,
+              algorithm: 'mockAlgorithm',
+            },
+          },
+          {
+            emailAddress: fromAddress,
+            keyId: 'mockKeyId',
+            publicKeyDetails: {
+              publicKey: 'mockPublicKey',
+              keyFormat: PublicKeyFormat.RSAPublicKey,
+              algorithm: 'mockAlgorithm',
+            },
+          },
+        ],
+        emailMessageMaxOutboundMessageSize,
+      })
+    })
+
+    it('returns result of service for internal recipients with mask', async () => {
+      const idResult = v4()
+      const emailMessageHeader = {
+        from: { emailAddress: fromAddress },
+        to: [{ emailAddress: EntityDataFactory.emailAddress.emailAddress }],
+      } as unknown as InternetMessageFormatHeader
+      when(mockMessageService.sendEncryptedMessage(anything())).thenResolve({
+        id: idResult,
+        createdAt: timestamp,
+      })
+      await expect(
+        instanceUnderTest.execute({
+          senderEmailMaskId,
+          emailMessageHeader,
+          body,
+          attachments,
+          inlineAttachments,
+        }),
+      ).resolves.toStrictEqual({ id: idResult, createdAt: timestamp })
+      verify(mockEmailConfigurationDataService.getConfigurationData()).once()
+      verify(
+        mockEmailDomainService.getConfiguredEmailDomains(anything()),
+      ).once()
+      verify(mockAccountService.lookupPublicInfo(anything())).once()
+      verify(mockMessageService.sendEncryptedMessage(anything())).once()
     })
   })
 })

@@ -242,6 +242,7 @@ export type EmailMask = {
   identityId: Scalars['ID']['output']
   inboundDelivered: Scalars['Int']['output']
   inboundReceived: Scalars['Int']['output']
+  keyRingId: Scalars['ID']['output']
   maskAddress: Scalars['String']['output']
   metadata?: Maybe<SealedAttribute>
   outboundDelivered: Scalars['Int']['output']
@@ -439,6 +440,7 @@ export type Mutation = {
   scheduleSendDraftMessage: ScheduledDraftMessage
   sendEmailMessageV2: SendEmailMessageResult
   sendEncryptedEmailMessage: SendEmailMessageResult
+  sendMaskedEmailMessage: SendEmailMessageResult
   unblockEmailAddresses: BlockEmailAddressesBulkUpdateResult
   updateCustomEmailFolder: EmailFolder
   updateEmailAddressMetadata: Scalars['ID']['output']
@@ -514,6 +516,10 @@ export type MutationSendEncryptedEmailMessageArgs = {
   input: SendEncryptedEmailMessageInput
 }
 
+export type MutationSendMaskedEmailMessageArgs = {
+  input: SendMaskedEmailMessageInput
+}
+
 export type MutationUnblockEmailAddressesArgs = {
   input: UnblockEmailAddressesInput
 }
@@ -567,10 +573,18 @@ export type ProvisionEmailAddressPublicKeyInput = {
 
 export type ProvisionEmailMaskInput = {
   expiresAtEpochSec?: InputMaybe<Scalars['Int']['input']>
+  key: ProvisionEmailMaskPublicKeyInput
   maskAddress: Scalars['String']['input']
   metadata?: InputMaybe<SealedAttributeInput>
   ownershipProofTokens: Array<Scalars['String']['input']>
   realAddress: Scalars['String']['input']
+}
+
+export type ProvisionEmailMaskPublicKeyInput = {
+  algorithm: Scalars['String']['input']
+  keyFormat: KeyFormat
+  keyId: Scalars['String']['input']
+  publicKey: Scalars['String']['input']
 }
 
 export type PublicKey = {
@@ -765,6 +779,7 @@ export type SealedEmailMessage = {
   deletedAtEpochMs?: Maybe<Scalars['Float']['output']>
   direction: EmailMessageDirection
   emailAddressId: Scalars['ID']['output']
+  emailMaskId?: Maybe<Scalars['ID']['output']>
   encryptionStatus?: Maybe<EmailMessageEncryptionStatus>
   folderId: Scalars['ID']['output']
   forwarded: Scalars['Boolean']['output']
@@ -797,6 +812,13 @@ export type SendEmailMessageResult = {
 export type SendEncryptedEmailMessageInput = {
   clientRefId?: InputMaybe<Scalars['String']['input']>
   emailAddressId: Scalars['ID']['input']
+  message: S3EmailObjectInput
+  rfc822Header: Rfc822HeaderInput
+}
+
+export type SendMaskedEmailMessageInput = {
+  emailMaskId: Scalars['ID']['input']
+  encryptionStatus: EmailMessageEncryptionStatus
   message: S3EmailObjectInput
   rfc822Header: Rfc822HeaderInput
 }
@@ -1055,6 +1077,7 @@ export type EmailMaskFragment = {
   __typename?: 'EmailMask'
   id: string
   owner: string
+  keyRingId: string
   identityId: string
   maskAddress: string
   realAddress: string
@@ -1153,6 +1176,7 @@ export type SealedEmailMessageFragment = {
   clientRefId?: string | null
   size: number
   encryptionStatus?: EmailMessageEncryptionStatus | null
+  emailMaskId?: string | null
   owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
   rfc822Header: {
     __typename?: 'SealedAttribute'
@@ -1506,6 +1530,7 @@ export type ProvisionEmailMaskMutation = {
     __typename?: 'EmailMask'
     id: string
     owner: string
+    keyRingId: string
     identityId: string
     maskAddress: string
     realAddress: string
@@ -1542,6 +1567,7 @@ export type DeprovisionEmailMaskMutation = {
     __typename?: 'EmailMask'
     id: string
     owner: string
+    keyRingId: string
     identityId: string
     maskAddress: string
     realAddress: string
@@ -1578,6 +1604,7 @@ export type UpdateEmailMaskMutation = {
     __typename?: 'EmailMask'
     id: string
     owner: string
+    keyRingId: string
     identityId: string
     maskAddress: string
     realAddress: string
@@ -1614,6 +1641,7 @@ export type EnableEmailMaskMutation = {
     __typename?: 'EmailMask'
     id: string
     owner: string
+    keyRingId: string
     identityId: string
     maskAddress: string
     realAddress: string
@@ -1650,6 +1678,7 @@ export type DisableEmailMaskMutation = {
     __typename?: 'EmailMask'
     id: string
     owner: string
+    keyRingId: string
     identityId: string
     maskAddress: string
     realAddress: string
@@ -1673,6 +1702,19 @@ export type DisableEmailMaskMutation = {
       plainTextType: string
       base64EncodedSealedData: string
     } | null
+  }
+}
+
+export type SendMaskedEmailMessageMutationVariables = Exact<{
+  input: SendMaskedEmailMessageInput
+}>
+
+export type SendMaskedEmailMessageMutation = {
+  __typename?: 'Mutation'
+  sendMaskedEmailMessage: {
+    __typename?: 'SendEmailMessageResult'
+    id: string
+    createdAtEpochMs: number
   }
 }
 
@@ -2001,6 +2043,7 @@ export type GetEmailMessageQuery = {
     clientRefId?: string | null
     size: number
     encryptionStatus?: EmailMessageEncryptionStatus | null
+    emailMaskId?: string | null
     owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
     rfc822Header: {
       __typename?: 'SealedAttribute'
@@ -2040,6 +2083,7 @@ export type ListEmailMessagesQuery = {
       clientRefId?: string | null
       size: number
       encryptionStatus?: EmailMessageEncryptionStatus | null
+      emailMaskId?: string | null
       owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
       rfc822Header: {
         __typename?: 'SealedAttribute'
@@ -2080,6 +2124,7 @@ export type ListEmailMessagesForEmailAddressIdQuery = {
       clientRefId?: string | null
       size: number
       encryptionStatus?: EmailMessageEncryptionStatus | null
+      emailMaskId?: string | null
       owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
       rfc822Header: {
         __typename?: 'SealedAttribute'
@@ -2120,6 +2165,7 @@ export type ListEmailMessagesForEmailFolderIdQuery = {
       clientRefId?: string | null
       size: number
       encryptionStatus?: EmailMessageEncryptionStatus | null
+      emailMaskId?: string | null
       owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
       rfc822Header: {
         __typename?: 'SealedAttribute'
@@ -2145,6 +2191,7 @@ export type ListEmailMasksForOwnerQuery = {
       __typename?: 'EmailMask'
       id: string
       owner: string
+      keyRingId: string
       identityId: string
       maskAddress: string
       realAddress: string
@@ -2318,6 +2365,7 @@ export type OnEmailMessageDeletedSubscription = {
     clientRefId?: string | null
     size: number
     encryptionStatus?: EmailMessageEncryptionStatus | null
+    emailMaskId?: string | null
     owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
     rfc822Header: {
       __typename?: 'SealedAttribute'
@@ -2354,6 +2402,7 @@ export type OnEmailMessageCreatedSubscription = {
     clientRefId?: string | null
     size: number
     encryptionStatus?: EmailMessageEncryptionStatus | null
+    emailMaskId?: string | null
     owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
     rfc822Header: {
       __typename?: 'SealedAttribute'
@@ -2390,6 +2439,7 @@ export type OnEmailMessageUpdatedSubscription = {
     clientRefId?: string | null
     size: number
     encryptionStatus?: EmailMessageEncryptionStatus | null
+    emailMaskId?: string | null
     owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
     rfc822Header: {
       __typename?: 'SealedAttribute'
@@ -3049,6 +3099,7 @@ export const EmailMaskFragmentDoc = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyRingId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'identityId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'maskAddress' } },
           { kind: 'Field', name: { kind: 'Name', value: 'realAddress' } },
@@ -3301,6 +3352,7 @@ export const SealedEmailMessageFragmentDoc = {
           },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailMaskId' } },
         ],
       },
     },
@@ -4900,6 +4952,7 @@ export const ProvisionEmailMaskDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyRingId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'identityId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'maskAddress' } },
           { kind: 'Field', name: { kind: 'Name', value: 'realAddress' } },
@@ -5031,6 +5084,7 @@ export const DeprovisionEmailMaskDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyRingId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'identityId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'maskAddress' } },
           { kind: 'Field', name: { kind: 'Name', value: 'realAddress' } },
@@ -5162,6 +5216,7 @@ export const UpdateEmailMaskDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyRingId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'identityId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'maskAddress' } },
           { kind: 'Field', name: { kind: 'Name', value: 'realAddress' } },
@@ -5293,6 +5348,7 @@ export const EnableEmailMaskDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyRingId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'identityId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'maskAddress' } },
           { kind: 'Field', name: { kind: 'Name', value: 'realAddress' } },
@@ -5424,6 +5480,7 @@ export const DisableEmailMaskDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyRingId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'identityId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'maskAddress' } },
           { kind: 'Field', name: { kind: 'Name', value: 'realAddress' } },
@@ -5459,6 +5516,78 @@ export const DisableEmailMaskDocument = {
 } as unknown as DocumentNode<
   DisableEmailMaskMutation,
   DisableEmailMaskMutationVariables
+>
+export const SendMaskedEmailMessageDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SendMaskedEmailMessage' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'SendMaskedEmailMessageInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sendMaskedEmailMessage' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SendEmailMessageResult' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SendEmailMessageResult' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'SendEmailMessageResult' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  SendMaskedEmailMessageMutation,
+  SendMaskedEmailMessageMutationVariables
 >
 export const CreatePublicKeyForEmailDocument = {
   kind: 'Document',
@@ -6756,6 +6885,7 @@ export const GetEmailMessageDocument = {
           },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailMaskId' } },
         ],
       },
     },
@@ -6883,6 +7013,7 @@ export const ListEmailMessagesDocument = {
           },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailMaskId' } },
         ],
       },
     },
@@ -7013,6 +7144,7 @@ export const ListEmailMessagesForEmailAddressIdDocument = {
           },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailMaskId' } },
         ],
       },
     },
@@ -7143,6 +7275,7 @@ export const ListEmailMessagesForEmailFolderIdDocument = {
           },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailMaskId' } },
         ],
       },
     },
@@ -7256,6 +7389,7 @@ export const ListEmailMasksForOwnerDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'keyRingId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'identityId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'maskAddress' } },
           { kind: 'Field', name: { kind: 'Name', value: 'realAddress' } },
@@ -7965,6 +8099,7 @@ export const OnEmailMessageDeletedDocument = {
           },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailMaskId' } },
         ],
       },
     },
@@ -8079,6 +8214,7 @@ export const OnEmailMessageCreatedDocument = {
           },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailMaskId' } },
         ],
       },
     },
@@ -8193,6 +8329,7 @@ export const OnEmailMessageUpdatedDocument = {
           },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailMaskId' } },
         ],
       },
     },

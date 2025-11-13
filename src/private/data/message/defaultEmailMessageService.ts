@@ -29,6 +29,7 @@ import {
   S3EmailObjectInput,
   SealedEmailMessage,
   ListScheduledDraftMessagesForEmailAddressIdInput as ListScheduledDraftMessagesForEmailAddressIdRequest,
+  EmailMessageEncryptionStatus,
 } from '../../../gen/graphqlTypes'
 import {
   ConnectionState,
@@ -39,6 +40,7 @@ import {
 } from '../../../public'
 import {
   InternalError,
+  InvalidArgumentError,
   MessageNotFoundError,
   MessageSizeLimitExceededError,
   UnsupportedKeyTypeError,
@@ -83,7 +85,10 @@ import {
   SecureEmailAttachmentType,
 } from '../../domain/entities/secure/secureEmailAttachmentType'
 import { arrayBufferToString, stringToArrayBuffer } from '../../util/buffer'
-import { Rfc822MessageDataProcessor } from '../../util/rfc822MessageDataProcessor'
+import {
+  EmailMessageDetails,
+  Rfc822MessageDataProcessor,
+} from '../../util/rfc822MessageDataProcessor'
 import { gunzipAsync } from '../../util/zlibAsync'
 import { ApiClient } from '../common/apiClient'
 import { EmailServiceConfig } from '../common/config'
@@ -479,6 +484,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
   async sendMessage({
     message,
     senderEmailAddressId,
+    senderEmailMaskId,
     emailMessageMaxOutboundMessageSize,
   }: SendMessageInput): Promise<SendEmailMessageOutput> {
     this.log.debug(this.sendMessage.name, {
@@ -486,6 +492,13 @@ export class DefaultEmailMessageService implements EmailMessageService {
       senderEmailAddressId,
       emailMessageMaxOutboundMessageSize,
     })
+    const senderId = senderEmailAddressId ?? senderEmailMaskId
+
+    if (!senderId) {
+      throw new InvalidArgumentError(
+        'Either senderEmailAddressId or senderEmailMaskId must be provided',
+      )
+    }
 
     const rfc822Data = Rfc822MessageDataProcessor.encodeToInternetMessageBuffer(
       {
@@ -500,14 +513,21 @@ export class DefaultEmailMessageService implements EmailMessageService {
     }
 
     const s3MessageObject = await this.uploadDataToTransientBucket(
-      senderEmailAddressId,
+      senderId,
       rfc822Data,
     )
 
-    const result = await this.appSync.sendEmailMessage({
-      emailAddressId: senderEmailAddressId,
-      message: s3MessageObject,
-    })
+    const result = senderEmailAddressId
+      ? await this.appSync.sendEmailMessage({
+          emailAddressId: senderId,
+          message: s3MessageObject,
+        })
+      : await this.appSync.sendMaskedEmailMessage({
+          emailMaskId: senderId,
+          message: s3MessageObject,
+          encryptionStatus: EmailMessageEncryptionStatus.Unencrypted,
+          rfc822Header: this.constructRfc822HeaderInput(message),
+        })
     const resultTransformer = new SendEmailMessageResultTransformer()
     return resultTransformer.transformGraphQL(result)
   }
@@ -516,6 +536,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     message,
     emailAddressesPublicInfo,
     senderEmailAddressId,
+    senderEmailMaskId,
     emailMessageMaxOutboundMessageSize,
   }: SendEncryptedMessageInput): Promise<SendEmailMessageOutput> {
     this.log.debug(this.sendEncryptedMessage.name, {
@@ -523,6 +544,13 @@ export class DefaultEmailMessageService implements EmailMessageService {
       emailAddressesPublicInfo,
       senderEmailAddressId,
     })
+    const senderId = senderEmailAddressId ?? senderEmailMaskId
+
+    if (!senderId) {
+      throw new InvalidArgumentError(
+        'Either senderEmailAddressId or senderEmailMaskId must be provided',
+      )
+    }
     const emailMessageUtil = new EmailMessageUtil({
       emailCryptoService: this.emailCryptoService,
     })
@@ -539,10 +567,31 @@ export class DefaultEmailMessageService implements EmailMessageService {
     }
 
     const s3MessageObject = await this.uploadDataToTransientBucket(
-      senderEmailAddressId,
+      senderId,
       encryptedRfc822Data,
     )
 
+    const rfc822Header = this.constructRfc822HeaderInput(message)
+
+    const result = senderEmailAddressId
+      ? await this.appSync.sendEncryptedEmailMessage({
+          emailAddressId: senderEmailAddressId,
+          message: s3MessageObject,
+          rfc822Header,
+        })
+      : await this.appSync.sendMaskedEmailMessage({
+          emailMaskId: senderId,
+          message: s3MessageObject,
+          encryptionStatus: EmailMessageEncryptionStatus.Encrypted,
+          rfc822Header,
+        })
+    const resultTransformer = new SendEmailMessageResultTransformer()
+    return resultTransformer.transformGraphQL(result)
+  }
+
+  private constructRfc822HeaderInput(
+    message: EmailMessageDetails,
+  ): Rfc822HeaderInput {
     const rfc822Header: Rfc822HeaderInput = {
       from: Rfc822MessageDataProcessor.emailAddressDetailToString(
         message.from[0],
@@ -577,14 +626,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     if (message.replyMessageId) {
       rfc822Header.inReplyTo = message.replyMessageId
     }
-
-    const result = await this.appSync.sendEncryptedEmailMessage({
-      emailAddressId: senderEmailAddressId,
-      message: s3MessageObject,
-      rfc822Header,
-    })
-    const resultTransformer = new SendEmailMessageResultTransformer()
-    return resultTransformer.transformGraphQL(result)
+    return rfc822Header
   }
 
   async updateMessages({

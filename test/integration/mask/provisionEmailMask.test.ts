@@ -15,6 +15,7 @@ import {
   EmailMask,
   EmailMaskRealAddressType,
   EmailMaskStatus,
+  InvalidArgumentError,
   SudoEmailClient,
 } from '../../../src'
 import { secondsSinceEpoch } from '../../../src/private/util/date'
@@ -84,165 +85,170 @@ describe('SudoEmailClient ProvisionEmailMask Test Suite', () => {
     emailAddresses = []
   })
 
-  const runTestsIfEnabled = runTests ? describe : describe.skip
-  runTestsIfEnabled('emailMasksEnabled', () => {
-    it('returns expected output with internal real address', async () => {
-      const realEmailAddress = await provisionEmailAddress(
-        ownershipProofToken,
-        instanceUnderTest,
-      )
-      emailAddresses.push(realEmailAddress)
+  it('returns expected output with internal real address', async () => {
+    if (!runTests) {
+      log.debug('Email Masks not enabled. Skipping.')
+      return
+    }
+    const realEmailAddress = await provisionEmailAddress(
+      ownershipProofToken,
+      instanceUnderTest,
+    )
+    emailAddresses.push(realEmailAddress)
 
-      const maskAddress = `${generateSafeLocalPart()}@${maskDomain}`
-      const metadata = { purpose: 'testing', environment: 'integration' }
-      const expiresAt = DateTime.now().plus({ days: 1 }).toJSDate() // 1 day from now
+    const maskAddress = `${generateSafeLocalPart()}@${maskDomain}`
+    const metadata = { purpose: 'testing', environment: 'integration' }
+    const expiresAt = DateTime.now().plus({ days: 1 }).toJSDate() // 1 day from now
 
-      const emailMask = await instanceUnderTest.provisionEmailMask({
-        maskAddress,
-        realAddress: realEmailAddress.emailAddress,
-        ownershipProofToken,
-        metadata,
-        expiresAt,
-      })
-      emailMasks.push(emailMask)
-
-      expect(emailMask.id).toBeDefined()
-      expect(emailMask.maskAddress).toStrictEqual(maskAddress)
-      expect(emailMask.realAddress).toStrictEqual(realEmailAddress.emailAddress)
-      expect(emailMask.realAddressType).toStrictEqual(
-        EmailMaskRealAddressType.INTERNAL,
-      )
-      expect(emailMask.status).toStrictEqual(EmailMaskStatus.ENABLED)
-
-      const sub = await userClient.getSubject()
-      expect(emailMask.owner).toStrictEqual(sub)
-      expect(emailMask.owners[0].id).toStrictEqual(sudo.id)
-      expect(emailMask.owners[0].issuer).toStrictEqual(sudoIssuer)
-
-      expect(emailMask.identityId).toBeDefined()
-      expect(emailMask.version).toStrictEqual(0)
-
-      // Check counters are initialized to zero
-      expect(emailMask.inboundReceived).toStrictEqual(0)
-      expect(emailMask.inboundDelivered).toStrictEqual(0)
-      expect(emailMask.outboundReceived).toStrictEqual(0)
-      expect(emailMask.outboundDelivered).toStrictEqual(0)
-      expect(emailMask.spamCount).toStrictEqual(0)
-      expect(emailMask.virusCount).toStrictEqual(0)
-
-      // Check metadata and expiration
-      expect(emailMask.metadata).toEqual(metadata)
-      expect(emailMask.expiresAt).toBeDefined()
-      expect(secondsSinceEpoch(emailMask.expiresAt!)).toEqual(
-        secondsSinceEpoch(expiresAt),
-      )
+    const emailMask = await instanceUnderTest.provisionEmailMask({
+      maskAddress,
+      realAddress: realEmailAddress.emailAddress,
+      ownershipProofToken,
+      metadata,
+      expiresAt,
     })
+    emailMasks.push(emailMask)
 
-    it('provisions a mask with external real address', async () => {
-      const maskAddress = `${generateSafeLocalPart()}@${maskDomain}`
-      const externalRealAddress = `${v4()}@anonyome.com`
+    expect(emailMask.id).toBeDefined()
+    expect(emailMask.maskAddress).toStrictEqual(maskAddress)
+    expect(emailMask.realAddress).toStrictEqual(realEmailAddress.emailAddress)
+    expect(emailMask.realAddressType).toStrictEqual(
+      EmailMaskRealAddressType.INTERNAL,
+    )
+    expect(emailMask.status).toStrictEqual(EmailMaskStatus.ENABLED)
 
-      const emailMask = await instanceUnderTest.provisionEmailMask({
+    const sub = await userClient.getSubject()
+    expect(emailMask.owner).toStrictEqual(sub)
+    expect(emailMask.owners[0].id).toStrictEqual(sudo.id)
+    expect(emailMask.owners[0].issuer).toStrictEqual(sudoIssuer)
+
+    expect(emailMask.identityId).toBeDefined()
+    expect(emailMask.version).toStrictEqual(0)
+
+    // Check counters are initialized to zero
+    expect(emailMask.inboundReceived).toStrictEqual(0)
+    expect(emailMask.inboundDelivered).toStrictEqual(0)
+    expect(emailMask.outboundReceived).toStrictEqual(0)
+    expect(emailMask.outboundDelivered).toStrictEqual(0)
+    expect(emailMask.spamCount).toStrictEqual(0)
+    expect(emailMask.virusCount).toStrictEqual(0)
+
+    // Check metadata and expiration
+    expect(emailMask.metadata).toEqual(metadata)
+    expect(emailMask.expiresAt).toBeDefined()
+    expect(secondsSinceEpoch(emailMask.expiresAt!)).toEqual(
+      secondsSinceEpoch(expiresAt),
+    )
+  })
+
+  it('throws InvalidArgumentError when provisioning a mask with external real address', async () => {
+    if (!runTests) {
+      log.debug('Email Masks not enabled. Skipping.')
+      return
+    }
+    const maskAddress = `${generateSafeLocalPart()}@${maskDomain}`
+    const externalRealAddress = `${v4()}@anonyome.com`
+
+    await expect(
+      instanceUnderTest.provisionEmailMask({
         maskAddress,
         realAddress: externalRealAddress,
         ownershipProofToken,
-      })
-      emailMasks.push(emailMask)
+      }),
+    ).rejects.toThrow(InvalidArgumentError)
+  })
 
-      expect(emailMask.id).toBeDefined()
-      expect(emailMask.maskAddress).toStrictEqual(maskAddress)
-      expect(emailMask.realAddress).toStrictEqual(externalRealAddress)
-      expect(emailMask.realAddressType).toStrictEqual(
-        EmailMaskRealAddressType.EXTERNAL,
-      )
-      expect(emailMask.status).toStrictEqual(EmailMaskStatus.ENABLED)
+  it('provisions a mask without optional metadata and expiration', async () => {
+    if (!runTests) {
+      log.debug('Email Masks not enabled. Skipping.')
+      return
+    }
+    const realEmailAddress = await provisionEmailAddress(
+      ownershipProofToken,
+      instanceUnderTest,
+    )
+    emailAddresses.push(realEmailAddress)
 
-      const sub = await userClient.getSubject()
-      expect(emailMask.owner).toStrictEqual(sub)
-      expect(emailMask.owners[0].id).toStrictEqual(sudo.id)
-      expect(emailMask.owners[0].issuer).toStrictEqual(sudoIssuer)
+    const maskAddress = `${generateSafeLocalPart()}@${maskDomain}`
+
+    const emailMask = await instanceUnderTest.provisionEmailMask({
+      maskAddress,
+      realAddress: realEmailAddress.emailAddress,
+      ownershipProofToken,
+    })
+    emailMasks.push(emailMask)
+
+    expect(emailMask.id).toBeDefined()
+    expect(emailMask.maskAddress).toStrictEqual(maskAddress)
+    expect(emailMask.realAddress).toStrictEqual(realEmailAddress.emailAddress)
+    expect(emailMask.status).toStrictEqual(EmailMaskStatus.ENABLED)
+    expect(emailMask.metadata).toBeUndefined()
+    expect(emailMask.expiresAt).toBeUndefined()
+  })
+
+  it('provisions a mask with multi-byte UTF-8 characters in metadata', async () => {
+    if (!runTests) {
+      log.debug('Email Masks not enabled. Skipping.')
+      return
+    }
+    const realEmailAddress = await provisionEmailAddress(
+      ownershipProofToken,
+      instanceUnderTest,
+    )
+    emailAddresses.push(realEmailAddress)
+
+    const maskAddress = `${generateSafeLocalPart()}@${maskDomain}`
+    const metadata = {
+      emoji: '😎🎉',
+      unicode: '日本語',
+      description: 'Test with UTF-8 🔥',
+    }
+
+    const emailMask = await instanceUnderTest.provisionEmailMask({
+      maskAddress,
+      realAddress: realEmailAddress.emailAddress,
+      ownershipProofToken,
+      metadata,
+    })
+    emailMasks.push(emailMask)
+
+    expect(emailMask.id).toBeDefined()
+    expect(emailMask.metadata).toEqual(metadata)
+  })
+
+  it('can provision multiple email masks', async () => {
+    if (!runTests) {
+      log.debug('Email Masks not enabled. Skipping.')
+      return
+    }
+    const realEmailAddress = await provisionEmailAddress(
+      ownershipProofToken,
+      instanceUnderTest,
+    )
+    emailAddresses.push(realEmailAddress)
+
+    const maskAddress1 = `${generateSafeLocalPart()}@${maskDomain}`
+    const maskAddress2 = `${generateSafeLocalPart()}@${maskDomain}`
+
+    const emailMask1 = await instanceUnderTest.provisionEmailMask({
+      maskAddress: maskAddress1,
+      realAddress: realEmailAddress.emailAddress,
+      ownershipProofToken,
     })
 
-    it('provisions a mask without optional metadata and expiration', async () => {
-      const realEmailAddress = await provisionEmailAddress(
-        ownershipProofToken,
-        instanceUnderTest,
-      )
-      emailAddresses.push(realEmailAddress)
-
-      const maskAddress = `${generateSafeLocalPart()}@${maskDomain}`
-
-      const emailMask = await instanceUnderTest.provisionEmailMask({
-        maskAddress,
-        realAddress: realEmailAddress.emailAddress,
-        ownershipProofToken,
-      })
-      emailMasks.push(emailMask)
-
-      expect(emailMask.id).toBeDefined()
-      expect(emailMask.maskAddress).toStrictEqual(maskAddress)
-      expect(emailMask.realAddress).toStrictEqual(realEmailAddress.emailAddress)
-      expect(emailMask.status).toStrictEqual(EmailMaskStatus.ENABLED)
-      expect(emailMask.metadata).toBeUndefined()
-      expect(emailMask.expiresAt).toBeUndefined()
+    const emailMask2 = await instanceUnderTest.provisionEmailMask({
+      maskAddress: maskAddress2,
+      realAddress: realEmailAddress.emailAddress,
+      ownershipProofToken,
     })
 
-    it('provisions a mask with multi-byte UTF-8 characters in metadata', async () => {
-      const realEmailAddress = await provisionEmailAddress(
-        ownershipProofToken,
-        instanceUnderTest,
-      )
-      emailAddresses.push(realEmailAddress)
+    emailMasks.push(emailMask1, emailMask2)
 
-      const maskAddress = `${generateSafeLocalPart()}@${maskDomain}`
-      const metadata = {
-        emoji: '😎🎉',
-        unicode: '日本語',
-        description: 'Test with UTF-8 🔥',
-      }
-
-      const emailMask = await instanceUnderTest.provisionEmailMask({
-        maskAddress,
-        realAddress: realEmailAddress.emailAddress,
-        ownershipProofToken,
-        metadata,
-      })
-      emailMasks.push(emailMask)
-
-      expect(emailMask.id).toBeDefined()
-      expect(emailMask.metadata).toEqual(metadata)
-    })
-
-    it('can provision multiple email masks', async () => {
-      const realEmailAddress = await provisionEmailAddress(
-        ownershipProofToken,
-        instanceUnderTest,
-      )
-      emailAddresses.push(realEmailAddress)
-
-      const maskAddress1 = `${generateSafeLocalPart()}@${maskDomain}`
-      const maskAddress2 = `${generateSafeLocalPart()}@${maskDomain}`
-
-      const emailMask1 = await instanceUnderTest.provisionEmailMask({
-        maskAddress: maskAddress1,
-        realAddress: realEmailAddress.emailAddress,
-        ownershipProofToken,
-      })
-
-      const emailMask2 = await instanceUnderTest.provisionEmailMask({
-        maskAddress: maskAddress2,
-        realAddress: realEmailAddress.emailAddress,
-        ownershipProofToken,
-      })
-
-      emailMasks.push(emailMask1, emailMask2)
-
-      expect(emailMask1.id).not.toStrictEqual(emailMask2.id)
-      expect(emailMask1.maskAddress).toStrictEqual(maskAddress1)
-      expect(emailMask2.maskAddress).toStrictEqual(maskAddress2)
-      expect(emailMask1.realAddress).toStrictEqual(emailMask2.realAddress)
-      expect(emailMask1.owner).toStrictEqual(emailMask2.owner)
-      expect(emailMask1.owners[0].id).toStrictEqual(emailMask2.owners[0].id)
-    })
+    expect(emailMask1.id).not.toStrictEqual(emailMask2.id)
+    expect(emailMask1.maskAddress).toStrictEqual(maskAddress1)
+    expect(emailMask2.maskAddress).toStrictEqual(maskAddress2)
+    expect(emailMask1.realAddress).toStrictEqual(emailMask2.realAddress)
+    expect(emailMask1.owner).toStrictEqual(emailMask2.owner)
+    expect(emailMask1.owners[0].id).toStrictEqual(emailMask2.owners[0].id)
   })
 })

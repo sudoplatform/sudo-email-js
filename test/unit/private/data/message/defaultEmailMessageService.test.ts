@@ -36,6 +36,7 @@ import {
   OnEmailMessageDeletedSubscription,
   UpdateEmailMessagesStatus,
   ScheduledDraftMessageState as ScheduledDraftMessageStateGql,
+  EmailMessageEncryptionStatus,
 } from '../../../../../src/gen/graphqlTypes'
 import { ApiClient } from '../../../../../src/private/data/common/apiClient'
 import {
@@ -151,6 +152,10 @@ describe('DefaultEmailMessageService Test Suite', () => {
       id: mockMessageId,
       createdAtEpochMs: timestamp.getMilliseconds(),
     })
+    when(mockAppSync.sendMaskedEmailMessage(anything())).thenResolve({
+      id: mockMessageId,
+      createdAtEpochMs: timestamp.getMilliseconds(),
+    })
     JestMockSubscriptionManager.mockImplementation(() =>
       instance(mockSubscriptionManager),
     )
@@ -163,9 +168,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
       Rfc822MessageDataProcessor,
       'encodeToInternetMessageBuffer',
     )
-    encodeToInternetMessageBufferSpy.mockReturnValueOnce(encodedOriginalMessage)
     let message: EmailMessageDetails
     beforeEach(() => {
+      encodeToInternetMessageBufferSpy.mockReset()
+      encodeToInternetMessageBufferSpy.mockReturnValueOnce(
+        encodedOriginalMessage,
+      )
       when(mockS3Client.upload(anything())).thenResolve({
         key: v4(),
         lastModified: new Date(),
@@ -225,7 +233,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       await expect(
         instanceUnderTest.sendMessage({
           message,
-          senderEmailAddressId: '',
+          senderEmailAddressId: 'dummyId',
           emailMessageMaxOutboundMessageSize,
         }),
       ).resolves.toStrictEqual({ id: resultId, createdAt: timestamp })
@@ -244,6 +252,58 @@ describe('DefaultEmailMessageService Test Suite', () => {
           emailMessageMaxOutboundMessageSize: limit,
         }),
       ).rejects.toThrow(MessageSizeLimitExceededError)
+    })
+
+    it('calls s3 upload with senderEmailMaskId', async () => {
+      const senderEmailMaskId = v4()
+      await instanceUnderTest.sendMessage({
+        message,
+        senderEmailMaskId,
+        emailMessageMaxOutboundMessageSize,
+      })
+
+      verify(mockS3Client.upload(anything())).once()
+      const [s3Inputs] = capture(mockS3Client.upload).first()
+      expect(s3Inputs).toStrictEqual<typeof s3Inputs>({
+        bucket: identityServiceConfig.transientBucket,
+        region: identityServiceConfig.region,
+        key: expect.stringMatching(
+          new RegExp(`^identityId\/email\/${senderEmailMaskId}\/.+`),
+        ),
+        body: arrayBufferToString(encodedOriginalMessage),
+      })
+    })
+
+    it('calls appsync with senderEmailMaskId', async () => {
+      const senderEmailMaskId = v4()
+      await instanceUnderTest.sendMessage({
+        message,
+        senderEmailMaskId,
+        emailMessageMaxOutboundMessageSize,
+      })
+      verify(mockAppSync.sendMaskedEmailMessage(anything())).once()
+      const [appSyncInput] = capture(mockAppSync.sendMaskedEmailMessage).first()
+      expect(appSyncInput).toStrictEqual<typeof appSyncInput>({
+        emailMaskId: senderEmailMaskId,
+        encryptionStatus: EmailMessageEncryptionStatus.Unencrypted,
+        message: {
+          key: expect.stringMatching(
+            new RegExp(`identityId/email/${senderEmailMaskId}/.+`),
+          ),
+          bucket: identityServiceConfig.transientBucket,
+          region: identityServiceConfig.region,
+        },
+        rfc822Header: {
+          from: message.from[0].emailAddress,
+          to: message.to?.map((a) => a.emailAddress) ?? [],
+          cc: message.cc?.map((a) => a.emailAddress) ?? [],
+          bcc: message.bcc?.map((a) => a.emailAddress) ?? [],
+          replyTo: message.replyTo?.map((a) => a.emailAddress) ?? [],
+          subject: message.subject,
+          hasAttachments: false,
+          dateEpochMs: expect.any(Number),
+        },
+      })
     })
   })
 
@@ -463,6 +523,61 @@ describe('DefaultEmailMessageService Test Suite', () => {
           emailMessageMaxOutboundMessageSize: limit,
         }),
       ).rejects.toThrow(MessageSizeLimitExceededError)
+    })
+
+    it('uploads the encrypted message to s3 with senderEmailMaskId', async () => {
+      const senderEmailMaskId = v4()
+      await instanceUnderTest.sendEncryptedMessage({
+        message: message,
+        senderEmailMaskId,
+        emailAddressesPublicInfo,
+        emailMessageMaxOutboundMessageSize,
+      })
+
+      verify(mockS3Client.upload(anything())).once()
+      const [s3Inputs] = capture(mockS3Client.upload).first()
+      expect(s3Inputs).toStrictEqual<typeof s3Inputs>({
+        bucket: identityServiceConfig.transientBucket,
+        region: identityServiceConfig.region,
+        key: expect.stringMatching(
+          new RegExp(`^identityId\/email\/${senderEmailMaskId}\/.+`),
+        ),
+        body: arrayBufferToString(encodedEncryptedMessage),
+      })
+    })
+
+    it('calls appSync to send the encrypted message with senderEmailMaskId', async () => {
+      const senderEmailMaskId = v4()
+      await instanceUnderTest.sendEncryptedMessage({
+        message: message,
+        senderEmailMaskId,
+        emailAddressesPublicInfo,
+        emailMessageMaxOutboundMessageSize,
+      })
+
+      verify(mockAppSync.sendMaskedEmailMessage(anything())).once()
+      const [appSyncInput] = capture(mockAppSync.sendMaskedEmailMessage).first()
+      expect(appSyncInput).toStrictEqual<typeof appSyncInput>({
+        emailMaskId: senderEmailMaskId,
+        encryptionStatus: EmailMessageEncryptionStatus.Encrypted,
+        message: {
+          key: expect.stringMatching(
+            new RegExp(`identityId/email/${senderEmailMaskId}/.+`),
+          ),
+          bucket: identityServiceConfig.transientBucket,
+          region: identityServiceConfig.region,
+        },
+        rfc822Header: {
+          from: message.from[0].emailAddress,
+          to: message.to?.map((a) => a.emailAddress) ?? [],
+          cc: message.cc?.map((a) => a.emailAddress) ?? [],
+          bcc: message.bcc?.map((a) => a.emailAddress) ?? [],
+          replyTo: message.replyTo?.map((a) => a.emailAddress) ?? [],
+          subject: message.subject,
+          hasAttachments: false,
+          dateEpochMs: expect.any(Number),
+        },
+      })
     })
   })
 

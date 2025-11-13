@@ -116,6 +116,12 @@ mutation DisableEmailMask($input: DisableEmailMaskInput!) {
   }
 }
 
+mutation SendMaskedEmailMessage($input: SendMaskedEmailMessageInput!) {
+  sendMaskedEmailMessage(input: $input) {
+    ...SendEmailMessageResult
+  }
+}
+
 ##########
 # Keys
 ##########

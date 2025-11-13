@@ -23,6 +23,7 @@ import _ from 'lodash'
 import { v4 } from 'uuid'
 import fs from 'node:fs/promises'
 import { delay } from '../util/delay'
+import { getPdfFileData } from '../util/files/fileData'
 
 export const externalAccounts = [
   'sudo.platform.testing@gmail.com',
@@ -52,15 +53,9 @@ describe('SudoEmailClient Interoperability Test Suite', () => {
   let emailAddress: EmailAddress
   let inboxFolder: EmailFolder
 
-  let attachmentData: string = ''
+  const attachmentData = getPdfFileData()
 
   const emailInteropTestsEnabled = !!process.env.ENABLE_EMAIL_INTEROP_TESTS
-
-  beforeAll(async () => {
-    attachmentData = await fs.readFile('test/util/files/lorem-ipsum.pdf', {
-      encoding: 'base64',
-    })
-  })
 
   beforeEach(async () => {
     const result = await setupEmailClient(log)

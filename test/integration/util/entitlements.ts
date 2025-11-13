@@ -26,6 +26,12 @@ export const emailAddressMaxProvisionsExpendableEntitlement =
 export const emailAddressMaxPerSudoEntitlement =
   'sudoplatform.email.emailAddressMaxPerSudo'
 
+export const emailMaskUserEntitledEntitlement =
+  'sudoplatform.email.emailMaskUserEntitled'
+
+export const emailMaskMaxPerUserEntitlement =
+  'sudoplatform.email.emailMaskMaxPerUser'
+
 export const emailAddressUserEntitledEntitlement =
   'sudoplatform.email.emailAddressUserEntitled'
 
@@ -78,6 +84,16 @@ export class EntitlementsBuilder {
       name: emailMessageReceiveUserEntitledEntitlement,
       description: 'Test Email Message Receive User Entitlement',
       value: 1,
+    },
+    {
+      name: emailMaskUserEntitledEntitlement,
+      description: 'Test Email Mask User Entitlement',
+      value: 1,
+    },
+    {
+      name: emailMaskMaxPerUserEntitlement,
+      description: 'Test Max Email Masks Entitlement',
+      value: 100, // Equivalent to paid MySudo subscription
     },
   ]
 

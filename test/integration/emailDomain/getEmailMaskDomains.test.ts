@@ -20,14 +20,21 @@ describe('SudoEmailClient getEmailMaskDomains Test Suite', () => {
   let entitlementsClient: SudoEntitlementsClient
   let profilesClient: SudoProfilesClient
   let sudo: Sudo
+  let runTests = true
 
   beforeEach(async () => {
     const result = await setupEmailClient(log)
     instanceUnderTest = result.emailClient
-    userClient = result.userClient
-    entitlementsClient = result.entitlementsClient
-    profilesClient = result.profilesClient
-    sudo = result.sudo
+    const config = await instanceUnderTest.getConfigurationData()
+    runTests = config.emailMasksEnabled
+    if (runTests) {
+      userClient = result.userClient
+      entitlementsClient = result.entitlementsClient
+      profilesClient = result.profilesClient
+      sudo = result.sudo
+    } else {
+      log.debug('Email masks are not enabled, skipping tests')
+    }
   })
 
   afterEach(async () => {
@@ -38,6 +45,10 @@ describe('SudoEmailClient getEmailMaskDomains Test Suite', () => {
   })
 
   it('returns email mask domains', async () => {
+    if (!runTests) {
+      log.debug('Email Masks not enabled. Skipping.')
+      return
+    }
     const domains = await instanceUnderTest.getEmailMaskDomains()
 
     expect(domains).toBeDefined()

@@ -164,6 +164,9 @@ import {
   EmailMaskConnection,
   ListEmailMasksForOwnerQuery,
   ListEmailMasksForOwnerDocument,
+  SendMaskedEmailMessageInput,
+  SendMaskedEmailMessageMutation,
+  SendMaskedEmailMessageDocument,
 } from '../../../gen/graphqlTypes'
 import { ErrorTransformer } from './transformer/errorTransformer'
 
@@ -444,6 +447,17 @@ export class ApiClient {
       calleeName: this.sendEncryptedEmailMessage.name,
     })
     return data.sendEncryptedEmailMessage
+  }
+
+  public async sendMaskedEmailMessage(
+    input: SendMaskedEmailMessageInput,
+  ): Promise<SendEmailMessageResult> {
+    const data = await this.performMutation<SendMaskedEmailMessageMutation>({
+      mutation: SendMaskedEmailMessageDocument,
+      variables: { input },
+      calleeName: this.sendMaskedEmailMessage.name,
+    })
+    return data.sendMaskedEmailMessage
   }
 
   public async deleteEmailMessages(

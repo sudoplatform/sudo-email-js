@@ -20,12 +20,14 @@ import {
   teardown,
 } from '../util/emailClientLifecycle'
 import { provisionEmailMask } from '../util/provisionEmailMask'
+import { provisionEmailAddress } from '../util/provisionEmailAddress'
 
 describe('SudoEmailClient EnableEmailMask Test Suite', () => {
   jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
 
   let emailMasks: EmailMask[] = []
+  let provisionedEmailAddress: EmailAddress
 
   let instanceUnderTest: SudoEmailClient
   let userClient: SudoUserClient
@@ -46,6 +48,10 @@ describe('SudoEmailClient EnableEmailMask Test Suite', () => {
       profilesClient = result.profilesClient
       sudo = result.sudo
       ownershipProofToken = result.ownershipProofToken
+      provisionedEmailAddress = await provisionEmailAddress(
+        ownershipProofToken,
+        instanceUnderTest,
+      )
     } else {
       log.debug('Email masks are not enabled, skipping tests')
     }
@@ -67,59 +73,70 @@ describe('SudoEmailClient EnableEmailMask Test Suite', () => {
     emailMasks = []
 
     await teardown(
-      { emailAddresses: [], sudos: [sudo] },
+      { emailAddresses: [provisionedEmailAddress], sudos: [sudo] },
       { emailClient: instanceUnderTest, profilesClient, userClient },
     )
   })
 
-  const runTestsIfEnabled = runTests ? describe : describe.skip
-  runTestsIfEnabled('emailMasksEnabled', () => {
-    it('enables a disabled email mask', async () => {
-      const emailMask = await provisionEmailMask(
-        ownershipProofToken,
-        instanceUnderTest,
-      )
-      emailMasks.push(emailMask)
+  it('enables a disabled email mask', async () => {
+    if (!runTests) {
+      log.debug('Email Masks not enabled. Skipping.')
+      return
+    }
+    const emailMask = await provisionEmailMask(
+      ownershipProofToken,
+      instanceUnderTest,
+      {
+        realAddress: provisionedEmailAddress.emailAddress,
+      },
+    )
+    emailMasks.push(emailMask)
 
-      // First disable it
-      const disabledMask = await instanceUnderTest.disableEmailMask({
-        emailMaskId: emailMask.id,
-      })
-      expect(disabledMask.status).toStrictEqual(EmailMaskStatus.DISABLED)
+    // First disable it
+    const disabledMask = await instanceUnderTest.disableEmailMask({
+      emailMaskId: emailMask.id,
+    })
+    expect(disabledMask.status).toStrictEqual(EmailMaskStatus.DISABLED)
 
-      // Then enable it
-      const enabledMask = await instanceUnderTest.enableEmailMask({
-        emailMaskId: emailMask.id,
-      })
-
-      expect(enabledMask.id).toStrictEqual(emailMask.id)
-      expect(enabledMask.status).toStrictEqual(EmailMaskStatus.ENABLED)
-      expect(enabledMask.maskAddress).toStrictEqual(emailMask.maskAddress)
-      expect(enabledMask.realAddress).toStrictEqual(emailMask.realAddress)
-      expect(enabledMask.version).toBeGreaterThan(disabledMask.version)
-
-      const sub = await userClient.getSubject()
-      expect(enabledMask.owner).toStrictEqual(sub)
-      expect(enabledMask.owners[0].id).toStrictEqual(sudo.id)
-      expect(enabledMask.owners[0].issuer).toStrictEqual(sudoIssuer)
+    // Then enable it
+    const enabledMask = await instanceUnderTest.enableEmailMask({
+      emailMaskId: emailMask.id,
     })
 
-    it('enabling an already enabled mask succeeds', async () => {
-      const emailMask = await provisionEmailMask(
-        ownershipProofToken,
-        instanceUnderTest,
-      )
-      emailMasks.push(emailMask)
+    expect(enabledMask.id).toStrictEqual(emailMask.id)
+    expect(enabledMask.status).toStrictEqual(EmailMaskStatus.ENABLED)
+    expect(enabledMask.maskAddress).toStrictEqual(emailMask.maskAddress)
+    expect(enabledMask.realAddress).toStrictEqual(emailMask.realAddress)
+    expect(enabledMask.version).toBeGreaterThan(disabledMask.version)
 
-      expect(emailMask.status).toStrictEqual(EmailMaskStatus.ENABLED)
+    const sub = await userClient.getSubject()
+    expect(enabledMask.owner).toStrictEqual(sub)
+    expect(enabledMask.owners[0].id).toStrictEqual(sudo.id)
+    expect(enabledMask.owners[0].issuer).toStrictEqual(sudoIssuer)
+  })
 
-      // Enable an already enabled mask
-      const enabledMask = await instanceUnderTest.enableEmailMask({
-        emailMaskId: emailMask.id,
-      })
+  it('enabling an already enabled mask succeeds', async () => {
+    if (!runTests) {
+      log.debug('Email Masks not enabled. Skipping.')
+      return
+    }
+    const emailMask = await provisionEmailMask(
+      ownershipProofToken,
+      instanceUnderTest,
+      {
+        realAddress: provisionedEmailAddress.emailAddress,
+      },
+    )
+    emailMasks.push(emailMask)
 
-      expect(enabledMask.id).toStrictEqual(emailMask.id)
-      expect(enabledMask.status).toStrictEqual(EmailMaskStatus.ENABLED)
+    expect(emailMask.status).toStrictEqual(EmailMaskStatus.ENABLED)
+
+    // Enable an already enabled mask
+    const enabledMask = await instanceUnderTest.enableEmailMask({
+      emailMaskId: emailMask.id,
     })
+
+    expect(enabledMask.id).toStrictEqual(emailMask.id)
+    expect(enabledMask.status).toStrictEqual(EmailMaskStatus.ENABLED)
   })
 })

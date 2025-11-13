@@ -87,7 +87,6 @@ export class SudoEmailClientTestBase {
     poolId: 'poolId',
     clientId: 'clientId',
     identityPoolId: 'identityPoolId',
-    apiKey: 'apiKey',
     apiUrl: 'apiUrl',
     transientBucket: 'transientBucket',
     registrationMethods: [],

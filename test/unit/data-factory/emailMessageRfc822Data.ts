@@ -24,7 +24,6 @@ export class EmailMessageRfc822DataFactory {
       clientId: 'clientId',
       identityPoolId: 'identityPoolId',
       apiUrl: 'apiUrl',
-      apiKey: 'apiKey',
       transientBucket: 'transientBucket',
       registrationMethods: [],
       bucket: 'bucket',

@@ -25,13 +25,19 @@ import {
   UpdateEmailMaskInput as UpdateEmailMaskRequest,
   ListEmailMasksForOwnerInput as ListEmailMasksForOwnerRequest,
   SealedAttribute,
+  KeyFormat as GraphQLKeyFormat,
 } from '../../../gen/graphqlTypes'
 import { EmailMaskEntity } from '../../domain/entities/mask/emailMaskEntity'
 import { ApiClient } from '../common/apiClient'
-import { DeviceKeyWorker, KeyType } from '../common/deviceKeyWorker'
+import {
+  DeviceKeyWorker,
+  DeviceKeyWorkerKeyFormat,
+  KeyType,
+} from '../common/deviceKeyWorker'
 import { EmailMaskTransformer } from './transformer/emailMaskTransformer'
 import { secondsSinceEpoch } from '../../util/date'
 import { EmailMaskFilterTransformer } from './transformer/emailMaskFilterTransformer'
+import { EmailAccountServiceConfig } from '../account/defaultEmailAccountService'
 
 export class DefaultEmailMaskService implements EmailMaskService {
   private readonly log: Logger
@@ -40,6 +46,7 @@ export class DefaultEmailMaskService implements EmailMaskService {
   constructor(
     private readonly appSync: ApiClient,
     private readonly deviceKeyWorker: DeviceKeyWorker,
+    private readonly config?: EmailAccountServiceConfig,
   ) {
     this.log = new DefaultLogger(this.constructor.name)
     this.transformer = new EmailMaskTransformer(this.deviceKeyWorker, this.log)
@@ -58,12 +65,32 @@ export class DefaultEmailMaskService implements EmailMaskService {
       ownershipProofToken,
       metadata,
     })
+    // Retrieve Public Key to create email account with.
+    const key = this.config?.enforceSingletonPublicKey
+      ? await this.deviceKeyWorker.getSingletonKeyPair()
+      : await this.deviceKeyWorker.generateKeyPair()
     const transformer = new EmailMaskTransformer(this.deviceKeyWorker, this.log)
+
+    let keyFormat: GraphQLKeyFormat
+    switch (key.format) {
+      case DeviceKeyWorkerKeyFormat.RsaPublicKey:
+        keyFormat = GraphQLKeyFormat.RsaPublicKey
+        break
+      case DeviceKeyWorkerKeyFormat.Spki:
+        keyFormat = GraphQLKeyFormat.Spki
+        break
+    }
 
     const provisionEmailMaskInput: ProvisionEmailMaskRequest = {
       maskAddress: maskAddress,
       realAddress: realAddress,
       ownershipProofTokens: [ownershipProofToken],
+      key: {
+        keyId: key.id,
+        algorithm: key.algorithm,
+        keyFormat,
+        publicKey: key.data,
+      },
     }
 
     if (metadata) {

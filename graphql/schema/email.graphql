@@ -303,12 +303,20 @@ input GetEmailAddressBlocklistInput {
   owner: ID!
 }
 
+input ProvisionEmailMaskPublicKeyInput {
+  keyId: String!
+  algorithm: String!
+  keyFormat: KeyFormat!
+  publicKey: String!
+}
+
 input ProvisionEmailMaskInput {
   maskAddress: String!
   realAddress: String!
   metadata: SealedAttributeInput
   expiresAtEpochSec: Int
   ownershipProofTokens: [String!]!
+  key: ProvisionEmailMaskPublicKeyInput!
 }
 
 input DeprovisionEmailMaskInput {
@@ -355,6 +363,13 @@ input ListEmailMasksForOwnerInput {
   filter: EmailMaskFilterInput
   limit: Int
   nextToken: String
+}
+
+input SendMaskedEmailMessageInput {
+  emailMaskId: ID!
+  message: S3EmailObjectInput!
+  encryptionStatus: EmailMessageEncryptionStatus!
+  rfc822Header: Rfc822HeaderInput!
 }
 
 type EmailConfigurationData {
@@ -428,6 +443,7 @@ type SealedEmailMessage {
   size: Float!
   encryptionStatus: EmailMessageEncryptionStatus
   deletedAtEpochMs: Float
+  emailMaskId: ID
 }
 
 type UpdatedEmailMessageSuccess {
@@ -528,6 +544,7 @@ type EmailMask {
   id: ID!
   owner: ID!
   owners: [Owner!]!
+  keyRingId: ID!
   identityId: ID!
   maskAddress: String!
   realAddress: String!
@@ -691,6 +708,10 @@ type Mutation {
   enableEmailMask(input: EnableEmailMaskInput!): EmailMask!
 
   disableEmailMask(input: DisableEmailMaskInput!): EmailMask!
+
+  sendMaskedEmailMessage(
+    input: SendMaskedEmailMessageInput!
+  ): SendEmailMessageResult!
 }
 
 type Subscription {

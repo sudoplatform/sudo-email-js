@@ -45,6 +45,11 @@ import {
 import { secondsSinceEpoch } from '../../../../../src/private/util/date'
 
 describe('DefaultEmailMaskService Test Suite', () => {
+  const generatedPKDeviceKey = EntityDataFactory.deviceKey
+  const userPKDeviceKey = {
+    ...EntityDataFactory.deviceKey,
+    data: 'dummyUserPublicKey',
+  }
   const mockAppSync = mock<ApiClient>()
   const mockDeviceKeyWorker = mock<DeviceKeyWorker>()
   let instanceUnderTest: DefaultEmailMaskService
@@ -73,6 +78,12 @@ describe('DefaultEmailMaskService Test Suite', () => {
     }
 
     beforeEach(() => {
+      when(mockDeviceKeyWorker.generateKeyPair()).thenResolve(
+        generatedPKDeviceKey,
+      )
+      when(mockDeviceKeyWorker.getSingletonKeyPair()).thenResolve(
+        userPKDeviceKey,
+      )
       when(mockAppSync.provisionEmailMask(anything())).thenResolve(
         GraphQLDataFactory.emailMask,
       )
@@ -87,6 +98,7 @@ describe('DefaultEmailMaskService Test Suite', () => {
         maskAddress: input.maskAddress,
         realAddress: input.realAddress,
         ownershipProofTokens: [input.ownershipProofToken],
+        key: GraphQLDataFactory.provisionKeyInput,
       })
     })
 
@@ -115,6 +127,7 @@ describe('DefaultEmailMaskService Test Suite', () => {
           plainTextType: 'json-string',
           algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding,
         },
+        key: GraphQLDataFactory.provisionKeyInput,
       })
     })
 
@@ -134,6 +147,7 @@ describe('DefaultEmailMaskService Test Suite', () => {
         realAddress: inputWithExpiresAt.realAddress,
         ownershipProofTokens: [inputWithExpiresAt.ownershipProofToken],
         expiresAtEpochSec: secondsSinceEpoch(expiresAt),
+        key: GraphQLDataFactory.provisionKeyInput,
       })
     })
 
@@ -167,6 +181,7 @@ describe('DefaultEmailMaskService Test Suite', () => {
           algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding,
         },
         expiresAtEpochSec: secondsSinceEpoch(expiresAt),
+        key: GraphQLDataFactory.provisionKeyInput,
       })
     })
 
@@ -192,6 +207,29 @@ describe('DefaultEmailMaskService Test Suite', () => {
       await instanceUnderTest.provisionEmailMask(inputWithMetadata)
 
       verify(mockDeviceKeyWorker.generateCurrentSymmetricKey()).once()
+    })
+
+    it('generates Public Key when on provision', async () => {
+      const result = await instanceUnderTest.provisionEmailMask(input)
+
+      expect(result).toStrictEqual(EntityDataFactory.emailMask)
+
+      verify(mockDeviceKeyWorker.generateKeyPair()).once()
+      verify(mockDeviceKeyWorker.getSingletonKeyPair()).never()
+    })
+
+    it('gets singleton Public Key from keychain when enforced', async () => {
+      const instanceUnderTest = new DefaultEmailMaskService(
+        instance(mockAppSync),
+        instance(mockDeviceKeyWorker),
+        { enforceSingletonPublicKey: true },
+      )
+      const result = await instanceUnderTest.provisionEmailMask(input)
+
+      expect(result).toStrictEqual(EntityDataFactory.emailMask)
+
+      verify(mockDeviceKeyWorker.generateKeyPair()).never()
+      verify(mockDeviceKeyWorker.getSingletonKeyPair()).once()
     })
   })
 

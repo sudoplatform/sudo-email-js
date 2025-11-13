@@ -25,7 +25,6 @@ export class DraftEmailMessageDataFactory {
       clientId: 'clientId',
       identityPoolId: 'identityPoolId',
       apiUrl: 'apiUrl',
-      apiKey: 'apiKey',
       transientBucket: 'transientBucket',
       registrationMethods: [],
       bucket: 'bucket',

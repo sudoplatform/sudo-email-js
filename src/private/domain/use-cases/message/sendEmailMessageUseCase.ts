@@ -35,13 +35,14 @@ import { EmailMessageUtil } from '../../../util/emailMessageUtil'
  *  If this property is set, `replyingMessageId` must not be set.
  */
 interface SendEmailMessageUseCaseInput {
-  senderEmailAddressId: string
   emailMessageHeader: InternetMessageFormatHeader
   body: string
   attachments: EmailAttachment[]
   inlineAttachments: EmailAttachment[]
   replyingMessageId?: string
   forwardingMessageId?: string
+  senderEmailAddressId?: string
+  senderEmailMaskId?: string
 }
 
 /**
@@ -73,6 +74,7 @@ export class SendEmailMessageUseCase {
 
   async execute({
     senderEmailAddressId,
+    senderEmailMaskId,
     emailMessageHeader,
     body,
     attachments,
@@ -82,6 +84,7 @@ export class SendEmailMessageUseCase {
   }: SendEmailMessageUseCaseInput): Promise<SendEmailMessageUseCaseOutput> {
     this.log.debug(this.constructor.name, {
       senderEmailAddressId,
+      senderEmailMaskId,
       emailMessageHeader,
       body,
       attachments,
@@ -89,12 +92,21 @@ export class SendEmailMessageUseCase {
       replyingMessageId,
       forwardingMessageId,
     })
+    const senderId = senderEmailAddressId ?? senderEmailMaskId
+    const inputBase = senderEmailAddressId
+      ? {
+          senderEmailAddressId: senderId,
+        }
+      : {
+          senderEmailMaskId: senderId,
+        }
     const {
       sendEncryptedEmailEnabled,
       emailMessageMaxOutboundMessageSize,
       emailMessageRecipientsLimit,
       encryptedEmailMessageRecipientsLimit,
       prohibitedFileExtensions,
+      emailMasksEnabled,
     } = await this.configurationDataService.getConfigurationData()
 
     const emailMessageUtil = new EmailMessageUtil({
@@ -141,14 +153,17 @@ export class SendEmailMessageUseCase {
       }
       // Process non-encrypted email message
       return await this.messageService.sendMessage({
+        ...inputBase,
         message,
-        senderEmailAddressId,
         emailMessageMaxOutboundMessageSize,
       })
     }
 
     const domains = await this.domainService.getConfiguredEmailDomains({})
-
+    if (emailMasksEnabled) {
+      const maskDomains = await this.domainService.getEmailMaskDomains({})
+      domains.push(...maskDomains)
+    }
     // Check if any recipient's domain is not one of ours
     const allRecipientsInternal =
       allRecipients.length > 0 &&
@@ -170,8 +185,8 @@ export class SendEmailMessageUseCase {
         )
       // Process encrypted email message
       return await this.messageService.sendEncryptedMessage({
+        ...inputBase,
         message,
-        senderEmailAddressId,
         emailAddressesPublicInfo,
         emailMessageMaxOutboundMessageSize,
       })
@@ -184,8 +199,8 @@ export class SendEmailMessageUseCase {
       }
       // Process non-encrypted email message
       return await this.messageService.sendMessage({
+        ...inputBase,
         message,
-        senderEmailAddressId,
         emailMessageMaxOutboundMessageSize,
       })
     }

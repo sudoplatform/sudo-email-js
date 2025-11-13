@@ -26,6 +26,7 @@ import {
   KeyFormat,
   Owner,
   ProvisionEmailAddressPublicKeyInput,
+  ProvisionEmailMaskPublicKeyInput,
   PublicKey,
   ScheduledDraftMessage,
   ScheduledDraftMessageConnection,
@@ -196,6 +197,7 @@ export class GraphQLDataFactory {
     },
     sortDateEpochMs: 1.0,
     size: 12345,
+    emailMaskId: undefined,
   }
 
   static readonly emailMessageConnection: EmailMessageConnection = {
@@ -211,7 +213,7 @@ export class GraphQLDataFactory {
     publicKey: 'testPublicKey',
   }
 
-  static readonly provisionKeyInput: ProvisionEmailAddressPublicKeyInput = {
+  static readonly provisionKeyInput: ProvisionEmailMaskPublicKeyInput = {
     keyId: 'dummyKeyId',
     keyFormat: KeyFormat.RsaPublicKey,
     algorithm: 'dummyAlgorithm',
@@ -264,6 +266,7 @@ export class GraphQLDataFactory {
   static readonly emailMask: EmailMask = {
     ...GraphQLDataFactory.commonProps,
     owners: [GraphQLDataFactory.owner],
+    keyRingId: 'testKeyRingId',
     identityId: 'testIdentityId',
     maskAddress: 'test-mask@anonyome.com',
     realAddress: 'test-real@anonyome.com',

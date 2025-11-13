@@ -130,6 +130,31 @@ export interface SendEmailMessageInput {
 }
 
 /**
+ * Input object containing information required to send a masked email message.
+ *
+ * @property {string} senderEmailMaskId Identifier of the email mask being used to
+ *  send the email. The identifier must match the identifier of the address of the `from` field
+ *  in the RFC 6854 data.
+ * @property {InternetMessageFormatHeader} emailMessageHeader The email message headers.
+ * @property {string} body The text body of the email message.
+ * @property {EmailAttachment[]} attachments List of attached files to be sent with the message.
+ *  Default is an empty list.
+ * @property {EmailAttachment[]} inlineAttachments List of inline attachments to be sent with the message.
+ *  Default is an empty list.
+ * @property {string} replyingMessageId Optional identifier of the message being replied to.
+ * @property {string} forwardingMessageId Optional identifier of the message being forwarded.
+ */
+export interface SendMaskedEmailMessageInput {
+  senderEmailMaskId: string
+  emailMessageHeader: InternetMessageFormatHeader
+  body: string
+  attachments: EmailAttachment[]
+  inlineAttachments: EmailAttachment[]
+  replyingMessageId?: string
+  forwardingMessageId?: string
+}
+
+/**
  * Input for `SudoEmailClient.updateEmailMessages`.
  *
  * @interface UpdateEmailMessagesInput

@@ -179,6 +179,7 @@ export class EntityDataFactory {
     sortDate: new Date(1.0),
     size: 12345,
     encryptionStatus: EncryptionStatus.UNENCRYPTED,
+    emailMaskId: undefined,
   }
 
   static readonly emailAttachment: EmailAttachmentEntity = {

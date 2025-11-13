@@ -31,8 +31,8 @@ describe('SudoEmailClient UpdateEmailMask Test Suite', () => {
   jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
 
-  let emailAddresses: EmailAddress[] = []
   let emailMasks: EmailMask[] = []
+  let provisionedEmailAddress: EmailAddress
 
   let instanceUnderTest: SudoEmailClient
   let userClient: SudoUserClient
@@ -53,6 +53,10 @@ describe('SudoEmailClient UpdateEmailMask Test Suite', () => {
       profilesClient = result.profilesClient
       sudo = result.sudo
       ownershipProofToken = result.ownershipProofToken
+      provisionedEmailAddress = await provisionEmailAddress(
+        ownershipProofToken,
+        instanceUnderTest,
+      )
     } else {
       log.debug('Email masks are not enabled, skipping tests')
     }
@@ -74,151 +78,181 @@ describe('SudoEmailClient UpdateEmailMask Test Suite', () => {
     emailMasks = []
 
     await teardown(
-      { emailAddresses, sudos: [sudo] },
+      { emailAddresses: [provisionedEmailAddress], sudos: [sudo] },
       { emailClient: instanceUnderTest, profilesClient, userClient },
     )
-    emailAddresses = []
   })
 
-  const runTestsIfEnabled = runTests ? describe : describe.skip
-  runTestsIfEnabled('emailMasksEnabled', () => {
-    it('updates metadata successfully', async () => {
-      const originalMetadata = { purpose: 'original', version: 1 }
-      const emailMask = await provisionEmailMask(
-        ownershipProofToken,
-        instanceUnderTest,
-        {
-          metadata: originalMetadata,
-        },
-      )
-      emailMasks.push(emailMask)
+  it('updates metadata successfully', async () => {
+    if (!runTests) {
+      log.debug('Email Masks not enabled. Skipping.')
+      return
+    }
+    const originalMetadata = { purpose: 'original', version: 1 }
+    const emailMask = await provisionEmailMask(
+      ownershipProofToken,
+      instanceUnderTest,
+      {
+        metadata: originalMetadata,
+        realAddress: provisionedEmailAddress.emailAddress,
+      },
+    )
+    emailMasks.push(emailMask)
 
-      const updatedMetadata = { purpose: 'updated', version: 2, new: 'field' }
-      const updatedMask = await instanceUnderTest.updateEmailMask({
-        emailMaskId: emailMask.id,
-        metadata: updatedMetadata,
-      })
-
-      expect(updatedMask.id).toStrictEqual(emailMask.id)
-      expect(updatedMask.metadata).toEqual(updatedMetadata)
-      expect(updatedMask.version).toBeGreaterThan(emailMask.version)
-      expect(updatedMask.status).toStrictEqual(EmailMaskStatus.ENABLED)
-
-      const sub = await userClient.getSubject()
-      expect(updatedMask.owner).toStrictEqual(sub)
-      expect(updatedMask.owners[0].id).toStrictEqual(sudo.id)
-      expect(updatedMask.owners[0].issuer).toStrictEqual(sudoIssuer)
+    const updatedMetadata = { purpose: 'updated', version: 2, new: 'field' }
+    const updatedMask = await instanceUnderTest.updateEmailMask({
+      emailMaskId: emailMask.id,
+      metadata: updatedMetadata,
     })
 
-    it('updates expiration date successfully', async () => {
-      const originalExpiresAt = DateTime.now().plus({ days: 1 }).toJSDate()
-      const emailMask = await provisionEmailMask(
-        ownershipProofToken,
-        instanceUnderTest,
-        {
-          expiresAt: originalExpiresAt,
-        },
-      )
-      emailMasks.push(emailMask)
+    expect(updatedMask.id).toStrictEqual(emailMask.id)
+    expect(updatedMask.metadata).toEqual(updatedMetadata)
+    expect(updatedMask.version).toBeGreaterThan(emailMask.version)
+    expect(updatedMask.status).toStrictEqual(EmailMaskStatus.ENABLED)
 
-      const newExpiresAt = DateTime.now().plus({ days: 7 }).toJSDate()
-      const updatedMask = await instanceUnderTest.updateEmailMask({
-        emailMaskId: emailMask.id,
-        expiresAt: newExpiresAt,
-      })
+    const sub = await userClient.getSubject()
+    expect(updatedMask.owner).toStrictEqual(sub)
+    expect(updatedMask.owners[0].id).toStrictEqual(sudo.id)
+    expect(updatedMask.owners[0].issuer).toStrictEqual(sudoIssuer)
+  })
 
-      expect(updatedMask.id).toStrictEqual(emailMask.id)
-      expect(updatedMask.expiresAt).toBeDefined()
-      expect(secondsSinceEpoch(updatedMask.expiresAt!)).toEqual(
-        secondsSinceEpoch(newExpiresAt),
-      )
-      expect(updatedMask.version).toBeGreaterThan(emailMask.version)
+  it('updates expiration date successfully', async () => {
+    if (!runTests) {
+      log.debug('Email Masks not enabled. Skipping.')
+      return
+    }
+    const originalExpiresAt = DateTime.now().plus({ days: 1 }).toJSDate()
+    const emailMask = await provisionEmailMask(
+      ownershipProofToken,
+      instanceUnderTest,
+      {
+        expiresAt: originalExpiresAt,
+        realAddress: provisionedEmailAddress.emailAddress,
+      },
+    )
+    emailMasks.push(emailMask)
+
+    const newExpiresAt = DateTime.now().plus({ days: 7 }).toJSDate()
+    const updatedMask = await instanceUnderTest.updateEmailMask({
+      emailMaskId: emailMask.id,
+      expiresAt: newExpiresAt,
     })
 
-    it('updates both metadata and expiration date', async () => {
-      const emailMask = await provisionEmailMask(
-        ownershipProofToken,
-        instanceUnderTest,
-      )
-      emailMasks.push(emailMask)
+    expect(updatedMask.id).toStrictEqual(emailMask.id)
+    expect(updatedMask.expiresAt).toBeDefined()
+    expect(secondsSinceEpoch(updatedMask.expiresAt!)).toEqual(
+      secondsSinceEpoch(newExpiresAt),
+    )
+    expect(updatedMask.version).toBeGreaterThan(emailMask.version)
+  })
 
-      const newMetadata = { updated: 'both fields' }
-      const newExpiresAt = DateTime.now().plus({ days: 14 }).toJSDate()
-      const updatedMask = await instanceUnderTest.updateEmailMask({
-        emailMaskId: emailMask.id,
-        metadata: newMetadata,
-        expiresAt: newExpiresAt,
-      })
+  it('updates both metadata and expiration date', async () => {
+    if (!runTests) {
+      log.debug('Email Masks not enabled. Skipping.')
+      return
+    }
+    const emailMask = await provisionEmailMask(
+      ownershipProofToken,
+      instanceUnderTest,
+      {
+        realAddress: provisionedEmailAddress.emailAddress,
+      },
+    )
+    emailMasks.push(emailMask)
 
-      expect(updatedMask.id).toStrictEqual(emailMask.id)
-      expect(updatedMask.metadata).toEqual(newMetadata)
-      expect(secondsSinceEpoch(updatedMask.expiresAt!)).toEqual(
-        secondsSinceEpoch(newExpiresAt),
-      )
-      expect(updatedMask.version).toBeGreaterThan(emailMask.version)
+    const newMetadata = { updated: 'both fields' }
+    const newExpiresAt = DateTime.now().plus({ days: 14 }).toJSDate()
+    const updatedMask = await instanceUnderTest.updateEmailMask({
+      emailMaskId: emailMask.id,
+      metadata: newMetadata,
+      expiresAt: newExpiresAt,
     })
 
-    it('removes metadata by setting to null', async () => {
-      const metadata = { toBeRemoved: 'yes' }
-      const emailMask = await provisionEmailMask(
-        ownershipProofToken,
-        instanceUnderTest,
-        {
-          metadata,
-        },
-      )
-      emailMasks.push(emailMask)
+    expect(updatedMask.id).toStrictEqual(emailMask.id)
+    expect(updatedMask.metadata).toEqual(newMetadata)
+    expect(secondsSinceEpoch(updatedMask.expiresAt!)).toEqual(
+      secondsSinceEpoch(newExpiresAt),
+    )
+    expect(updatedMask.version).toBeGreaterThan(emailMask.version)
+  })
 
-      const updatedMask = await instanceUnderTest.updateEmailMask({
-        emailMaskId: emailMask.id,
-        metadata: null,
-      })
+  it('removes metadata by setting to null', async () => {
+    if (!runTests) {
+      log.debug('Email Masks not enabled. Skipping.')
+      return
+    }
+    const metadata = { toBeRemoved: 'yes' }
+    const emailMask = await provisionEmailMask(
+      ownershipProofToken,
+      instanceUnderTest,
+      {
+        metadata,
+        realAddress: provisionedEmailAddress.emailAddress,
+      },
+    )
+    emailMasks.push(emailMask)
 
-      expect(updatedMask.id).toStrictEqual(emailMask.id)
-      expect(updatedMask.metadata).toBeUndefined()
-      expect(updatedMask.version).toBeGreaterThan(emailMask.version)
+    const updatedMask = await instanceUnderTest.updateEmailMask({
+      emailMaskId: emailMask.id,
+      metadata: null,
     })
 
-    it('removes expiration date by setting to null', async () => {
-      const expiresAt = DateTime.now().plus({ days: 1 }).toJSDate()
-      const emailMask = await provisionEmailMask(
-        ownershipProofToken,
-        instanceUnderTest,
-        {
-          expiresAt,
-        },
-      )
-      emailMasks.push(emailMask)
+    expect(updatedMask.id).toStrictEqual(emailMask.id)
+    expect(updatedMask.metadata).toBeUndefined()
+    expect(updatedMask.version).toBeGreaterThan(emailMask.version)
+  })
 
-      const updatedMask = await instanceUnderTest.updateEmailMask({
-        emailMaskId: emailMask.id,
-        expiresAt: null,
-      })
+  it('removes expiration date by setting to null', async () => {
+    if (!runTests) {
+      log.debug('Email Masks not enabled. Skipping.')
+      return
+    }
+    const expiresAt = DateTime.now().plus({ days: 1 }).toJSDate()
+    const emailMask = await provisionEmailMask(
+      ownershipProofToken,
+      instanceUnderTest,
+      {
+        expiresAt,
+        realAddress: provisionedEmailAddress.emailAddress,
+      },
+    )
+    emailMasks.push(emailMask)
 
-      expect(updatedMask.id).toStrictEqual(emailMask.id)
-      expect(updatedMask.expiresAt).toBeUndefined()
-      expect(updatedMask.version).toBeGreaterThan(emailMask.version)
+    const updatedMask = await instanceUnderTest.updateEmailMask({
+      emailMaskId: emailMask.id,
+      expiresAt: null,
     })
 
-    it('handles multi-byte UTF-8 characters in metadata', async () => {
-      const emailMask = await provisionEmailMask(
-        ownershipProofToken,
-        instanceUnderTest,
-      )
-      emailMasks.push(emailMask)
+    expect(updatedMask.id).toStrictEqual(emailMask.id)
+    expect(updatedMask.expiresAt).toBeUndefined()
+    expect(updatedMask.version).toBeGreaterThan(emailMask.version)
+  })
 
-      const unicodeMetadata = {
-        emoji: '🎉🔥',
-        japanese: '日本語',
-        description: 'Testing UTF-8 support 😎',
-      }
-      const updatedMask = await instanceUnderTest.updateEmailMask({
-        emailMaskId: emailMask.id,
-        metadata: unicodeMetadata,
-      })
+  it('handles multi-byte UTF-8 characters in metadata', async () => {
+    if (!runTests) {
+      log.debug('Email Masks not enabled. Skipping.')
+      return
+    }
+    const emailMask = await provisionEmailMask(
+      ownershipProofToken,
+      instanceUnderTest,
+      {
+        realAddress: provisionedEmailAddress.emailAddress,
+      },
+    )
+    emailMasks.push(emailMask)
 
-      expect(updatedMask.id).toStrictEqual(emailMask.id)
-      expect(updatedMask.metadata).toEqual(unicodeMetadata)
+    const unicodeMetadata = {
+      emoji: '🎉🔥',
+      japanese: '日本語',
+      description: 'Testing UTF-8 support 😎',
+    }
+    const updatedMask = await instanceUnderTest.updateEmailMask({
+      emailMaskId: emailMask.id,
+      metadata: unicodeMetadata,
     })
+
+    expect(updatedMask.id).toStrictEqual(emailMask.id)
+    expect(updatedMask.metadata).toEqual(unicodeMetadata)
   })
 })

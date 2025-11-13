@@ -43,6 +43,7 @@ export class SealedEmailMessageEntityTransformer {
       encryptionStatus: encryptionStatusTransformer.fromGraphQLToAPI(
         data.encryptionStatus ?? EmailMessageEncryptionStatus.Unencrypted,
       ),
+      emailMaskId: data.emailMaskId ?? undefined,
     }
   }
 }

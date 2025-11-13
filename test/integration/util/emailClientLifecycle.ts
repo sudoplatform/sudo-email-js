@@ -16,7 +16,10 @@ import {
   DefaultSudoEntitlementsClient,
   SudoEntitlementsClient,
 } from '@sudoplatform/sudo-entitlements'
-import { DefaultSudoEntitlementsAdminClient } from '@sudoplatform/sudo-entitlements-admin'
+import {
+  DefaultSudoEntitlementsAdminClient,
+  SudoEntitlementsAdminClient,
+} from '@sudoplatform/sudo-entitlements-admin'
 import {
   DefaultSudoProfilesClient,
   FetchOption,
@@ -90,6 +93,7 @@ export interface SetupEmailClientOutput {
   emailClient: SudoEmailClient
   userClient: SudoUserClient
   entitlementsClient: SudoEntitlementsClient
+  entitlementsAdminClient: SudoEntitlementsAdminClient
   profilesClient: SudoProfilesClient
   keyManagers: {
     user: SudoKeyManager
@@ -216,6 +220,7 @@ export const setupEmailClient = async (
       emailClient,
       userClient,
       entitlementsClient,
+      entitlementsAdminClient,
       profilesClient,
       sudo,
       keyManagers: {

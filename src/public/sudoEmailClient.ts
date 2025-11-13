@@ -49,6 +49,7 @@ import {
   ListEmailMessagesForEmailFolderIdInput,
   ListEmailMessagesInput,
   SendEmailMessageInput,
+  SendMaskedEmailMessageInput,
   UpdateEmailMessagesInput,
 } from './inputs/emailMessage'
 import { ScheduledDraftMessage, UpdatedEmailMessageSuccess } from './typings'
@@ -457,6 +458,26 @@ export interface SudoEmailClient {
    */
   sendEmailMessage(
     input: SendEmailMessageInput,
+  ): Promise<SendEmailMessageResult>
+
+  /**
+   * Send a masked email message using RFC 6854 (supersedes RFC 822)(https://tools.ietf.org/html/rfc6854) data.
+   *
+   * Email messages sent to in-network recipients (i.e. email addresses/masks that exist within the Sudo Platform)
+   * will be sent end-to-end encrypted.
+   *
+   * @param {SendMaskedEmailMessageInput} input Parameters used to send a masked email message.
+   * @returns {string} The identifier of the masked email message that is being sent.
+   *
+   * @throws {@link UnauthorizedAddressError}
+   * @throws {@link InvalidEmailContentsError}
+   * @throws NotAuthorizedError
+   * @throws NotRegisteredError
+   * @throws LimitExceededError
+   * @throws InsufficientEntitlementsError
+   */
+  sendMaskedEmailMessage(
+    input: SendMaskedEmailMessageInput,
   ): Promise<SendEmailMessageResult>
 
   /**
