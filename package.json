@@ -77,10 +77,12 @@
     "apollo-link-http": "^1.5.17",
     "node-fetch": "^2.6.9",
     "minimist": "^1.2.8",
+    "glob": "^11.1.0",
     "got": "^14.4.5",
     "debug": "^4.4.0",
     "ua-parser-js": "^2.0.0",
     "json5": "^2.2.3",
+    "js-yaml": "^4.1.1",
     "fast-xml-parser": "^4.5.1",
     "semver": "^7.5.2",
     "@babel/traverse": "^7.26.5",
@@ -89,7 +91,7 @@
     "micromatch": "^4.0.8",
     "cross-spawn": "^7.0.5",
     "tmp": "^0.2.3",
-    "nodemailer": "^7.0.7"
+    "nodemailer": "^7.0.11"
   },
   "devDependencies": {
     "@graphql-codegen/add": "^5.0.3",
@@ -144,7 +146,14 @@
     }
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22 <23"
   },
-  "packageManager": "yarn@4.9.2+sha256.ca4310f8ba997b4643a000ce512d9772e01c1485df35511114b325315960acb7"
+  "packageManager": "yarn@4.12.0+sha512.f45ab632439a67f8bc759bf32ead036a1f413287b9042726b7cc4818b7b49e14e9423ba49b18f9e06ea4941c1ad062385b1d8760a8d5091a1a31e5f6219afca8",
+  "auditSuppressions": {
+    "1111244": {
+      "until": 1768347985,
+      "untilISO": "2026-01-13T23:46:25Z",
+      "reason": "not vulnerable per advisory as only usage is via jsonwebtoken"
+    }
+  }
 }

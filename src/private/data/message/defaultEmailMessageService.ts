@@ -61,6 +61,7 @@ import {
   GetEmailMessageRfc822DataInput,
   GetEmailMessageWithBodyInput,
   ListDraftsMetadataForEmailAddressIdInput,
+  ListDraftsMetadataForEmailAddressIdOutput,
   ListEmailMessagesForEmailAddressIdInput,
   ListEmailMessagesForEmailAddressIdOutput,
   ListEmailMessagesForEmailFolderIdInput,
@@ -338,21 +339,29 @@ export class DefaultEmailMessageService implements EmailMessageService {
 
   async listDraftsMetadataForEmailAddressId({
     emailAddressId,
-  }: ListDraftsMetadataForEmailAddressIdInput): Promise<
-    DraftEmailMessageMetadataEntity[]
-  > {
+    limit = 10,
+    nextToken = undefined,
+  }: ListDraftsMetadataForEmailAddressIdInput): Promise<ListDraftsMetadataForEmailAddressIdOutput> {
     const keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
     const draftPrefix = `${keyPrefix}/draft/`
     const result = await this.s3Client.list({
       bucket: this.emailServiceConfig.bucket,
       region: this.emailServiceConfig.region,
       prefix: draftPrefix,
+      limit,
+      nextToken,
     })
-    return result.map((r) => ({
-      id: r.key.replace(draftPrefix, ''),
+
+    return {
+      items:
+        result.results?.map((r) => ({
+          id: r.key.replace(draftPrefix, ''),
+          emailAddressId,
+          updatedAt: r.lastModified,
+        })) ?? [],
+      nextToken: result.nextToken,
       emailAddressId,
-      updatedAt: r.lastModified,
-    }))
+    }
   }
 
   async scheduleSendDraftMessage({

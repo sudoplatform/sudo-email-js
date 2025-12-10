@@ -21,6 +21,7 @@ import {
   CreateDraftEmailMessageInput,
   DeleteDraftEmailMessagesInput,
   GetDraftEmailMessageInput,
+  ListDraftEmailMessageMetadataForEmailAddressIdInput,
   ListScheduledDraftMessagesForEmailAddressIdInput,
   ScheduleSendDraftMessageInput,
   UpdateDraftEmailMessageInput,
@@ -374,6 +375,7 @@ export interface SudoEmailClient {
   ): Promise<DraftEmailMessage | undefined>
 
   /**
+   * @deprecated The method should not be used. Instead use listDraftEmailMessageMetadataForEmailAddressId.
    * Lists the metadata and content of all draft email messages for the user.
    *
    * @returns {DraftEmailMessage[]} An array of draft email messages or an empty array if no
@@ -402,14 +404,15 @@ export interface SudoEmailClient {
 
   /**
    * Lists the metadata of all draft email messages for the specified email address identifier.
+   * Supports pagination with limit and nextToken parameters.
    *
-   * @param {string} emailAddressId The identifier of the email address associated with the draft email messages.
-   * @returns {DraftEmailMessageMetadata[]} An array of draft email message metadata or an empty array if no
-   *  matching draft email messages can be found.
+   * @param {ListDraftEmailMessageMetadataForEmailAddressIdInput} input Parameters for listing draft email message metadata
+   *   including emailAddressId, optional limit (defaults to 10), and optional nextToken for pagination.
+   * @returns {ListOutput<DraftEmailMessageMetadata>} A list output containing draft email message metadata and pagination token.
    */
   listDraftEmailMessageMetadataForEmailAddressId(
-    emailAddressId: string,
-  ): Promise<DraftEmailMessageMetadata[]>
+    input: ListDraftEmailMessageMetadataForEmailAddressIdInput,
+  ): Promise<ListOutput<DraftEmailMessageMetadata>>
 
   /**
    *

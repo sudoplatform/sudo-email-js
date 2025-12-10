@@ -14,6 +14,7 @@ import {
   when,
 } from 'ts-mockito'
 import { v4 } from 'uuid'
+import { ListOutput } from '@sudoplatform/sudo-common'
 import { DraftEmailMessageMetadata, SudoEmailClient } from '../../../src'
 import { ListDraftEmailMessageMetadataForEmailAddressIdUseCase } from '../../../src/private/domain/use-cases/draft/listDraftEmailMessageMetadataForEmailAddressIdUseCase'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
@@ -55,7 +56,9 @@ describe('SudoEmailClient.listDraftEmailMessageMetadataForEmailAddressId Test Su
   })
 
   it('generates use case', async () => {
-    await instanceUnderTest.listDraftEmailMessageMetadataForEmailAddressId('')
+    await instanceUnderTest.listDraftEmailMessageMetadataForEmailAddressId({
+      emailAddressId: '',
+    })
     expect(
       JestMockListDraftEmailMessageMetadataForEmailAddressIdUseCase,
     ).toHaveBeenCalledTimes(1)
@@ -63,9 +66,9 @@ describe('SudoEmailClient.listDraftEmailMessageMetadataForEmailAddressId Test Su
 
   it('calls use case as expected', async () => {
     const emailAddressId = v4()
-    await instanceUnderTest.listDraftEmailMessageMetadataForEmailAddressId(
+    await instanceUnderTest.listDraftEmailMessageMetadataForEmailAddressId({
       emailAddressId,
-    )
+    })
     verify(
       mockListDraftEmailMessageMetadataForEmailAddressIdUseCase.execute(
         anything(),
@@ -76,6 +79,8 @@ describe('SudoEmailClient.listDraftEmailMessageMetadataForEmailAddressId Test Su
     ).first()
     expect(actualArgs).toEqual<typeof actualArgs>({
       emailAddressId,
+      limit: 10,
+      nextToken: undefined,
     })
   })
 
@@ -87,16 +92,67 @@ describe('SudoEmailClient.listDraftEmailMessageMetadataForEmailAddressId Test Su
     ).thenResolve({
       metadata: [],
     })
-    await expect(
-      instanceUnderTest.listDraftEmailMessageMetadataForEmailAddressId(''),
-    ).resolves.toHaveLength(0)
+    const result =
+      await instanceUnderTest.listDraftEmailMessageMetadataForEmailAddressId({
+        emailAddressId: '',
+      })
+    expect(result.items).toHaveLength(0)
   })
 
   it('returns expected result', async () => {
-    await expect(
-      instanceUnderTest.listDraftEmailMessageMetadataForEmailAddressId(''),
-    ).resolves.toEqual<DraftEmailMessageMetadata[]>([
-      { id: 'id', emailAddressId: 'emailAddressId', updatedAt },
-    ])
+    const result =
+      await instanceUnderTest.listDraftEmailMessageMetadataForEmailAddressId({
+        emailAddressId: '',
+      })
+    expect(result).toEqual<ListOutput<DraftEmailMessageMetadata>>({
+      items: [{ id: 'id', emailAddressId: 'emailAddressId', updatedAt }],
+      nextToken: undefined,
+    })
+  })
+
+  it('passes pagination parameters correctly', async () => {
+    const emailAddressId = v4()
+    const limit = 5
+    const nextToken = 'test-token'
+
+    await instanceUnderTest.listDraftEmailMessageMetadataForEmailAddressId({
+      emailAddressId,
+      limit,
+      nextToken,
+    })
+
+    verify(
+      mockListDraftEmailMessageMetadataForEmailAddressIdUseCase.execute(
+        anything(),
+      ),
+    ).once()
+    const [actualArgs] = capture(
+      mockListDraftEmailMessageMetadataForEmailAddressIdUseCase.execute,
+    ).first()
+    expect(actualArgs).toEqual<typeof actualArgs>({
+      emailAddressId,
+      limit,
+      nextToken,
+    })
+  })
+
+  it('returns nextToken when results are truncated', async () => {
+    when(
+      mockListDraftEmailMessageMetadataForEmailAddressIdUseCase.execute(
+        anything(),
+      ),
+    ).thenResolve({
+      metadata: [{ id: 'id', emailAddressId: 'emailAddressId', updatedAt }],
+      nextToken: 'next-page-token',
+    })
+
+    const result =
+      await instanceUnderTest.listDraftEmailMessageMetadataForEmailAddressId({
+        emailAddressId: '',
+      })
+    expect(result).toEqual<ListOutput<DraftEmailMessageMetadata>>({
+      items: [{ id: 'id', emailAddressId: 'emailAddressId', updatedAt }],
+      nextToken: 'next-page-token',
+    })
   })
 })

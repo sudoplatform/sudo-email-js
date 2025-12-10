@@ -47,7 +47,7 @@ export class ListDraftEmailMessagesForEmailAddressIdUseCase {
         emailAddressId,
       })
     const draftMessages = await Promise.all(
-      metadata.map(async (m) => {
+      metadata.items.map(async (m) => {
         const draft = await this.emailMessageService.getDraft({
           id: m.id,
           emailAddressId,

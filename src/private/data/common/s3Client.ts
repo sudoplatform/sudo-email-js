@@ -63,6 +63,11 @@ export interface S3ClientGetHeadObjectDataOutput {
 }
 
 export interface S3ClientListOutput {
+  nextToken?: string
+  results?: S3ClientListMetadataOutput[]
+}
+
+export interface S3ClientListMetadataOutput {
   key: string
   lastModified: Date
 }
@@ -83,6 +88,8 @@ interface S3ClientListInput {
   bucket: string
   region: string
   prefix: string
+  limit?: number
+  nextToken?: string
 }
 
 export enum S3Error {
@@ -291,34 +298,41 @@ export class S3Client {
     bucket,
     region,
     prefix,
-  }: S3ClientListInput): Promise<S3ClientListOutput[]> {
+    limit = 1000, // AWS S3 max limit - consumer can decide their own default limit
+    nextToken = undefined,
+  }: S3ClientListInput): Promise<S3ClientListOutput> {
     const awsS3 = await this.getAWSS3({ region })
     const result = await awsS3.listObjectsV2({
       Bucket: bucket,
       Prefix: prefix,
+      MaxKeys: limit,
+      ContinuationToken: nextToken,
     })
 
-    return _(result.Contents)
-      .flatMap()
-      .filter((value) => {
-        if (value.Key && value.LastModified && value.Size !== undefined)
-          return true
-        this.log.error('listed S3 item has missing Key or LastModified', {
-          bucket,
-          prefix,
-          value,
+    return {
+      nextToken: result.NextContinuationToken,
+      results: _(result.Contents)
+        .flatMap()
+        .filter((value) => {
+          if (value.Key && value.LastModified && value.Size !== undefined)
+            return true
+          this.log.error('listed S3 item has missing Key or LastModified', {
+            bucket,
+            prefix,
+            value,
+          })
+          return false
         })
-        return false
-      })
-      .map((value) => ({
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        key: value.Key!,
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        lastModified: value.LastModified!,
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        size: value.Size!,
-      }))
-      .value()
+        .map((value) => ({
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          key: value.Key!,
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          lastModified: value.LastModified!,
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          size: value.Size!,
+        }))
+        .value(),
+    }
   }
 
   async delete({ bucket, region, key }: S3ClientDeleteInput): Promise<string> {

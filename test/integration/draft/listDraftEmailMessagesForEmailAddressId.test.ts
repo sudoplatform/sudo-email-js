@@ -44,13 +44,8 @@ describe('SudoEmailClient listDraftEmailMessagesForEmailAddressId Test Suite', (
   })
 
   afterEach(async () => {
-    const draftIds = draftData.map(({ id }) => id)
-
-    await instanceUnderTest.deleteDraftEmailMessages({
-      ids: draftIds,
-      emailAddressId: emailAddress.id,
-    })
     draftData = []
+
     await teardown(
       { emailAddresses: [emailAddress], sudos: [sudo] },
       { emailClient: instanceUnderTest, profilesClient, userClient },

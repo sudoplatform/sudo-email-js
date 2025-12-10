@@ -47,8 +47,9 @@ export class ListDraftEmailMessageMetadataUseCase {
           const metadata =
             await this.emailMessageService.listDraftsMetadataForEmailAddressId({
               emailAddressId: account.id,
+              limit: 1000, // max limit to ensure all messages are returned
             })
-          result.push(...metadata)
+          result.push(...metadata.items)
         }),
       )
     } while (nextToken)

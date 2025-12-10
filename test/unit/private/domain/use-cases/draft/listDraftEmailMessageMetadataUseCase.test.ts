@@ -28,10 +28,14 @@ describe('ListDraftEmailMessageMetadataUseCase Test Suite', () => {
     emailAccounts: [EntityDataFactory.emailAccount],
     nextToken: undefined,
   }
-  const metadata = [
-    { id: v4(), emailAddressId: v4(), size: 1, updatedAt: new Date() },
-    { id: v4(), emailAddressId: v4(), size: 2, updatedAt: new Date() },
-  ]
+  const metadata = {
+    items: [
+      { id: v4(), emailAddressId: v4(), size: 1, updatedAt: new Date() },
+      { id: v4(), emailAddressId: v4(), size: 2, updatedAt: new Date() },
+    ],
+    nextToken: undefined,
+    emailAddressId: v4(),
+  }
 
   beforeEach(() => {
     reset(mockEmailAccountService)
@@ -48,7 +52,6 @@ describe('ListDraftEmailMessageMetadataUseCase Test Suite', () => {
       mockEmailMessageService.listDraftsMetadataForEmailAddressId(anything()),
     ).thenResolve(metadata)
 
-    const emailAddressId = 'testId'
     await instanceUnderTest.execute()
     verify(mockEmailAccountService.list(anything())).once()
     verify(
@@ -57,7 +60,10 @@ describe('ListDraftEmailMessageMetadataUseCase Test Suite', () => {
     const [actualResult] = capture(
       mockEmailMessageService.listDraftsMetadataForEmailAddressId,
     ).first()
-    expect(actualResult).toStrictEqual({ emailAddressId })
+    expect(actualResult).toStrictEqual({
+      emailAddressId: EntityDataFactory.emailAccount.id,
+      limit: 1000,
+    })
   })
 
   it('returns results', async () => {
@@ -66,7 +72,7 @@ describe('ListDraftEmailMessageMetadataUseCase Test Suite', () => {
       mockEmailMessageService.listDraftsMetadataForEmailAddressId(anything()),
     ).thenResolve(metadata)
     await expect(instanceUnderTest.execute()).resolves.toStrictEqual({
-      metadata,
+      metadata: metadata.items,
     })
   })
 })

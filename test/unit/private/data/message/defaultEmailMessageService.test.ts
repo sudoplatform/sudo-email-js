@@ -2122,23 +2122,28 @@ describe('DefaultEmailMessageService Test Suite', () => {
   describe('listDraftsMetadataForEmailAddressId', () => {
     it('lists drafts successfully', async () => {
       const emailAddressId = 'emailAddressId'
-      const drafts: S3ClientListOutput[] = [
-        { key: 'draft1', lastModified: new Date(1) },
-        { key: 'draft2', lastModified: new Date(2) },
-        { key: 'draft3', lastModified: new Date(3) },
-      ]
+      const drafts: S3ClientListOutput = {
+        results: [
+          { key: 'draft1', lastModified: new Date(1) },
+          { key: 'draft2', lastModified: new Date(2) },
+          { key: 'draft3', lastModified: new Date(3) },
+        ],
+      }
       when(mockS3Client.list(anything())).thenResolve(drafts)
       await expect(
         instanceUnderTest.listDraftsMetadataForEmailAddressId({
           emailAddressId,
         }),
-      ).resolves.toEqual<DraftEmailMessageMetadataEntity[]>(
-        drafts.map((s3) => ({
-          id: s3.key,
-          emailAddressId,
-          updatedAt: s3.lastModified,
-        })),
-      )
+      ).resolves.toEqual({
+        items:
+          drafts.results?.map((s3) => ({
+            id: s3.key,
+            emailAddressId,
+            updatedAt: s3.lastModified,
+          })) ?? [],
+        nextToken: undefined,
+        emailAddressId,
+      })
     })
 
     it('removes key prefix correctly', async () => {
@@ -2150,14 +2155,142 @@ describe('DefaultEmailMessageService Test Suite', () => {
         3,
       )
       when(mockS3Client.list(anything())).thenResolve(drafts)
-      const listOfDrafts =
+      const result =
         await instanceUnderTest.listDraftsMetadataForEmailAddressId({
           emailAddressId: 'emailAddressId',
         })
 
-      listOfDrafts.forEach((draft, i) => {
+      result.items.forEach((draft, i) => {
         expect(draft.id).toStrictEqual(`${draftEmailMessage}${i}`)
       })
+    })
+
+    it('respects limit parameter', async () => {
+      const emailAddressId = 'emailAddressId'
+      const limit = 5
+      const drafts: S3ClientListOutput = {
+        results: [
+          { key: 'draft1', lastModified: new Date(1) },
+          { key: 'draft2', lastModified: new Date(2) },
+        ],
+        nextToken: undefined,
+      }
+      when(mockS3Client.list(anything())).thenResolve(drafts)
+
+      await instanceUnderTest.listDraftsMetadataForEmailAddressId({
+        emailAddressId,
+        limit,
+      })
+
+      verify(mockS3Client.list(anything())).once()
+      const [listArgs] = capture(mockS3Client.list).first()
+      expect(listArgs.limit).toEqual(limit)
+    })
+
+    it('passes nextToken for pagination', async () => {
+      const emailAddressId = 'emailAddressId'
+      const nextToken = 'someToken'
+      const drafts: S3ClientListOutput = {
+        results: [],
+        nextToken: undefined,
+      }
+      when(mockS3Client.list(anything())).thenResolve(drafts)
+
+      await instanceUnderTest.listDraftsMetadataForEmailAddressId({
+        emailAddressId,
+        nextToken,
+      })
+
+      verify(mockS3Client.list(anything())).once()
+      const [listArgs] = capture(mockS3Client.list).first()
+      expect(listArgs.nextToken).toEqual(nextToken)
+    })
+
+    it('returns nextToken from S3', async () => {
+      const emailAddressId = 'emailAddressId'
+      const drafts: S3ClientListOutput = {
+        results: [{ key: 'draft1', lastModified: new Date(1) }],
+        nextToken: 'nextPageToken',
+      }
+      when(mockS3Client.list(anything())).thenResolve(drafts)
+
+      const result =
+        await instanceUnderTest.listDraftsMetadataForEmailAddressId({
+          emailAddressId,
+        })
+
+      expect(result.nextToken).toEqual('nextPageToken')
+    })
+
+    it('uses default limit of 10 when not specified', async () => {
+      const emailAddressId = 'emailAddressId'
+      const drafts: S3ClientListOutput = {
+        results: [],
+      }
+      when(mockS3Client.list(anything())).thenResolve(drafts)
+
+      await instanceUnderTest.listDraftsMetadataForEmailAddressId({
+        emailAddressId,
+      })
+
+      verify(mockS3Client.list(anything())).once()
+      const [listArgs] = capture(mockS3Client.list).first()
+      expect(listArgs.limit).toEqual(10)
+    })
+
+    it('handles empty results', async () => {
+      const emailAddressId = 'emailAddressId'
+      const drafts: S3ClientListOutput = {
+        results: [],
+        nextToken: undefined,
+      }
+      when(mockS3Client.list(anything())).thenResolve(drafts)
+
+      const result =
+        await instanceUnderTest.listDraftsMetadataForEmailAddressId({
+          emailAddressId,
+        })
+
+      expect(result.items).toEqual([])
+      expect(result.nextToken).toBeUndefined()
+      expect(result.emailAddressId).toEqual(emailAddressId)
+    })
+
+    it('handles undefined results array', async () => {
+      const emailAddressId = 'emailAddressId'
+      const drafts: S3ClientListOutput = {}
+      when(mockS3Client.list(anything())).thenResolve(drafts)
+
+      const result =
+        await instanceUnderTest.listDraftsMetadataForEmailAddressId({
+          emailAddressId,
+        })
+
+      expect(result.items).toEqual([])
+    })
+
+    it('passes both limit and nextToken parameters', async () => {
+      const emailAddressId = 'emailAddressId'
+      const limit = 20
+      const nextToken = 'paginationToken'
+      const drafts: S3ClientListOutput = {
+        results: [{ key: 'draft1', lastModified: new Date(1) }],
+        nextToken: 'newToken',
+      }
+      when(mockS3Client.list(anything())).thenResolve(drafts)
+
+      const result =
+        await instanceUnderTest.listDraftsMetadataForEmailAddressId({
+          emailAddressId,
+          limit,
+          nextToken,
+        })
+
+      verify(mockS3Client.list(anything())).once()
+      const [listArgs] = capture(mockS3Client.list).first()
+      expect(listArgs.limit).toEqual(limit)
+      expect(listArgs.nextToken).toEqual(nextToken)
+      expect(result.nextToken).toEqual('newToken')
     })
   })
 
@@ -2869,9 +3002,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
           // A different error is thrown here based on Node version being <20 or >=20.
           // - this should handle both scenarios.
           cause: new SyntaxError(
-            nodeMajorVersion >= 20
-              ? "Expected property name or '}' in JSON at position 1"
-              : 'Unexpected token ] in JSON at position 1',
+            nodeMajorVersion >= 22
+              ? "Expected property name or '}' in JSON at position 1 (line 1 column 2)"
+              : nodeMajorVersion >= 20
+                ? "Expected property name or '}' in JSON at position 1"
+                : 'Unexpected token ] in JSON at position 1',
           ),
         },
         date: undefined,

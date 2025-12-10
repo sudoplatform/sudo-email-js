@@ -40,12 +40,15 @@ export class DraftEmailMessageDataFactory {
     emailAddressId: string,
     draftEmailMessage: string,
     numberOfDrafts: number,
-  ): S3ClientListOutput[] {
+  ): S3ClientListOutput {
     const now = Date.now()
     const prefix = `${identityId}/email/${emailAddressId}/draft`
-    return _.range(numberOfDrafts).map((i) => ({
-      key: `${prefix}/${draftEmailMessage}${i}`,
-      lastModified: new Date(now + i),
-    }))
+    return {
+      results: _.range(numberOfDrafts).map((i) => ({
+        key: `${prefix}/${draftEmailMessage}${i}`,
+        lastModified: new Date(now + i),
+      })),
+      nextToken: undefined,
+    }
   }
 }
