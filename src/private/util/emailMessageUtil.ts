@@ -30,6 +30,7 @@ import {
   SecureEmailAttachmentType,
 } from '../domain/entities/secure/secureEmailAttachmentType'
 import { SecurePackage } from '../domain/entities/secure/securePackage'
+import { EmailDomainEntity } from '../domain/entities/emailDomain/emailDomainEntity'
 
 export class EmailMessageUtil {
   private readonly accountService?: EmailAccountService
@@ -82,17 +83,16 @@ export class EmailMessageUtil {
     cc?.forEach((addr) => allRecipients.push(addr.emailAddress))
     bcc?.forEach((addr) => allRecipients.push(addr.emailAddress))
 
-    const domains = await this.domainService.getConfiguredEmailDomains({})
+    const domains = await this.domainService.getConfiguredEmailDomains()
 
     // Check if any recipient's domain is not one of ours
-    const allRecipientsInternal =
-      allRecipients.length > 0 &&
-      allRecipients.every((address) =>
-        domains.some((domain) => address.includes(domain.domain)),
-      )
+    const allRecipientsInternal = EmailMessageUtil.allRecipientsInternal(
+      allRecipients,
+      domains,
+    )
 
     if (allRecipientsInternal && sendEncryptedEmailEnabled) {
-      if (allRecipients.length > emailMessageRecipientsLimit) {
+      if (allRecipients.length > encryptedEmailMessageRecipientsLimit) {
         throw new LimitExceededError(
           `Cannot send message to more than ${encryptedEmailMessageRecipientsLimit} recipients`,
         )
@@ -118,6 +118,20 @@ export class EmailMessageUtil {
       )
     }
     return processedRfc822Data
+  }
+
+  public static allRecipientsInternal(
+    allRecipients: string[],
+    internalDomains: EmailDomainEntity[],
+  ): boolean {
+    return (
+      allRecipients.length > 0 &&
+      allRecipients.every((address) =>
+        internalDomains.some((domain) =>
+          address.toLowerCase().includes(domain.domain),
+        ),
+      )
+    )
   }
 
   async processDownloadedEncryptedMessage(

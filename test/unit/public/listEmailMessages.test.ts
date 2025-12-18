@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
 import {
   anything,
   capture,
@@ -51,7 +50,6 @@ describe('SudoEmailClient.listEmailMessages Test Suite', () => {
   })
   it('generates use case', async () => {
     await instanceUnderTest.listEmailMessages({
-      cachePolicy: CachePolicy.CacheOnly,
       limit: 0,
       sortOrder: SortOrder.Desc,
       nextToken: '',
@@ -59,7 +57,6 @@ describe('SudoEmailClient.listEmailMessages Test Suite', () => {
     expect(JestMockListEmailMessagesUseCase).toHaveBeenCalledTimes(1)
   })
   it('calls use case as expected', async () => {
-    const cachePolicy = CachePolicy.CacheOnly
     const dateRange = {
       sortDate: {
         startDate: new Date(1.0),
@@ -71,7 +68,6 @@ describe('SudoEmailClient.listEmailMessages Test Suite', () => {
     const nextToken = v4()
     await instanceUnderTest.listEmailMessages({
       dateRange,
-      cachePolicy,
       limit,
       sortOrder,
       nextToken,
@@ -80,7 +76,6 @@ describe('SudoEmailClient.listEmailMessages Test Suite', () => {
     const [actualArgs] = capture(mockListEmailMessagesUseCase.execute).first()
     expect(actualArgs).toEqual<typeof actualArgs>({
       dateRange,
-      cachePolicy,
       limit,
       sortOrder,
       nextToken,
@@ -91,18 +86,14 @@ describe('SudoEmailClient.listEmailMessages Test Suite', () => {
       emailMessages: [],
       nextToken: undefined,
     })
-    await expect(
-      instanceUnderTest.listEmailMessages({
-        cachePolicy: CachePolicy.CacheOnly,
-      }),
-    ).resolves.toEqual({ status: 'Success', items: [], nextToken: undefined })
+    await expect(instanceUnderTest.listEmailMessages({})).resolves.toEqual({
+      status: 'Success',
+      items: [],
+      nextToken: undefined,
+    })
   })
   it('returns expected result', async () => {
-    await expect(
-      instanceUnderTest.listEmailMessages({
-        cachePolicy: CachePolicy.CacheOnly,
-      }),
-    ).resolves.toEqual({
+    await expect(instanceUnderTest.listEmailMessages({})).resolves.toEqual({
       status: 'Success',
       items: [APIDataFactory.emailMessage],
       nextToken: 'nextToken',

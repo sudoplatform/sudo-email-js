@@ -5,7 +5,6 @@
  */
 
 import {
-  CachePolicy,
   ListOutput,
   SudoCryptoProvider,
   SudoKeyManager,
@@ -141,38 +140,32 @@ export interface SudoEmailClient {
   /**
    * Get a list of all of the email domains on which emails may be provisioned.
    *
-   * @param {CachePolicy} cachePolicy Determines how the supported email domains will be fetched. Default usage is
-   *   `remoteOnly`.
    * @returns {string[]} A list of supported domains.
    *
    * @throws NotRegisteredError
    * @throws ServiceError
    */
-  getSupportedEmailDomains(cachePolicy?: CachePolicy): Promise<string[]>
+  getSupportedEmailDomains(): Promise<string[]>
 
   /**
    * Get a list of all of the email domains for which end-to-end encryption is supported.
    *
-   * @param {CachePolicy} cachePolicy Determines how the configured email domains will be fetched. Default usage is
-   *   `remoteOnly`.
    * @returns {string[]} A list of all configured domains.
    *
    * @throws NotRegisteredError
    * @throws ServiceError
    */
-  getConfiguredEmailDomains(cachePolicy?: CachePolicy): Promise<string[]>
+  getConfiguredEmailDomains(): Promise<string[]>
 
   /**
    * Get a list of all of the email domains on which email masks may be provisioned.
    *
-   * @param {CachePolicy} cachePolicy Determines how the email mask domains will be fetched. Default usage is
-   *   `remoteOnly`.
    * @returns {string[]} A list of email mask domains.
    *
    * @throws NotRegisteredError
    * @throws ServiceError
    */
-  getEmailMaskDomains(cachePolicy?: CachePolicy): Promise<string[]>
+  getEmailMaskDomains(): Promise<string[]>
 
   /**
    * Check if an email address is available to be provisioned within a domain.

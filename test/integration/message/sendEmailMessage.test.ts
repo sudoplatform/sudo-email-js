@@ -5,7 +5,6 @@
  */
 
 import {
-  CachePolicy,
   DefaultLogger,
   ListOperationResultStatus,
   Buffer as BufferUtil,
@@ -18,6 +17,7 @@ import { externalAccounts } from '../interop.test'
 import waitForExpect from 'wait-for-expect'
 import {
   EmailAddress,
+  EmailAttachment,
   EmailFolder,
   EmailMessage,
   EmailMessageRfc822Data,
@@ -38,12 +38,13 @@ import { runTestsIf } from '../../util/util'
 import { delay } from '../../util/delay'
 import { insertLinebreaks } from '../../../src/private/util/stringUtils'
 import { encodeWordIfRequired } from '../../util/encoding'
-import { EmailAttachment } from '../../../types'
 
 describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
   const successSimulatorAddress = 'success@simulator.amazonses.com'
+  const emailMessageIdRegex =
+    /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
 
   let emailAddresses: EmailAddress[] = []
 
@@ -195,15 +196,12 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     })
     const { id: sentId } = result
 
-    expect(sentId).toMatch(
-      /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
-    )
+    expect(sentId).toMatch(emailMessageIdRegex)
 
     let sent
     await waitForExpect(async () => {
       sent = await instanceUnderTest.getEmailMessage({
         id: sentId,
-        cachePolicy: CachePolicy.RemoteOnly,
       })
       expect(sent).toBeDefined()
     })
@@ -254,15 +252,12 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     })
     const { id: sentId } = result
 
-    expect(sentId).toMatch(
-      /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
-    )
+    expect(sentId).toMatch(emailMessageIdRegex)
 
     let sent
     await waitForExpect(async () => {
       sent = await instanceUnderTest.getEmailMessage({
         id: sentId,
-        cachePolicy: CachePolicy.RemoteOnly,
       })
       expect(sent).toBeDefined()
     })
@@ -307,15 +302,12 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     })
     const { id: sentId } = result
 
-    expect(sentId).toMatch(
-      /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
-    )
+    expect(sentId).toMatch(emailMessageIdRegex)
 
     let sent
     await waitForExpect(async () => {
       sent = await instanceUnderTest.getEmailMessage({
         id: sentId,
-        cachePolicy: CachePolicy.RemoteOnly,
       })
       expect(sent).toBeDefined()
     })
@@ -377,15 +369,12 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     })
     const { id: sentId } = result
 
-    expect(sentId).toMatch(
-      /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
-    )
+    expect(sentId).toMatch(emailMessageIdRegex)
 
     let sent
     await waitForExpect(async () => {
       sent = await instanceUnderTest.getEmailMessage({
         id: sentId,
-        cachePolicy: CachePolicy.RemoteOnly,
       })
       expect(sent).toBeDefined()
     })
@@ -415,7 +404,6 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       const result = await readAllPages((nextToken?: string) =>
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: inboxFolder2.id,
-          cachePolicy: CachePolicy.RemoteOnly,
           nextToken,
         }),
       )
@@ -449,15 +437,12 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     })
     const { id: sentId } = result
 
-    expect(sentId).toMatch(
-      /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
-    )
+    expect(sentId).toMatch(emailMessageIdRegex)
 
     let sent
     await waitForExpect(async () => {
       sent = await instanceUnderTest.getEmailMessage({
         id: sentId,
-        cachePolicy: CachePolicy.RemoteOnly,
       })
       expect(sent).toBeDefined()
     })
@@ -490,7 +475,6 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         const result = await readAllPages((nextToken?: string) =>
           instanceUnderTest.listEmailMessagesForEmailFolderId({
             folderId: inboxFolder2.id,
-            cachePolicy: CachePolicy.RemoteOnly,
             nextToken,
           }),
         )
@@ -529,15 +513,12 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     })
     const { id: sentId } = result
 
-    expect(sentId).toMatch(
-      /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
-    )
+    expect(sentId).toMatch(emailMessageIdRegex)
 
     let sent
     await waitForExpect(async () => {
       sent = await instanceUnderTest.getEmailMessage({
         id: sentId,
-        cachePolicy: CachePolicy.RemoteOnly,
       })
       expect(sent).toBeDefined()
     })
@@ -580,15 +561,12 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     })
     const { id: sentId } = result
 
-    expect(sentId).toMatch(
-      /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
-    )
+    expect(sentId).toMatch(emailMessageIdRegex)
 
     let sent
     await waitForExpect(async () => {
       sent = await instanceUnderTest.getEmailMessage({
         id: sentId,
-        cachePolicy: CachePolicy.RemoteOnly,
       })
       expect(sent).toBeDefined()
     })
@@ -795,15 +773,12 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       })
       const { id: sentId } = result
 
-      expect(sentId).toMatch(
-        /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
-      )
+      expect(sentId).toMatch(emailMessageIdRegex)
 
       let sent
       await waitForExpect(async () => {
         sent = await instanceUnderTest.getEmailMessage({
           id: sentId,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
         expect(sent).toBeDefined()
       })
@@ -841,15 +816,12 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       })
       const { id: sentId } = result
 
-      expect(sentId).toMatch(
-        /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
-      )
+      expect(sentId).toMatch(emailMessageIdRegex)
 
       let sent
       await waitForExpect(async () => {
         sent = await instanceUnderTest.getEmailMessage({
           id: sentId,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
         expect(sent).toBeDefined()
       })
@@ -883,9 +855,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       })
       const { id: sentId } = result
 
-      expect(sentId).toMatch(
-        /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
-      )
+      expect(sentId).toMatch(emailMessageIdRegex)
 
       let sent: EmailMessageRfc822Data | undefined
       await waitForExpect(async () => {
@@ -917,6 +887,62 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       expect(sentRfc822DataStr).toContain(expectedAttachment2Data)
     })
 
+    it('returns expected output when sending to random-cased email address', async () => {
+      function convertEverySecondCharToUpper(str: string): string {
+        return str
+          .split('')
+          .map((char, index) => (index % 2 === 1 ? char.toUpperCase() : char))
+          .join('')
+      }
+
+      const ccDraft = {
+        ...encryptedDraft,
+        to: [],
+        cc: [
+          {
+            emailAddress: convertEverySecondCharToUpper(
+              emailAddress1.emailAddress,
+            ),
+          },
+        ],
+      }
+      const result = await instanceUnderTest.sendEmailMessage({
+        senderEmailAddressId: emailAddress1.id,
+        emailMessageHeader: {
+          from: ccDraft.from[0],
+          to: ccDraft.to ?? [],
+          cc: ccDraft.cc ?? [],
+          bcc: ccDraft.bcc ?? [],
+          replyTo: ccDraft.replyTo ?? [],
+          subject: ccDraft.subject ?? '',
+        },
+        body: ccDraft.body ?? '',
+        attachments: ccDraft.attachments ?? [],
+        inlineAttachments: ccDraft.inlineAttachments ?? [],
+      })
+      const { id: sentId } = result
+
+      expect(sentId).toMatch(emailMessageIdRegex)
+
+      let sent
+      await waitForExpect(async () => {
+        sent = await instanceUnderTest.getEmailMessage({
+          id: sentId,
+        })
+        expect(sent).toBeDefined()
+      })
+
+      expect(sent).toMatchObject({
+        ..._.omit(ccDraft, 'body', 'attachments'),
+        id: sentId,
+        hasAttachments: false,
+        encryptionStatus: sendEncryptedEmailEnabled
+          ? EncryptionStatus.ENCRYPTED
+          : EncryptionStatus.UNENCRYPTED,
+        date: expect.any(Date),
+      })
+    })
+
     it('returns expected output when sending to cc', async () => {
       const ccDraft = {
         ...encryptedDraft,
@@ -939,15 +965,12 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       })
       const { id: sentId } = result
 
-      expect(sentId).toMatch(
-        /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
-      )
+      expect(sentId).toMatch(emailMessageIdRegex)
 
       let sent
       await waitForExpect(async () => {
         sent = await instanceUnderTest.getEmailMessage({
           id: sentId,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
         expect(sent).toBeDefined()
       })
@@ -985,15 +1008,12 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       })
       const { id: sentId } = result
 
-      expect(sentId).toMatch(
-        /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
-      )
+      expect(sentId).toMatch(emailMessageIdRegex)
 
       let sent
       await waitForExpect(async () => {
         sent = await instanceUnderTest.getEmailMessage({
           id: sentId,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
         expect(sent).toBeDefined()
       })
@@ -1035,15 +1055,12 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       })
       const { id: sentId } = result
 
-      expect(sentId).toMatch(
-        /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
-      )
+      expect(sentId).toMatch(emailMessageIdRegex)
 
       let sent
       await waitForExpect(async () => {
         sent = await instanceUnderTest.getEmailMessage({
           id: sentId,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
         expect(sent).toBeDefined()
       })
@@ -1167,7 +1184,6 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       await waitForExpect(async () => {
         message = await instanceUnderTest.getEmailMessage({
           id: messageId,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
         expect(message).toBeDefined()
         expect(message).toMatchObject({ id: messageId })

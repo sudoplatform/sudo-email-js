@@ -9,9 +9,7 @@ import { EmailConfigurationDataEntity } from '../../domain/entities/configuratio
 import { ApiClient } from '../common/apiClient'
 import { ConfigurationDataAPITransformer } from './transformer/configurationDataAPITransformer'
 
-export class DefaultConfigurationDataService
-  implements EmailConfigurationDataService
-{
+export class DefaultConfigurationDataService implements EmailConfigurationDataService {
   constructor(private readonly appSync: ApiClient) {}
 
   async getConfigurationData(): Promise<EmailConfigurationDataEntity> {

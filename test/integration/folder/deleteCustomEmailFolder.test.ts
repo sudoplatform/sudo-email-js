@@ -5,13 +5,11 @@
  */
 
 import {
-  CachePolicy,
   DefaultLogger,
   ListOperationResultStatus,
 } from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
-import _ from 'lodash'
 import {
   BatchOperationResultStatus,
   EmailAddress,
@@ -20,11 +18,7 @@ import {
   SendEmailMessageInput,
   SudoEmailClient,
 } from '../../../src'
-import {
-  setupEmailClient,
-  sudoIssuer,
-  teardown,
-} from '../util/emailClientLifecycle'
+import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import waitForExpect from 'wait-for-expect'
 import { delay } from '../../util/delay'
@@ -119,7 +113,6 @@ describe('SudoEmailClient DeleteCustomEmailFolder Test Suite', () => {
       await expect(
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: customFolder.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).resolves.toStrictEqual<ListEmailMessagesResult>({
         nextToken: undefined,
@@ -154,7 +147,6 @@ describe('SudoEmailClient DeleteCustomEmailFolder Test Suite', () => {
       await expect(
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: trashFolder.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).resolves.toStrictEqual<ListEmailMessagesResult>({
         nextToken: undefined,

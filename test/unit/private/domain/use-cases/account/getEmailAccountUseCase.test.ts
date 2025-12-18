@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
 import {
   anything,
   capture,
@@ -39,13 +38,11 @@ describe('GetEmailAddressUseCase', () => {
       )
       const result = await instanceUnderTest.execute({
         id,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       verify(mockEmailAccountService.get(anything())).once()
       const [inputArgs] = capture(mockEmailAccountService.get).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         id,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       expect(result).toStrictEqual(EntityDataFactory.emailAccount)
     })
@@ -55,13 +52,11 @@ describe('GetEmailAddressUseCase', () => {
       when(mockEmailAccountService.get(anything())).thenResolve(undefined)
       const result = await instanceUnderTest.execute({
         id,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       verify(mockEmailAccountService.get(anything())).once()
       const [inputArgs] = capture(mockEmailAccountService.get).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         id,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       expect(result).toStrictEqual(undefined)
     })

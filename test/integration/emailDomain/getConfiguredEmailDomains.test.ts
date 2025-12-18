@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy, DefaultLogger } from '@sudoplatform/sudo-common'
+import { DefaultLogger } from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { SudoEmailClient } from '../../../src'
@@ -35,7 +35,7 @@ describe('SudoEmailClient GetConfiguredEmailDomains Test Suite', () => {
   })
   it('returns expected output', async () => {
     const configuredEmailDomains =
-      await instanceUnderTest.getConfiguredEmailDomains(CachePolicy.RemoteOnly)
+      await instanceUnderTest.getConfiguredEmailDomains()
     expect(configuredEmailDomains.length).toBeGreaterThanOrEqual(1)
   })
 })

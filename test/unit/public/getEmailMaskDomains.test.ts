@@ -4,16 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
-import {
-  anything,
-  capture,
-  instance,
-  mock,
-  reset,
-  verify,
-  when,
-} from 'ts-mockito'
+import { instance, mock, reset, verify, when } from 'ts-mockito'
 import { SudoEmailClient } from '../../../src'
 import { GetEmailMaskDomainsUseCase } from '../../../src/private/domain/use-cases/emailDomain/getEmailMaskDomainsUseCase'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
@@ -44,37 +35,24 @@ describe('SudoEmailClient.getEmailMaskDomains Test Suite', () => {
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
-    when(mockGetEmailMaskDomainsUseCase.execute(anything())).thenResolve([
+    when(mockGetEmailMaskDomainsUseCase.execute()).thenResolve([
       { domain: 'mask.anonyome.com' },
     ])
   })
 
   it('generates use case', async () => {
-    await instanceUnderTest.getEmailMaskDomains(CachePolicy.CacheOnly)
+    await instanceUnderTest.getEmailMaskDomains()
     expect(JestMockGetEmailMaskDomainsUseCase).toHaveBeenCalledTimes(1)
   })
 
   it('calls use case as expected', async () => {
-    await instanceUnderTest.getEmailMaskDomains(CachePolicy.CacheOnly)
-    verify(mockGetEmailMaskDomainsUseCase.execute(anything())).once()
-    const [actualCachePolicy] = capture(
-      mockGetEmailMaskDomainsUseCase.execute,
-    ).first()
-    expect(actualCachePolicy).toEqual(CachePolicy.CacheOnly)
+    await instanceUnderTest.getEmailMaskDomains()
+    verify(mockGetEmailMaskDomainsUseCase.execute()).once()
   })
 
   it('returns expected result', async () => {
-    await expect(
-      instanceUnderTest.getEmailMaskDomains(CachePolicy.CacheOnly),
-    ).resolves.toEqual(['mask.anonyome.com'])
-  })
-
-  it('uses RemoteOnly cache policy by default', async () => {
-    await instanceUnderTest.getEmailMaskDomains()
-    verify(mockGetEmailMaskDomainsUseCase.execute(anything())).once()
-    const [actualCachePolicy] = capture(
-      mockGetEmailMaskDomainsUseCase.execute,
-    ).first()
-    expect(actualCachePolicy).toEqual(CachePolicy.RemoteOnly)
+    await expect(instanceUnderTest.getEmailMaskDomains()).resolves.toEqual([
+      'mask.anonyome.com',
+    ])
   })
 })

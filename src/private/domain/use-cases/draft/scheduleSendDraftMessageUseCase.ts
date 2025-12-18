@@ -4,12 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  CachePolicy,
-  DefaultLogger,
-  Logger,
-  Owner,
-} from '@sudoplatform/sudo-common'
+import { DefaultLogger, Logger, Owner } from '@sudoplatform/sudo-common'
 import {
   AddressNotFoundError,
   InvalidArgumentError,
@@ -64,7 +59,6 @@ export class ScheduleSendDraftMessageUseCase {
     this.log.debug(this.execute.name, { id, emailAddressId, sendAt })
     const account = await this.emailAccountService.get({
       id: emailAddressId,
-      cachePolicy: CachePolicy.RemoteOnly,
     })
     if (!account) {
       throw new AddressNotFoundError()

@@ -5,7 +5,6 @@
  */
 
 import {
-  CachePolicy,
   DefaultLogger,
   KeyNotFoundError,
   ListOperationResultStatus,
@@ -93,9 +92,7 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
     it('returns email addresses', async () => {
       expectSetupComplete()
 
-      const result = await instanceUnderTest.listEmailAddresses({
-        cachePolicy: CachePolicy.RemoteOnly,
-      })
+      const result = await instanceUnderTest.listEmailAddresses()
       if (result.status === ListOperationResultStatus.Success) {
         expect(result.items).toHaveLength(emailAddresses.length)
         expect(result.items).toStrictEqual(
@@ -114,7 +111,6 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
       await expect(
         instanceUnderTest.listEmailAddressesForSudoId({
           sudoId: sudo1.id ?? '',
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).resolves.toEqual({
         status: 'Success',
@@ -123,7 +119,6 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
       await expect(
         instanceUnderTest.listEmailAddressesForSudoId({
           sudoId: sudo2.id ?? '',
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).resolves.toEqual({
         status: 'Success',
@@ -137,7 +132,6 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
       await expect(
         instanceUnderTest.listEmailAddressesForSudoId({
           sudoId: v4(),
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).resolves.toEqual({
         status: 'Success',
@@ -151,7 +145,6 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
       await instanceUnderTest.reset()
       const result = await instanceUnderTest.listEmailAddressesForSudoId({
         sudoId: sudo1.id ?? '',
-        cachePolicy: CachePolicy.RemoteOnly,
         limit: 2,
       })
       if (result.status === ListOperationResultStatus.Partial) {
@@ -176,7 +169,6 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
       await instanceUnderTest.reset()
       const result = await instanceUnderTest.listEmailAddressesForSudoId({
         sudoId: sudo2.id ?? '',
-        cachePolicy: CachePolicy.RemoteOnly,
         limit: 2,
       })
       if (result.status === ListOperationResultStatus.Partial) {

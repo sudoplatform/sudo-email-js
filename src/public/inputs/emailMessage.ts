@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
 import { Pagination } from './common'
 import { EmailAddressDetail } from '../typings/emailAddress'
 import { EmailAttachment } from '../typings/emailAttachment'
@@ -16,11 +15,9 @@ import { SortOrder } from '../typings/sortOrder'
  *
  * @interface GetEmailMessageInput
  * @property {string} id The identifier of the email message to be retrieved.
- * @property {CachePolicy} cachePolicy Determines how the email message will be fetched. Default usage is `remoteOnly`.
  */
 export interface GetEmailMessageInput {
   id: string
-  cachePolicy?: CachePolicy
 }
 
 /**
@@ -28,13 +25,11 @@ export interface GetEmailMessageInput {
  *
  * @interface ListEmailMessagesInput
  * @property {EmailMessageDateRange} dateRange Email messages matching the specified date range inclusive will be fetched.
- * @property {CachePolicy} cachePolicy Determines how the email messages will be fetched. Default usage is `remoteOnly`.
  * @property {SortOrder} sortOrder The direction in which the email messages are sorted. Defaults to descending.
  * @property {boolean} includeDeletedMessages A flag to indicate if deleted messages should be included. Defaults to false.
  */
 export interface ListEmailMessagesInput extends Pagination {
   dateRange?: EmailMessageDateRange
-  cachePolicy?: CachePolicy
   sortOrder?: SortOrder
   includeDeletedMessages?: boolean
 }
@@ -45,14 +40,12 @@ export interface ListEmailMessagesInput extends Pagination {
  * @interface ListEmailMessagesForEmailAddressIdInput
  * @property {string} emailAddressId The identifier of the email address associated with the email message.
  * @property {EmailMessageDateRange} dateRange Email messages matching the specified date range inclusive will be fetched.
- * @property {CachePolicy} cachePolicy Determines how the email messages will be fetched. Default usage is `remoteOnly`.
  * @property {SortOrder} sortOrder The direction in which the email messages are sorted. Defaults to descending.
  * @property {boolean} includeDeletedMessages A flag to indicate if deleted messages should be included. Defaults to false.
  */
 export interface ListEmailMessagesForEmailAddressIdInput extends Pagination {
   emailAddressId: string
   dateRange?: EmailMessageDateRange
-  cachePolicy?: CachePolicy
   sortOrder?: SortOrder
   includeDeletedMessages?: boolean
 }
@@ -63,14 +56,12 @@ export interface ListEmailMessagesForEmailAddressIdInput extends Pagination {
  * @interface ListEmailMessagesForEmailFolderIdInput
  * @property {string} folderId The identifier of the email folder that contains the email message.
  * @property {EmailMessageDateRange} dateRange Email messages matching the specified date range inclusive will be fetched.
- * @property {CachePolicy} cachePolicy Determines how the email messages will be fetched. Default usage is `remoteOnly`.
  * @property {SortOrder} sortOrder The direction in which the email messages are sorted. Defaults to descending.
  * @property {boolean} includeDeletedMessages A flag to indicate if deleted messages should be included. Defaults to false.
  */
 export interface ListEmailMessagesForEmailFolderIdInput extends Pagination {
   folderId: string
   dateRange?: EmailMessageDateRange
-  cachePolicy?: CachePolicy
   sortOrder?: SortOrder
   includeDeletedMessages?: boolean
 }

@@ -9,54 +9,70 @@ import {
   DefaultApiClientManager,
 } from '@sudoplatform/sudo-api-client'
 import {
-  AppSyncNetworkError,
   DefaultLogger,
   FatalError,
+  GraphQLNetworkError,
+  isGraphQLNetworkError,
   Logger,
-  UnknownGraphQLError,
-  isAppSyncNetworkError,
   mapNetworkErrorToClientError,
+  UnknownGraphQLError,
 } from '@sudoplatform/sudo-common'
-import { NormalizedCacheObject } from 'apollo-cache-inmemory'
-import {
-  FetchPolicy,
-  MutationOptions,
-  QueryOptions,
-  SubscriptionOptions,
-} from 'apollo-client/core/watchQueryOptions'
-import { ApolloError } from 'apollo-client/errors/ApolloError'
-import { Observable } from 'apollo-client/util/Observable'
-import { FetchResult } from 'apollo-link'
-import AWSAppSyncClient from 'aws-appsync'
+import { GraphQLOptions } from '@aws-amplify/api-graphql'
+import Observable from 'zen-observable'
+
 import {
   AvailableAddresses,
   BlockEmailAddressesBulkUpdateResult,
   BlockEmailAddressesDocument,
   BlockEmailAddressesInput,
   BlockEmailAddressesMutation,
+  CancelScheduledDraftMessageDocument,
+  CancelScheduledDraftMessageInput,
+  CancelScheduledDraftMessageMutation,
   CheckEmailAddressAvailabilityDocument,
   CheckEmailAddressAvailabilityInput,
   CheckEmailAddressAvailabilityQuery,
+  ConfiguredDomains,
   CreateCustomEmailFolderDocument,
   CreateCustomEmailFolderInput,
   CreateCustomEmailFolderMutation,
   CreatePublicKeyForEmailDocument,
   CreatePublicKeyForEmailMutation,
   CreatePublicKeyInput,
+  DeleteCustomEmailFolderDocument,
+  DeleteCustomEmailFolderInput,
+  DeleteCustomEmailFolderMutation,
   DeleteEmailMessagesDocument,
   DeleteEmailMessagesInput,
   DeleteEmailMessagesMutation,
+  DeleteMessagesByFolderIdDocument,
+  DeleteMessagesByFolderIdInput,
+  DeleteMessagesByFolderIdMutation,
   DeprovisionEmailAddressDocument,
   DeprovisionEmailAddressInput,
   DeprovisionEmailAddressMutation,
+  DeprovisionEmailMaskDocument,
+  DeprovisionEmailMaskInput,
+  DeprovisionEmailMaskMutation,
+  DisableEmailMaskDocument,
+  DisableEmailMaskInput,
+  DisableEmailMaskMutation,
   EmailAddress,
   EmailAddressConnection,
   EmailAddressWithoutFoldersFragment,
   EmailConfigurationData,
   EmailFolder,
   EmailFolderConnection,
+  EmailMask,
+  EmailMaskConnection,
+  EmailMaskDomains,
   EmailMessageConnection,
   EmailMessageDateRangeInput,
+  EnableEmailMaskDocument,
+  EnableEmailMaskInput,
+  EnableEmailMaskMutation,
+  GetConfiguredEmailDomainsDocument,
+  GetConfiguredEmailDomainsQuery,
   GetEmailAddressBlocklistDocument,
   GetEmailAddressBlocklistQuery,
   GetEmailAddressBlocklistResponseFragment,
@@ -66,24 +82,39 @@ import {
   GetEmailConfigQuery,
   GetEmailDomainsDocument,
   GetEmailDomainsQuery,
+  GetEmailMaskDomainsDocument,
+  GetEmailMaskDomainsQuery,
   GetEmailMessageDocument,
   GetEmailMessageQuery,
   GetKeyRingForEmailDocument,
   GetKeyRingForEmailQuery,
+  GetKeyRingForEmailQueryVariables,
   GetPublicKeyForEmailDocument,
   GetPublicKeyForEmailQuery,
   ListEmailAddressesDocument,
   ListEmailAddressesForSudoIdDocument,
   ListEmailAddressesForSudoIdQuery,
+  ListEmailAddressesForSudoIdQueryVariables,
   ListEmailAddressesQuery,
+  ListEmailAddressesQueryVariables,
   ListEmailFoldersForEmailAddressIdDocument,
   ListEmailFoldersForEmailAddressIdQuery,
+  ListEmailFoldersForEmailAddressIdQueryVariables,
+  ListEmailMasksForOwnerDocument,
+  ListEmailMasksForOwnerInput,
+  ListEmailMasksForOwnerQuery,
   ListEmailMessagesDocument,
   ListEmailMessagesForEmailAddressIdDocument,
   ListEmailMessagesForEmailAddressIdQuery,
+  ListEmailMessagesForEmailAddressIdQueryVariables,
   ListEmailMessagesForEmailFolderIdDocument,
   ListEmailMessagesForEmailFolderIdQuery,
+  ListEmailMessagesForEmailFolderIdQueryVariables,
   ListEmailMessagesQuery,
+  ListEmailMessagesQueryVariables,
+  ListScheduledDraftMessagesForEmailAddressIdDocument,
+  ListScheduledDraftMessagesForEmailAddressIdInput,
+  ListScheduledDraftMessagesForEmailAddressIdQuery,
   LookupEmailAddressesPublicInfoDocument,
   LookupEmailAddressesPublicInfoQuery,
   LookupEmailAddressesPublicInfoResponse,
@@ -91,88 +122,58 @@ import {
   OnEmailMessageCreatedSubscription,
   OnEmailMessageDeletedDocument,
   OnEmailMessageDeletedSubscription,
+  OnEmailMessageUpdatedDocument,
+  OnEmailMessageUpdatedSubscription,
   PaginatedPublicKey,
   ProvisionEmailAddressDocument,
   ProvisionEmailAddressInput,
   ProvisionEmailAddressMutation,
+  ProvisionEmailMaskDocument,
+  ProvisionEmailMaskInput,
+  ProvisionEmailMaskMutation,
   PublicKey,
+  ScheduledDraftMessage,
+  ScheduledDraftMessageConnection,
+  ScheduleSendDraftMessageDocument,
+  ScheduleSendDraftMessageInput,
+  ScheduleSendDraftMessageMutation,
   SealedEmailMessage,
-  SendEmailMessageInput,
-  SendEmailMessageResult,
   SendEmailMessageDocument,
+  SendEmailMessageInput,
   SendEmailMessageMutation,
+  SendEmailMessageResult,
   SendEncryptedEmailMessageDocument,
   SendEncryptedEmailMessageInput,
   SendEncryptedEmailMessageMutation,
+  SendMaskedEmailMessageDocument,
+  SendMaskedEmailMessageInput,
+  SendMaskedEmailMessageMutation,
   SortOrder,
   SupportedDomains,
   UnblockEmailAddressesDocument,
   UnblockEmailAddressesInput,
   UnblockEmailAddressesMutation,
+  UpdateCustomEmailFolderDocument,
+  UpdateCustomEmailFolderInput,
+  UpdateCustomEmailFolderMutation,
   UpdateEmailAddressMetadataDocument,
   UpdateEmailAddressMetadataInput,
   UpdateEmailAddressMetadataMutation,
+  UpdateEmailMaskDocument,
+  UpdateEmailMaskInput,
+  UpdateEmailMaskMutation,
   UpdateEmailMessagesDocument,
   UpdateEmailMessagesInput,
   UpdateEmailMessagesMutation,
   UpdateEmailMessagesV2Result,
-  OnEmailMessageUpdatedSubscription,
-  OnEmailMessageUpdatedDocument,
-  ConfiguredDomains,
-  GetConfiguredEmailDomainsQuery,
-  GetConfiguredEmailDomainsDocument,
-  GetEmailMaskDomainsQuery,
-  GetEmailMaskDomainsDocument,
-  EmailMaskDomains,
-  DeleteCustomEmailFolderInput,
-  DeleteCustomEmailFolderMutation,
-  DeleteCustomEmailFolderDocument,
-  UpdateCustomEmailFolderInput,
-  UpdateCustomEmailFolderMutation,
-  UpdateCustomEmailFolderDocument,
-  DeleteMessagesByFolderIdInput,
-  DeleteMessagesByFolderIdMutation,
-  DeleteMessagesByFolderIdDocument,
-  ScheduleSendDraftMessageInput,
-  ScheduledDraftMessage,
-  ScheduleSendDraftMessageMutation,
-  ScheduleSendDraftMessageDocument,
-  CancelScheduledDraftMessageInput,
-  CancelScheduledDraftMessageMutation,
-  CancelScheduledDraftMessageDocument,
-  ListScheduledDraftMessagesForEmailAddressIdQuery,
-  ListScheduledDraftMessagesForEmailAddressIdInput,
-  ScheduledDraftMessageConnection,
-  ListScheduledDraftMessagesForEmailAddressIdDocument,
-  ProvisionEmailMaskInput,
-  EmailMask,
-  ProvisionEmailMaskMutation,
-  ProvisionEmailMaskDocument,
-  DeprovisionEmailMaskInput,
-  DeprovisionEmailMaskMutation,
-  DeprovisionEmailMaskDocument,
-  UpdateEmailMaskInput,
-  UpdateEmailMaskMutation,
-  UpdateEmailMaskDocument,
-  EnableEmailMaskInput,
-  EnableEmailMaskDocument,
-  EnableEmailMaskMutation,
-  DisableEmailMaskDocument,
-  DisableEmailMaskMutation,
-  DisableEmailMaskInput,
-  ListEmailMasksForOwnerInput,
-  EmailMaskConnection,
-  ListEmailMasksForOwnerQuery,
-  ListEmailMasksForOwnerDocument,
-  SendMaskedEmailMessageInput,
-  SendMaskedEmailMessageMutation,
-  SendMaskedEmailMessageDocument,
 } from '../../../gen/graphqlTypes'
 import { ErrorTransformer } from './transformer/errorTransformer'
+import { GraphQLClient } from '@sudoplatform/sudo-user'
+import { SubscriptionResult } from './subscriptionManager'
 
 export class ApiClient {
   private readonly log: Logger
-  private readonly client: AWSAppSyncClient<NormalizedCacheObject>
+  private readonly client: GraphQLClient
 
   private readonly graphqlErrorTransformer: ErrorTransformer
 
@@ -182,7 +183,6 @@ export class ApiClient {
     const clientManager =
       apiClientManager ?? DefaultApiClientManager.getInstance()
     this.client = clientManager.getClient({
-      disableOffline: true,
       configNamespace: 'emService',
     })
   }
@@ -266,12 +266,10 @@ export class ApiClient {
 
   public async getEmailAddressBlocklist(
     owner: string,
-    fetchPolicy: FetchPolicy = 'network-only',
   ): Promise<GetEmailAddressBlocklistResponseFragment> {
     const data = await this.performQuery<GetEmailAddressBlocklistQuery>({
       query: GetEmailAddressBlocklistDocument,
       variables: { input: { owner } },
-      fetchPolicy,
       calleeName: this.getEmailAddressBlocklist.name,
     })
 
@@ -302,34 +300,25 @@ export class ApiClient {
     return data.updateEmailAddressMetadata
   }
 
-  public async getSupportedEmailDomains(
-    fetchPolicy: FetchPolicy = 'network-only',
-  ): Promise<SupportedDomains> {
+  public async getSupportedEmailDomains(): Promise<SupportedDomains> {
     const data = await this.performQuery<GetEmailDomainsQuery>({
       query: GetEmailDomainsDocument,
-      fetchPolicy,
       calleeName: this.getSupportedEmailDomains.name,
     })
     return data.getEmailDomains
   }
 
-  public async getConfiguredEmailDomains(
-    fetchPolicy: FetchPolicy = 'network-only',
-  ): Promise<ConfiguredDomains> {
+  public async getConfiguredEmailDomains(): Promise<ConfiguredDomains> {
     const data = await this.performQuery<GetConfiguredEmailDomainsQuery>({
       query: GetConfiguredEmailDomainsDocument,
-      fetchPolicy,
       calleeName: this.getConfiguredEmailDomains.name,
     })
     return data.getConfiguredEmailDomains
   }
 
-  public async getEmailMaskDomains(
-    fetchPolicy: FetchPolicy = 'network-only',
-  ): Promise<EmailMaskDomains> {
+  public async getEmailMaskDomains(): Promise<EmailMaskDomains> {
     const data = await this.performQuery<GetEmailMaskDomainsQuery>({
       query: GetEmailMaskDomainsDocument,
-      fetchPolicy,
       calleeName: this.getEmailMaskDomains.name,
     })
     return data.getEmailMaskDomains
@@ -341,7 +330,6 @@ export class ApiClient {
     const data = await this.performQuery<CheckEmailAddressAvailabilityQuery>({
       query: CheckEmailAddressAvailabilityDocument,
       variables: { input },
-      fetchPolicy: 'network-only',
       calleeName: this.checkEmailAddressAvailability.name,
     })
     return data.checkEmailAddressAvailability
@@ -356,28 +344,24 @@ export class ApiClient {
     return data.getEmailConfig
   }
 
-  public async getEmailAddress(
-    id: string,
-    fetchPolicy: FetchPolicy = 'network-only',
-  ): Promise<EmailAddress | undefined> {
+  public async getEmailAddress(id: string): Promise<EmailAddress | undefined> {
     const data = await this.performQuery<GetEmailAddressQuery>({
       query: GetEmailAddressDocument,
       variables: { id },
-      fetchPolicy,
       calleeName: this.getEmailAddress.name,
     })
     return data.getEmailAddress ?? undefined
   }
 
   public async listEmailAddresses(
-    fetchPolicy: FetchPolicy = 'network-only',
     limit?: number,
     nextToken?: string,
   ): Promise<EmailAddressConnection> {
     const data = await this.performQuery<ListEmailAddressesQuery>({
       query: ListEmailAddressesDocument,
-      variables: { input: { limit, nextToken } },
-      fetchPolicy,
+      variables: {
+        input: { limit, nextToken },
+      } as ListEmailAddressesQueryVariables,
       calleeName: this.listEmailAddresses.name,
     })
     return data.listEmailAddresses
@@ -385,14 +369,14 @@ export class ApiClient {
 
   public async listEmailAddressesForSudoId(
     sudoId: string,
-    fetchPolicy: FetchPolicy = 'network-only',
     limit?: number,
     nextToken?: string,
   ): Promise<EmailAddressConnection> {
     const data = await this.performQuery<ListEmailAddressesForSudoIdQuery>({
       query: ListEmailAddressesForSudoIdDocument,
-      variables: { input: { sudoId, limit, nextToken } },
-      fetchPolicy,
+      variables: {
+        input: { sudoId, limit, nextToken },
+      } as ListEmailAddressesForSudoIdQueryVariables,
       calleeName: this.listEmailAddressesForSudoId.name,
     })
     return data.listEmailAddressesForSudoId
@@ -400,12 +384,10 @@ export class ApiClient {
 
   public async lookupEmailAddressesPublicInfo(
     emailAddresses: string[],
-    fetchPolicy: FetchPolicy = 'network-only',
   ): Promise<LookupEmailAddressesPublicInfoResponse> {
     const data = await this.performQuery<LookupEmailAddressesPublicInfoQuery>({
       query: LookupEmailAddressesPublicInfoDocument,
       variables: { input: { emailAddresses } },
-      fetchPolicy,
       calleeName: this.lookupEmailAddressesPublicInfo.name,
     })
     return data.lookupEmailAddressesPublicInfo
@@ -413,15 +395,15 @@ export class ApiClient {
 
   public async listEmailFoldersForEmailAddressId(
     emailAddressId: string,
-    fetchPolicy: FetchPolicy = 'network-only',
     limit?: number,
     nextToken?: string,
   ): Promise<EmailFolderConnection> {
     const data =
       await this.performQuery<ListEmailFoldersForEmailAddressIdQuery>({
         query: ListEmailFoldersForEmailAddressIdDocument,
-        variables: { input: { emailAddressId, limit, nextToken } },
-        fetchPolicy,
+        variables: {
+          input: { emailAddressId, limit, nextToken },
+        } as ListEmailFoldersForEmailAddressIdQueryVariables,
         calleeName: this.listEmailFoldersForEmailAddressId.name,
       })
     return data.listEmailFoldersForEmailAddressId
@@ -485,19 +467,16 @@ export class ApiClient {
 
   public async getEmailMessage(
     id: string,
-    fetchPolicy: FetchPolicy = 'network-only',
   ): Promise<SealedEmailMessage | undefined> {
     const data = await this.performQuery<GetEmailMessageQuery>({
       query: GetEmailMessageDocument,
       variables: { id },
-      fetchPolicy,
       calleeName: this.getEmailMessage.name,
     })
     return data.getEmailMessage ?? undefined
   }
 
   public async listEmailMessages(
-    fetchPolicy: FetchPolicy = 'network-only',
     dateRange?: EmailMessageDateRangeInput,
     limit?: number,
     sortOrder?: SortOrder,
@@ -514,8 +493,7 @@ export class ApiClient {
           nextToken,
           includeDeletedMessages,
         },
-      },
-      fetchPolicy,
+      } as ListEmailMessagesQueryVariables,
       calleeName: this.listEmailMessages.name,
     })
     return data.listEmailMessages
@@ -523,7 +501,6 @@ export class ApiClient {
 
   public async listEmailMessagesForEmailAddressId(
     emailAddressId: string,
-    fetchPolicy: FetchPolicy = 'network-only',
     dateRange?: EmailMessageDateRangeInput,
     limit?: number,
     sortOrder?: SortOrder,
@@ -542,8 +519,7 @@ export class ApiClient {
             nextToken,
             includeDeletedMessages,
           },
-        },
-        fetchPolicy,
+        } as ListEmailMessagesForEmailAddressIdQueryVariables,
         calleeName: this.listEmailMessagesForEmailAddressId.name,
       })
     return data.listEmailMessagesForEmailAddressId
@@ -551,7 +527,6 @@ export class ApiClient {
 
   public async listEmailMessagesForEmailFolderId(
     folderId: string,
-    fetchPolicy: FetchPolicy = 'network-only',
     dateRange?: EmailMessageDateRangeInput,
     limit?: number,
     sortOrder?: SortOrder,
@@ -570,8 +545,7 @@ export class ApiClient {
             nextToken,
             includeDeletedMessages,
           },
-        },
-        fetchPolicy,
+        } as ListEmailMessagesForEmailFolderIdQueryVariables,
         calleeName: this.listEmailMessagesForEmailFolderId.name,
       })
     return data.listEmailMessagesForEmailFolderId
@@ -602,7 +576,6 @@ export class ApiClient {
 
   public async listScheduledDraftMessagesForEmailAddressId(
     input: ListScheduledDraftMessagesForEmailAddressIdInput,
-    fetchPolicy: FetchPolicy = 'network-only',
   ): Promise<ScheduledDraftMessageConnection> {
     const data =
       await this.performQuery<ListScheduledDraftMessagesForEmailAddressIdQuery>(
@@ -610,7 +583,6 @@ export class ApiClient {
           query: ListScheduledDraftMessagesForEmailAddressIdDocument,
           variables: { input },
           calleeName: this.listScheduledDraftMessagesForEmailAddressId.name,
-          fetchPolicy,
         },
       )
     return data.listScheduledDraftMessagesForEmailAddressId
@@ -677,7 +649,6 @@ export class ApiClient {
     const data = await this.performQuery<ListEmailMasksForOwnerQuery>({
       query: ListEmailMasksForOwnerDocument,
       variables: { input },
-      fetchPolicy: 'network-only',
       calleeName: this.listEmailMasksForOwner.name,
     })
     return data.listEmailMasksForOwner
@@ -685,9 +656,11 @@ export class ApiClient {
 
   public onEmailMessageDeleted(
     ownerId: string,
-  ): Observable<FetchResult<OnEmailMessageDeletedSubscription>> {
+  ): Promise<
+    Observable<SubscriptionResult<OnEmailMessageDeletedSubscription>>
+  > {
     return this.performSubscription({
-      query: OnEmailMessageDeletedDocument,
+      subscription: OnEmailMessageDeletedDocument,
       variables: { owner: ownerId },
       calleeName: this.onEmailMessageDeleted.name,
     })
@@ -695,9 +668,11 @@ export class ApiClient {
 
   public onEmailMessageCreated(
     ownerId: string,
-  ): Observable<FetchResult<OnEmailMessageCreatedSubscription>> {
+  ): Promise<
+    Observable<SubscriptionResult<OnEmailMessageCreatedSubscription>>
+  > {
     return this.performSubscription({
-      query: OnEmailMessageCreatedDocument,
+      subscription: OnEmailMessageCreatedDocument,
       variables: { owner: ownerId },
       calleeName: this.onEmailMessageCreated.name,
     })
@@ -705,9 +680,11 @@ export class ApiClient {
 
   public onEmailMessageUpdated(
     ownerId: string,
-  ): Observable<FetchResult<OnEmailMessageUpdatedSubscription>> {
+  ): Promise<
+    Observable<SubscriptionResult<OnEmailMessageUpdatedSubscription>>
+  > {
     return this.performSubscription({
-      query: OnEmailMessageUpdatedDocument,
+      subscription: OnEmailMessageUpdatedDocument,
       variables: { owner: ownerId },
       calleeName: this.onEmailMessageUpdated.name,
     })
@@ -726,27 +703,25 @@ export class ApiClient {
 
   public async getKeyRing(
     keyRingId: string,
-    fetchPolicy: FetchPolicy = 'network-only',
     limit?: number,
     nextToken?: string,
   ): Promise<PaginatedPublicKey | undefined> {
     const data = await this.performQuery<GetKeyRingForEmailQuery>({
       query: GetKeyRingForEmailDocument,
-      variables: { keyRingId, limit, nextToken },
-      fetchPolicy,
+      variables: {
+        keyRingId,
+        limit,
+        nextToken,
+      } as GetKeyRingForEmailQueryVariables,
       calleeName: this.getKeyRing.name,
     })
     return data.getKeyRingForEmail
   }
 
-  public async getPublicKey(
-    keyId: string,
-    fetchPolicy: FetchPolicy = 'network-only',
-  ): Promise<PublicKey | undefined> {
+  public async getPublicKey(keyId: string): Promise<PublicKey | undefined> {
     const data = await this.performQuery<GetPublicKeyForEmailQuery>({
       query: GetPublicKeyForEmailDocument,
       variables: { keyId },
-      fetchPolicy,
       calleeName: this.getPublicKey.name,
     })
     return data.getPublicKeyForEmail ?? undefined
@@ -754,32 +729,20 @@ export class ApiClient {
 
   private async performQuery<Q>({
     variables,
-    fetchPolicy,
     query,
     calleeName,
-  }: QueryOptions & { calleeName?: string }): Promise<Q> {
+  }: GraphQLOptions & { calleeName?: string }): Promise<Q> {
     let result
     try {
       result = await this.client.query<Q>({
         variables,
-        fetchPolicy,
         query,
       })
     } catch (err) {
-      if (isAppSyncNetworkError(err as Error)) {
-        throw mapNetworkErrorToClientError(err as AppSyncNetworkError)
+      if (isGraphQLNetworkError(err as Error)) {
+        throw mapNetworkErrorToClientError(err as GraphQLNetworkError)
       }
-
-      const clientError = err as ApolloError
-      this.log.debug('error received', { calleeName, clientError })
-      const error = clientError.graphQLErrors?.[0]
-      if (error) {
-        console.debug({ error })
-        this.log.debug('appSync query failed with error', { error })
-        throw this.graphqlErrorTransformer.toClientError(error)
-      } else {
-        throw new UnknownGraphQLError(err)
-      }
+      throw this.mapGraphQLCallError(err as Error)
     }
 
     const error = result.errors?.[0]
@@ -800,7 +763,8 @@ export class ApiClient {
     mutation,
     variables,
     calleeName,
-  }: Omit<MutationOptions<M>, 'fetchPolicy'> & {
+  }: Omit<GraphQLOptions, 'query'> & {
+    mutation: GraphQLOptions['query']
     calleeName?: string
   }): Promise<M> {
     let result
@@ -810,19 +774,10 @@ export class ApiClient {
         variables,
       })
     } catch (err) {
-      if (isAppSyncNetworkError(err as Error)) {
-        throw mapNetworkErrorToClientError(err as AppSyncNetworkError)
+      if (isGraphQLNetworkError(err as Error)) {
+        throw mapNetworkErrorToClientError(err as GraphQLNetworkError)
       }
-
-      const clientError = err as ApolloError
-      this.log.debug('error received', { calleeName, clientError })
-      const error = clientError.graphQLErrors?.[0]
-      if (error) {
-        this.log.debug('appSync mutation failed with error', { error })
-        throw this.graphqlErrorTransformer.toClientError(error)
-      } else {
-        throw new UnknownGraphQLError(err)
-      }
+      throw this.mapGraphQLCallError(err as Error)
     }
     const error = result.errors?.[0]
     if (error) {
@@ -839,27 +794,47 @@ export class ApiClient {
   }
 
   private performSubscription<S>({
-    query,
+    subscription,
     variables,
     calleeName,
-  }: Omit<SubscriptionOptions, 'fetchPolicy'> & {
+  }: Omit<GraphQLOptions, 'query'> & {
+    subscription: GraphQLOptions['query']
     calleeName?: string
-  }): Observable<FetchResult<S>> {
+  }): Promise<Observable<SubscriptionResult<S>>> {
     try {
       return this.client.subscribe<S>({
-        query,
+        subscription,
         variables,
       })
     } catch (err) {
-      const clientError = err as ApolloError
-      this.log.debug('error received', { calleeName, clientError })
-      const error = clientError.graphQLErrors?.[0]
+      if (isGraphQLNetworkError(err as Error)) {
+        throw mapNetworkErrorToClientError(err as GraphQLNetworkError)
+      }
+      this.log.debug('appSync subscription failed with error', {
+        error: err as Error,
+        calleeName,
+      })
+      throw this.mapGraphQLCallError(err as Error)
+    }
+  }
+  mapGraphQLCallError = (err: Error): Error => {
+    if ('graphQLErrors' in err && Array.isArray(err.graphQLErrors)) {
+      const error = err.graphQLErrors[0] as {
+        errorType: string
+        message: string
+        name: string
+      }
       if (error) {
-        this.log.debug('appSync subscription failed with error', { error })
-        throw this.graphqlErrorTransformer.toClientError(error)
-      } else {
-        throw new UnknownGraphQLError(err)
+        this.log.debug('appSync operation failed with error', { err })
+        return this.graphqlErrorTransformer.toClientError(error)
       }
     }
+    if ('errorType' in err) {
+      this.log.debug('appSync operation failed with error', { err })
+      return this.graphqlErrorTransformer.toClientError(
+        err as { errorType: string; message: string; errorInfo?: string },
+      )
+    }
+    return new UnknownGraphQLError(err)
   }
 }

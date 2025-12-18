@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy, DefaultLogger } from '@sudoplatform/sudo-common'
+import { DefaultLogger } from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import _ from 'lodash'
@@ -172,7 +172,6 @@ describe('SudoEmailClient DeleteEmailMessages Test Suite', () => {
       await expect(
         instanceUnderTest.getEmailMessage({
           id: result.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).resolves.toBeDefined()
     })

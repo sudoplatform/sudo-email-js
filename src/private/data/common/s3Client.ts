@@ -9,6 +9,7 @@ import {
   NoSuchKey,
   NotFound,
   S3,
+  S3ServiceException,
 } from '@aws-sdk/client-s3'
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers'
 import { Upload } from '@aws-sdk/lib-storage'
@@ -278,9 +279,14 @@ export class S3Client {
       return result
     } catch (err: unknown) {
       this.log.error('s3Client download error', { err })
-      if (err instanceof NoSuchKey) {
+      // instanceof is unreliable in some versions of aws sdks, so check using both mechanisms
+      const s3err = err as S3ServiceException
+      if (
+        err instanceof NoSuchKey ||
+        ('Code' in s3err && s3err.Code === 'NoSuchKey')
+      ) {
         throw new S3DownloadError({
-          msg: err.message,
+          msg: s3err.message,
           code: S3Error.NoSuchKey,
           key,
         })

@@ -425,7 +425,7 @@ export class Rfc822MessageDataProcessor {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const [group, charset, encoding, value] = match
       if (value === '') {
-        // Found a match but its for an empty string
+        // Found a match but it's for an empty string
         resultString = resultString.replace(group, value)
       } else {
         let decoded = ''

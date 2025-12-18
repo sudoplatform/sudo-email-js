@@ -1,6 +1,6 @@
 {
   "preset": "ts-jest/presets/js-with-ts",
-  "testEnvironment": "jsdom",
+  "testEnvironment": "./jest.setup.ts",
   "testMatch": ["<rootDir>/test/**/*.test.ts"],
   "testPathIgnorePatterns": ["/node_modules/", "/lib/", "/cjs/", "/types/"],
   "setupFilesAfterEnv": ["./jest.setup.ts"],

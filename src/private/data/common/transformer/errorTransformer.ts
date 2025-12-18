@@ -5,7 +5,6 @@
  */
 
 import {
-  AppSyncError,
   DefaultLogger,
   Logger,
   mapGraphQLToClientError,
@@ -26,6 +25,7 @@ import {
   RecordNotFoundError,
   UnauthorizedAddressError,
 } from '../../../../public/errors'
+import { GraphQLError } from 'graphql/error'
 
 export class ErrorTransformer {
   private readonly log: Logger
@@ -34,9 +34,13 @@ export class ErrorTransformer {
     this.log = new DefaultLogger(this.constructor.name)
   }
 
-  toClientError(error: AppSyncError): Error {
+  toClientError(
+    error: { errorType: string; message: string } | GraphQLError,
+  ): Error {
     this.log.debug('GraphQL call failed', { error })
-    switch (error.errorType) {
+    const errorType = 'errorType' in error ? error.errorType : error.message
+
+    switch (errorType) {
       case 'sudoplatform.email.IdentityContextMissing':
         return new NotRegisteredError(error.message)
       case 'sudoplatform.email.EmailValidation':

@@ -5,10 +5,9 @@
  */
 
 import {
-  CachePolicy,
-  DefaultLogger,
-  Buffer as BufferUtil,
   Base64,
+  Buffer as BufferUtil,
+  DefaultLogger,
 } from '@sudoplatform/sudo-common'
 import {
   EmailAddress,
@@ -21,9 +20,8 @@ import {
   SudoEmailClient,
   UnauthorizedAddressError,
 } from '../../../src'
-import { SudoProfilesClient, Sudo } from '@sudoplatform/sudo-profiles'
+import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
-import { EmailMessageDetails } from '../../../src/private/util/rfc822MessageDataProcessor'
 import { EmailConfigurationDataService } from '../../../src/private/domain/entities/configuration/configurationDataService'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import {
@@ -33,9 +31,7 @@ import {
 import { provisionEmailMask } from '../util/provisionEmailMask'
 import { constructSendMessageInputSansSenderId } from '../util/emailMessage'
 import waitForExpect from 'wait-for-expect'
-import _ from 'lodash'
 import { OOTO_SIMULATOR_ADDRESS, SUCCESS_SIMULATOR_ADDRESS } from '../util/data'
-import fs from 'fs'
 import { v4 } from 'uuid'
 import { getRandomElement } from '../../../src/private/util/array'
 import {

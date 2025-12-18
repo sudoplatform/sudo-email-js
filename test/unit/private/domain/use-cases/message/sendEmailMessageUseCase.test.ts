@@ -57,9 +57,9 @@ describe('SendEmailMessageUseCase', () => {
     reset(mockEmailDomainService)
     reset(mockEmailConfigurationDataService)
 
-    when(
-      mockEmailDomainService.getConfiguredEmailDomains(anything()),
-    ).thenResolve([EntityDataFactory.emailDomain])
+    when(mockEmailDomainService.getConfiguredEmailDomains()).thenResolve([
+      EntityDataFactory.emailDomain,
+    ])
     when(mockEmailConfigurationDataService.getConfigurationData()).thenResolve({
       sendEncryptedEmailEnabled: true,
       emailMessageMaxOutboundMessageSize,
@@ -82,9 +82,7 @@ describe('SendEmailMessageUseCase', () => {
         inlineAttachments,
       })
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
-      verify(
-        mockEmailDomainService.getConfiguredEmailDomains(anything()),
-      ).once()
+      verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
       verify(mockMessageService.sendMessage(anything())).once()
       const [actualSendInput] = capture(mockMessageService.sendMessage).first()
       expect(actualSendInput).toStrictEqual<typeof actualSendInput>({
@@ -120,9 +118,7 @@ describe('SendEmailMessageUseCase', () => {
         }),
       ).resolves.toStrictEqual({ id: idResult, createdAt: timestamp })
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
-      verify(
-        mockEmailDomainService.getConfiguredEmailDomains(anything()),
-      ).once()
+      verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
       verify(mockMessageService.sendMessage(anything())).once()
     })
 
@@ -158,9 +154,7 @@ describe('SendEmailMessageUseCase', () => {
         }),
       ).resolves.toStrictEqual({ id: idResult, createdAt: timestamp })
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
-      verify(
-        mockEmailDomainService.getConfiguredEmailDomains(anything()),
-      ).once()
+      verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
       verify(mockMessageService.sendMessage(anything())).once()
     })
 
@@ -184,9 +178,7 @@ describe('SendEmailMessageUseCase', () => {
         }),
       ).resolves.toStrictEqual({ id: idResult, createdAt: timestamp })
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
-      verify(
-        mockEmailDomainService.getConfiguredEmailDomains(anything()),
-      ).once()
+      verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
       verify(mockMessageService.sendMessage(anything())).once()
     })
 
@@ -199,9 +191,7 @@ describe('SendEmailMessageUseCase', () => {
         inlineAttachments,
       })
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
-      verify(
-        mockEmailDomainService.getConfiguredEmailDomains(anything()),
-      ).once()
+      verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
       verify(mockMessageService.sendMessage(anything())).once()
       const [actualSendInput] = capture(mockMessageService.sendMessage).first()
       expect(actualSendInput).toStrictEqual<typeof actualSendInput>({
@@ -237,9 +227,7 @@ describe('SendEmailMessageUseCase', () => {
         }),
       ).resolves.toStrictEqual({ id: idResult, createdAt: timestamp })
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
-      verify(
-        mockEmailDomainService.getConfiguredEmailDomains(anything()),
-      ).once()
+      verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
       verify(mockMessageService.sendMessage(anything())).once()
     })
   })
@@ -281,9 +269,7 @@ describe('SendEmailMessageUseCase', () => {
         inlineAttachments,
       })
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
-      verify(
-        mockEmailDomainService.getConfiguredEmailDomains(anything()),
-      ).once()
+      verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
       verify(mockAccountService.lookupPublicInfo(anything())).once()
       verify(mockMessageService.sendEncryptedMessage(anything())).once()
       const [actualSendInput] = capture(
@@ -345,9 +331,7 @@ describe('SendEmailMessageUseCase', () => {
         }),
       ).resolves.toStrictEqual({ id: idResult, createdAt: timestamp })
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
-      verify(
-        mockEmailDomainService.getConfiguredEmailDomains(anything()),
-      ).once()
+      verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
       verify(mockAccountService.lookupPublicInfo(anything())).once()
       verify(mockMessageService.sendEncryptedMessage(anything())).once()
     })
@@ -395,9 +379,7 @@ describe('SendEmailMessageUseCase', () => {
         }),
       ).rejects.toThrow(InNetworkAddressNotFoundError)
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
-      verify(
-        mockEmailDomainService.getConfiguredEmailDomains(anything()),
-      ).once()
+      verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
       verify(mockAccountService.lookupPublicInfo(anything())).once()
     })
 
@@ -414,9 +396,7 @@ describe('SendEmailMessageUseCase', () => {
         inlineAttachments,
       })
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
-      verify(
-        mockEmailDomainService.getConfiguredEmailDomains(anything()),
-      ).once()
+      verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
       verify(mockAccountService.lookupPublicInfo(anything())).once()
       verify(mockMessageService.sendEncryptedMessage(anything())).once()
       const [actualSendInput] = capture(
@@ -479,9 +459,7 @@ describe('SendEmailMessageUseCase', () => {
         }),
       ).resolves.toStrictEqual({ id: idResult, createdAt: timestamp })
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
-      verify(
-        mockEmailDomainService.getConfiguredEmailDomains(anything()),
-      ).once()
+      verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
       verify(mockAccountService.lookupPublicInfo(anything())).once()
       verify(mockMessageService.sendEncryptedMessage(anything())).once()
     })

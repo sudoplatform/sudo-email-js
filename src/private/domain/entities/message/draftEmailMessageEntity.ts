@@ -13,7 +13,6 @@ import { DraftEmailMessageMetadataEntity } from './draftEmailMessageMetadataEnti
  * @extends DraftEmailMessageMetadataEntity
  * @property {ArrayBuffer} rfc822Data The encrypted RFC822 data of the draft
  */
-export interface DraftEmailMessageEntity
-  extends DraftEmailMessageMetadataEntity {
+export interface DraftEmailMessageEntity extends DraftEmailMessageMetadataEntity {
   rfc822Data: ArrayBuffer
 }

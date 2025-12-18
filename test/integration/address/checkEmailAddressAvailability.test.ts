@@ -5,7 +5,6 @@
  */
 
 import {
-  CachePolicy,
   DefaultLogger,
   NotAuthorizedError,
   SudoKeyManager,
@@ -47,9 +46,7 @@ describe('SudoEmailClient checkEmailAddressAvailability Test Suite', () => {
     sudoOwnershipProofToken = result.ownershipProofToken
     profilesClient = result.profilesClient
 
-    supportedDomains = await instanceUnderTest.getSupportedEmailDomains(
-      CachePolicy.RemoteOnly,
-    )
+    supportedDomains = await instanceUnderTest.getSupportedEmailDomains()
 
     expect(supportedDomains.length).toBeGreaterThanOrEqual(1)
   })

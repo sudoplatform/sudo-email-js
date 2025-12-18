@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy, DefaultLogger } from '@sudoplatform/sudo-common'
+import { DefaultLogger } from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import _ from 'lodash'
@@ -58,7 +58,6 @@ describe('SudoEmailClient GetEmailAddress Test Suite', () => {
       await expect(
         instanceUnderTest.getEmailAddress({
           id: emailAddresses[0].id,
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).resolves.toStrictEqual(emailAddresses[0])
     })
@@ -66,7 +65,6 @@ describe('SudoEmailClient GetEmailAddress Test Suite', () => {
       await expect(
         instanceUnderTest.getEmailAddress({
           id: v4(),
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).resolves.toBeUndefined()
     })

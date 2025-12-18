@@ -4,16 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
-import {
-  anything,
-  capture,
-  instance,
-  mock,
-  reset,
-  verify,
-  when,
-} from 'ts-mockito'
+import { instance, mock, reset, verify, when } from 'ts-mockito'
 import { EntityDataFactory } from '../../../../data-factory/entity'
 import { EmailDomainService } from '../../../../../../src/private/domain/entities/emailDomain/emailDomainService'
 import { GetEmailMaskDomainsUseCase } from '../../../../../../src/private/domain/use-cases/emailDomain/getEmailMaskDomainsUseCase'
@@ -34,33 +25,19 @@ describe('GetEmailMaskDomainsUseCase Test Suite', () => {
 
   describe('execute', () => {
     it('completes successfully returning expected single email mask domain', async () => {
-      when(mockEmailDomainService.getEmailMaskDomains(anything())).thenResolve([
+      when(mockEmailDomainService.getEmailMaskDomains()).thenResolve([
         domains[0],
       ])
-      const result = await instanceUnderTest.execute(CachePolicy.CacheOnly)
+      const result = await instanceUnderTest.execute()
       expect(result).toStrictEqual([domains[0]])
-      const [inputArgs] = capture(
-        mockEmailDomainService.getEmailMaskDomains,
-      ).first()
-      expect(inputArgs).toStrictEqual<typeof inputArgs>({
-        cachePolicy: CachePolicy.CacheOnly,
-      })
-      verify(mockEmailDomainService.getEmailMaskDomains(anything())).once()
+      verify(mockEmailDomainService.getEmailMaskDomains()).once()
     })
 
     it('completes successfully returning expected multiple email mask domains', async () => {
-      when(mockEmailDomainService.getEmailMaskDomains(anything())).thenResolve(
-        domains,
-      )
-      const result = await instanceUnderTest.execute(CachePolicy.CacheOnly)
+      when(mockEmailDomainService.getEmailMaskDomains()).thenResolve(domains)
+      const result = await instanceUnderTest.execute()
       expect(result).toStrictEqual(domains)
-      const [inputArgs] = capture(
-        mockEmailDomainService.getEmailMaskDomains,
-      ).first()
-      expect(inputArgs).toStrictEqual<typeof inputArgs>({
-        cachePolicy: CachePolicy.CacheOnly,
-      })
-      verify(mockEmailDomainService.getEmailMaskDomains(anything())).once()
+      verify(mockEmailDomainService.getEmailMaskDomains()).once()
     })
   })
 })

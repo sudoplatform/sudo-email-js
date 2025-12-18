@@ -5,7 +5,6 @@
  */
 
 import {
-  CachePolicy,
   DefaultLogger,
   DefaultSudoKeyArchive,
   DefaultSudoKeyManager,
@@ -465,29 +464,23 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     }
   }
 
-  public async getSupportedEmailDomains(
-    cachePolicy: CachePolicy,
-  ): Promise<string[]> {
+  public async getSupportedEmailDomains(): Promise<string[]> {
     const useCase = new GetSupportedEmailDomainsUseCase(this.emailDomainService)
-    const result = await useCase.execute(cachePolicy)
+    const result = await useCase.execute()
     return result.map((domain) => domain.domain)
   }
 
-  public async getConfiguredEmailDomains(
-    cachePolicy: CachePolicy,
-  ): Promise<string[]> {
+  public async getConfiguredEmailDomains(): Promise<string[]> {
     const useCase = new GetConfiguredEmailDomainsUseCase(
       this.emailDomainService,
     )
-    const result = await useCase.execute(cachePolicy)
+    const result = await useCase.execute()
     return result.map((domain) => domain.domain)
   }
 
-  public async getEmailMaskDomains(
-    cachePolicy: CachePolicy = CachePolicy.RemoteOnly,
-  ): Promise<string[]> {
+  public async getEmailMaskDomains(): Promise<string[]> {
     const useCase = new GetEmailMaskDomainsUseCase(this.emailDomainService)
-    const result = await useCase.execute(cachePolicy)
+    const result = await useCase.execute()
     return result.map((domain) => domain.domain)
   }
 
@@ -514,17 +507,14 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
 
   public async getEmailAddress({
     id,
-    cachePolicy,
   }: GetEmailAddressInput): Promise<EmailAddress | undefined> {
     return await this.mutex.runExclusive(async () => {
       this.log.debug(this.getEmailAddress.name, {
         id,
-        cachePolicy,
       })
       const useCase = new GetEmailAccountUseCase(this.emailAccountService)
       const result = await useCase.execute({
         id,
-        cachePolicy,
       })
       const transformer = new EmailAddressAPITransformer()
       return result ? transformer.transformEntity(result) : undefined
@@ -538,7 +528,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       this.log.debug(this.listEmailAddresses.name, { input })
       const useCase = new ListEmailAccountsUseCase(this.emailAccountService)
       const { emailAccounts, nextToken: resultNextToken } =
-        await useCase.execute(input)
+        await useCase.execute(input ?? {})
       const transformer = new ListEmailAddressesAPITransformer()
       const result = transformer.transform(emailAccounts, resultNextToken)
       return result
@@ -547,14 +537,12 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
 
   public async listEmailAddressesForSudoId({
     sudoId,
-    cachePolicy,
     limit,
     nextToken,
   }: ListEmailAddressesForSudoIdInput): Promise<ListEmailAddressesResult> {
     return await this.mutex.runExclusive(async () => {
       this.log.debug(this.listEmailAddressesForSudoId.name, {
         sudoId,
-        cachePolicy,
         limit,
         nextToken,
       })
@@ -562,7 +550,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
         this.emailAccountService,
       )
       const { emailAccounts, nextToken: resultNextToken } =
-        await useCase.execute({ sudoId, cachePolicy, limit, nextToken })
+        await useCase.execute({ sudoId, limit, nextToken })
       const transformer = new ListEmailAddressesAPITransformer()
       const result = transformer.transform(emailAccounts, resultNextToken)
       return result
@@ -589,13 +577,11 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
 
   public async listEmailFoldersForEmailAddressId({
     emailAddressId,
-    cachePolicy,
     limit,
     nextToken,
   }: ListEmailFoldersForEmailAddressIdInput): Promise<ListOutput<EmailFolder>> {
     this.log.debug(this.listEmailFoldersForEmailAddressId.name, {
       emailAddressId,
-      cachePolicy,
       limit,
       nextToken,
     })
@@ -604,7 +590,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     )
     const { folders, nextToken: resultNextToken } = await useCase.execute({
       emailAddressId,
-      cachePolicy,
       limit,
       nextToken,
     })
@@ -984,7 +969,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     filter,
     limit,
     nextToken,
-    cachePolicy,
   }: ListScheduledDraftMessagesForEmailAddressIdInput): Promise<
     ListOutput<ScheduledDraftMessage>
   > {
@@ -993,7 +977,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       filter,
       limit,
       nextToken,
-      cachePolicy,
     })
 
     const useCase = new ListScheduledDraftMessagesForEmailAddressIdUseCase(
@@ -1007,7 +990,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
         filter,
         limit,
         nextToken,
-        cachePolicy,
       })
 
     return {
@@ -1018,16 +1000,13 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
 
   public async getEmailMessage({
     id,
-    cachePolicy,
   }: GetEmailMessageInput): Promise<EmailMessage | undefined> {
     this.log.debug(this.getEmailMessage.name, {
       id,
-      cachePolicy,
     })
     const useCase = new GetEmailMessageUseCase(this.emailMessageService)
     const result = await useCase.execute({
       id,
-      cachePolicy,
     })
     const transformer = new EmailMessageAPITransformer()
     return result ? transformer.transformEntity(result) : undefined
@@ -1060,7 +1039,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
 
   public async listEmailMessages({
     dateRange,
-    cachePolicy,
     limit,
     sortOrder,
     nextToken,
@@ -1068,7 +1046,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   }: ListEmailMessagesInput): Promise<ListEmailMessagesResult> {
     this.log.debug(this.listEmailMessages.name, {
       dateRange,
-      cachePolicy,
       limit,
       sortOrder,
       nextToken,
@@ -1078,7 +1055,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const { emailMessages, nextToken: resultNextToken } = await useCase.execute(
       {
         dateRange,
-        cachePolicy,
         limit,
         sortOrder,
         nextToken,
@@ -1093,7 +1069,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async listEmailMessagesForEmailAddressId({
     emailAddressId,
     dateRange,
-    cachePolicy,
     limit,
     sortOrder,
     nextToken,
@@ -1102,7 +1077,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     this.log.debug(this.listEmailMessagesForEmailAddressId.name, {
       emailAddressId,
       dateRange,
-      cachePolicy,
       limit,
       sortOrder,
       nextToken,
@@ -1115,7 +1089,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       {
         emailAddressId,
         dateRange,
-        cachePolicy,
         limit,
         sortOrder,
         nextToken,
@@ -1130,7 +1103,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async listEmailMessagesForEmailFolderId({
     folderId,
     dateRange,
-    cachePolicy,
     limit,
     sortOrder,
     nextToken,
@@ -1139,7 +1111,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     this.log.debug(this.listEmailMessagesForEmailFolderId.name, {
       folderId,
       dateRange,
-      cachePolicy,
       limit,
       sortOrder,
       nextToken,
@@ -1152,7 +1123,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       {
         folderId,
         dateRange,
-        cachePolicy,
         limit,
         sortOrder,
         nextToken,

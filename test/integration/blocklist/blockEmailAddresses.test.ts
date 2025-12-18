@@ -5,7 +5,6 @@
  */
 
 import {
-  CachePolicy,
   DefaultLogger,
   ListOperationResultStatus,
 } from '@sudoplatform/sudo-common'
@@ -109,7 +108,6 @@ describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
     await waitForExpect(async () => {
       sent = await instanceUnderTest.getEmailMessage({
         id: result.id,
-        cachePolicy: CachePolicy.RemoteOnly,
       })
       expect(sent).toBeDefined()
     })
@@ -188,7 +186,6 @@ describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
       async () => {
         messages = await instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: inboxFolder!.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
 
         if (messages.status !== ListOperationResultStatus.Success) {
@@ -221,7 +218,6 @@ describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
       async () => {
         messages = await instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: inboxFolder!.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
 
         if (messages.status !== ListOperationResultStatus.Success) {
@@ -255,7 +251,6 @@ describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
       async () => {
         messages = await instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: inboxFolder!.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
 
         if (messages.status !== ListOperationResultStatus.Success) {
@@ -333,7 +328,6 @@ describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
       async () => {
         messages = await instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: folder.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
 
         if (messages.status !== ListOperationResultStatus.Success) {
@@ -403,7 +397,6 @@ describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
     await waitForExpect(async () => {
       sent = await instanceUnderTest.getEmailMessage({
         id: result.id,
-        cachePolicy: CachePolicy.RemoteOnly,
       })
       expect(sent).toBeDefined()
     })
@@ -416,7 +409,6 @@ describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
         const messages =
           await instanceUnderTest.listEmailMessagesForEmailFolderId({
             folderId: receiver2InboxFolder!.id,
-            cachePolicy: CachePolicy.RemoteOnly,
           })
 
         if (messages.status !== ListOperationResultStatus.Success) {
@@ -434,7 +426,6 @@ describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
         const messages =
           await instanceUnderTest.listEmailMessagesForEmailFolderId({
             folderId: receiverInboxFolder!.id,
-            cachePolicy: CachePolicy.RemoteOnly,
           })
 
         if (messages.status !== ListOperationResultStatus.Success) {
@@ -481,7 +472,6 @@ describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
       async () => {
         messages = await instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: inboxFolder!.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
 
         if (messages.status !== ListOperationResultStatus.Success) {

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
 import {
   anything,
   capture,
@@ -52,17 +51,15 @@ describe('SudoEmailClient.getEmailAccount Test Suite', () => {
   it('generates use case', async () => {
     await instanceUnderTest.getEmailAddress({
       id: '',
-      cachePolicy: CachePolicy.CacheOnly,
     })
     expect(JestMockGetEmailAccountUseCase).toHaveBeenCalledTimes(1)
   })
   it('calls use case as expected', async () => {
     const id = v4()
-    const cachePolicy = CachePolicy.CacheOnly
-    await instanceUnderTest.getEmailAddress({ id, cachePolicy })
+    await instanceUnderTest.getEmailAddress({ id })
     verify(mockGetEmailAccountUseCase.execute(anything())).once()
     const [actualArgs] = capture(mockGetEmailAccountUseCase.execute).first()
-    expect(actualArgs).toEqual<typeof actualArgs>({ id, cachePolicy })
+    expect(actualArgs).toEqual<typeof actualArgs>({ id })
   })
 
   it('returns undefined if use case result is undefined', async () => {
@@ -70,7 +67,6 @@ describe('SudoEmailClient.getEmailAccount Test Suite', () => {
     await expect(
       instanceUnderTest.getEmailAddress({
         id: '',
-        cachePolicy: CachePolicy.CacheOnly,
       }),
     ).resolves.toBeUndefined()
   })
@@ -78,7 +74,6 @@ describe('SudoEmailClient.getEmailAccount Test Suite', () => {
     await expect(
       instanceUnderTest.getEmailAddress({
         id: '',
-        cachePolicy: CachePolicy.CacheOnly,
       }),
     ).resolves.toEqual(APIDataFactory.emailAddress)
   })

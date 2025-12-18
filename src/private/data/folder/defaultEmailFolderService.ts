@@ -16,18 +16,17 @@ import {
 } from '../../domain/entities/folder/emailFolderService'
 import { ApiClient } from '../common/apiClient'
 import {
-  SealedAttributeInput,
   CreateCustomEmailFolderInput,
   DeleteCustomEmailFolderInput,
-  UpdateCustomEmailFolderInput,
   DeleteMessagesByFolderIdInput as DeleteMessagesByFolderIdRequest,
+  SealedAttributeInput,
+  UpdateCustomEmailFolderInput,
 } from '../../../gen/graphqlTypes'
-import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransformer'
 import { EmailFolderEntityTransformer } from './transformer/emailFolderEntityTransformer'
 import { DeviceKeyWorker, KeyType } from '../common/deviceKeyWorker'
 import {
-  EncryptionAlgorithm,
   Buffer as BufferUtil,
+  EncryptionAlgorithm,
 } from '@sudoplatform/sudo-common'
 import { KeyNotFoundError } from '@sudoplatform/sudo-web-crypto-provider'
 
@@ -42,16 +41,11 @@ export class DefaultEmailFolderService implements EmailFolderService {
 
   async listEmailFoldersForEmailAddressId({
     emailAddressId,
-    cachePolicy,
     limit,
     nextToken,
   }: ListEmailFoldersForEmailAddressIdInput): Promise<ListEmailFoldersForEmailAddressIdOutput> {
-    const fetchPolicy = cachePolicy
-      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
-      : undefined
     const result = await this.appSync.listEmailFoldersForEmailAddressId(
       emailAddressId,
-      fetchPolicy,
       limit,
       nextToken,
     )

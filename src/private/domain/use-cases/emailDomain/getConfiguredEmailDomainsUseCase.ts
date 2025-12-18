@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy, DefaultLogger, Logger } from '@sudoplatform/sudo-common'
+import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { EmailDomainEntity } from '../../entities/emailDomain/emailDomainEntity'
 import { EmailDomainService } from '../../entities/emailDomain/emailDomainService'
 
@@ -18,12 +18,8 @@ export class GetConfiguredEmailDomainsUseCase {
     this.log = new DefaultLogger(this.constructor.name)
   }
 
-  async execute(cachePolicy: CachePolicy): Promise<EmailDomainEntity[]> {
-    this.log.debug(this.constructor.name, {
-      cachePolicy,
-    })
-    return await this.emailDomainService.getConfiguredEmailDomains({
-      cachePolicy,
-    })
+  async execute(): Promise<EmailDomainEntity[]> {
+    this.log.debug(this.constructor.name)
+    return await this.emailDomainService.getConfiguredEmailDomains()
   }
 }

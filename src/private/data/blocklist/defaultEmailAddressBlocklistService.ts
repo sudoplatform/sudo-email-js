@@ -40,9 +40,7 @@ import {
   UnsealedBlockedAddress,
 } from '../../domain/entities/blocklist/blockedEmailEntity'
 
-export class DefaultEmailAddressBlocklistService
-  implements EmailAddressBlocklistService
-{
+export class DefaultEmailAddressBlocklistService implements EmailAddressBlocklistService {
   private readonly log: Logger
   private readonly parser: EmailAddressParser
   constructor(

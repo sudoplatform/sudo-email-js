@@ -5,7 +5,6 @@
  */
 
 import {
-  CachePolicy,
   DefaultLogger,
   ListOperationResultStatus,
 } from '@sudoplatform/sudo-common'
@@ -24,7 +23,6 @@ import {
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { getFolderByName } from '../util/folder'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
-import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 
 describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
   jest.setTimeout(240000)
@@ -94,7 +92,6 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
     const messages = await instanceUnderTest.listEmailMessagesForEmailAddressId(
       {
         emailAddressId: emailAddress.id,
-        cachePolicy: CachePolicy.RemoteOnly,
       },
     )
     if (messages.status !== ListOperationResultStatus.Success) {
@@ -138,7 +135,6 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
     const messages = await instanceUnderTest.listEmailMessagesForEmailAddressId(
       {
         emailAddressId: emailAddress.id,
-        cachePolicy: CachePolicy.RemoteOnly,
       },
     )
     if (messages.status !== ListOperationResultStatus.Success) {
@@ -191,7 +187,6 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
     const messages = await instanceUnderTest.listEmailMessagesForEmailAddressId(
       {
         emailAddressId: emailAddress.id,
-        cachePolicy: CachePolicy.RemoteOnly,
       },
     )
     if (messages.status !== ListOperationResultStatus.Success) {
@@ -238,7 +233,6 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
       const messages =
         await instanceUnderTest.listEmailMessagesForEmailAddressId({
           emailAddressId: emailAddress.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
       if (messages.status !== ListOperationResultStatus.Success) {
         fail(`Expect result not returned: ${messages}`)

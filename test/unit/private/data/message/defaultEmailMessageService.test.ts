@@ -6,11 +6,10 @@
 
 import {
   Base64,
-  CachePolicy,
+  Buffer as BufferUtil,
   DecodeError,
   KeyNotFoundError,
   PublicKeyFormat,
-  Buffer as BufferUtil,
 } from '@sudoplatform/sudo-common'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import {
@@ -33,10 +32,10 @@ import {
   UpdateEmailMessagesInput,
 } from '../../../../../src'
 import {
-  OnEmailMessageDeletedSubscription,
-  UpdateEmailMessagesStatus,
-  ScheduledDraftMessageState as ScheduledDraftMessageStateGql,
   EmailMessageEncryptionStatus,
+  OnEmailMessageDeletedSubscription,
+  ScheduledDraftMessageState as ScheduledDraftMessageStateGql,
+  UpdateEmailMessagesStatus,
 } from '../../../../../src/gen/graphqlTypes'
 import { ApiClient } from '../../../../../src/private/data/common/apiClient'
 import {
@@ -54,7 +53,6 @@ import {
 import { SubscriptionManager } from '../../../../../src/private/data/common/subscriptionManager'
 import { DefaultEmailMessageService } from '../../../../../src/private/data/message/defaultEmailMessageService'
 import { DraftEmailMessageEntity } from '../../../../../src/private/domain/entities/message/draftEmailMessageEntity'
-import { DraftEmailMessageMetadataEntity } from '../../../../../src/private/domain/entities/message/draftEmailMessageMetadataEntity'
 import { EmailMessageServiceDeleteDraftsError } from '../../../../../src/private/domain/entities/message/emailMessageService'
 import {
   InternalError,
@@ -639,18 +637,16 @@ describe('DefaultEmailMessageService Test Suite', () => {
     })
 
     it('calls appsync correctly', async () => {
-      when(mockAppSync.getEmailMessage(anything(), anything())).thenResolve(
+      when(mockAppSync.getEmailMessage(anything())).thenResolve(
         GraphQLDataFactory.sealedEmailMessage,
       )
       const id = v4()
       const result = await instanceUnderTest.getMessage({
         id,
-        cachePolicy: CachePolicy.CacheOnly,
       })
-      verify(mockAppSync.getEmailMessage(anything(), anything())).once()
-      const [idArg, policyArg] = capture(mockAppSync.getEmailMessage).first()
+      verify(mockAppSync.getEmailMessage(anything())).once()
+      const [idArg] = capture(mockAppSync.getEmailMessage).first()
       expect(idArg).toStrictEqual<typeof idArg>(id)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(result).toEqual(EntityDataFactory.emailMessage)
     })
 
@@ -662,19 +658,17 @@ describe('DefaultEmailMessageService Test Suite', () => {
     `(
       'unseals correctly when hasAttachments is $name',
       async ({ json, expected }) => {
-        when(mockAppSync.getEmailMessage(anything(), anything())).thenResolve(
+        when(mockAppSync.getEmailMessage(anything())).thenResolve(
           GraphQLDataFactory.sealedEmailMessage,
         )
         when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(json)
         const id = v4()
         const result = await instanceUnderTest.getMessage({
           id,
-          cachePolicy: CachePolicy.CacheOnly,
         })
-        verify(mockAppSync.getEmailMessage(anything(), anything())).once()
-        const [idArg, policyArg] = capture(mockAppSync.getEmailMessage).first()
+        verify(mockAppSync.getEmailMessage(anything())).once()
+        const [idArg] = capture(mockAppSync.getEmailMessage).first()
         expect(idArg).toStrictEqual<typeof idArg>(id)
-        expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
         expect(result).toEqual({
           ...EntityDataFactory.emailMessage,
           hasAttachments: expected,
@@ -687,19 +681,17 @@ describe('DefaultEmailMessageService Test Suite', () => {
       ${unsealedHeaderDetailsString}       | ${'set'}   | ${new Date(2.0)}
       ${unsealedHeaderDetailsNoDateString} | ${'unset'} | ${undefined}
     `('unseals correctly when date is $name', async ({ json, expected }) => {
-      when(mockAppSync.getEmailMessage(anything(), anything())).thenResolve(
+      when(mockAppSync.getEmailMessage(anything())).thenResolve(
         GraphQLDataFactory.sealedEmailMessage,
       )
       when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(json)
       const id = v4()
       const result = await instanceUnderTest.getMessage({
         id,
-        cachePolicy: CachePolicy.CacheOnly,
       })
-      verify(mockAppSync.getEmailMessage(anything(), anything())).once()
-      const [idArg, policyArg] = capture(mockAppSync.getEmailMessage).first()
+      verify(mockAppSync.getEmailMessage(anything())).once()
+      const [idArg] = capture(mockAppSync.getEmailMessage).first()
       expect(idArg).toStrictEqual<typeof idArg>(id)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(result).toEqual({
         ...EntityDataFactory.emailMessage,
         date: expected,
@@ -707,41 +699,29 @@ describe('DefaultEmailMessageService Test Suite', () => {
     })
 
     it('calls appsync correctly with undefined result', async () => {
-      when(mockAppSync.getEmailMessage(anything(), anything())).thenResolve(
-        undefined,
-      )
+      when(mockAppSync.getEmailMessage(anything())).thenResolve(undefined)
       const id = v4()
       const result = await instanceUnderTest.getMessage({
         id,
-        cachePolicy: CachePolicy.CacheOnly,
       })
-      verify(mockAppSync.getEmailMessage(anything(), anything())).once()
-      const [idArg, policyArg] = capture(mockAppSync.getEmailMessage).first()
+      verify(mockAppSync.getEmailMessage(anything())).once()
+      const [idArg] = capture(mockAppSync.getEmailMessage).first()
       expect(idArg).toStrictEqual<typeof idArg>(id)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(result).toEqual(undefined)
     })
 
-    it.each`
-      cachePolicy               | test
-      ${CachePolicy.CacheOnly}  | ${'cache'}
-      ${CachePolicy.RemoteOnly} | ${'remote'}
-    `(
-      'returns transformed result when calling $test',
-      async ({ cachePolicy }) => {
-        when(mockAppSync.getEmailMessage(anything(), anything())).thenResolve(
-          GraphQLDataFactory.sealedEmailMessage,
-        )
-        const id = v4()
-        await expect(
-          instanceUnderTest.getMessage({
-            id,
-            cachePolicy,
-          }),
-        ).resolves.toEqual(EntityDataFactory.emailMessage)
-        verify(mockAppSync.getEmailMessage(anything(), anything())).once()
-      },
-    )
+    it('returns transformed result', async () => {
+      when(mockAppSync.getEmailMessage(anything())).thenResolve(
+        GraphQLDataFactory.sealedEmailMessage,
+      )
+      const id = v4()
+      await expect(
+        instanceUnderTest.getMessage({
+          id,
+        }),
+      ).resolves.toEqual(EntityDataFactory.emailMessage)
+      verify(mockAppSync.getEmailMessage(anything())).once()
+    })
   })
 
   describe('listMessages', () => {
@@ -759,12 +739,9 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
-      const result = await instanceUnderTest.listMessages({
-        cachePolicy: CachePolicy.CacheOnly,
-      })
+      const result = await instanceUnderTest.listMessages({})
       verify(
         mockAppSync.listEmailMessages(
           anything(),
@@ -772,11 +749,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).once()
-      const [policyArg] = capture(mockAppSync.listEmailMessages).first()
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(result).toStrictEqual({
         emailMessages: [EntityDataFactory.emailMessage],
         nextToken: undefined,
@@ -799,12 +773,9 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
-            anything(),
           ),
         ).thenResolve(GraphQLDataFactory.emailMessageConnection)
-        const result = await instanceUnderTest.listMessages({
-          cachePolicy: CachePolicy.CacheOnly,
-        })
+        const result = await instanceUnderTest.listMessages({})
         verify(
           mockAppSync.listEmailMessages(
             anything(),
@@ -812,11 +783,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
-            anything(),
           ),
         ).once()
-        const [policyArg] = capture(mockAppSync.listEmailMessages).first()
-        expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
         expect(result).toStrictEqual({
           emailMessages: [
             {
@@ -842,12 +810,9 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
-      const result = await instanceUnderTest.listMessages({
-        cachePolicy: CachePolicy.CacheOnly,
-      })
+      const result = await instanceUnderTest.listMessages({})
       verify(
         mockAppSync.listEmailMessages(
           anything(),
@@ -855,11 +820,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).once()
-      const [policyArg] = capture(mockAppSync.listEmailMessages).first()
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(result).toStrictEqual({
         emailMessages: [
           {
@@ -871,43 +833,30 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
     })
 
-    it.each`
-      cachePolicy               | test
-      ${CachePolicy.CacheOnly}  | ${'cache'}
-      ${CachePolicy.RemoteOnly} | ${'remote'}
-    `(
-      'returns transformed result when calling $test',
-      async ({ cachePolicy }) => {
-        when(
-          mockAppSync.listEmailMessages(
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-          ),
-        ).thenResolve(GraphQLDataFactory.emailMessageConnection)
-        await expect(
-          instanceUnderTest.listMessages({
-            cachePolicy,
-          }),
-        ).resolves.toStrictEqual({
-          emailMessages: [EntityDataFactory.emailMessage],
-          nextToken: undefined,
-        })
-        verify(
-          mockAppSync.listEmailMessages(
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-          ),
-        ).once()
-      },
-    )
+    it('returns transformed result', async () => {
+      when(
+        mockAppSync.listEmailMessages(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+      await expect(instanceUnderTest.listMessages({})).resolves.toStrictEqual({
+        emailMessages: [EntityDataFactory.emailMessage],
+        nextToken: undefined,
+      })
+      verify(
+        mockAppSync.listEmailMessages(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).once()
+    })
 
     it.each`
       sortOrder         | test
@@ -921,12 +870,10 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       await expect(
         instanceUnderTest.listMessages({
-          cachePolicy: CachePolicy.CacheOnly,
           sortOrder,
         }),
       ).resolves.toStrictEqual({
@@ -935,7 +882,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessages(
-          anything(),
           anything(),
           anything(),
           anything(),
@@ -953,11 +899,9 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const result = await instanceUnderTest.listMessages({
-        cachePolicy: CachePolicy.CacheOnly,
         dateRange: {
           sortDate: {
             startDate: new Date(1),
@@ -965,10 +909,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           },
         },
       })
-      const [policyArg, dateRangeArg] = capture(
-        mockAppSync.listEmailMessages,
-      ).first()
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+      const [dateRangeArg] = capture(mockAppSync.listEmailMessages).first()
       expect(dateRangeArg).toStrictEqual(<typeof dateRangeArg>{
         sortDateEpochMs: {
           endDateEpochMs: 2,
@@ -986,7 +927,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).once()
     })
@@ -999,11 +939,9 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const result = await instanceUnderTest.listMessages({
-        cachePolicy: CachePolicy.CacheOnly,
         dateRange: {
           updatedAt: {
             startDate: new Date(1),
@@ -1011,10 +949,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           },
         },
       })
-      const [policyArg, dateRangeArg] = capture(
-        mockAppSync.listEmailMessages,
-      ).first()
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+      const [dateRangeArg] = capture(mockAppSync.listEmailMessages).first()
       expect(dateRangeArg).toStrictEqual(<typeof dateRangeArg>{
         updatedAtEpochMs: {
           endDateEpochMs: 2,
@@ -1023,7 +958,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessages(
-          anything(),
           anything(),
           anything(),
           anything(),
@@ -1041,26 +975,21 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const result = await instanceUnderTest.listMessages({
-        cachePolicy: CachePolicy.CacheOnly,
         includeDeletedMessages: true,
       })
       const [
-        policyArg,
         dateRangeArg,
         limitArg,
         sortOrderArg,
         nextTokenArg,
         includeDeletedMessagesArg,
       ] = capture(mockAppSync.listEmailMessages).first()
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(includeDeletedMessagesArg).toStrictEqual(true)
       verify(
         mockAppSync.listEmailMessages(
-          anything(),
           anything(),
           anything(),
           anything(),
@@ -1087,13 +1016,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const emailAddressId = v4()
       const result = await instanceUnderTest.listMessagesForEmailAddressId({
         emailAddressId,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       verify(
         mockAppSync.listEmailMessagesForEmailAddressId(
@@ -1103,14 +1030,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).once()
-      const [inputArg, policyArg] = capture(
+      const [inputArg] = capture(
         mockAppSync.listEmailMessagesForEmailAddressId,
       ).first()
       expect(inputArg).toStrictEqual<typeof inputArg>(emailAddressId)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(result).toStrictEqual({
         emailMessages: [EntityDataFactory.emailMessage],
         nextToken: undefined,
@@ -1134,13 +1059,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
-            anything(),
           ),
         ).thenResolve(GraphQLDataFactory.emailMessageConnection)
         const emailAddressId = v4()
         const result = await instanceUnderTest.listMessagesForEmailAddressId({
           emailAddressId,
-          cachePolicy: CachePolicy.CacheOnly,
         })
         verify(
           mockAppSync.listEmailMessagesForEmailAddressId(
@@ -1150,14 +1073,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
-            anything(),
           ),
         ).once()
-        const [inputArg, policyArg] = capture(
+        const [inputArg] = capture(
           mockAppSync.listEmailMessagesForEmailAddressId,
         ).first()
         expect(inputArg).toStrictEqual<typeof inputArg>(emailAddressId)
-        expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
         expect(result).toStrictEqual({
           emailMessages: [
             {
@@ -1184,13 +1105,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const emailAddressId = v4()
       const result = await instanceUnderTest.listMessagesForEmailAddressId({
         emailAddressId,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       verify(
         mockAppSync.listEmailMessagesForEmailAddressId(
@@ -1200,14 +1119,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).once()
-      const [inputArg, policyArg] = capture(
+      const [inputArg] = capture(
         mockAppSync.listEmailMessagesForEmailAddressId,
       ).first()
       expect(inputArg).toStrictEqual<typeof inputArg>(emailAddressId)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(result).toStrictEqual({
         emailMessages: [
           {
@@ -1219,47 +1136,37 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
     })
 
-    it.each`
-      cachePolicy               | test
-      ${CachePolicy.CacheOnly}  | ${'cache'}
-      ${CachePolicy.RemoteOnly} | ${'remote'}
-    `(
-      'returns transformed result when calling $test',
-      async ({ cachePolicy }) => {
-        when(
-          mockAppSync.listEmailMessagesForEmailAddressId(
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-          ),
-        ).thenResolve(GraphQLDataFactory.emailMessageConnection)
-        const emailAddressId = v4()
-        await expect(
-          instanceUnderTest.listMessagesForEmailAddressId({
-            emailAddressId,
-            cachePolicy,
-          }),
-        ).resolves.toStrictEqual({
-          emailMessages: [EntityDataFactory.emailMessage],
-          nextToken: undefined,
-        })
-        verify(
-          mockAppSync.listEmailMessagesForEmailAddressId(
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-          ),
-        ).once()
-      },
-    )
+    it('returns transformed result', async () => {
+      when(
+        mockAppSync.listEmailMessagesForEmailAddressId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+      const emailAddressId = v4()
+      await expect(
+        instanceUnderTest.listMessagesForEmailAddressId({
+          emailAddressId,
+        }),
+      ).resolves.toStrictEqual({
+        emailMessages: [EntityDataFactory.emailMessage],
+        nextToken: undefined,
+      })
+      verify(
+        mockAppSync.listEmailMessagesForEmailAddressId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).once()
+    })
 
     it.each`
       sortOrder         | test
@@ -1274,14 +1181,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const emailAddressId = v4()
       await expect(
         instanceUnderTest.listMessagesForEmailAddressId({
           emailAddressId,
-          cachePolicy: CachePolicy.CacheOnly,
           sortOrder,
         }),
       ).resolves.toStrictEqual({
@@ -1290,7 +1195,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessagesForEmailAddressId(
-          anything(),
           anything(),
           anything(),
           anything(),
@@ -1310,7 +1214,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const emailAddressId = v4()
@@ -1322,13 +1225,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
             endDate: new Date(2),
           },
         },
-        cachePolicy: CachePolicy.CacheOnly,
       })
-      const [idArg, policyArg, dateRangeArg] = capture(
+      const [idArg, dateRangeArg] = capture(
         mockAppSync.listEmailMessagesForEmailAddressId,
       ).first()
       expect(idArg).toStrictEqual<typeof idArg>(emailAddressId)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(dateRangeArg).toStrictEqual(<typeof dateRangeArg>{
         sortDateEpochMs: {
           endDateEpochMs: 2,
@@ -1341,7 +1242,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessagesForEmailAddressId(
-          anything(),
           anything(),
           anything(),
           anything(),
@@ -1361,7 +1261,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const emailAddressId = v4()
@@ -1373,13 +1272,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
             endDate: new Date(2),
           },
         },
-        cachePolicy: CachePolicy.CacheOnly,
       })
-      const [idArg, policyArg, dateRangeArg] = capture(
+      const [idArg, dateRangeArg] = capture(
         mockAppSync.listEmailMessagesForEmailAddressId,
       ).first()
       expect(idArg).toStrictEqual<typeof idArg>(emailAddressId)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(dateRangeArg).toStrictEqual(<typeof dateRangeArg>{
         updatedAtEpochMs: {
           endDateEpochMs: 2,
@@ -1392,7 +1289,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessagesForEmailAddressId(
-          anything(),
           anything(),
           anything(),
           anything(),
@@ -1412,18 +1308,15 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const emailAddressId = v4()
       const result = await instanceUnderTest.listMessagesForEmailAddressId({
         emailAddressId,
-        cachePolicy: CachePolicy.CacheOnly,
         includeDeletedMessages: true,
       })
       const [
         idArg,
-        policyArg,
         dateRangeArg,
         limitArg,
         sortOrderArg,
@@ -1431,7 +1324,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
         includeDeletedMessagesArg,
       ] = capture(mockAppSync.listEmailMessagesForEmailAddressId).first()
       expect(idArg).toStrictEqual<typeof idArg>(emailAddressId)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(includeDeletedMessagesArg).toStrictEqual(true)
       expect(result).toStrictEqual({
         emailMessages: [EntityDataFactory.emailMessage],
@@ -1439,7 +1331,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessagesForEmailAddressId(
-          anything(),
           anything(),
           anything(),
           anything(),
@@ -1467,13 +1358,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const folderId = v4()
       const result = await instanceUnderTest.listMessagesForEmailFolderId({
         folderId,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       verify(
         mockAppSync.listEmailMessagesForEmailFolderId(
@@ -1483,14 +1372,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).once()
-      const [inputArg, policyArg] = capture(
+      const [inputArg] = capture(
         mockAppSync.listEmailMessagesForEmailFolderId,
       ).first()
       expect(inputArg).toStrictEqual<typeof inputArg>(folderId)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(result).toStrictEqual({
         emailMessages: [EntityDataFactory.emailMessage],
         nextToken: undefined,
@@ -1514,13 +1401,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
-            anything(),
           ),
         ).thenResolve(GraphQLDataFactory.emailMessageConnection)
         const folderId = v4()
         const result = await instanceUnderTest.listMessagesForEmailFolderId({
           folderId,
-          cachePolicy: CachePolicy.CacheOnly,
         })
         verify(
           mockAppSync.listEmailMessagesForEmailFolderId(
@@ -1530,14 +1415,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
-            anything(),
           ),
         ).once()
-        const [inputArg, policyArg] = capture(
+        const [inputArg] = capture(
           mockAppSync.listEmailMessagesForEmailFolderId,
         ).first()
         expect(inputArg).toStrictEqual<typeof inputArg>(folderId)
-        expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
         expect(result).toStrictEqual({
           emailMessages: [
             {
@@ -1564,13 +1447,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const folderId = v4()
       const result = await instanceUnderTest.listMessagesForEmailFolderId({
         folderId,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       verify(
         mockAppSync.listEmailMessagesForEmailFolderId(
@@ -1580,14 +1461,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).once()
-      const [inputArg, policyArg] = capture(
+      const [inputArg] = capture(
         mockAppSync.listEmailMessagesForEmailFolderId,
       ).first()
       expect(inputArg).toStrictEqual<typeof inputArg>(folderId)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(result).toStrictEqual({
         emailMessages: [
           {
@@ -1599,47 +1478,37 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
     })
 
-    it.each`
-      cachePolicy               | test
-      ${CachePolicy.CacheOnly}  | ${'cache'}
-      ${CachePolicy.RemoteOnly} | ${'remote'}
-    `(
-      'returns transformed result when calling $test',
-      async ({ cachePolicy }) => {
-        when(
-          mockAppSync.listEmailMessagesForEmailFolderId(
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-          ),
-        ).thenResolve(GraphQLDataFactory.emailMessageConnection)
-        const folderId = v4()
-        await expect(
-          instanceUnderTest.listMessagesForEmailFolderId({
-            folderId,
-            cachePolicy,
-          }),
-        ).resolves.toStrictEqual({
-          emailMessages: [EntityDataFactory.emailMessage],
-          nextToken: undefined,
-        })
-        verify(
-          mockAppSync.listEmailMessagesForEmailFolderId(
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-          ),
-        ).once()
-      },
-    )
+    it('returns transformed result', async () => {
+      when(
+        mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(GraphQLDataFactory.emailMessageConnection)
+      const folderId = v4()
+      await expect(
+        instanceUnderTest.listMessagesForEmailFolderId({
+          folderId,
+        }),
+      ).resolves.toStrictEqual({
+        emailMessages: [EntityDataFactory.emailMessage],
+        nextToken: undefined,
+      })
+      verify(
+        mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).once()
+    })
 
     it.each`
       sortOrder         | test
@@ -1654,14 +1523,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const folderId = v4()
       await expect(
         instanceUnderTest.listMessagesForEmailFolderId({
           folderId,
-          cachePolicy: CachePolicy.CacheOnly,
           sortOrder,
         }),
       ).resolves.toStrictEqual({
@@ -1670,7 +1537,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessagesForEmailFolderId(
-          anything(),
           anything(),
           anything(),
           anything(),
@@ -1690,7 +1556,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const folderId = v4()
@@ -1702,13 +1567,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
             endDate: new Date(2),
           },
         },
-        cachePolicy: CachePolicy.CacheOnly,
       })
-      const [idArg, policyArg, dateRangeArg] = capture(
+      const [idArg, dateRangeArg] = capture(
         mockAppSync.listEmailMessagesForEmailFolderId,
       ).first()
       expect(idArg).toStrictEqual<typeof idArg>(folderId)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(dateRangeArg).toStrictEqual(<typeof dateRangeArg>{
         sortDateEpochMs: {
           endDateEpochMs: 2,
@@ -1721,7 +1584,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessagesForEmailFolderId(
-          anything(),
           anything(),
           anything(),
           anything(),
@@ -1741,7 +1603,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const folderId = v4()
@@ -1753,13 +1614,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
             endDate: new Date(2),
           },
         },
-        cachePolicy: CachePolicy.CacheOnly,
       })
-      const [idArg, policyArg, dateRangeArg] = capture(
+      const [idArg, dateRangeArg] = capture(
         mockAppSync.listEmailMessagesForEmailFolderId,
       ).first()
       expect(idArg).toStrictEqual<typeof idArg>(folderId)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(dateRangeArg).toStrictEqual(<typeof dateRangeArg>{
         updatedAtEpochMs: {
           endDateEpochMs: 2,
@@ -1768,7 +1627,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessagesForEmailFolderId(
-          anything(),
           anything(),
           anything(),
           anything(),
@@ -1788,18 +1646,15 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const folderId = v4()
       const result = await instanceUnderTest.listMessagesForEmailFolderId({
         folderId,
-        cachePolicy: CachePolicy.CacheOnly,
         includeDeletedMessages: true,
       })
       const [
         idArg,
-        policyArg,
         dateRangeArg,
         limitArg,
         sortOrderArg,
@@ -1807,7 +1662,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
         includeDeletedMessagesArg,
       ] = capture(mockAppSync.listEmailMessagesForEmailFolderId).first()
       expect(idArg).toStrictEqual<typeof idArg>(folderId)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(includeDeletedMessagesArg).toStrictEqual(true)
       expect(result).toStrictEqual({
         emailMessages: [EntityDataFactory.emailMessage],
@@ -1815,7 +1669,6 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessagesForEmailFolderId(
-          anything(),
           anything(),
           anything(),
           anything(),
@@ -2587,10 +2440,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
   describe('listScheduledDraftMessagesForEmailAddressId', () => {
     beforeEach(() => {
       when(
-        mockAppSync.listScheduledDraftMessagesForEmailAddressId(
-          anything(),
-          anything(),
-        ),
+        mockAppSync.listScheduledDraftMessagesForEmailAddressId(anything()),
       ).thenResolve(GraphQLDataFactory.scheduledDraftMessageConnection)
     })
 
@@ -2623,10 +2473,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
 
       verify(
-        mockAppSync.listScheduledDraftMessagesForEmailAddressId(
-          anything(),
-          anything(),
-        ),
+        mockAppSync.listScheduledDraftMessagesForEmailAddressId(anything()),
       ).once()
       const [listArgs] = capture(
         mockAppSync.listScheduledDraftMessagesForEmailAddressId,
@@ -2721,13 +2568,10 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(mockS3Client.download(anything())).once()
 
-      const [idArg, fetchPolicyArg] = capture(
-        mockAppSync.getEmailMessage,
-      ).first()
+      const [idArg] = capture(mockAppSync.getEmailMessage).first()
       expect(idArg).toStrictEqual(
         EmailMessageRfc822DataFactory.getEmailMessageInput.id,
       )
-      expect(fetchPolicyArg).toBeUndefined()
       verify(mockAppSync.getEmailMessage(anything())).once()
       expect(gunzipSpy).toHaveBeenCalledTimes(0)
     })
@@ -2753,13 +2597,10 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(mockS3Client.download(anything())).once()
 
-      const [idArg, fetchPolicyArg] = capture(
-        mockAppSync.getEmailMessage,
-      ).first()
+      const [idArg] = capture(mockAppSync.getEmailMessage).first()
       expect(idArg).toStrictEqual(
         EmailMessageRfc822DataFactory.getEmailMessageInput.id,
       )
-      expect(fetchPolicyArg).toBeUndefined()
       verify(mockAppSync.getEmailMessage(anything())).once()
       expect(gunzipSpy).toHaveBeenCalledTimes(1)
     })
@@ -2784,13 +2625,10 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(mockS3Client.download(anything())).once()
 
-      const [idArg, fetchPolicyArg] = capture(
-        mockAppSync.getEmailMessage,
-      ).first()
+      const [idArg] = capture(mockAppSync.getEmailMessage).first()
       expect(idArg).toStrictEqual(
         EmailMessageRfc822DataFactory.getEmailMessageInput.id,
       )
-      expect(fetchPolicyArg).toBeUndefined()
       verify(mockAppSync.getEmailMessage(anything())).once()
       expect(gunzipSpy).toHaveBeenCalledTimes(0)
     })
@@ -2839,13 +2677,10 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(mockS3Client.download(anything())).once()
 
-      const [idArg, fetchPolicyArg] = capture(
-        mockAppSync.getEmailMessage,
-      ).first()
+      const [idArg] = capture(mockAppSync.getEmailMessage).first()
       expect(idArg).toStrictEqual(
         EmailMessageRfc822DataFactory.getEmailMessageInput.id,
       )
-      expect(fetchPolicyArg).toBeUndefined()
       verify(mockAppSync.getEmailMessage(anything())).once()
       expect(gunzipSpy).toHaveBeenCalledTimes(0)
       expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(1)
@@ -2890,13 +2725,10 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(mockS3Client.download(anything())).once()
 
-      const [idArg, fetchPolicyArg] = capture(
-        mockAppSync.getEmailMessage,
-      ).first()
+      const [idArg] = capture(mockAppSync.getEmailMessage).first()
       expect(idArg).toStrictEqual(
         EmailMessageRfc822DataFactory.getEmailMessageInput.id,
       )
-      expect(fetchPolicyArg).toBeUndefined()
       verify(mockAppSync.getEmailMessage(anything())).once()
       expect(gunzipSpy).toHaveBeenCalledTimes(0)
     })
@@ -2924,13 +2756,10 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(mockS3Client.download(anything())).once()
 
-      const [idArg, fetchPolicyArg] = capture(
-        mockAppSync.getEmailMessage,
-      ).first()
+      const [idArg] = capture(mockAppSync.getEmailMessage).first()
       expect(idArg).toStrictEqual(
         EmailMessageRfc822DataFactory.getEmailMessageInput.id,
       )
-      expect(fetchPolicyArg).toBeUndefined()
       verify(mockAppSync.getEmailMessage(anything())).once()
       expect(gunzipSpy).toHaveBeenCalledTimes(0)
     })
@@ -2945,13 +2774,10 @@ describe('DefaultEmailMessageService Test Suite', () => {
       ).resolves.toBeUndefined()
 
       verify(mockS3Client.download(anything())).never()
-      const [idArg, fetchPolicyArg] = capture(
-        mockAppSync.getEmailMessage,
-      ).first()
+      const [idArg] = capture(mockAppSync.getEmailMessage).first()
       expect(idArg).toStrictEqual(
         EmailMessageRfc822DataFactory.getEmailMessageInput.id,
       )
-      expect(fetchPolicyArg).toBeUndefined()
       verify(mockAppSync.getEmailMessage(anything())).once()
       expect(gunzipSpy).toHaveBeenCalledTimes(0)
     })
@@ -3087,9 +2913,9 @@ describe('DefaultEmailMessageService Test Suite', () => {
     const mockOwnerId = 'owner-id'
     const mockSubscriberId = 'subscriber-id'
 
-    it('calls services correctly', () => {
+    it('calls services correctly', async () => {
       when(mockSubscriptionManager.getWatcher()).thenReturn(null)
-      instanceUnderTest.subscribeToEmailMessages({
+      await instanceUnderTest.subscribeToEmailMessages({
         subscriptionId: mockOwnerId,
         ownerId: mockSubscriberId,
         subscriber: {

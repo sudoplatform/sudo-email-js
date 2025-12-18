@@ -5,7 +5,6 @@
  */
 
 import {
-  CachePolicy,
   EncryptionAlgorithm,
   KeyNotFoundError,
 } from '@sudoplatform/sudo-common'
@@ -319,23 +318,21 @@ describe('DefaultEmailAccountService Test Suite', () => {
 
   describe('get', () => {
     it('calls appsync correctly', async () => {
-      when(mockAppSync.getEmailAddress(anything(), anything())).thenResolve(
+      when(mockAppSync.getEmailAddress(anything())).thenResolve(
         GraphQLDataFactory.emailAddress,
       )
       const id = v4()
       const result = await instanceUnderTest.get({
         id,
-        cachePolicy: CachePolicy.CacheOnly,
       })
-      verify(mockAppSync.getEmailAddress(anything(), anything())).once()
-      const [inputArg, policyArg] = capture(mockAppSync.getEmailAddress).first()
+      verify(mockAppSync.getEmailAddress(anything())).once()
+      const [inputArg] = capture(mockAppSync.getEmailAddress).first()
       expect(inputArg).toStrictEqual<typeof inputArg>(id)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(result).toEqual(EntityDataFactory.emailAccount)
     })
 
     it('calls unseal when email address has alias', async () => {
-      when(mockAppSync.getEmailAddress(anything(), anything())).thenResolve(
+      when(mockAppSync.getEmailAddress(anything())).thenResolve(
         GraphQLDataFactory.emailAddressWithAlias,
       )
       when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
@@ -348,12 +345,10 @@ describe('DefaultEmailAccountService Test Suite', () => {
       const id = v4()
       const result = await instanceUnderTest.get({
         id,
-        cachePolicy: CachePolicy.CacheOnly,
       })
-      verify(mockAppSync.getEmailAddress(anything(), anything())).once()
-      const [inputArg, policyArg] = capture(mockAppSync.getEmailAddress).first()
+      verify(mockAppSync.getEmailAddress(anything())).once()
+      const [inputArg] = capture(mockAppSync.getEmailAddress).first()
       expect(inputArg).toStrictEqual<typeof inputArg>(id)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(result).toEqual(
         EntityDataFactory.emailAccountWithEmailAddressAlias,
       )
@@ -361,7 +356,7 @@ describe('DefaultEmailAccountService Test Suite', () => {
     })
 
     it('tolerates unseal failure on alias', async () => {
-      when(mockAppSync.getEmailAddress(anything(), anything())).thenResolve(
+      when(mockAppSync.getEmailAddress(anything())).thenResolve(
         GraphQLDataFactory.emailAddressWithAlias,
       )
       when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
@@ -374,12 +369,10 @@ describe('DefaultEmailAccountService Test Suite', () => {
       const id = v4()
       const result = await instanceUnderTest.get({
         id,
-        cachePolicy: CachePolicy.CacheOnly,
       })
-      verify(mockAppSync.getEmailAddress(anything(), anything())).once()
-      const [inputArg, policyArg] = capture(mockAppSync.getEmailAddress).first()
+      verify(mockAppSync.getEmailAddress(anything())).once()
+      const [inputArg] = capture(mockAppSync.getEmailAddress).first()
       expect(inputArg).toStrictEqual<typeof inputArg>(id)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(result).toEqual({
         ...EntityDataFactory.emailAccountWithEmailAddressAlias,
         emailAddress: {
@@ -391,56 +384,38 @@ describe('DefaultEmailAccountService Test Suite', () => {
     })
 
     it('calls appsync correctly with undefined result', async () => {
-      when(mockAppSync.getEmailAddress(anything(), anything())).thenResolve(
-        undefined,
-      )
+      when(mockAppSync.getEmailAddress(anything())).thenResolve(undefined)
       const id = v4()
       const result = await instanceUnderTest.get({
         id,
-        cachePolicy: CachePolicy.CacheOnly,
       })
-      verify(mockAppSync.getEmailAddress(anything(), anything())).once()
-      const [inputArg, policyArg] = capture(mockAppSync.getEmailAddress).first()
+      verify(mockAppSync.getEmailAddress(anything())).once()
+      const [inputArg] = capture(mockAppSync.getEmailAddress).first()
       expect(inputArg).toStrictEqual<typeof inputArg>(id)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(result).toEqual(undefined)
     })
 
-    it.each`
-      cachePolicy               | test
-      ${CachePolicy.CacheOnly}  | ${'cache'}
-      ${CachePolicy.RemoteOnly} | ${'remote'}
-    `(
-      'returns transformed result when calling $test',
-      async ({ cachePolicy }) => {
-        when(mockAppSync.getEmailAddress(anything(), anything())).thenResolve(
-          GraphQLDataFactory.emailAddress,
-        )
-        const id = v4()
-        await expect(
-          instanceUnderTest.get({
-            id,
-            cachePolicy,
-          }),
-        ).resolves.toEqual(EntityDataFactory.emailAccount)
-        verify(mockAppSync.getEmailAddress(anything(), anything())).once()
-      },
-    )
+    it('returns transformed result when calling getEmailAddress', async () => {
+      when(mockAppSync.getEmailAddress(anything())).thenResolve(
+        GraphQLDataFactory.emailAddress,
+      )
+      const id = v4()
+      await expect(
+        instanceUnderTest.get({
+          id,
+        }),
+      ).resolves.toEqual(EntityDataFactory.emailAccount)
+      verify(mockAppSync.getEmailAddress(anything())).once()
+    })
   })
 
   describe('list', () => {
     it('calls appsync correctly', async () => {
-      when(
-        mockAppSync.listEmailAddresses(anything(), anything(), anything()),
-      ).thenResolve(GraphQLDataFactory.emailAddressConnection)
-      const result = await instanceUnderTest.list({
-        cachePolicy: CachePolicy.CacheOnly,
-      })
-      verify(
-        mockAppSync.listEmailAddresses(anything(), anything(), anything()),
-      ).once()
-      const [policyArg] = capture(mockAppSync.listEmailAddresses).first()
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
+      when(mockAppSync.listEmailAddresses(anything(), anything())).thenResolve(
+        GraphQLDataFactory.emailAddressConnection,
+      )
+      const result = await instanceUnderTest.list({})
+      verify(mockAppSync.listEmailAddresses(anything(), anything())).once()
       expect(result).toStrictEqual({
         emailAccounts: [EntityDataFactory.emailAccount],
         nextToken: undefined,
@@ -448,9 +423,9 @@ describe('DefaultEmailAccountService Test Suite', () => {
     })
 
     it('calls unseal when alias found', async () => {
-      when(
-        mockAppSync.listEmailAddresses(anything(), anything(), anything()),
-      ).thenResolve(GraphQLDataFactory.emailAddressWithAliasConnection)
+      when(mockAppSync.listEmailAddresses(anything(), anything())).thenResolve(
+        GraphQLDataFactory.emailAddressWithAliasConnection,
+      )
       when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
         true,
       )
@@ -460,18 +435,12 @@ describe('DefaultEmailAccountService Test Suite', () => {
       const numberOfEmailAddresses =
         GraphQLDataFactory.emailAddressWithAliasConnection.items.length
 
-      const result = await instanceUnderTest.list({
-        cachePolicy: CachePolicy.CacheOnly,
-      })
+      const result = await instanceUnderTest.list({})
 
-      verify(
-        mockAppSync.listEmailAddresses(anything(), anything(), anything()),
-      ).once()
+      verify(mockAppSync.listEmailAddresses(anything(), anything())).once()
       verify(mockDeviceKeyWorker.unsealString(anything())).times(
         numberOfEmailAddresses,
       )
-      const [policyArg] = capture(mockAppSync.listEmailAddresses).first()
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(result).toStrictEqual({
         emailAccounts: [EntityDataFactory.emailAccountWithEmailAddressAlias],
         nextToken: undefined,
@@ -479,9 +448,7 @@ describe('DefaultEmailAccountService Test Suite', () => {
     })
 
     it('returns partial result with KeyNotFoundError when alias key missing', async () => {
-      when(
-        mockAppSync.listEmailAddresses(anything(), anything(), anything()),
-      ).thenResolve({
+      when(mockAppSync.listEmailAddresses(anything(), anything())).thenResolve({
         items: [
           GraphQLDataFactory.emailAddressWithAlias,
           {
@@ -505,13 +472,9 @@ describe('DefaultEmailAccountService Test Suite', () => {
       when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
         'Some Alias',
       )
-      const result = await instanceUnderTest.list({
-        cachePolicy: CachePolicy.CacheOnly,
-      })
+      const result = await instanceUnderTest.list({})
 
-      verify(
-        mockAppSync.listEmailAddresses(anything(), anything(), anything()),
-      ).once()
+      verify(mockAppSync.listEmailAddresses(anything(), anything())).once()
       expect(result).toStrictEqual({
         emailAccounts: [
           {
@@ -531,9 +494,7 @@ describe('DefaultEmailAccountService Test Suite', () => {
     })
 
     it('returns partial result with KeyNotFoundError when message key missing', async () => {
-      when(
-        mockAppSync.listEmailAddresses(anything(), anything(), anything()),
-      ).thenResolve({
+      when(mockAppSync.listEmailAddresses(anything(), anything())).thenResolve({
         items: [
           GraphQLDataFactory.emailAddressWithAlias,
           {
@@ -553,13 +514,9 @@ describe('DefaultEmailAccountService Test Suite', () => {
         'Some Alias',
       )
 
-      const result = await instanceUnderTest.list({
-        cachePolicy: CachePolicy.CacheOnly,
-      })
+      const result = await instanceUnderTest.list({})
 
-      verify(
-        mockAppSync.listEmailAddresses(anything(), anything(), anything()),
-      ).once()
+      verify(mockAppSync.listEmailAddresses(anything(), anything())).once()
       expect(result).toStrictEqual({
         emailAccounts: [
           {
@@ -578,29 +535,16 @@ describe('DefaultEmailAccountService Test Suite', () => {
       })
     })
 
-    it.each`
-      cachePolicy               | test
-      ${CachePolicy.CacheOnly}  | ${'cache'}
-      ${CachePolicy.RemoteOnly} | ${'remote'}
-    `(
-      'returns transformed result when calling $test',
-      async ({ cachePolicy }) => {
-        when(
-          mockAppSync.listEmailAddresses(anything(), anything(), anything()),
-        ).thenResolve(GraphQLDataFactory.emailAddressConnection)
-        await expect(
-          instanceUnderTest.list({
-            cachePolicy,
-          }),
-        ).resolves.toStrictEqual({
-          emailAccounts: [EntityDataFactory.emailAccount],
-          nextToken: undefined,
-        })
-        verify(
-          mockAppSync.listEmailAddresses(anything(), anything(), anything()),
-        ).once()
-      },
-    )
+    it('returns transformed result', async () => {
+      when(mockAppSync.listEmailAddresses(anything(), anything())).thenResolve(
+        GraphQLDataFactory.emailAddressConnection,
+      )
+      await expect(instanceUnderTest.list({})).resolves.toStrictEqual({
+        emailAccounts: [EntityDataFactory.emailAccount],
+        nextToken: undefined,
+      })
+      verify(mockAppSync.listEmailAddresses(anything(), anything())).once()
+    })
   })
 
   describe('listForSudoId', () => {
@@ -610,27 +554,23 @@ describe('DefaultEmailAccountService Test Suite', () => {
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailAddressConnection)
       const sudoId = v4()
       const result = await instanceUnderTest.listForSudoId({
         sudoId,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       verify(
         mockAppSync.listEmailAddressesForSudoId(
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).once()
-      const [inputArg, policyArg] = capture(
+      const [inputArg] = capture(
         mockAppSync.listEmailAddressesForSudoId,
       ).first()
       expect(inputArg).toStrictEqual<typeof inputArg>(sudoId)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(result).toStrictEqual({
         emailAccounts: [EntityDataFactory.emailAccount],
         nextToken: undefined,
@@ -640,7 +580,6 @@ describe('DefaultEmailAccountService Test Suite', () => {
     it('calls unseal correctly', async () => {
       when(
         mockAppSync.listEmailAddressesForSudoId(
-          anything(),
           anything(),
           anything(),
           anything(),
@@ -656,63 +595,50 @@ describe('DefaultEmailAccountService Test Suite', () => {
       const sudoId = v4()
       const result = await instanceUnderTest.listForSudoId({
         sudoId,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       verify(
         mockAppSync.listEmailAddressesForSudoId(
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).once()
       verify(mockDeviceKeyWorker.unsealString(anything())).once()
-      const [inputArg, policyArg] = capture(
+      const [inputArg] = capture(
         mockAppSync.listEmailAddressesForSudoId,
       ).first()
       expect(inputArg).toStrictEqual<typeof inputArg>(sudoId)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
       expect(result).toStrictEqual({
         emailAccounts: [EntityDataFactory.emailAccountWithEmailAddressAlias],
         nextToken: undefined,
       })
     })
 
-    it.each`
-      cachePolicy               | test
-      ${CachePolicy.CacheOnly}  | ${'cache'}
-      ${CachePolicy.RemoteOnly} | ${'remote'}
-    `(
-      'returns transformed result when calling $test',
-      async ({ cachePolicy }) => {
-        when(
-          mockAppSync.listEmailAddressesForSudoId(
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-          ),
-        ).thenResolve(GraphQLDataFactory.emailAddressConnection)
-        const sudoId = v4()
-        await expect(
-          instanceUnderTest.listForSudoId({
-            sudoId,
-            cachePolicy,
-          }),
-        ).resolves.toStrictEqual({
-          emailAccounts: [EntityDataFactory.emailAccount],
-          nextToken: undefined,
-        })
-        verify(
-          mockAppSync.listEmailAddressesForSudoId(
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-          ),
-        ).once()
-      },
-    )
+    it('returns transformed result when calling $test', async () => {
+      when(
+        mockAppSync.listEmailAddressesForSudoId(
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).thenResolve(GraphQLDataFactory.emailAddressConnection)
+      const sudoId = v4()
+      await expect(
+        instanceUnderTest.listForSudoId({
+          sudoId,
+        }),
+      ).resolves.toStrictEqual({
+        emailAccounts: [EntityDataFactory.emailAccount],
+        nextToken: undefined,
+      })
+      verify(
+        mockAppSync.listEmailAddressesForSudoId(
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).once()
+    })
   })
 
   describe('lookupPublicInfo', () => {

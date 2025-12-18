@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
 import {
   anything,
   capture,
@@ -60,7 +59,6 @@ describe('SudoEmailClient.listEmailMessagesForEmailAddressId Test Suite', () => 
     const emailAddressId = v4()
     await instanceUnderTest.listEmailMessagesForEmailAddressId({
       emailAddressId,
-      cachePolicy: CachePolicy.CacheOnly,
       limit: 0,
       sortOrder: SortOrder.Desc,
       nextToken: '',
@@ -71,7 +69,6 @@ describe('SudoEmailClient.listEmailMessagesForEmailAddressId Test Suite', () => 
   })
   it('calls use case as expected', async () => {
     const emailAddressId = v4()
-    const cachePolicy = CachePolicy.CacheOnly
     const dateRange: EmailMessageDateRange = {
       sortDate: {
         startDate: new Date(1.0),
@@ -83,7 +80,6 @@ describe('SudoEmailClient.listEmailMessagesForEmailAddressId Test Suite', () => 
     const nextToken = v4()
     await instanceUnderTest.listEmailMessagesForEmailAddressId({
       emailAddressId,
-      cachePolicy,
       dateRange,
       limit,
       sortOrder,
@@ -97,7 +93,6 @@ describe('SudoEmailClient.listEmailMessagesForEmailAddressId Test Suite', () => 
     ).first()
     expect(actualArgs).toEqual<typeof actualArgs>({
       emailAddressId,
-      cachePolicy,
       dateRange,
       limit,
       sortOrder,
@@ -115,7 +110,6 @@ describe('SudoEmailClient.listEmailMessagesForEmailAddressId Test Suite', () => 
     await expect(
       instanceUnderTest.listEmailMessagesForEmailAddressId({
         emailAddressId,
-        cachePolicy: CachePolicy.CacheOnly,
       }),
     ).resolves.toEqual({ status: 'Success', items: [], nextToken: undefined })
   })
@@ -124,7 +118,6 @@ describe('SudoEmailClient.listEmailMessagesForEmailAddressId Test Suite', () => 
     await expect(
       instanceUnderTest.listEmailMessagesForEmailAddressId({
         emailAddressId,
-        cachePolicy: CachePolicy.CacheOnly,
       }),
     ).resolves.toEqual({
       status: 'Success',

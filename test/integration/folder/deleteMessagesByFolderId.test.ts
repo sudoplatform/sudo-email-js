@@ -5,10 +5,8 @@
  */
 
 import {
-  CachePolicy,
   DefaultLogger,
   ListOperationResultStatus,
-  ServiceError,
 } from '@sudoplatform/sudo-common'
 import {
   AddressNotFoundError,
@@ -116,7 +114,6 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
       const listResult =
         await instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: inboxFolder.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
       if (listResult.status !== ListOperationResultStatus.Success) {
         fail('List result not successful')
@@ -135,7 +132,6 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
       await expect(
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: inboxFolder.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).resolves.toStrictEqual<ListEmailMessagesResult>({
         nextToken: undefined,
@@ -187,7 +183,6 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
       const listResult =
         await instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: inboxFolder.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
       if (listResult.status !== ListOperationResultStatus.Success) {
         fail('list result not successful')
@@ -206,7 +201,6 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
       await expect(
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: inboxFolder.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).resolves.toStrictEqual<ListEmailMessagesResult>({
         nextToken: undefined,
@@ -268,7 +262,6 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
       const listResult =
         await instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: inboxFolder.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
       if (listResult.status !== ListOperationResultStatus.Success) {
         fail('list result not successful')
@@ -288,7 +281,6 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
       await expect(
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: inboxFolder.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).resolves.toStrictEqual<ListEmailMessagesResult>({
         nextToken: undefined,
@@ -301,7 +293,6 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
       const listResult =
         await instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: trashFolder.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
       if (listResult.status !== ListOperationResultStatus.Success) {
         fail('list result not successful')
@@ -353,7 +344,6 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
       const listResult =
         await instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: inboxFolder.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
       if (listResult.status !== ListOperationResultStatus.Success) {
         fail('List result not successful')
@@ -372,7 +362,6 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
       const listResult =
         await instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: trashFolder.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
       if (listResult.status !== ListOperationResultStatus.Success) {
         fail('List result not successful')
@@ -392,7 +381,6 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
       await expect(
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: trashFolder.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).resolves.toStrictEqual<ListEmailMessagesResult>({
         nextToken: undefined,
@@ -440,7 +428,6 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
       const listResult =
         await instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: inboxFolder.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
       if (listResult.status !== ListOperationResultStatus.Success) {
         fail('List result not successful')
@@ -459,7 +446,6 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
       const listResult =
         await instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: customFolder.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
       if (listResult.status !== ListOperationResultStatus.Success) {
         fail('List result not successful')
@@ -479,7 +465,6 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
       await expect(
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: customFolder.id,
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).resolves.toStrictEqual<ListEmailMessagesResult>({
         nextToken: undefined,

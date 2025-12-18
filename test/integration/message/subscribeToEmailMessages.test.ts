@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
-  CachePolicy,
   DefaultLogger,
   ListOperationResultStatus,
 } from '@sudoplatform/sudo-common'
@@ -24,7 +23,7 @@ import { ApiClient } from '../../../src/private/data/common/apiClient'
 import { S3Client } from '../../../src/private/data/common/s3Client'
 import { DeviceKeyWorker } from '../../../src/private/data/common/deviceKeyWorker'
 import { DefaultEmailMessageService } from '../../../src/private/data/message/defaultEmailMessageService'
-import { Observable } from 'apollo-client/util/Observable'
+import Observable from 'zen-observable'
 import { EmailServiceConfig } from '../../../src/private/data/common/config'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { EmailCryptoService } from '../../../src/private/domain/entities/secure/emailCryptoService'
@@ -106,7 +105,6 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
     const messages = await instanceUnderTest.listEmailMessagesForEmailAddressId(
       {
         emailAddressId: emailAddress.id,
-        cachePolicy: CachePolicy.RemoteOnly,
       },
     )
     if (messages.status !== ListOperationResultStatus.Success) {
@@ -375,7 +373,12 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
         message: 'message',
         statusCode: 401,
       }
-      when(mockAppSync.onEmailMessageDeleted(anything())).thenReturn(
+      when(mockAppSync.onEmailMessageDeleted(anything())).thenResolve(
+        new Observable((observer) => {
+          observer.error(networkError)
+        }),
+      )
+      when(mockAppSync.onEmailMessageUpdated(anything())).thenResolve(
         new Observable((observer) => {
           observer.error(networkError)
         }),
@@ -384,7 +387,7 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
       let latestConnectionStatus: ConnectionState = ConnectionState.Disconnected
       let connectionStatusChangedCalled = false
 
-      emailMessageService.subscribeToEmailMessages({
+      await emailMessageService.subscribeToEmailMessages({
         ownerId: 'owner-id',
         subscriptionId: 'subscribe-id',
         subscriber: {

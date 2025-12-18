@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
 import {
   anything,
   capture,
@@ -59,7 +58,6 @@ describe('SudoEmailClient.listEmailAccountsForSudoId Test Suite', () => {
     const sudoId = v4()
     await instanceUnderTest.listEmailAddressesForSudoId({
       sudoId,
-      cachePolicy: CachePolicy.CacheOnly,
       limit: 0,
       nextToken: '',
     })
@@ -67,12 +65,10 @@ describe('SudoEmailClient.listEmailAccountsForSudoId Test Suite', () => {
   })
   it('calls use case as expected', async () => {
     const sudoId = v4()
-    const cachePolicy = CachePolicy.CacheOnly
     const limit = 100
     const nextToken = v4()
     await instanceUnderTest.listEmailAddressesForSudoId({
       sudoId,
-      cachePolicy,
       limit,
       nextToken,
     })
@@ -82,7 +78,6 @@ describe('SudoEmailClient.listEmailAccountsForSudoId Test Suite', () => {
     ).first()
     expect(actualArgs).toEqual<typeof actualArgs>({
       sudoId,
-      cachePolicy,
       limit,
       nextToken,
     })
@@ -98,7 +93,6 @@ describe('SudoEmailClient.listEmailAccountsForSudoId Test Suite', () => {
     await expect(
       instanceUnderTest.listEmailAddressesForSudoId({
         sudoId,
-        cachePolicy: CachePolicy.CacheOnly,
       }),
     ).resolves.toStrictEqual({
       status: 'Success',
@@ -111,7 +105,6 @@ describe('SudoEmailClient.listEmailAccountsForSudoId Test Suite', () => {
     await expect(
       instanceUnderTest.listEmailAddressesForSudoId({
         sudoId,
-        cachePolicy: CachePolicy.CacheOnly,
       }),
     ).resolves.toStrictEqual({
       status: 'Success',

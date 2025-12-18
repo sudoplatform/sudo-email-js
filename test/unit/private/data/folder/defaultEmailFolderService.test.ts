@@ -5,7 +5,6 @@
  */
 
 import {
-  CachePolicy,
   DecodeError,
   EncryptionAlgorithm,
   KeyNotFoundError,
@@ -43,7 +42,6 @@ describe('DefaultEmailFolderService Test Suite', () => {
         anything(),
         anything(),
         anything(),
-        anything(),
       ),
     ).thenResolve(GraphQLDataFactory.emailFolderConnection)
 
@@ -57,50 +55,38 @@ describe('DefaultEmailFolderService Test Suite', () => {
       const emailAddressId = v4()
       await instanceUnderTest.listEmailFoldersForEmailAddressId({
         emailAddressId,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       verify(
         mockAppSync.listEmailFoldersForEmailAddressId(
           anything(),
           anything(),
           anything(),
-          anything(),
         ),
       ).once()
-      const [inputArgs, policyArg] = capture(
+      const [inputArgs] = capture(
         mockAppSync.listEmailFoldersForEmailAddressId,
       ).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>(emailAddressId)
-      expect(policyArg).toStrictEqual<typeof policyArg>('cache-only')
     })
 
-    it.each`
-      cachePolicy               | test
-      ${CachePolicy.CacheOnly}  | ${'cache'}
-      ${CachePolicy.RemoteOnly} | ${'remote'}
-    `(
-      'returns transformed result when calling $test',
-      async ({ cachePolicy }) => {
-        const emailAddressId = v4()
-        await expect(
-          instanceUnderTest.listEmailFoldersForEmailAddressId({
-            emailAddressId,
-            cachePolicy,
-          }),
-        ).resolves.toStrictEqual({
-          folders: [EntityDataFactory.emailFolder],
-          nextToken: undefined,
-        })
-        verify(
-          mockAppSync.listEmailFoldersForEmailAddressId(
-            anything(),
-            anything(),
-            anything(),
-            anything(),
-          ),
-        ).once()
-      },
-    )
+    it('returns transformed result', async () => {
+      const emailAddressId = v4()
+      await expect(
+        instanceUnderTest.listEmailFoldersForEmailAddressId({
+          emailAddressId,
+        }),
+      ).resolves.toStrictEqual({
+        folders: [EntityDataFactory.emailFolder],
+        nextToken: undefined,
+      })
+      verify(
+        mockAppSync.listEmailFoldersForEmailAddressId(
+          anything(),
+          anything(),
+          anything(),
+        ),
+      ).once()
+    })
   })
 
   describe('createCustomEmailFolderForEmailAddressId', () => {

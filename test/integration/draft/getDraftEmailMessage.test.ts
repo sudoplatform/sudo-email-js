@@ -51,17 +51,19 @@ describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
   })
 
   afterEach(async () => {
-    await instanceUnderTest
-      .deleteDraftEmailMessages({
-        ids: [draftMetadata.id],
-        emailAddressId: emailAddress.id,
-      })
-      .catch((err) => {
-        if (err instanceof AddressNotFoundError) {
-          return
-        }
-        throw err
-      })
+    if (draftMetadata) {
+      await instanceUnderTest
+        .deleteDraftEmailMessages({
+          ids: [draftMetadata.id],
+          emailAddressId: emailAddress.id,
+        })
+        .catch((err) => {
+          if (err instanceof AddressNotFoundError) {
+            return
+          }
+          throw err
+        })
+    }
     await teardown(
       { emailAddresses: [emailAddress], sudos: [sudo] },
       { emailClient: instanceUnderTest, profilesClient, userClient },

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
 import {
   anything,
   capture,
@@ -39,7 +38,6 @@ describe('ListEmailFoldersForEmailAddressIdUseCase Test Suite', () => {
       ).thenResolve({ folders: [EntityDataFactory.emailFolder] })
       const result = await instanceUnderTest.execute({
         emailAddressId,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       verify(
         mockEmailFolderService.listEmailFoldersForEmailAddressId(anything()),
@@ -49,7 +47,6 @@ describe('ListEmailFoldersForEmailAddressIdUseCase Test Suite', () => {
       ).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         emailAddressId: emailAddressId,
-        cachePolicy: CachePolicy.CacheOnly,
         limit: undefined,
         nextToken: undefined,
       })
@@ -65,7 +62,6 @@ describe('ListEmailFoldersForEmailAddressIdUseCase Test Suite', () => {
       })
       const result = await instanceUnderTest.execute({
         emailAddressId,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       verify(
         mockEmailFolderService.listEmailFoldersForEmailAddressId(anything()),
@@ -75,7 +71,6 @@ describe('ListEmailFoldersForEmailAddressIdUseCase Test Suite', () => {
       ).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         emailAddressId: emailAddressId,
-        cachePolicy: CachePolicy.CacheOnly,
         limit: undefined,
         nextToken: undefined,
       })

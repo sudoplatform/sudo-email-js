@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
 import {
   anything,
   capture,
@@ -52,25 +51,21 @@ describe('SudoEmailClient.listEmailAccounts Test Suite', () => {
   })
   it('generates use case', async () => {
     await instanceUnderTest.listEmailAddresses({
-      cachePolicy: CachePolicy.CacheOnly,
       limit: 0,
       nextToken: '',
     })
     expect(JestMockListEmailAccountsUseCase).toHaveBeenCalledTimes(1)
   })
   it('calls use case as expected', async () => {
-    const cachePolicy = CachePolicy.CacheOnly
     const limit = 100
     const nextToken = v4()
     await instanceUnderTest.listEmailAddresses({
-      cachePolicy,
       limit,
       nextToken,
     })
     verify(mockListEmailAccountsUseCase.execute(anything())).once()
     const [actualArgs] = capture(mockListEmailAccountsUseCase.execute).first()
     expect(actualArgs).toEqual<typeof actualArgs>({
-      cachePolicy,
       limit,
       nextToken,
     })
@@ -82,9 +77,7 @@ describe('SudoEmailClient.listEmailAccounts Test Suite', () => {
       nextToken: undefined,
     })
     await expect(
-      instanceUnderTest.listEmailAddresses({
-        cachePolicy: CachePolicy.CacheOnly,
-      }),
+      instanceUnderTest.listEmailAddresses({}),
     ).resolves.toStrictEqual({
       status: 'Success',
       items: [],
@@ -93,9 +86,7 @@ describe('SudoEmailClient.listEmailAccounts Test Suite', () => {
   })
   it('returns expected result', async () => {
     await expect(
-      instanceUnderTest.listEmailAddresses({
-        cachePolicy: CachePolicy.CacheOnly,
-      }),
+      instanceUnderTest.listEmailAddresses({}),
     ).resolves.toStrictEqual({
       status: 'Success',
       items: [APIDataFactory.emailAddress],
@@ -114,9 +105,7 @@ describe('SudoEmailClient.listEmailAccounts Test Suite', () => {
       nextToken: 'nextToken',
     })
     await expect(
-      instanceUnderTest.listEmailAddresses({
-        cachePolicy: CachePolicy.CacheOnly,
-      }),
+      instanceUnderTest.listEmailAddresses({}),
     ).resolves.toStrictEqual({
       status: 'Partial',
       items: [APIDataFactory.emailAddress],

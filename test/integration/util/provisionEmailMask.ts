@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
-
 import { SudoEmailClient } from '../../../src/public/sudoEmailClient'
 import { EmailMask } from '../../../src/public/typings/emailMask'
 import { delay } from '../../util/delay'
@@ -29,9 +27,7 @@ export const provisionEmailMask = async (
   let maskAddress = options?.maskAddress
   if (!maskAddress) {
     if (!maskDomain) {
-      const domains = await emailClient.getEmailMaskDomains(
-        CachePolicy.RemoteOnly,
-      )
+      const domains = await emailClient.getEmailMaskDomains()
       if (domains.length === 0) {
         throw new Error(
           'No supported email domains available to provision mask',

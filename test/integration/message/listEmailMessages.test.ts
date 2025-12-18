@@ -5,7 +5,6 @@
  */
 
 import {
-  CachePolicy,
   DefaultLogger,
   KeyNotFoundError,
   ListOperationResultStatus,
@@ -152,7 +151,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         async () => {
           const messages = await readAllPages((nextToken?: string) =>
             instanceUnderTest.listEmailMessages({
-              cachePolicy: CachePolicy.RemoteOnly,
               nextToken,
             }),
           )
@@ -194,7 +192,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       await waitForExpect(
         async () => {
           const messages = await instanceUnderTest.listEmailMessages({
-            cachePolicy: CachePolicy.RemoteOnly,
             limit: 1,
           })
           if (messages.status !== ListOperationResultStatus.Success) {
@@ -223,7 +220,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           const messages = await readAllPages((nextToken?: string) =>
             instanceUnderTest.listEmailMessages({
               dateRange,
-              cachePolicy: CachePolicy.RemoteOnly,
               nextToken,
             }),
           )
@@ -253,7 +249,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         async () => {
           const allMessages = await readAllPages((nextToken?: string) =>
             instanceUnderTest.listEmailMessages({
-              cachePolicy: CachePolicy.RemoteOnly,
               nextToken,
             }),
           )
@@ -292,7 +287,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
                   endDate: new Date(timestamp.getTime() + 100000),
                 },
               },
-              cachePolicy: CachePolicy.RemoteOnly,
               nextToken,
             }),
           )
@@ -319,7 +313,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
                   endDate: senderAddress.createdAt,
                 },
               },
-              cachePolicy: CachePolicy.RemoteOnly,
               nextToken,
             }),
           )
@@ -346,7 +339,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
                   endDate: senderAddress.createdAt,
                 },
               },
-              cachePolicy: CachePolicy.RemoteOnly,
               nextToken,
             }),
           )
@@ -375,7 +367,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               endDate: new Date(senderAddress.createdAt.getTime() + 100000),
             },
           },
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).rejects.toThrow(InvalidArgumentError)
     })
@@ -391,7 +382,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               endDate: senderAddress.createdAt,
             },
           },
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).rejects.toThrow(InvalidArgumentError)
     })
@@ -407,7 +397,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               endDate: senderAddress.createdAt,
             },
           },
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).rejects.toThrow(InvalidArgumentError)
     })
@@ -426,7 +415,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           const messages = await readAllPages((nextToken?: string) =>
             instanceUnderTest.listEmailMessages({
               dateRange,
-              cachePolicy: CachePolicy.RemoteOnly,
               sortOrder: SortOrder.Asc,
               nextToken,
             }),
@@ -455,7 +443,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         async () => {
           const messages = await readAllPages((nextToken?: string) =>
             instanceUnderTest.listEmailMessages({
-              cachePolicy: CachePolicy.RemoteOnly,
               sortOrder: SortOrder.Desc,
               nextToken,
             }),
@@ -486,7 +473,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           await instanceUnderTest.reset()
           const messages = await readAllPages((nextToken?: string) =>
             instanceUnderTest.listEmailMessages({
-              cachePolicy: CachePolicy.RemoteOnly,
               nextToken,
             }),
           )
@@ -523,7 +509,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         async () => {
           const messages = await readAllPages((nextToken?: string) =>
             instanceUnderTest.listEmailMessages({
-              cachePolicy: CachePolicy.RemoteOnly,
               sortOrder: SortOrder.Desc,
               nextToken,
             }),
@@ -543,7 +528,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         async () => {
           const messages = await readAllPages((nextToken?: string) =>
             instanceUnderTest.listEmailMessages({
-              cachePolicy: CachePolicy.RemoteOnly,
               nextToken,
             }),
           )
@@ -559,7 +543,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         async () => {
           const messages = await readAllPages((nextToken?: string) =>
             instanceUnderTest.listEmailMessages({
-              cachePolicy: CachePolicy.RemoteOnly,
               includeDeletedMessages: true,
               nextToken,
             }),
@@ -668,7 +651,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
               emailAddressId: senderAddress.id,
-              cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
@@ -698,7 +680,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
               emailAddressId: receiverAddress.id,
-              cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
@@ -732,7 +713,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
               emailAddressId: senderAddress.id,
-              cachePolicy: CachePolicy.RemoteOnly,
               limit: 1,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
@@ -761,7 +741,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
               emailAddressId: senderAddress.id,
               dateRange,
-              cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
@@ -788,9 +767,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       let inboundMessageIds: string[] = []
       await waitForExpect(
         async () => {
-          const allMessages = await instanceUnderTest.listEmailMessages({
-            cachePolicy: CachePolicy.RemoteOnly,
-          })
+          const allMessages = await instanceUnderTest.listEmailMessages({})
           if (allMessages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${allMessages}`)
           }
@@ -827,7 +804,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
                   endDate: new Date(timestamp.getTime() + 100000),
                 },
               },
-              cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
@@ -854,7 +830,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
                   endDate: senderAddress.createdAt,
                 },
               },
-              cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
@@ -881,7 +856,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
                   endDate: senderAddress.createdAt,
                 },
               },
-              cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
@@ -910,7 +884,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               endDate: new Date(senderAddress.createdAt.getTime() + 100000),
             },
           },
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).rejects.toThrow(InvalidArgumentError)
     })
@@ -927,7 +900,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               endDate: senderAddress.createdAt,
             },
           },
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).rejects.toThrow(InvalidArgumentError)
     })
@@ -944,7 +916,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               endDate: senderAddress.createdAt,
             },
           },
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).rejects.toThrow(InvalidArgumentError)
     })
@@ -964,7 +935,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
               emailAddressId: senderAddress.id,
               dateRange,
-              cachePolicy: CachePolicy.RemoteOnly,
               sortOrder: SortOrder.Asc,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
@@ -993,7 +963,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
               emailAddressId: senderAddress.id,
-              cachePolicy: CachePolicy.RemoteOnly,
               sortOrder: SortOrder.Desc,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
@@ -1020,7 +989,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       await expect(
         instanceUnderTest.listEmailMessagesForEmailAddressId({
           emailAddressId: v4(),
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).resolves.toEqual({
         status: 'Success',
@@ -1038,7 +1006,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
               emailAddressId: senderAddress.id,
-              cachePolicy: CachePolicy.RemoteOnly,
             })
 
           expect(messages).not.toBeNull()
@@ -1078,7 +1045,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
               emailAddressId: senderAddress.id,
-              cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
@@ -1097,7 +1063,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
               emailAddressId: senderAddress.id,
-              cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
@@ -1113,7 +1078,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailAddressId({
               emailAddressId: senderAddress.id,
-              cachePolicy: CachePolicy.RemoteOnly,
               includeDeletedMessages: true,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
@@ -1213,7 +1177,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailFolderId({
               folderId: inboxFolder?.id ?? '',
-              cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
@@ -1240,7 +1203,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       await expect(
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: v4(),
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).resolves.toEqual({
         status: 'Success',
@@ -1259,7 +1221,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       await expect(
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: trashFolder?.id ?? '',
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).resolves.toEqual({
         status: 'Success',
@@ -1283,7 +1244,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             await instanceUnderTest.listEmailMessagesForEmailFolderId({
               folderId: inboxFolder?.id ?? '',
               dateRange,
-              cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
@@ -1310,9 +1270,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       let inboundMessageIds: string[] = []
       await waitForExpect(
         async () => {
-          const allMessages = await instanceUnderTest.listEmailMessages({
-            cachePolicy: CachePolicy.RemoteOnly,
-          })
+          const allMessages = await instanceUnderTest.listEmailMessages({})
           if (allMessages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${allMessages}`)
           }
@@ -1349,7 +1307,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
                   endDate: new Date(timestamp.getTime() + 100000),
                 },
               },
-              cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
@@ -1376,7 +1333,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
                   endDate: receiverAddress.createdAt,
                 },
               },
-              cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
@@ -1403,7 +1359,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
                   endDate: receiverAddress.createdAt,
                 },
               },
-              cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
@@ -1432,7 +1387,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               endDate: new Date(senderAddress.createdAt.getTime() + 100000),
             },
           },
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).rejects.toThrow(InvalidArgumentError)
     })
@@ -1449,7 +1403,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               endDate: receiverAddress.createdAt,
             },
           },
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).rejects.toThrow(InvalidArgumentError)
     })
@@ -1466,7 +1419,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               endDate: receiverAddress.createdAt,
             },
           },
-          cachePolicy: CachePolicy.RemoteOnly,
         }),
       ).rejects.toThrow(InvalidArgumentError)
     })
@@ -1487,7 +1439,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             await instanceUnderTest.listEmailMessagesForEmailFolderId({
               folderId: inboxFolder?.id ?? '',
               dateRange,
-              cachePolicy: CachePolicy.RemoteOnly,
               sortOrder: SortOrder.Asc,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
@@ -1516,7 +1467,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailFolderId({
               folderId: inboxFolder.id,
-              cachePolicy: CachePolicy.RemoteOnly,
               sortOrder: SortOrder.Desc,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
@@ -1553,7 +1503,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailFolderId({
               folderId: sentFolder.id,
-              cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
@@ -1572,7 +1521,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailFolderId({
               folderId: sentFolder.id,
-              cachePolicy: CachePolicy.RemoteOnly,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
             fail(`Expect result not returned: ${messages}`)
@@ -1588,7 +1536,6 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           const messages =
             await instanceUnderTest.listEmailMessagesForEmailFolderId({
               folderId: sentFolder.id,
-              cachePolicy: CachePolicy.RemoteOnly,
               includeDeletedMessages: true,
             })
           if (messages.status !== ListOperationResultStatus.Success) {

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
 import {
   anything,
   capture,
@@ -58,7 +57,6 @@ describe('SudoEmailClient.listEmailMessagesForEmailFolderId Test Suite', () => {
     const folderId = v4()
     await instanceUnderTest.listEmailMessagesForEmailFolderId({
       folderId,
-      cachePolicy: CachePolicy.CacheOnly,
       limit: 0,
       sortOrder: SortOrder.Desc,
       nextToken: '',
@@ -69,7 +67,6 @@ describe('SudoEmailClient.listEmailMessagesForEmailFolderId Test Suite', () => {
   })
   it('calls use case as expected', async () => {
     const folderId = v4()
-    const cachePolicy = CachePolicy.CacheOnly
     const dateRange: EmailMessageDateRange = {
       sortDate: {
         startDate: new Date(1.0),
@@ -81,7 +78,6 @@ describe('SudoEmailClient.listEmailMessagesForEmailFolderId Test Suite', () => {
     const nextToken = v4()
     await instanceUnderTest.listEmailMessagesForEmailFolderId({
       folderId,
-      cachePolicy,
       dateRange,
       limit,
       sortOrder,
@@ -95,7 +91,6 @@ describe('SudoEmailClient.listEmailMessagesForEmailFolderId Test Suite', () => {
     ).first()
     expect(actualArgs).toEqual<typeof actualArgs>({
       folderId,
-      cachePolicy,
       dateRange,
       limit,
       sortOrder,
@@ -113,7 +108,6 @@ describe('SudoEmailClient.listEmailMessagesForEmailFolderId Test Suite', () => {
     await expect(
       instanceUnderTest.listEmailMessagesForEmailFolderId({
         folderId,
-        cachePolicy: CachePolicy.CacheOnly,
       }),
     ).resolves.toEqual({ status: 'Success', items: [], nextToken: undefined })
   })
@@ -122,7 +116,6 @@ describe('SudoEmailClient.listEmailMessagesForEmailFolderId Test Suite', () => {
     await expect(
       instanceUnderTest.listEmailMessagesForEmailFolderId({
         folderId,
-        cachePolicy: CachePolicy.CacheOnly,
       }),
     ).resolves.toEqual({
       items: [APIDataFactory.emailMessage],
@@ -148,7 +141,6 @@ describe('SudoEmailClient.listEmailMessagesForEmailFolderId Test Suite', () => {
     await expect(
       instanceUnderTest.listEmailMessagesForEmailFolderId({
         folderId,
-        cachePolicy: CachePolicy.CacheOnly,
       }),
     ).resolves.toStrictEqual({
       items: [

@@ -159,17 +159,16 @@ export class SendEmailMessageUseCase {
       })
     }
 
-    const domains = await this.domainService.getConfiguredEmailDomains({})
+    const domains = await this.domainService.getConfiguredEmailDomains()
     if (emailMasksEnabled) {
-      const maskDomains = await this.domainService.getEmailMaskDomains({})
+      const maskDomains = await this.domainService.getEmailMaskDomains()
       domains.push(...maskDomains)
     }
     // Check if any recipient's domain is not one of ours
-    const allRecipientsInternal =
-      allRecipients.length > 0 &&
-      allRecipients.every((address) =>
-        domains.some((domain) => address.includes(domain.domain)),
-      )
+    const allRecipientsInternal = EmailMessageUtil.allRecipientsInternal(
+      allRecipients,
+      domains,
+    )
 
     if (allRecipientsInternal) {
       if (allRecipients.length > encryptedEmailMessageRecipientsLimit) {

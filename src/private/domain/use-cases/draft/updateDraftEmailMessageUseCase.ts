@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy, DefaultLogger, Logger } from '@sudoplatform/sudo-common'
+import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import {
   AddressNotFoundError,
   MessageNotFoundError,
@@ -64,7 +64,6 @@ export class UpdateDraftEmailMessageUseCase {
     })
     const account = await this.emailAccountService.get({
       id: senderEmailAddressId,
-      cachePolicy: CachePolicy.RemoteOnly,
     })
     if (!account) {
       throw new AddressNotFoundError()

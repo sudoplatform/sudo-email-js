@@ -6,7 +6,6 @@
 
 import {
   Base64,
-  CachePolicy,
   DefaultLogger,
   ListOperationResultStatus,
   SudoKeyManager,
@@ -18,7 +17,7 @@ import {
   SudoEmailClient,
 } from '../../../src'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
-import { SudoUserClient, internal } from '@sudoplatform/sudo-user'
+import { internal, SudoUserClient } from '@sudoplatform/sudo-user'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import waitForExpect from 'wait-for-expect'
@@ -40,15 +39,13 @@ import {
 } from '@aws-sdk/client-s3'
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers'
 import { Upload } from '@aws-sdk/lib-storage'
-import fs from 'node:fs/promises'
 import { getFolderByName } from '../util/folder'
 import { provisionEmailMask } from '../util/provisionEmailMask'
 import { getImageFileData, getPdfFileData } from '../../util/files/fileData'
 import {
-  EntitlementsBuilder,
-  emailAddressMaxPerSudoEntitlement,
   emailStorageMaxPerEmailAddressEntitlement,
   emailStorageMaxPerUserEntitlement,
+  EntitlementsBuilder,
 } from '../util/entitlements'
 
 describe('getEmailMessageWithBody test suite', () => {
@@ -507,7 +504,6 @@ describe('getEmailMessageWithBody test suite', () => {
         await expect(
           instanceUnderTest.getEmailMessage({
             id: sendResult.id,
-            cachePolicy: CachePolicy.RemoteOnly,
           }),
         ).resolves.toBeDefined()
       },

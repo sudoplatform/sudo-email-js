@@ -14,7 +14,6 @@ import {
   Buffer as BufferUtil,
 } from '@sudoplatform/sudo-common'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
-import { FetchResult } from 'apollo-link'
 import { isLeft } from 'fp-ts/lib/Either'
 import * as t from 'io-ts'
 import { DateFromISOString } from 'io-ts-types'
@@ -104,8 +103,8 @@ import {
 import {
   Subscribable,
   SubscriptionManager,
+  SubscriptionResult,
 } from '../common/subscriptionManager'
-import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransformer'
 import { SortOrderTransformer } from '../common/transformer/sortOrderTransformer'
 // eslint-disable-next-line tree-shaking/no-side-effects-in-initialization
 import { withDefault } from '../common/withDefault'
@@ -457,7 +456,6 @@ export class DefaultEmailMessageService implements EmailMessageService {
     filter,
     limit,
     nextToken,
-    cachePolicy,
   }: ListScheduledDraftMessagesForEmailAddressIdInput): Promise<ListScheduledDraftMessagesOutput> {
     this.log.debug(this.listScheduledDraftMessagesForEmailAddressId.name, {
       emailAddressId,
@@ -465,9 +463,6 @@ export class DefaultEmailMessageService implements EmailMessageService {
       limit,
       nextToken,
     })
-    const fetchPolicy = cachePolicy
-      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
-      : undefined
 
     const input: ListScheduledDraftMessagesForEmailAddressIdRequest = {
       emailAddressId,
@@ -478,10 +473,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       input.filter = ScheduledDraftMessageFilterTransformer.toGraphQl(filter)
     }
     const result =
-      await this.appSync.listScheduledDraftMessagesForEmailAddressId(
-        input,
-        fetchPolicy,
-      )
+      await this.appSync.listScheduledDraftMessagesForEmailAddressId(input)
     return {
       nextToken: result.nextToken ?? undefined,
       scheduledDraftMessages: result.items.map((s) =>
@@ -765,10 +757,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
   async getMessage(
     input: GetEmailMessageInput,
   ): Promise<EmailMessageEntity | undefined> {
-    const fetchPolicy = input.cachePolicy
-      ? FetchPolicyTransformer.transformCachePolicy(input.cachePolicy)
-      : undefined
-    const result = await this.appSync.getEmailMessage(input.id, fetchPolicy)
+    const result = await this.appSync.getEmailMessage(input.id)
     if (!result) {
       return undefined
     }
@@ -781,15 +770,11 @@ export class DefaultEmailMessageService implements EmailMessageService {
 
   async listMessages({
     dateRange,
-    cachePolicy,
     limit,
     sortOrder,
     nextToken,
     includeDeletedMessages,
   }: ListEmailMessagesInput): Promise<ListEmailMessagesOutput> {
-    const fetchPolicy = cachePolicy
-      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
-      : undefined
     const sortOrderTransformer = new SortOrderTransformer()
     const sortOrderInput = sortOrder
       ? sortOrderTransformer.fromAPItoGraphQL(sortOrder)
@@ -799,7 +784,6 @@ export class DefaultEmailMessageService implements EmailMessageService {
       : undefined
 
     const response = await this.appSync.listEmailMessages(
-      fetchPolicy,
       inputDateRange,
       limit,
       sortOrderInput,
@@ -827,15 +811,11 @@ export class DefaultEmailMessageService implements EmailMessageService {
   async listMessagesForEmailAddressId({
     emailAddressId,
     dateRange,
-    cachePolicy,
     limit,
     sortOrder,
     nextToken,
     includeDeletedMessages,
   }: ListEmailMessagesForEmailAddressIdInput): Promise<ListEmailMessagesForEmailAddressIdOutput> {
-    const fetchPolicy = cachePolicy
-      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
-      : undefined
     const sortOrderTransformer = new SortOrderTransformer()
     const sortOrderInput = sortOrder
       ? sortOrderTransformer.fromAPItoGraphQL(sortOrder)
@@ -846,7 +826,6 @@ export class DefaultEmailMessageService implements EmailMessageService {
 
     const response = await this.appSync.listEmailMessagesForEmailAddressId(
       emailAddressId,
-      fetchPolicy,
       inputDateRange,
       limit,
       sortOrderInput,
@@ -874,15 +853,11 @@ export class DefaultEmailMessageService implements EmailMessageService {
   async listMessagesForEmailFolderId({
     folderId,
     dateRange,
-    cachePolicy,
     limit,
     sortOrder,
     nextToken,
     includeDeletedMessages,
   }: ListEmailMessagesForEmailFolderIdInput): Promise<ListEmailMessagesForEmailFolderIdOutput> {
-    const fetchPolicy = cachePolicy
-      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
-      : undefined
     const sortOrderTransformer = new SortOrderTransformer()
     const sortOrderInput = sortOrder
       ? sortOrderTransformer.fromAPItoGraphQL(sortOrder)
@@ -893,7 +868,6 @@ export class DefaultEmailMessageService implements EmailMessageService {
 
     const response = await this.appSync.listEmailMessagesForEmailFolderId(
       folderId,
-      fetchPolicy,
       inputDateRange,
       limit,
       sortOrderInput,
@@ -1037,9 +1011,9 @@ export class DefaultEmailMessageService implements EmailMessageService {
     }
   }
 
-  subscribeToEmailMessages(
+  async subscribeToEmailMessages(
     input: EmailMessageServiceSubscribeToEmailMessagesInput,
-  ): void {
+  ): Promise<void> {
     // subscribe to email messages created
     this.createSubscriptionManager.subscribe(
       input.subscriptionId,
@@ -1049,7 +1023,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     // create them and watch for email message changes per `owner`.
     if (!this.createSubscriptionManager.getWatcher()) {
       this.createSubscriptionManager.setWatcher(
-        this.appSync.onEmailMessageCreated(input.ownerId),
+        await this.appSync.onEmailMessageCreated(input.ownerId),
       )
 
       this.createSubscriptionManager.setSubscription(
@@ -1070,7 +1044,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     // create them and watch for email message changes per `owner`.
     if (!this.deleteSubscriptionManager.getWatcher()) {
       this.deleteSubscriptionManager.setWatcher(
-        this.appSync.onEmailMessageDeleted(input.ownerId),
+        await this.appSync.onEmailMessageDeleted(input.ownerId),
       )
 
       this.deleteSubscriptionManager.setSubscription(
@@ -1091,7 +1065,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     // create them and watch for email message changes per `owner`.
     if (!this.updateSubscriptionManager.getWatcher()) {
       this.updateSubscriptionManager.setWatcher(
-        this.appSync.onEmailMessageUpdated(input.ownerId),
+        await this.appSync.onEmailMessageUpdated(input.ownerId),
       )
 
       this.updateSubscriptionManager.setSubscription(
@@ -1164,12 +1138,12 @@ export class DefaultEmailMessageService implements EmailMessageService {
       | OnEmailMessageCreatedSubscription,
   >(
     subscriptionName: string,
-    result: FetchResult<SubscriptionType>,
+    result: SubscriptionResult<SubscriptionType>,
     getData: (data: SubscriptionType) => SealedEmailMessage,
     callback: (emailMessage: EmailMessage) => Promise<void>,
   ) {
     return void (async (
-      result: FetchResult<SubscriptionType>,
+      result: SubscriptionResult<SubscriptionType>,
     ): Promise<void> => {
       this.log.info(`executing ${subscriptionName} subscription`, {
         result,
@@ -1215,9 +1189,11 @@ export class DefaultEmailMessageService implements EmailMessageService {
             error,
           )
         },
-        next: (result: FetchResult<OnEmailMessageCreatedSubscription>) => {
+        next: (
+          result: SubscriptionResult<OnEmailMessageCreatedSubscription>,
+        ) => {
           return void (async (
-            result: FetchResult<OnEmailMessageCreatedSubscription>,
+            result: SubscriptionResult<OnEmailMessageCreatedSubscription>,
           ): Promise<void> => {
             return this.onSubscriptionNext(
               'onEmailMessageCreated',
@@ -1253,9 +1229,11 @@ export class DefaultEmailMessageService implements EmailMessageService {
             error,
           )
         },
-        next: (result: FetchResult<OnEmailMessageDeletedSubscription>) => {
+        next: (
+          result: SubscriptionResult<OnEmailMessageDeletedSubscription>,
+        ) => {
           return void (async (
-            result: FetchResult<OnEmailMessageDeletedSubscription>,
+            result: SubscriptionResult<OnEmailMessageDeletedSubscription>,
           ): Promise<void> => {
             return this.onSubscriptionNext(
               'onEmailMessageDeleted',
@@ -1291,9 +1269,11 @@ export class DefaultEmailMessageService implements EmailMessageService {
             error,
           )
         },
-        next: (result: FetchResult<OnEmailMessageUpdatedSubscription>) => {
+        next: (
+          result: SubscriptionResult<OnEmailMessageUpdatedSubscription>,
+        ) => {
           return void (async (
-            result: FetchResult<OnEmailMessageUpdatedSubscription>,
+            result: SubscriptionResult<OnEmailMessageUpdatedSubscription>,
           ): Promise<void> => {
             return this.onSubscriptionNext(
               'onEmailMessageUpdated',

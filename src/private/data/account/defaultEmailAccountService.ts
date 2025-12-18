@@ -37,7 +37,6 @@ import {
   DeviceKeyWorkerKeyFormat,
   KeyType,
 } from '../common/deviceKeyWorker'
-import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransformer'
 import { EmailAccountEntityTransformer } from './transformer/emailAccountEntityTransformer'
 import { EmailAddressEntityTransformer } from './transformer/emailAddressEntityTransformer'
 import { EmailAddressPublicInfoEntityTransformer } from './transformer/emailAddressPublicInfoEntityTransformer'
@@ -144,26 +143,15 @@ export class DefaultEmailAccountService implements EmailAccountService {
   async get(
     input: GetEmailAccountInput,
   ): Promise<EmailAccountEntity | undefined> {
-    const fetchPolicy = input.cachePolicy
-      ? FetchPolicyTransformer.transformCachePolicy(input.cachePolicy)
-      : undefined
-    const result = await this.appSync.getEmailAddress(input.id, fetchPolicy)
+    const result = await this.appSync.getEmailAddress(input.id)
     return result ? await this.mapEmailAddress(result) : undefined
   }
 
   async list({
-    cachePolicy,
     limit,
     nextToken,
   }: ListEmailAccountsInput): Promise<ListEmailAccountsOutput> {
-    const fetchPolicy = cachePolicy
-      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
-      : undefined
-    const result = await this.appSync.listEmailAddresses(
-      fetchPolicy,
-      limit,
-      nextToken,
-    )
+    const result = await this.appSync.listEmailAddresses(limit, nextToken)
     let emailAccounts: EmailAccountEntity[] = []
     if (result.items) {
       emailAccounts = await Promise.all(
@@ -180,16 +168,11 @@ export class DefaultEmailAccountService implements EmailAccountService {
 
   async listForSudoId({
     sudoId,
-    cachePolicy,
     limit,
     nextToken,
   }: ListEmailAccountsForSudoIdInput): Promise<ListEmailAccountsOutput> {
-    const fetchPolicy = cachePolicy
-      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
-      : undefined
     const result = await this.appSync.listEmailAddressesForSudoId(
       sudoId,
-      fetchPolicy,
       limit,
       nextToken,
     )

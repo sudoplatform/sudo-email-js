@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy, DefaultLogger, Logger } from '@sudoplatform/sudo-common'
+import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { EmailAccountService } from '../../entities/account/emailAccountService'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
 import { AddressNotFoundError } from '../../../../public'
@@ -38,7 +38,6 @@ export class CancelScheduledDraftMessageUseCase {
     this.log.debug(this.execute.name, { id, emailAddressId })
     const account = await this.emailAccountService.get({
       id: emailAddressId,
-      cachePolicy: CachePolicy.RemoteOnly,
     })
     if (!account) {
       throw new AddressNotFoundError()

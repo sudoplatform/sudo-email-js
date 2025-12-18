@@ -4,12 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  CachePolicy,
-  DefaultLogger,
-  KeyData,
-  SudoCryptoProvider,
-} from '@sudoplatform/sudo-common'
+import { DefaultLogger, SudoCryptoProvider } from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import waitForExpect from 'wait-for-expect'
@@ -144,7 +139,6 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
           await expect(
             instanceUnderTest.getEmailMessage({
               id: emailMessageId,
-              cachePolicy: CachePolicy.RemoteOnly,
             }),
           ).resolves.toBeUndefined()
         },

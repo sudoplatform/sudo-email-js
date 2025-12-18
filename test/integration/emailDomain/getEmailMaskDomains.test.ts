@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy, DefaultLogger } from '@sudoplatform/sudo-common'
+import { DefaultLogger } from '@sudoplatform/sudo-common'
 import { SudoEntitlementsClient } from '@sudoplatform/sudo-entitlements'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'

@@ -5,11 +5,11 @@
  */
 
 import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
-import { Observable } from 'apollo-client/util/Observable'
-import { FetchResult } from 'apollo-link'
+import Observable from 'zen-observable'
+
 import {
-  OnEmailMessageDeletedSubscription,
   OnEmailMessageCreatedSubscription,
+  OnEmailMessageDeletedSubscription,
   OnEmailMessageUpdatedSubscription,
 } from '../../../gen/graphqlTypes'
 import {
@@ -18,6 +18,8 @@ import {
   EmailMessageSubscriber,
 } from '../../../public'
 
+export type SubscriptionResult<T> = { data: T }
+
 export type Subscribable =
   | OnEmailMessageDeletedSubscription
   | OnEmailMessageCreatedSubscription
@@ -25,12 +27,11 @@ export type Subscribable =
 export class SubscriptionManager<
   T extends Subscribable,
   S extends EmailMessageSubscriber,
-> implements EmailMessageSubscriber
-{
+> implements EmailMessageSubscriber {
   private readonly log: Logger
   private subscribers: Record<string, S | undefined> = {}
   private _subscription: ZenObservable.Subscription | undefined = undefined
-  private _watcher: Observable<FetchResult<T>> | null = null
+  private _watcher: Observable<SubscriptionResult<T>> | null = null
 
   public constructor() {
     this.log = new DefaultLogger(this.constructor.name)
@@ -57,11 +58,11 @@ export class SubscriptionManager<
     }
   }
 
-  public getWatcher(): Observable<FetchResult<T>> | null {
+  public getWatcher(): Observable<SubscriptionResult<T>> | null {
     return this._watcher
   }
 
-  public setWatcher(value: Observable<FetchResult<T>> | null): void {
+  public setWatcher(value: Observable<SubscriptionResult<T>> | null): void {
     this._watcher = value
   }
 

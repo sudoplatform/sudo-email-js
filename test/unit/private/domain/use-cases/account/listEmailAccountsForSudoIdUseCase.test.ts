@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
 import {
   anything,
   capture,
@@ -39,13 +38,11 @@ describe('ListEmailAccountsForSudoIdUseCase Test Suite', () => {
       })
       const result = await instanceUnderTest.execute({
         sudoId,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       verify(mockEmailAccountService.listForSudoId(anything())).once()
       const [inputArgs] = capture(mockEmailAccountService.listForSudoId).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         sudoId,
-        cachePolicy: CachePolicy.CacheOnly,
         limit: undefined,
         nextToken: undefined,
       })
@@ -61,13 +58,11 @@ describe('ListEmailAccountsForSudoIdUseCase Test Suite', () => {
       })
       const result = await instanceUnderTest.execute({
         sudoId,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       verify(mockEmailAccountService.listForSudoId(anything())).once()
       const [inputArgs] = capture(mockEmailAccountService.listForSudoId).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         sudoId,
-        cachePolicy: CachePolicy.CacheOnly,
         limit: undefined,
         nextToken: undefined,
       })

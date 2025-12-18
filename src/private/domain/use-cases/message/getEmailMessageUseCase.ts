@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy, DefaultLogger, Logger } from '@sudoplatform/sudo-common'
+import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { Direction, State } from '../../../../public/typings/emailMessage'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
 import { EncryptionStatus } from '../../../../public'
@@ -15,11 +15,9 @@ import { EncryptionStatus } from '../../../../public'
  * @interface GetEmailMessageInput
  * @property {string} id The identifier of the email message to attempt to retrieve.
  * @property {string} keyId The identifier of the key used to seal the email message.
- * @property {CachePolicy} cachePolicy Cache policy determines the strategy for accessing the email message record.
  */
 interface GetEmailMessageUseCaseInput {
   id: string
-  cachePolicy?: CachePolicy
 }
 interface GetEmailMessageUseCaseOutput {
   id: string
@@ -64,17 +62,14 @@ export class GetEmailMessageUseCase {
 
   async execute({
     id,
-    cachePolicy,
   }: GetEmailMessageUseCaseInput): Promise<
     GetEmailMessageUseCaseOutput | undefined
   > {
     this.log.debug(this.constructor.name, {
       id,
-      cachePolicy,
     })
     return await this.emailMessageService.getMessage({
       id,
-      cachePolicy,
     })
   }
 }

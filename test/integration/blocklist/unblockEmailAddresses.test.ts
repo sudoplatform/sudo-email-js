@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy, DefaultLogger } from '@sudoplatform/sudo-common'
+import { DefaultLogger } from '@sudoplatform/sudo-common'
 import {
   BatchOperationResultStatus,
   EmailAddress,
@@ -151,7 +151,6 @@ describe('SudoEmailClient Unblock Email Addresses Integration Test Suite', () =>
     await waitForExpect(async () => {
       sentMessage = await instanceUnderTest.getEmailMessage({
         id: sentMessageId,
-        cachePolicy: CachePolicy.RemoteOnly,
       })
       expect(sentMessage).toBeDefined()
     })

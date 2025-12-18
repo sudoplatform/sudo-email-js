@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
 import {
   anything,
   capture,
@@ -39,13 +38,11 @@ describe('GetEmailMessageUseCase', () => {
       )
       const result = await instanceUnderTest.execute({
         id,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       verify(mockEmailMessageService.getMessage(anything())).once()
       const [inputArgs] = capture(mockEmailMessageService.getMessage).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         id,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       expect(result).toStrictEqual(EntityDataFactory.emailMessage)
     })
@@ -57,13 +54,11 @@ describe('GetEmailMessageUseCase', () => {
       )
       const result = await instanceUnderTest.execute({
         id,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       verify(mockEmailMessageService.getMessage(anything())).once()
       const [inputArgs] = capture(mockEmailMessageService.getMessage).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         id,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       expect(result).toStrictEqual(undefined)
     })
@@ -75,13 +70,11 @@ describe('GetEmailMessageUseCase', () => {
       )
       const result = await instanceUnderTest.execute({
         id,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       verify(mockEmailMessageService.getMessage(anything())).once()
       const [inputArgs] = capture(mockEmailMessageService.getMessage).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         id,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       expect(result).toStrictEqual(EntityDataFactory.emailMessage)
     })

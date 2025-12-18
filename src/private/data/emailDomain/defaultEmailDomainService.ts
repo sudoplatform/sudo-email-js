@@ -4,13 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  EmailDomainService,
-  GetEmailDomainsInput,
-} from '../../domain/entities/emailDomain/emailDomainService'
+import { EmailDomainService } from '../../domain/entities/emailDomain/emailDomainService'
 import { EmailDomainEntity } from '../../domain/entities/emailDomain/emailDomainEntity'
 import { ApiClient } from '../common/apiClient'
-import { FetchPolicyTransformer } from '../common/transformer/fetchPolicyTransformer'
 import { EmailDomainEntityTransformer } from './transformer/emailDomainEntityTransformer'
 
 export class DefaultEmailDomainService implements EmailDomainService {
@@ -20,37 +16,22 @@ export class DefaultEmailDomainService implements EmailDomainService {
     this.emailDomainTransformer = new EmailDomainEntityTransformer()
   }
 
-  async getSupportedEmailDomains({
-    cachePolicy,
-  }: GetEmailDomainsInput): Promise<EmailDomainEntity[]> {
-    const fetchPolicy = cachePolicy
-      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
-      : undefined
-    const result = await this.appSync.getSupportedEmailDomains(fetchPolicy)
+  async getSupportedEmailDomains(): Promise<EmailDomainEntity[]> {
+    const result = await this.appSync.getSupportedEmailDomains()
     return result.domains.map((domain) =>
       this.emailDomainTransformer.transformGraphQL(domain),
     )
   }
 
-  async getConfiguredEmailDomains({
-    cachePolicy,
-  }: GetEmailDomainsInput): Promise<EmailDomainEntity[]> {
-    const fetchPolicy = cachePolicy
-      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
-      : undefined
-    const result = await this.appSync.getConfiguredEmailDomains(fetchPolicy)
+  async getConfiguredEmailDomains(): Promise<EmailDomainEntity[]> {
+    const result = await this.appSync.getConfiguredEmailDomains()
     return result.domains.map((domain) =>
       this.emailDomainTransformer.transformGraphQL(domain),
     )
   }
 
-  async getEmailMaskDomains({
-    cachePolicy,
-  }: GetEmailDomainsInput): Promise<EmailDomainEntity[]> {
-    const fetchPolicy = cachePolicy
-      ? FetchPolicyTransformer.transformCachePolicy(cachePolicy)
-      : undefined
-    const result = await this.appSync.getEmailMaskDomains(fetchPolicy)
+  async getEmailMaskDomains(): Promise<EmailDomainEntity[]> {
+    const result = await this.appSync.getEmailMaskDomains()
     return result.domains.map((domain) =>
       this.emailDomainTransformer.transformGraphQL(domain),
     )

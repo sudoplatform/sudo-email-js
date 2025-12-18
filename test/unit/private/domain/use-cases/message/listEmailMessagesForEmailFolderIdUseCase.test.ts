@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
 import {
   anything,
   capture,
@@ -43,7 +42,6 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
       })
       const result = await instanceUnderTest.execute({
         folderId,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       verify(
         mockEmailMessageService.listMessagesForEmailFolderId(anything()),
@@ -53,7 +51,6 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
       ).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         folderId,
-        cachePolicy: CachePolicy.CacheOnly,
         dateRange: undefined,
         limit: undefined,
         sortOrder: undefined,
@@ -81,7 +78,6 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
       const result = await instanceUnderTest.execute({
         folderId,
         dateRange,
-        cachePolicy: CachePolicy.CacheOnly,
         sortOrder: SortOrder.Desc,
       })
       verify(
@@ -93,7 +89,6 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         folderId,
         dateRange,
-        cachePolicy: CachePolicy.CacheOnly,
         limit: undefined,
         sortOrder: SortOrder.Desc,
         nextToken: undefined,
@@ -120,7 +115,6 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
       const result = await instanceUnderTest.execute({
         folderId,
         dateRange,
-        cachePolicy: CachePolicy.CacheOnly,
         sortOrder: SortOrder.Desc,
       })
       verify(
@@ -132,7 +126,6 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         folderId,
         dateRange,
-        cachePolicy: CachePolicy.CacheOnly,
         limit: undefined,
         sortOrder: SortOrder.Desc,
         nextToken: undefined,
@@ -152,7 +145,6 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
       })
       const result = await instanceUnderTest.execute({
         folderId,
-        cachePolicy: CachePolicy.CacheOnly,
       })
       verify(
         mockEmailMessageService.listMessagesForEmailFolderId(anything()),
@@ -162,7 +154,6 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
       ).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         folderId,
-        cachePolicy: CachePolicy.CacheOnly,
         dateRange: undefined,
         limit: undefined,
         sortOrder: undefined,
@@ -183,7 +174,6 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
       })
       const result = await instanceUnderTest.execute({
         folderId,
-        cachePolicy: CachePolicy.CacheOnly,
         includeDeletedMessages: true,
       })
       verify(
@@ -195,7 +185,6 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         folderId,
         dateRange: undefined,
-        cachePolicy: CachePolicy.CacheOnly,
         limit: undefined,
         sortOrder: undefined,
         nextToken: undefined,

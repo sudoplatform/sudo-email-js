@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
 import {
   anything,
   capture,
@@ -37,14 +36,11 @@ describe('ListEmailMessagesUseCase Test Suite', () => {
       when(mockEmailMessageService.listMessages(anything())).thenResolve({
         emailMessages: [EntityDataFactory.emailMessage],
       })
-      const result = await instanceUnderTest.execute({
-        cachePolicy: CachePolicy.CacheOnly,
-      })
+      const result = await instanceUnderTest.execute({})
       verify(mockEmailMessageService.listMessages(anything())).once()
       const [inputArgs] = capture(mockEmailMessageService.listMessages).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         dateRange: undefined,
-        cachePolicy: CachePolicy.CacheOnly,
         limit: undefined,
         sortOrder: undefined,
         nextToken: undefined,
@@ -66,7 +62,6 @@ describe('ListEmailMessagesUseCase Test Suite', () => {
         emailMessages: [EntityDataFactory.emailMessage],
       })
       const result = await instanceUnderTest.execute({
-        cachePolicy: CachePolicy.CacheOnly,
         dateRange,
         sortOrder: SortOrder.Desc,
       })
@@ -74,7 +69,6 @@ describe('ListEmailMessagesUseCase Test Suite', () => {
       const [inputArgs] = capture(mockEmailMessageService.listMessages).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         dateRange,
-        cachePolicy: CachePolicy.CacheOnly,
         limit: undefined,
         sortOrder: SortOrder.Desc,
         nextToken: undefined,
@@ -96,7 +90,6 @@ describe('ListEmailMessagesUseCase Test Suite', () => {
         emailMessages: [EntityDataFactory.emailMessage],
       })
       const result = await instanceUnderTest.execute({
-        cachePolicy: CachePolicy.CacheOnly,
         dateRange,
         sortOrder: SortOrder.Desc,
       })
@@ -104,7 +97,6 @@ describe('ListEmailMessagesUseCase Test Suite', () => {
       const [inputArgs] = capture(mockEmailMessageService.listMessages).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         dateRange,
-        cachePolicy: CachePolicy.CacheOnly,
         limit: undefined,
         sortOrder: SortOrder.Desc,
         nextToken: undefined,
@@ -119,14 +111,11 @@ describe('ListEmailMessagesUseCase Test Suite', () => {
       when(mockEmailMessageService.listMessages(anything())).thenResolve({
         emailMessages: [],
       })
-      const result = await instanceUnderTest.execute({
-        cachePolicy: CachePolicy.CacheOnly,
-      })
+      const result = await instanceUnderTest.execute({})
       verify(mockEmailMessageService.listMessages(anything())).once()
       const [inputArgs] = capture(mockEmailMessageService.listMessages).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         dateRange: undefined,
-        cachePolicy: CachePolicy.CacheOnly,
         limit: undefined,
         sortOrder: undefined,
         nextToken: undefined,
@@ -142,14 +131,12 @@ describe('ListEmailMessagesUseCase Test Suite', () => {
         emailMessages: [EntityDataFactory.emailMessage],
       })
       const result = await instanceUnderTest.execute({
-        cachePolicy: CachePolicy.CacheOnly,
         includeDeletedMessages: true,
       })
       verify(mockEmailMessageService.listMessages(anything())).once()
       const [inputArgs] = capture(mockEmailMessageService.listMessages).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         dateRange: undefined,
-        cachePolicy: CachePolicy.CacheOnly,
         limit: undefined,
         sortOrder: undefined,
         nextToken: undefined,

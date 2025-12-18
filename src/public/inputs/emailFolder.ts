@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
 import { Pagination } from './common'
 
 /**
@@ -12,11 +11,9 @@ import { Pagination } from './common'
  *
  * @interface ListEmailFoldersForEmailAddressIdInput
  * @property {string} emailAddressId The identifier of the email address associated with the email folders.
- * @property {CachePolicy} cachePolicy Determines how the email folders will be fetched. Default usage is `remoteOnly`.
  */
 export interface ListEmailFoldersForEmailAddressIdInput extends Pagination {
   emailAddressId: string
-  cachePolicy?: CachePolicy
 }
 
 /**

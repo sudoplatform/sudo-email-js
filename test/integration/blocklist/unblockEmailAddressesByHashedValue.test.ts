@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Base64, CachePolicy, DefaultLogger } from '@sudoplatform/sudo-common'
+import { Base64, DefaultLogger } from '@sudoplatform/sudo-common'
 import { SudoProfilesClient, Sudo } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import {
@@ -179,7 +179,6 @@ describe('SudoEmailClient Unblock Email Addresses By Hashed Value Integration Te
     await waitForExpect(async () => {
       sentMessage = await instanceUnderTest.getEmailMessage({
         id: sentMessageId,
-        cachePolicy: CachePolicy.RemoteOnly,
       })
       expect(sentMessage).toBeDefined()
     })

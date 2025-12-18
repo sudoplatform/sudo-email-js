@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
-import { anything, instance, mock, reset, verify, when } from 'ts-mockito'
+import { instance, mock, reset, verify, when } from 'ts-mockito'
 import { ApiClient } from '../../../../../src/private/data/common/apiClient'
 import { DefaultEmailDomainService } from '../../../../../src/private/data/emailDomain/defaultEmailDomainService'
 import { EntityDataFactory } from '../../../data-factory/entity'
@@ -21,65 +20,44 @@ describe('DefaultEmailDomainService Test Suite', () => {
   })
 
   describe('getSupportedEmailDomains', () => {
-    it.each`
-      cachePolicy               | test
-      ${CachePolicy.CacheOnly}  | ${'cache'}
-      ${CachePolicy.RemoteOnly} | ${'remote'}
-    `(
-      'returns transformed result when calling $test',
-      async ({ cachePolicy }) => {
-        when(mockAppSync.getSupportedEmailDomains(anything())).thenResolve(
-          GraphQLDataFactory.supportedEmailDomains,
-        )
-        await expect(
-          instanceUnderTest.getSupportedEmailDomains({ cachePolicy }),
-        ).resolves.toStrictEqual([EntityDataFactory.emailDomain])
-        verify(mockAppSync.getSupportedEmailDomains(anything())).once()
-      },
-    )
+    it('returns transformed result when calling $test', async () => {
+      when(mockAppSync.getSupportedEmailDomains()).thenResolve(
+        GraphQLDataFactory.supportedEmailDomains,
+      )
+      await expect(
+        instanceUnderTest.getSupportedEmailDomains(),
+      ).resolves.toStrictEqual([EntityDataFactory.emailDomain])
+      verify(mockAppSync.getSupportedEmailDomains()).once()
+    })
   })
 
   describe('getConfiguredEmailDomains', () => {
-    it.each`
-      cachePolicy               | test
-      ${CachePolicy.CacheOnly}  | ${'cache'}
-      ${CachePolicy.RemoteOnly} | ${'remote'}
-    `(
-      'returns transformed result when calling $test',
-      async ({ cachePolicy }) => {
-        when(mockAppSync.getConfiguredEmailDomains(anything())).thenResolve(
-          GraphQLDataFactory.configuredEmailDomains,
-        )
-        await expect(
-          instanceUnderTest.getConfiguredEmailDomains({ cachePolicy }),
-        ).resolves.toStrictEqual([
-          { domain: 'unittest.org' },
-          { domain: 'foobar.com' },
-        ])
-        verify(mockAppSync.getConfiguredEmailDomains(anything())).once()
-      },
-    )
+    it('returns transformed result when calling $test', async () => {
+      when(mockAppSync.getConfiguredEmailDomains()).thenResolve(
+        GraphQLDataFactory.configuredEmailDomains,
+      )
+      await expect(
+        instanceUnderTest.getConfiguredEmailDomains(),
+      ).resolves.toStrictEqual([
+        { domain: 'unittest.org' },
+        { domain: 'foobar.com' },
+      ])
+      verify(mockAppSync.getConfiguredEmailDomains()).once()
+    })
   })
 
   describe('getEmailMaskDomains', () => {
-    it.each`
-      cachePolicy               | test
-      ${CachePolicy.CacheOnly}  | ${'cache'}
-      ${CachePolicy.RemoteOnly} | ${'remote'}
-    `(
-      'returns transformed result when calling $test',
-      async ({ cachePolicy }) => {
-        when(mockAppSync.getEmailMaskDomains(anything())).thenResolve({
-          domains: ['mask1.anonyome.com', 'mask2.anonyome.com'],
-        })
-        await expect(
-          instanceUnderTest.getEmailMaskDomains({ cachePolicy }),
-        ).resolves.toStrictEqual([
-          { domain: 'mask1.anonyome.com' },
-          { domain: 'mask2.anonyome.com' },
-        ])
-        verify(mockAppSync.getEmailMaskDomains(anything())).once()
-      },
-    )
+    it('returns transformed result', async () => {
+      when(mockAppSync.getEmailMaskDomains()).thenResolve({
+        domains: ['mask1.anonyome.com', 'mask2.anonyome.com'],
+      })
+      await expect(
+        instanceUnderTest.getEmailMaskDomains(),
+      ).resolves.toStrictEqual([
+        { domain: 'mask1.anonyome.com' },
+        { domain: 'mask2.anonyome.com' },
+      ])
+      verify(mockAppSync.getEmailMaskDomains()).once()
+    })
   })
 })

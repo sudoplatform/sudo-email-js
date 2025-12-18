@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
 import { v4 } from 'uuid'
 import { SudoEmailClient } from '../../../src/public/sudoEmailClient'
 import { EmailAddress } from '../../../src/public/typings/emailAddress'
@@ -19,7 +18,7 @@ export const provisionEmailAddress = async (
   let address = options?.address
   if (!address) {
     const [domain] = await emailClient
-      .getSupportedEmailDomains(CachePolicy.RemoteOnly)
+      .getSupportedEmailDomains()
       .catch((err) => {
         console.log('Error getting supported email domains', { err })
         throw err

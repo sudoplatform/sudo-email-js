@@ -5,7 +5,6 @@
  */
 
 import {
-  CachePolicy,
   DefaultLogger,
   ListOperationResultStatus,
 } from '@sudoplatform/sudo-common'
@@ -221,7 +220,6 @@ describe('getEmailMessageRfc822Data test suite', () => {
         await expect(
           instanceUnderTest.getEmailMessage({
             id: sendResult.id,
-            cachePolicy: CachePolicy.RemoteOnly,
           }),
         ).resolves.toBeDefined()
       },

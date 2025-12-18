@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
-  CachePolicy,
   DefaultLogger,
   ListOperationResultStatus,
 } from '@sudoplatform/sudo-common'
@@ -19,9 +18,7 @@ import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { setupEmailClient, teardown } from './util/emailClientLifecycle'
 import { provisionEmailAddress } from './util/provisionEmailAddress'
 import waitForExpect from 'wait-for-expect'
-import _ from 'lodash'
 import { v4 } from 'uuid'
-import fs from 'node:fs/promises'
 import { delay } from '../util/delay'
 import { getPdfFileData } from '../util/files/fileData'
 
@@ -130,7 +127,6 @@ describe('SudoEmailClient Interoperability Test Suite', () => {
       await waitForExpect(async () => {
         sent = await instanceUnderTest.getEmailMessage({
           id: sentId,
-          cachePolicy: CachePolicy.RemoteOnly,
         })
         expect(sent).toBeDefined()
       })

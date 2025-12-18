@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy } from '@sudoplatform/sudo-common'
 import { Pagination } from './common'
 
 /**
@@ -12,35 +11,26 @@ import { Pagination } from './common'
  *
  * @interface GetEmailAddressInput
  * @property {string} id The identifier of the email address to be retrieved.
- * @property {CachePolicy} cachePolicy Determines how the email address will be fetched. Default usage is `remoteOnly`.
  */
 export interface GetEmailAddressInput {
   id: string
-  cachePolicy?: CachePolicy
 }
 
 /**
  * Input for `SudoEmailClient.listEmailAddresses`.
  *
  * @interface ListEmailAddressesInput
- * @property {CachePolicy} cachePolicy Determines how the email addresses will be fetched. Default usage is
- *   `remoteOnly`.
  */
-export interface ListEmailAddressesInput extends Pagination {
-  cachePolicy?: CachePolicy
-}
+export type ListEmailAddressesInput = Pagination
 
 /**
  * Input for `SudoEmailClient.listEmailAddressesForSudoId`.
  *
  * @interface ListEmailAddressesForSudoIdInput
  * @property {string} sudoId The identifier of the Sudo that owns the email address.
- * @property {CachePolicy} cachePolicy Determines how the email addresses will be fetched. Default usage is
- *   `remoteOnly`.
  */
 export interface ListEmailAddressesForSudoIdInput extends Pagination {
   sudoId: string
-  cachePolicy?: CachePolicy
 }
 
 /**

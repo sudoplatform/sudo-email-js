@@ -31,7 +31,6 @@ import { EntityDataFactory } from '../../../../data-factory/entity'
 import { EmailDomainService } from '../../../../../../src/private/domain/entities/emailDomain/emailDomainService'
 import { EmailConfigurationDataService } from '../../../../../../src/private/domain/entities/configuration/configurationDataService'
 import { EmailCryptoService } from '../../../../../../src/private/domain/entities/secure/emailCryptoService'
-import { EmailConfigurationDataEntity } from '../../../../../../src/private/domain/entities/configuration/emailConfigurationDataEntity'
 import { Rfc822MessageDataProcessor } from '../../../../../../src/private/util/rfc822MessageDataProcessor'
 import { EmailMessageRfc822DataFactory } from '../../../../data-factory/emailMessageRfc822Data'
 import { PublicKeyFormat } from '@sudoplatform/sudo-common'
@@ -80,9 +79,9 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
     when(mockEmailAccountService.get(anything())).thenResolve(
       EntityDataFactory.emailAccount,
     )
-    when(
-      mockEmailDomainService.getConfiguredEmailDomains(anything()),
-    ).thenResolve([EntityDataFactory.emailDomain])
+    when(mockEmailDomainService.getConfiguredEmailDomains()).thenResolve([
+      EntityDataFactory.emailDomain,
+    ])
     when(mockEmailConfigurationDataService.getConfigurationData()).thenResolve({
       ...EntityDataFactory.configurationData,
       sendEncryptedEmailEnabled: true,
@@ -136,9 +135,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
       verify(mockEmailMessageService.getDraft(anything())).once()
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
       expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(1)
-      verify(
-        mockEmailDomainService.getConfiguredEmailDomains(anything()),
-      ).once()
+      verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
       verify(mockEmailMessageService.saveDraft(anything())).once()
     })
 
@@ -157,9 +154,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
       verify(mockEmailMessageService.getDraft(anything())).never()
       verify(mockEmailConfigurationDataService.getConfigurationData()).never()
       expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(0)
-      verify(
-        mockEmailDomainService.getConfiguredEmailDomains(anything()),
-      ).never()
+      verify(mockEmailDomainService.getConfiguredEmailDomains()).never()
       verify(mockEmailMessageService.saveDraft(anything())).never()
     })
 
@@ -178,9 +173,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
       verify(mockEmailMessageService.getDraft(anything())).once()
       verify(mockEmailConfigurationDataService.getConfigurationData()).never()
       expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(0)
-      verify(
-        mockEmailDomainService.getConfiguredEmailDomains(anything()),
-      ).never()
+      verify(mockEmailDomainService.getConfiguredEmailDomains()).never()
       verify(mockEmailMessageService.saveDraft(anything())).never()
     })
 
@@ -208,9 +201,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
       verify(mockEmailMessageService.getDraft(anything())).once()
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
       expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(1)
-      verify(
-        mockEmailDomainService.getConfiguredEmailDomains(anything()),
-      ).never()
+      verify(mockEmailDomainService.getConfiguredEmailDomains()).never()
       verify(mockEmailMessageService.saveDraft(anything())).never()
     })
 
@@ -243,9 +234,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
       verify(mockEmailMessageService.getDraft(anything())).once()
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
       expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(1)
-      verify(
-        mockEmailDomainService.getConfiguredEmailDomains(anything()),
-      ).once()
+      verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
       verify(mockEmailMessageService.saveDraft(anything())).never()
     })
 
@@ -272,9 +261,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
       verify(mockEmailMessageService.getDraft(anything())).once()
       verify(mockEmailConfigurationDataService.getConfigurationData()).once()
       expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(1)
-      verify(
-        mockEmailDomainService.getConfiguredEmailDomains(anything()),
-      ).once()
+      verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
       verify(mockEmailMessageService.saveDraft(anything())).never()
     })
 
@@ -346,9 +333,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
         verify(mockEmailMessageService.getDraft(anything())).once()
         verify(mockEmailConfigurationDataService.getConfigurationData()).once()
         expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(1)
-        verify(
-          mockEmailDomainService.getConfiguredEmailDomains(anything()),
-        ).once()
+        verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
         verify(mockEmailAccountService.lookupPublicInfo(anything())).once()
         verify(mockEmailCryptoService.encrypt(anything(), anything())).once()
         expect(encodeToInternetMessageBufferSpy).toHaveBeenCalledTimes(2)
@@ -405,9 +390,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
         verify(mockEmailMessageService.getDraft(anything())).once()
         verify(mockEmailConfigurationDataService.getConfigurationData()).once()
         expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(1)
-        verify(
-          mockEmailDomainService.getConfiguredEmailDomains(anything()),
-        ).once()
+        verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
         verify(mockEmailAccountService.lookupPublicInfo(anything())).never()
         verify(mockEmailCryptoService.encrypt(anything(), anything())).never()
         expect(encodeToInternetMessageBufferSpy).toHaveBeenCalledTimes(0)
@@ -443,9 +426,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
         verify(mockEmailMessageService.getDraft(anything())).once()
         verify(mockEmailConfigurationDataService.getConfigurationData()).once()
         expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(1)
-        verify(
-          mockEmailDomainService.getConfiguredEmailDomains(anything()),
-        ).once()
+        verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
         verify(mockEmailAccountService.lookupPublicInfo(anything())).once()
         verify(mockEmailCryptoService.encrypt(anything(), anything())).never()
         expect(encodeToInternetMessageBufferSpy).toHaveBeenCalledTimes(0)

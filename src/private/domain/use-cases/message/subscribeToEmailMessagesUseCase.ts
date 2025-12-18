@@ -39,7 +39,7 @@ export class SubscribeToEmailMessagesUseCase {
     if (!owner) {
       throw new NotSignedInError()
     }
-    this.emailMessageService.subscribeToEmailMessages({
+    await this.emailMessageService.subscribeToEmailMessages({
       subscriptionId: input.subscriptionId,
       ownerId: owner,
       subscriber: input.subscriber,

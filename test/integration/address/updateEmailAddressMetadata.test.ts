@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CachePolicy, DefaultLogger } from '@sudoplatform/sudo-common'
+import { DefaultLogger } from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { EmailAddress, SudoEmailClient } from '../../../src'
@@ -57,7 +57,6 @@ describe('SudoEmailClient UpdateEmailAddressMetadata Test Suite', () => {
 
       const updatedEmailAddress = await instanceUnderTest.getEmailAddress({
         id: emailAddress.id,
-        cachePolicy: CachePolicy.RemoteOnly,
       })
 
       expect(updatedEmailAddress?.alias).toStrictEqual('updated alias')
