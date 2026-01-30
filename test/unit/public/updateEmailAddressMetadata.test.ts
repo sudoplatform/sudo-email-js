@@ -115,7 +115,7 @@ describe('SudoEmailClient.updateEmailAccountMetadata Test Suite', () => {
     await instanceUnderTest.updateEmailAddressMetadata({
       id: '',
       values: {
-        alias: '',
+        alias: null,
       },
     })
     expect(JestMockUpdateEmailAccountMetadataUseCase).toHaveBeenCalledTimes(1)

@@ -680,12 +680,12 @@ describe('SudoEmailClient Smoketest Test Suite', () => {
 
     it('should list draft messages', async () => {
       const drafts =
-        await instanceUnderTest.listDraftEmailMessagesForEmailAddressId(
-          senderAddress.id,
-        )
+        await instanceUnderTest.listDraftEmailMessagesForEmailAddressId({
+          emailAddressId: senderAddress.id,
+        })
 
-      expect(Array.isArray(drafts)).toBe(true)
-      const foundDraft = drafts.find((d) => d.id === draftId)
+      expect(Array.isArray(drafts.items)).toBe(true)
+      const foundDraft = drafts.items.find((d) => d.id === draftId)
       expect(foundDraft).toBeDefined()
     })
 
@@ -732,10 +732,10 @@ describe('SudoEmailClient Smoketest Test Suite', () => {
 
       // Verify draft is deleted
       const draftsAfterDelete =
-        await instanceUnderTest.listDraftEmailMessagesForEmailAddressId(
-          senderAddress.id,
-        )
-      const deletedDraft = draftsAfterDelete.find((d) => d.id === draftId)
+        await instanceUnderTest.listDraftEmailMessagesForEmailAddressId({
+          emailAddressId: senderAddress.id,
+        })
+      const deletedDraft = draftsAfterDelete.items.find((d) => d.id === draftId)
       expect(deletedDraft).toBeUndefined()
     })
   })

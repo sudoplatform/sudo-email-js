@@ -233,6 +233,10 @@ export class DefaultEmailAccountService implements EmailAccountService {
       values: {},
     }
 
+    if (input.values.alias === null || input.values.alias === '') {
+      updateEmailAddressMetadataInput.values.alias = null
+    }
+
     if (input.values.alias) {
       const sealedAlias = await this.deviceKeyWorker.sealString({
         payload: BufferUtil.fromString(input.values.alias),

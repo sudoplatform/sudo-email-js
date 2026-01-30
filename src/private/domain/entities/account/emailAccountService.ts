@@ -43,7 +43,7 @@ export interface DeleteEmailAccountInput {
 export interface UpdateEmailAccountMetadataInput {
   id: string
   values: {
-    alias?: string
+    alias?: string | null
   }
 }
 

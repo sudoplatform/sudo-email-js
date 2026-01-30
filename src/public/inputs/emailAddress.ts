@@ -66,11 +66,12 @@ export interface ProvisionEmailAddressInput {
  * @interface UpdateEmailAddressMetadataInput
  * @property {string} id The id of the email address to update.
  * @property values The new value(s) to set for each listed email address.
+ * Set the alias to null or the empty string to clear it.
  */
 export interface UpdateEmailAddressMetadataInput {
   id: string
   values: {
-    alias?: string
+    alias?: string | null
   }
 }
 

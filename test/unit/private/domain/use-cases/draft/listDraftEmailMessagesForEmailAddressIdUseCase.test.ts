@@ -57,7 +57,11 @@ describe('ListDraftEmailMessagesForEmailAddressIdUseCase Test Suite', () => {
     const [getDraft1] = capture(mockEmailMessageService.getDraft).first()
     const [getDraft2] = capture(mockEmailMessageService.getDraft).second()
 
-    expect(listResult).toStrictEqual({ emailAddressId })
+    expect(listResult).toStrictEqual({
+      emailAddressId,
+      limit: 10,
+      nextToken: undefined,
+    })
     expect(getDraft1).toStrictEqual({ id: id1, emailAddressId })
     expect(getDraft2).toStrictEqual({ id: id2, emailAddressId })
   })
@@ -87,6 +91,97 @@ describe('ListDraftEmailMessagesForEmailAddressIdUseCase Test Suite', () => {
     when(mockEmailMessageService.getDraft(anything())).thenResolve(getResult)
     await expect(
       instanceUnderTest.execute({ emailAddressId }),
-    ).resolves.toStrictEqual({ draftMessages: result })
+    ).resolves.toStrictEqual({ draftMessages: result, nextToken: undefined })
+  })
+
+  it('passes limit parameter to service', async () => {
+    const emailAddressId = v4()
+    const limit = 5
+    const listResult = {
+      items: [],
+      nextToken: undefined,
+      emailAddressId,
+    }
+    when(
+      mockEmailMessageService.listDraftsMetadataForEmailAddressId(anything()),
+    ).thenResolve(listResult)
+
+    await instanceUnderTest.execute({ emailAddressId, limit })
+
+    const [listInput] = capture(
+      mockEmailMessageService.listDraftsMetadataForEmailAddressId,
+    ).first()
+    expect(listInput).toStrictEqual({
+      emailAddressId,
+      limit,
+      nextToken: undefined,
+    })
+  })
+
+  it('passes nextToken parameter to service', async () => {
+    const emailAddressId = v4()
+    const nextToken = 'some-token'
+    const listResult = {
+      items: [],
+      nextToken: undefined,
+      emailAddressId,
+    }
+    when(
+      mockEmailMessageService.listDraftsMetadataForEmailAddressId(anything()),
+    ).thenResolve(listResult)
+
+    await instanceUnderTest.execute({ emailAddressId, nextToken })
+
+    const [listInput] = capture(
+      mockEmailMessageService.listDraftsMetadataForEmailAddressId,
+    ).first()
+    expect(listInput).toStrictEqual({ emailAddressId, limit: 10, nextToken })
+  })
+
+  it('returns nextToken from service', async () => {
+    const id = v4()
+    const emailAddressId = v4()
+    const rfc822Data = stringToArrayBuffer(v4())
+    const nextToken = 'next-page-token'
+    const listResult = {
+      items: [{ id, emailAddressId, updatedAt: new Date() }],
+      nextToken,
+      emailAddressId,
+    }
+    const getResult = {
+      id,
+      emailAddressId,
+      updatedAt: new Date(),
+      rfc822Data,
+    }
+    when(
+      mockEmailMessageService.listDraftsMetadataForEmailAddressId(anything()),
+    ).thenResolve(listResult)
+    when(mockEmailMessageService.getDraft(anything())).thenResolve(getResult)
+
+    const result = await instanceUnderTest.execute({ emailAddressId })
+
+    expect(result.nextToken).toBe(nextToken)
+  })
+
+  it('passes both limit and nextToken parameters', async () => {
+    const emailAddressId = v4()
+    const limit = 3
+    const nextToken = 'previous-token'
+    const listResult = {
+      items: [],
+      nextToken: undefined,
+      emailAddressId,
+    }
+    when(
+      mockEmailMessageService.listDraftsMetadataForEmailAddressId(anything()),
+    ).thenResolve(listResult)
+
+    await instanceUnderTest.execute({ emailAddressId, limit, nextToken })
+
+    const [listInput] = capture(
+      mockEmailMessageService.listDraftsMetadataForEmailAddressId,
+    ).first()
+    expect(listInput).toStrictEqual({ emailAddressId, limit, nextToken })
   })
 })

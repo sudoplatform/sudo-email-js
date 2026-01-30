@@ -61,5 +61,22 @@ describe('SudoEmailClient UpdateEmailAddressMetadata Test Suite', () => {
 
       expect(updatedEmailAddress?.alias).toStrictEqual('updated alias')
     })
+
+    it('clears alias successfully', async () => {
+      await expect(
+        instanceUnderTest.updateEmailAddressMetadata({
+          id: emailAddress.id,
+          values: {
+            alias: '',
+          },
+        }),
+      ).resolves.toStrictEqual(emailAddress.id)
+
+      const updatedEmailAddress = await instanceUnderTest.getEmailAddress({
+        id: emailAddress.id,
+      })
+
+      expect(updatedEmailAddress?.alias).toBeUndefined()
+    })
   })
 })

@@ -21,10 +21,7 @@ import {
   sudoIssuer,
   teardown,
 } from '../util/emailClientLifecycle'
-import {
-  generateSafeLocalPart,
-  provisionEmailAddress,
-} from '../util/provisionEmailAddress'
+import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { provisionEmailMask } from '../util/provisionEmailMask'
 
 describe('SudoEmailClient UpdateEmailMask Test Suite', () => {
@@ -192,6 +189,20 @@ describe('SudoEmailClient UpdateEmailMask Test Suite', () => {
     )
     emailMasks.push(emailMask)
 
+    const expiry = DateTime.now().plus({ days: 14 }).toJSDate()
+    const updatedExpiresAt = await instanceUnderTest.updateEmailMask({
+      emailMaskId: emailMask.id,
+      expiresAt: expiry,
+    })
+
+    expect(updatedExpiresAt.id).toStrictEqual(emailMask.id)
+    expect(updatedExpiresAt.metadata).toBeDefined()
+    expect(updatedExpiresAt.metadata).toEqual(metadata)
+    expect(updatedExpiresAt.version).toBeGreaterThan(emailMask.version)
+    expect(Math.floor(updatedExpiresAt.expiresAt?.getTime() ?? 0) / 1000).toBe(
+      Math.floor(expiry.getTime() / 1000),
+    )
+
     const updatedMask = await instanceUnderTest.updateEmailMask({
       emailMaskId: emailMask.id,
       metadata: null,
@@ -200,6 +211,11 @@ describe('SudoEmailClient UpdateEmailMask Test Suite', () => {
     expect(updatedMask.id).toStrictEqual(emailMask.id)
     expect(updatedMask.metadata).toBeUndefined()
     expect(updatedMask.version).toBeGreaterThan(emailMask.version)
+
+    const maskList = await instanceUnderTest.listEmailMasksForOwner()
+    const actualMask = maskList.items.find((mask) => mask.id === emailMask.id)
+    expect(actualMask).toBeDefined()
+    expect(actualMask?.metadata).toBeUndefined()
   })
 
   it('removes expiration date by setting to null', async () => {

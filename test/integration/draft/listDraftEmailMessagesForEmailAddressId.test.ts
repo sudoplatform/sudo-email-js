@@ -76,12 +76,12 @@ describe('SudoEmailClient listDraftEmailMessagesForEmailAddressId Test Suite', (
       await delay(10)
     }
 
-    const draftMessages =
-      await instanceUnderTest.listDraftEmailMessagesForEmailAddressId(
-        emailAddress.id,
-      )
+    const result =
+      await instanceUnderTest.listDraftEmailMessagesForEmailAddressId({
+        emailAddressId: emailAddress.id,
+      })
 
-    draftMessages.forEach((d) => {
+    result.items.forEach((d) => {
       expect(draftData).toContainEqual({
         ...d,
         id: d.id,
@@ -96,12 +96,12 @@ describe('SudoEmailClient listDraftEmailMessagesForEmailAddressId Test Suite', (
   })
 
   it('should return an empty list if no drafts found', async () => {
-    const draftMessages =
-      await instanceUnderTest.listDraftEmailMessagesForEmailAddressId(
-        emailAddress.id,
-      )
+    const result =
+      await instanceUnderTest.listDraftEmailMessagesForEmailAddressId({
+        emailAddressId: emailAddress.id,
+      })
 
-    expect(draftMessages).toHaveLength(0)
+    expect(result.items).toHaveLength(0)
   })
 
   it('should not return a list of out-network draft messages from other accounts', async () => {
@@ -149,11 +149,11 @@ describe('SudoEmailClient listDraftEmailMessagesForEmailAddressId Test Suite', (
     draftData.push({ ...metadata2, rfc822Data: draft })
 
     const result =
-      await instanceUnderTest.listDraftEmailMessagesForEmailAddressId(
-        emailAddress.id,
-      )
-    expect(result).toHaveLength(NUMBER_DRAFTS)
-    result.forEach((d) => {
+      await instanceUnderTest.listDraftEmailMessagesForEmailAddressId({
+        emailAddressId: emailAddress.id,
+      })
+    expect(result.items).toHaveLength(NUMBER_DRAFTS)
+    result.items.forEach((d) => {
       expect(draftData).toContainEqual({
         ...d,
         id: d.id,
@@ -194,12 +194,12 @@ describe('SudoEmailClient listDraftEmailMessagesForEmailAddressId Test Suite', (
       await delay(10)
     }
 
-    const draftMessages =
-      await instanceUnderTest.listDraftEmailMessagesForEmailAddressId(
-        emailAddress.id,
-      )
+    const result =
+      await instanceUnderTest.listDraftEmailMessagesForEmailAddressId({
+        emailAddressId: emailAddress.id,
+      })
 
-    draftMessages.forEach((d) => {
+    result.items.forEach((d) => {
       expect(draftData).toContainEqual({
         ...d,
         id: d.id,
@@ -259,11 +259,11 @@ describe('SudoEmailClient listDraftEmailMessagesForEmailAddressId Test Suite', (
     draftData.push({ ...metadata2, rfc822Data: draft })
 
     const result =
-      await instanceUnderTest.listDraftEmailMessagesForEmailAddressId(
-        emailAddress.id,
-      )
-    expect(result).toHaveLength(NUMBER_DRAFTS)
-    result.forEach((d) => {
+      await instanceUnderTest.listDraftEmailMessagesForEmailAddressId({
+        emailAddressId: emailAddress.id,
+      })
+    expect(result.items).toHaveLength(NUMBER_DRAFTS)
+    result.items.forEach((d) => {
       expect(draftData).toContainEqual({
         ...d,
         id: d.id,
@@ -275,5 +275,102 @@ describe('SudoEmailClient listDraftEmailMessagesForEmailAddressId Test Suite', (
       expect(draftResDataStr).toContain(emailAddress.emailAddress)
       expect(draftResDataStr).toContain(emailAddress2.emailAddress)
     })
+  })
+
+  it('supports pagination with limit parameter', async () => {
+    const body = 'pagination test message'
+    const totalDrafts = 15
+    const draftDataArrays = _.range(totalDrafts).map(() =>
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body,
+        attachments: [],
+      }),
+    )
+
+    for (let d of draftDataArrays) {
+      const metadata = await instanceUnderTest.createDraftEmailMessage({
+        senderEmailAddressId: emailAddress.id,
+        rfc822Data: d,
+      })
+      draftData.push({ ...metadata, rfc822Data: d })
+      await delay(10)
+    }
+
+    const result =
+      await instanceUnderTest.listDraftEmailMessagesForEmailAddressId({
+        emailAddressId: emailAddress.id,
+        limit: 5,
+      })
+
+    expect(result.items).toHaveLength(5)
+    expect(result.nextToken).toBeDefined()
+
+    const result2 =
+      await instanceUnderTest.listDraftEmailMessagesForEmailAddressId({
+        emailAddressId: emailAddress.id,
+        limit: 15,
+        nextToken: result.nextToken,
+      })
+
+    expect(result2.items).toHaveLength(10)
+    expect(result2.nextToken).toBeUndefined()
+
+    const firstPageIds = result.items.map((d) => d.id)
+    const secondPageIds = result2.items.map((d) => d.id)
+    const overlap = firstPageIds.filter((id) => secondPageIds.includes(id))
+
+    expect(overlap).toHaveLength(0)
+  })
+
+  it('returns all items across multiple pages', async () => {
+    const body = 'multi-page test'
+    const totalDrafts = 23
+    const draftDataArrays = _.range(totalDrafts).map(() =>
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body,
+        attachments: [],
+      }),
+    )
+
+    for (let d of draftDataArrays) {
+      const metadata = await instanceUnderTest.createDraftEmailMessage({
+        senderEmailAddressId: emailAddress.id,
+        rfc822Data: d,
+      })
+      draftData.push({ ...metadata, rfc822Data: d })
+      await delay(10)
+    }
+
+    // Fetch all pages
+    const allDrafts: any[] = []
+    let nextToken: string | undefined = undefined
+    const pageSize = 7
+
+    do {
+      const page =
+        await instanceUnderTest.listDraftEmailMessagesForEmailAddressId({
+          emailAddressId: emailAddress.id,
+          limit: pageSize,
+          nextToken,
+        })
+      allDrafts.push(...page.items)
+      nextToken = page.nextToken
+    } while (nextToken)
+
+    expect(allDrafts).toHaveLength(totalDrafts)
+
+    // Verify all IDs are unique
+    const uniqueIds = new Set(allDrafts.map((d) => d.id))
+    expect(uniqueIds.size).toBe(totalDrafts)
   })
 })

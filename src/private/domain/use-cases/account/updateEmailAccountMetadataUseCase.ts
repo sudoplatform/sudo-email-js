@@ -17,7 +17,7 @@ import { EmailAccountService } from '../../entities/account/emailAccountService'
 interface UpdateEmailAccountMetadataUseCaseInput {
   id: string
   values: {
-    alias?: string
+    alias?: string | null
   }
 }
 

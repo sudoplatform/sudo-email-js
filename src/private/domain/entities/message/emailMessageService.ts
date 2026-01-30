@@ -365,7 +365,7 @@ export interface ListEmailMessagesForEmailFolderIdOutput {
  * @interface ListDraftsMetadataForEmailAddressIdOutput
  * @property emailAddressId [String] Unique identifier of the email address associated with the draft
  *  email message.
- * @property {DraftEmailMessageMetadataEntity[]} items List of draft email message metadata entities.
+ * @property {DraftEmailMessageMetadataEntity[]} drafts List of draft email message metadata entities.
  * @property {string} [nextToken] Token to be used to fetch the next set of draft email messages, if
  *  any.
  */

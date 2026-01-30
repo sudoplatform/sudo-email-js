@@ -21,6 +21,7 @@ import {
   DeleteDraftEmailMessagesInput,
   GetDraftEmailMessageInput,
   ListDraftEmailMessageMetadataForEmailAddressIdInput,
+  ListDraftEmailMessagesForEmailAddressIdInput,
   ListScheduledDraftMessagesForEmailAddressIdInput,
   ScheduleSendDraftMessageInput,
   UpdateDraftEmailMessageInput,
@@ -369,6 +370,7 @@ export interface SudoEmailClient {
 
   /**
    * @deprecated The method should not be used. Instead use listDraftEmailMessageMetadataForEmailAddressId.
+   * @deprecated The method should not be used. Instead use listDraftEmailMessageMetadataForEmailAddressId.
    * Lists the metadata and content of all draft email messages for the user.
    *
    * @returns {DraftEmailMessage[]} An array of draft email messages or an empty array if no
@@ -378,14 +380,15 @@ export interface SudoEmailClient {
 
   /**
    * Lists the metadata and content of all draft messages for the specified email address identifier.
+   * Supports pagination with limit and nextToken parameters.
    *
-   * @param {string} emailAddressId The identifier of the email address associated with the draft email messages.
-   * @returns {DraftEmailMessage[]} An array of draft email messages or an empty array if no
-   *  matching draft email messages can be found.
+   * @param {ListDraftEmailMessagesForEmailAddressIdInput} input Parameters for listing draft email messages
+   *   including emailAddressId, optional limit (defaults to 10), and optional nextToken for pagination.
+   * @returns {ListOutput<DraftEmailMessage>} A list output containing draft email messages and pagination token.
    */
   listDraftEmailMessagesForEmailAddressId(
-    emailAddressId: string,
-  ): Promise<DraftEmailMessage[]>
+    input: ListDraftEmailMessagesForEmailAddressIdInput,
+  ): Promise<ListOutput<DraftEmailMessage>>
 
   /**
    * Lists the metadata of all draft email messages for the user.
@@ -398,7 +401,11 @@ export interface SudoEmailClient {
   /**
    * Lists the metadata of all draft email messages for the specified email address identifier.
    * Supports pagination with limit and nextToken parameters.
+   * Supports pagination with limit and nextToken parameters.
    *
+   * @param {ListDraftEmailMessageMetadataForEmailAddressIdInput} input Parameters for listing draft email message metadata
+   *   including emailAddressId, optional limit (defaults to 10), and optional nextToken for pagination.
+   * @returns {ListOutput<DraftEmailMessageMetadata>} A list output containing draft email message metadata and pagination token.
    * @param {ListDraftEmailMessageMetadataForEmailAddressIdInput} input Parameters for listing draft email message metadata
    *   including emailAddressId, optional limit (defaults to 10), and optional nextToken for pagination.
    * @returns {ListOutput<DraftEmailMessageMetadata>} A list output containing draft email message metadata and pagination token.

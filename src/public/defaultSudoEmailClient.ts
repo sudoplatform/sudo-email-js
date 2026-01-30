@@ -113,6 +113,7 @@ import {
   DeleteDraftEmailMessagesInput,
   GetDraftEmailMessageInput,
   ListDraftEmailMessageMetadataForEmailAddressIdInput,
+  ListDraftEmailMessagesForEmailAddressIdInput,
   ListScheduledDraftMessagesForEmailAddressIdInput,
   ScheduleSendDraftMessageInput,
   UpdateDraftEmailMessageInput,
@@ -864,19 +865,34 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     return draftMessages
   }
 
-  public async listDraftEmailMessagesForEmailAddressId(
-    emailAddressId: string,
-  ): Promise<DraftEmailMessage[]> {
+  public async listDraftEmailMessagesForEmailAddressId({
+    emailAddressId,
+    limit = 10,
+    nextToken = undefined,
+  }: ListDraftEmailMessagesForEmailAddressIdInput): Promise<
+    ListOutput<DraftEmailMessage>
+  > {
     this.log.debug(this.listDraftEmailMessagesForEmailAddressId.name, {
       emailAddressId,
+      limit,
+      nextToken,
     })
 
     const useCase = new ListDraftEmailMessagesForEmailAddressIdUseCase(
       this.emailMessageService,
     )
-    const { draftMessages } = await useCase.execute({ emailAddressId })
+    const { draftMessages, nextToken: resultNextToken } = await useCase.execute(
+      {
+        emailAddressId,
+        limit,
+        nextToken,
+      },
+    )
 
-    return draftMessages
+    return {
+      items: draftMessages,
+      nextToken: resultNextToken,
+    }
   }
 
   /**
@@ -912,12 +928,17 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const useCase = new ListDraftEmailMessageMetadataForEmailAddressIdUseCase(
       this.emailMessageService,
     )
+
     const { metadata, nextToken: resultNextToken } = await useCase.execute({
       emailAddressId,
       limit,
       nextToken,
     })
 
+    return {
+      items: metadata,
+      nextToken: resultNextToken,
+    }
     return {
       items: metadata,
       nextToken: resultNextToken,

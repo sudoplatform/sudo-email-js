@@ -18,6 +18,7 @@ import { DraftEmailMessage, SudoEmailClient } from '../../../src'
 import { ListDraftEmailMessagesForEmailAddressIdUseCase } from '../../../src/private/domain/use-cases/draft/listDraftEmailMessagesForEmailAddressIdUseCase'
 import { stringToArrayBuffer } from '../../../src/private/util/buffer'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
+import { ListOutput } from '@sudoplatform/sudo-common'
 
 jest.mock(
   '../../../src/private/domain/use-cases/draft/listDraftEmailMessagesForEmailAddressIdUseCase',
@@ -57,7 +58,9 @@ describe('SudoEmailClient.listDraftEmailMessagesForEmailAddressId Test Suite', (
   })
 
   it('generates use case', async () => {
-    await instanceUnderTest.listDraftEmailMessagesForEmailAddressId('')
+    await instanceUnderTest.listDraftEmailMessagesForEmailAddressId({
+      emailAddressId: '',
+    })
     expect(
       JestMockListDraftEmailMessagesForEmailAddressIdUseCase,
     ).toHaveBeenCalledTimes(1)
@@ -65,9 +68,9 @@ describe('SudoEmailClient.listDraftEmailMessagesForEmailAddressId Test Suite', (
 
   it('calls use case as expected', async () => {
     const emailAddressId = v4()
-    await instanceUnderTest.listDraftEmailMessagesForEmailAddressId(
+    await instanceUnderTest.listDraftEmailMessagesForEmailAddressId({
       emailAddressId,
-    )
+    })
     verify(
       mockListDraftEmailMessagesForEmailAddressIdUseCase.execute(anything()),
     ).once()
@@ -76,6 +79,8 @@ describe('SudoEmailClient.listDraftEmailMessagesForEmailAddressId Test Suite', (
     ).first()
     expect(actualArgs).toEqual<typeof actualArgs>({
       emailAddressId,
+      limit: 10,
+      nextToken: undefined,
     })
   })
 
@@ -85,16 +90,24 @@ describe('SudoEmailClient.listDraftEmailMessagesForEmailAddressId Test Suite', (
     ).thenResolve({
       draftMessages: [],
     })
-    await expect(
-      instanceUnderTest.listDraftEmailMessagesForEmailAddressId(''),
-    ).resolves.toHaveLength(0)
+
+    const result =
+      await instanceUnderTest.listDraftEmailMessagesForEmailAddressId({
+        emailAddressId: '',
+      })
+
+    expect(result.items).toHaveLength(0)
   })
 
   it('returns expected result', async () => {
     await expect(
-      instanceUnderTest.listDraftEmailMessagesForEmailAddressId(''),
-    ).resolves.toEqual<DraftEmailMessage[]>([
-      { id: 'id', emailAddressId: 'emailAddressId', updatedAt, rfc822Data },
-    ])
+      instanceUnderTest.listDraftEmailMessagesForEmailAddressId({
+        emailAddressId: '',
+      }),
+    ).resolves.toEqual<ListOutput<DraftEmailMessage>>({
+      items: [
+        { id: 'id', emailAddressId: 'emailAddressId', updatedAt, rfc822Data },
+      ],
+    })
   })
 })

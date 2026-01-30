@@ -131,15 +131,15 @@ export class DefaultEmailMaskService implements EmailMaskService {
       id: emailMaskId,
     }
 
-    if (metadata === null) {
-      updateEmailMaskInput.metadata = metadata
+    if (metadata === null || (metadata && Object.keys(metadata).length === 0)) {
+      updateEmailMaskInput.metadata = null
     } else if (metadata !== undefined) {
       const sealedMetadata = await this.sealMetadata(metadata)
       updateEmailMaskInput.metadata = sealedMetadata
     }
 
-    if (expiresAt === null) {
-      updateEmailMaskInput.expiresAtEpochSec = expiresAt
+    if (expiresAt === null || (expiresAt && expiresAt.getTime() === 0)) {
+      updateEmailMaskInput.expiresAtEpochSec = null
     } else if (expiresAt !== undefined) {
       updateEmailMaskInput.expiresAtEpochSec = secondsSinceEpoch(expiresAt)
     }
