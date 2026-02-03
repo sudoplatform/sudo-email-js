@@ -108,12 +108,11 @@
     "@typescript-eslint/parser": "^8.54.0",
     "concurrently": "^9.2.1",
     "dotenv": "^17.2.3",
-    "eslint": "^8.57.1",
+    "eslint": "^9.39.2",
     "eslint-config-prettier": "^9.1.2",
     "eslint-plugin-headers": "^1.3.3",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-prettier": "^5.5.5",
-    "eslint-plugin-tree-shaking": "^1.12.2",
     "husky": "^9.1.7",
     "isomorphic-fetch": "^3.0.0",
     "jest": "^30.2.0",
@@ -144,6 +143,11 @@
       "until": 1772240935,
       "untilISO": "2026-02-28T01:08:55Z",
       "reason": "Waiting for fix maturity in tar for dev-only dependency"
+    },
+    "1112708": {
+      "until": 1771198541,
+      "untilISO": "2026-02-15T23:35:41Z",
+      "reason": "Supressing audit until patch has matured. Package is used by aws/amplify so not processing untrusted data."
     }
   }
 }

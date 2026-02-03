@@ -11,6 +11,7 @@ import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { DateTime } from 'luxon'
 import { v4 } from 'uuid'
 import {
+  ConfigurationData,
   EmailAddress,
   EmailMask,
   EmailMaskRealAddressType,
@@ -45,11 +46,12 @@ describe('SudoEmailClient ProvisionEmailMask Test Suite', () => {
   let ownershipProofToken: string
   let maskDomain: string
   let runTests = true
+  let config: ConfigurationData
 
   beforeEach(async () => {
     const result = await setupEmailClient(log)
     instanceUnderTest = result.emailClient
-    const config = await instanceUnderTest.getConfigurationData()
+    config = await instanceUnderTest.getConfigurationData()
     runTests = config.emailMasksEnabled
     if (runTests) {
       userClient = result.userClient
@@ -141,7 +143,7 @@ describe('SudoEmailClient ProvisionEmailMask Test Suite', () => {
     )
   })
 
-  it('throws InvalidArgumentError when provisioning a mask with external real address', async () => {
+  it('handles attempts to provision mask with external real address appropriately', async () => {
     if (!runTests) {
       log.debug('Email Masks not enabled. Skipping.')
       return
@@ -149,13 +151,34 @@ describe('SudoEmailClient ProvisionEmailMask Test Suite', () => {
     const maskAddress = `${generateSafeLocalPart()}@${maskDomain}`
     const externalRealAddress = `${v4()}@anonyome.com`
 
-    await expect(
-      instanceUnderTest.provisionEmailMask({
+    if (!config.externalEmailMasksEnabled) {
+      await expect(
+        instanceUnderTest.provisionEmailMask({
+          maskAddress,
+          realAddress: externalRealAddress,
+          ownershipProofToken,
+        }),
+      ).rejects.toThrow(InvalidArgumentError)
+    } else {
+      const maskAddress = `${generateSafeLocalPart()}@${maskDomain}`
+
+      const emailMask = await instanceUnderTest.provisionEmailMask({
         maskAddress,
         realAddress: externalRealAddress,
         ownershipProofToken,
-      }),
-    ).rejects.toThrow(InvalidArgumentError)
+      })
+      emailMasks.push(emailMask)
+
+      expect(emailMask.id).toBeDefined()
+      expect(emailMask.maskAddress).toStrictEqual(maskAddress)
+      expect(emailMask.realAddress).toStrictEqual(externalRealAddress)
+      expect(emailMask.status).toStrictEqual(EmailMaskStatus.PENDING)
+      expect(emailMask.realAddressType).toStrictEqual(
+        EmailMaskRealAddressType.EXTERNAL,
+      )
+      expect(emailMask.metadata).toBeUndefined()
+      expect(emailMask.expiresAt).toBeUndefined()
+    }
   })
 
   it('provisions a mask without optional metadata and expiration', async () => {

@@ -17,6 +17,7 @@ export interface GetConfigurationDataUseCaseOutput {
   sendEncryptedEmailEnabled: boolean
   prohibitedFileExtensions: string[]
   emailMasksEnabled: boolean
+  externalEmailMasksEnabled: boolean
 }
 
 /**

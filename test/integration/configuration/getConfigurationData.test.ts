@@ -32,6 +32,7 @@ describe('SudoEmailClient GetConfigurationData Test Suite', () => {
       expect(result).toHaveProperty('sendEncryptedEmailEnabled')
       expect(result.prohibitedFileExtensions.length).toBeGreaterThan(20)
       expect(result).toHaveProperty('emailMasksEnabled')
+      expect(result).toHaveProperty('externalEmailMasksEnabled')
     })
   })
 })

@@ -13,6 +13,8 @@ export enum EmailMaskStatus {
   DISABLED = 'DISABLED',
   // The email mask has been locked by the system
   LOCKED = 'LOCKED',
+  // The email mask is pending verification
+  PENDING = 'PENDING',
 }
 
 export enum EmailMaskRealAddressType {

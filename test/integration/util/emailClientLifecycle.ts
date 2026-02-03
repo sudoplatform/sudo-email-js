@@ -54,7 +54,6 @@ import { EmailConfigurationDataService } from '../../../src/private/domain/entit
 global.fetch = require('node-fetch')
 require('isomorphic-fetch')
 // jsdom does some crypto polyfill magic but we want to use crypto.subtle so we need to add it back in
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const localCrypto = require('crypto').webcrypto
 global.crypto = localCrypto
 // @ts-ignore

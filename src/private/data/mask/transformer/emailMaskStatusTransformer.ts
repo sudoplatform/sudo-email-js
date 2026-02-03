@@ -17,6 +17,8 @@ export class EmailMaskStatusTransformer {
         return EmailMaskEntityStatus.DISABLED
       case EmailMaskStatusGraphQL.Locked:
         return EmailMaskEntityStatus.LOCKED
+      case EmailMaskStatusGraphQL.Pending:
+        return EmailMaskEntityStatus.PENDING
     }
   }
 
@@ -28,6 +30,8 @@ export class EmailMaskStatusTransformer {
         return EmailMaskStatusGraphQL.Disabled
       case EmailMaskEntityStatus.LOCKED:
         return EmailMaskStatusGraphQL.Locked
+      case EmailMaskEntityStatus.PENDING:
+        return EmailMaskStatusGraphQL.Pending
     }
   }
 
@@ -39,6 +43,8 @@ export class EmailMaskStatusTransformer {
         return EmailMaskStatus.DISABLED
       case EmailMaskEntityStatus.LOCKED:
         return EmailMaskStatus.LOCKED
+      case EmailMaskEntityStatus.PENDING:
+        return EmailMaskStatus.PENDING
     }
   }
 
@@ -50,6 +56,8 @@ export class EmailMaskStatusTransformer {
         return EmailMaskEntityStatus.DISABLED
       case EmailMaskStatus.LOCKED:
         return EmailMaskEntityStatus.LOCKED
+      case EmailMaskStatus.PENDING:
+        return EmailMaskEntityStatus.PENDING
     }
   }
 }

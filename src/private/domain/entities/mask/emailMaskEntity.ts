@@ -12,6 +12,7 @@ export enum EmailMaskEntityStatus {
   ENABLED = 'ENABLED',
   DISABLED = 'DISABLED',
   LOCKED = 'LOCKED',
+  PENDING = 'PENDING',
 }
 
 export enum EmailMaskEntityRealAddressType {

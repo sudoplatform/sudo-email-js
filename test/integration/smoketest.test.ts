@@ -124,6 +124,8 @@ describe('SudoEmailClient Smoketest Test Suite', () => {
       expect(config.emailMessageRecipientsLimit).toBeGreaterThanOrEqual(1)
       expect(config).toHaveProperty('sendEncryptedEmailEnabled')
       expect(config.prohibitedFileExtensions.length).toBeGreaterThan(20)
+      expect(config).toHaveProperty('emailMasksEnabled')
+      expect(config).toHaveProperty('externalEmailMasksEnabled')
     })
 
     it('should get supported email domains', async () => {

@@ -207,6 +207,7 @@ export type EmailConfigurationData = {
   emailMessageMaxOutboundMessageSize: Scalars['Int']['output']
   emailMessageRecipientsLimit: Scalars['Int']['output']
   encryptedEmailMessageRecipientsLimit: Scalars['Int']['output']
+  externalEmailMasksEnabled: Scalars['Boolean']['output']
   prohibitedFileExtensions: Array<Scalars['String']['output']>
   sendEncryptedEmailEnabled: Scalars['Boolean']['output']
   updateEmailMessagesLimit: Scalars['Int']['output']
@@ -293,6 +294,7 @@ export enum EmailMaskStatus {
   Disabled = 'DISABLED',
   Enabled = 'ENABLED',
   Locked = 'LOCKED',
+  Pending = 'PENDING',
 }
 
 export type EmailMaskStatusFilterInput = {
@@ -1049,6 +1051,7 @@ export type EmailConfigurationDataFragment = {
   sendEncryptedEmailEnabled: boolean
   prohibitedFileExtensions: Array<string>
   emailMasksEnabled: boolean
+  externalEmailMasksEnabled: boolean
 }
 
 export type EmailFolderFragment = {
@@ -1754,6 +1757,7 @@ export type GetEmailConfigQuery = {
     sendEncryptedEmailEnabled: boolean
     prohibitedFileExtensions: Array<string>
     emailMasksEnabled: boolean
+    externalEmailMasksEnabled: boolean
   }
 }
 
@@ -3068,6 +3072,10 @@ export const EmailConfigurationDataFragmentDoc = {
             name: { kind: 'Name', value: 'prohibitedFileExtensions' },
           },
           { kind: 'Field', name: { kind: 'Name', value: 'emailMasksEnabled' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'externalEmailMasksEnabled' },
+          },
         ],
       },
     },
@@ -5741,6 +5749,10 @@ export const GetEmailConfigDocument = {
             name: { kind: 'Name', value: 'prohibitedFileExtensions' },
           },
           { kind: 'Field', name: { kind: 'Name', value: 'emailMasksEnabled' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'externalEmailMasksEnabled' },
+          },
         ],
       },
     },

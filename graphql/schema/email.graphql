@@ -61,6 +61,7 @@ enum EmailMaskStatus {
   ENABLED
   DISABLED
   LOCKED
+  PENDING
 }
 
 input CreatePublicKeyInput {
@@ -382,6 +383,7 @@ type EmailConfigurationData {
   sendEncryptedEmailEnabled: Boolean!
   prohibitedFileExtensions: [String!]!
   emailMasksEnabled: Boolean!
+  externalEmailMasksEnabled: Boolean!
 }
 
 type Owner {

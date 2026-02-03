@@ -66,6 +66,7 @@ export class GraphQLDataFactory {
     sendEncryptedEmailEnabled: true,
     prohibitedFileExtensions: ['.js', '.exe', '.lib'],
     emailMasksEnabled: true,
+    externalEmailMasksEnabled: false,
   }
 
   static readonly emailFolder: EmailFolder = {

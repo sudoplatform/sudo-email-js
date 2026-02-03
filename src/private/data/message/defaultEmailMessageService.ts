@@ -106,7 +106,6 @@ import {
   SubscriptionResult,
 } from '../common/subscriptionManager'
 import { SortOrderTransformer } from '../common/transformer/sortOrderTransformer'
-// eslint-disable-next-line tree-shaking/no-side-effects-in-initialization
 import { withDefault } from '../common/withDefault'
 import { SealedEmailMessageEntityTransformer } from './transformer/sealedEmailMessageEntityTransformer'
 import { SendEmailMessageResultTransformer } from './transformer/sendEmailMessageResultTransformer'
@@ -896,11 +895,9 @@ export class DefaultEmailMessageService implements EmailMessageService {
     emailAddressId: string,
   ): Promise<string> {
     const idToken = await this.userClient.getIdToken()
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const identityId = await this.userClient.getUserClaim(
       this.Defaults.IdentityIdClaimName,
     )
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     this.log.debug('ID info', { idToken, identityId })
 
     if (typeof identityId !== 'string' || !identityId.length) {
@@ -974,7 +971,6 @@ export class DefaultEmailMessageService implements EmailMessageService {
         encrypted: sealedEmailMessage.rfc822Header,
         keyId: sealedEmailMessage.keyId,
       })
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       json = JSON.parse(unsealedRFC822Header)
     } catch (err: unknown) {
       const error = err as Error

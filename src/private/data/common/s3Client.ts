@@ -330,11 +330,8 @@ export class S3Client {
           return false
         })
         .map((value) => ({
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           key: value.Key!,
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           lastModified: value.LastModified!,
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           size: value.Size!,
         }))
         .value(),

@@ -24,6 +24,7 @@ export class ConfigurationDataAPITransformer {
       sendEncryptedEmailEnabled: entity.sendEncryptedEmailEnabled,
       prohibitedFileExtensions: entity.prohibitedFileExtensions,
       emailMasksEnabled: entity.emailMasksEnabled,
+      externalEmailMasksEnabled: entity.externalEmailMasksEnabled,
     }
 
     return transformed
@@ -42,6 +43,7 @@ export class ConfigurationDataAPITransformer {
       sendEncryptedEmailEnabled: data.sendEncryptedEmailEnabled,
       prohibitedFileExtensions: data.prohibitedFileExtensions,
       emailMasksEnabled: data.emailMasksEnabled,
+      externalEmailMasksEnabled: data.externalEmailMasksEnabled,
     }
   }
 }

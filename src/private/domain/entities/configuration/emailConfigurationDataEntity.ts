@@ -18,6 +18,7 @@
  * @property {boolean} sendEncryptedEmailEnabled Flag indicating whether End-to-end encrypted send operations are enabled.
  * @property {string[]} prohibitedFileExtensions List of file extensions that are prohibited from being attached to an email message.
  * @property {boolean} emailMasksEnabled Flag indicating whether email masks are enabled.
+ * @property {boolean} externalEmailMasksEnabled Flag indicating whether external email masks are enabled.
  */
 export interface EmailConfigurationDataEntity {
   deleteEmailMessagesLimit: number
@@ -29,4 +30,5 @@ export interface EmailConfigurationDataEntity {
   sendEncryptedEmailEnabled: boolean
   prohibitedFileExtensions: string[]
   emailMasksEnabled: boolean
+  externalEmailMasksEnabled: boolean
 }
