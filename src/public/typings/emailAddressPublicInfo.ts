@@ -25,4 +25,5 @@ export interface EmailAddressPublicInfo {
    */
   publicKey: string
   publicKeyDetails: EmailAddressPublicKey
+  enableEncryption: boolean
 }

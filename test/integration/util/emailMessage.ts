@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -56,4 +56,14 @@ export const constructSendMessageInputSansSenderId = ({
     forwardingMessageId,
     replyingMessageId,
   }
+}
+
+/**
+ * Given a HTML body of a verification code email, extracts the OTP.
+ * @param {string} body HTML body string
+ * @returns {string} OTP within the verification code email
+ */
+export function extractOtp(body: string | false): string {
+  if (!body) return ''
+  return body.match(/(?<=otp">)\d+/gm)?.[0] ?? ''
 }

@@ -7,7 +7,6 @@
 import { anything, instance, mock, reset, when } from 'ts-mockito'
 import { EmailMessageService } from '../../../../../../src/private/domain/entities/message/emailMessageService'
 import { GetEmailMessageWithBodyUseCase } from '../../../../../../src/private/domain/use-cases/message/getEmailMessageWithBodyUseCase'
-import { stringToArrayBuffer } from '../../../../../../src/private/util/buffer'
 
 describe('GetEmailMessageWithBodyUseCase', () => {
   const mockEmailMessageService = mock<EmailMessageService>()

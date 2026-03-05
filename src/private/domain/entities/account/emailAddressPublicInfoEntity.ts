@@ -20,4 +20,5 @@ export interface EmailAddressPublicInfoEntity {
   emailAddress: string
   keyId: string
   publicKeyDetails: EmailAddressPublicKeyEntity
+  enableEncryption: boolean
 }

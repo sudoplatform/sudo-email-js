@@ -49,6 +49,7 @@ export class EmailMessageAPITransformer {
       size: entity.size,
       encryptionStatus: entity.encryptionStatus,
       date: entity.date,
+      emailMaskId: entity.emailMaskId,
     }
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -166,6 +166,10 @@ import {
   UpdateEmailMessagesInput,
   UpdateEmailMessagesMutation,
   UpdateEmailMessagesV2Result,
+  VerifyExternalEmailAddressDocument,
+  VerifyExternalEmailAddressInput,
+  VerifyExternalEmailAddressMutation,
+  VerifyExternalEmailAddressResult,
 } from '../../../gen/graphqlTypes'
 import { ErrorTransformer } from './transformer/errorTransformer'
 import { GraphQLClient } from '@sudoplatform/sudo-user'
@@ -688,6 +692,19 @@ export class ApiClient {
       variables: { owner: ownerId },
       calleeName: this.onEmailMessageUpdated.name,
     })
+  }
+
+  public async verifyExternalEmailAddress(
+    input: VerifyExternalEmailAddressInput,
+  ): Promise<VerifyExternalEmailAddressResult | undefined> {
+    const data = await this.performMutation<VerifyExternalEmailAddressMutation>(
+      {
+        mutation: VerifyExternalEmailAddressDocument,
+        variables: { input },
+        calleeName: this.verifyExternalEmailAddress.name,
+      },
+    )
+    return data.verifyExternalEmailAddress
   }
 
   public async createPublicKey(

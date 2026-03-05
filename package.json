@@ -10,9 +10,10 @@
   "scripts": {
     "prepare": "husky",
     "lint": "npm-run-all --parallel lint:eslint lint:prettier",
-    "lint:eslint": "eslint \"{bin,test,src}/**/*.{js,jsx,ts,tsx}\"",
-    "lint:prettier": "prettier -l \"{bin,test,src}/**/*.{js,jsx,ts,tsx,yml}\"",
+    "lint:eslint": "eslint test/ src/",
+    "lint:prettier": "prettier -l \"test/**/*.{js,jsx,ts,tsx,yml}\" \"src/**/*.{js,jsx,ts,tsx,yml}\"",
     "codegen": "graphql-codegen -c codegen.yml",
+    "audit-with-suppressions": "true",
     "verify": "true",
     "unit-test": "jest --verbose test/unit",
     "smoketest": "yarn unit-test && jest --verbose test/integration/smoketest",
@@ -79,14 +80,16 @@
     "ua-parser-js": "^2.0.0",
     "json5": "^2.2.3",
     "js-yaml": "^4.1.1",
-    "fast-xml-parser": "^4.5.1",
+    "fast-xml-parser": "5.3.8",
     "semver": "^7.5.2",
     "@babel/traverse": "^7.26.5",
     "es5-ext": "^0.10.63",
     "cross-spawn": "^7.0.5",
     "tmp": "^0.2.3",
     "nodemailer": "^7.0.11",
-    "tar": "<7.5.7"
+    "tar": "<7.5.9",
+    "@isaacs/brace-expansion": "^5.0.1",
+    "@smithy/config-resolver": "^4.4.6"
   },
   "devDependencies": {
     "@graphql-codegen/add": "^6.0.0",
@@ -100,10 +103,12 @@
     "@sudoplatform/sudo-entitlements-admin": "^13.0.1",
     "@sudoplatform/sudo-profiles": "^19.0.1",
     "@sudoplatform/sudo-user": "^16.0.2",
+    "@types/imap": "^0",
     "@types/jest": "^30.0.0",
     "@types/lodash": "^4.17.23",
     "@types/luxon": "^3.7.1",
-    "@types/mailparser": "^3.4.6",
+    "@types/mailparser": "^3",
+    "@types/nodemailer": "^7.0.10",
     "@typescript-eslint/eslint-plugin": "^8.54.0",
     "@typescript-eslint/parser": "^8.54.0",
     "concurrently": "^9.2.1",
@@ -114,9 +119,11 @@
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-prettier": "^5.5.5",
     "husky": "^9.1.7",
+    "imap": "^0.8.19",
     "isomorphic-fetch": "^3.0.0",
     "jest": "^30.2.0",
     "luxon": "^3.7.2",
+    "mailparser": "^3.9.3",
     "nodemailer": "^7.0.13",
     "npm-run-all": "^4.1.5",
     "prettier": "^3.8.1",
@@ -144,10 +151,15 @@
       "untilISO": "2026-02-28T01:08:55Z",
       "reason": "Waiting for fix maturity in tar for dev-only dependency"
     },
-    "1112708": {
-      "until": 1771198541,
-      "untilISO": "2026-02-15T23:35:41Z",
-      "reason": "Supressing audit until patch has matured. Package is used by aws/amplify so not processing untrusted data."
+    "1113371": {
+      "until": 1773012539,
+      "untilISO": "2026-03-08T23:28:59Z",
+      "reason": "Suppressing minimatch audit until patch matures. Not used for user input."
+    },
+    "1113398": {
+      "until": 1773012279,
+      "untilISO": "2026-03-08T23:24:39Z",
+      "reason": "Suppressing ajv audit until patch matures. Only used by eslint."
     }
   }
 }

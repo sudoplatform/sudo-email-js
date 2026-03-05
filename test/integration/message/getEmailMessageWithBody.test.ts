@@ -473,7 +473,7 @@ describe('getEmailMessageWithBody test suite', () => {
           fail(`result status unexpectedly not Success`)
         }
         const receivedMessage = receiverMessages.items.find(
-          (m) => m.to[0].emailAddress === receiverMask.maskAddress,
+          (m) => m.emailMaskId === receiverMask.id,
         )
         expect(receivedMessage).toBeDefined()
         receivedMessageId = receivedMessage!.id
@@ -482,7 +482,7 @@ describe('getEmailMessageWithBody test suite', () => {
       const receivedMessageWithBody =
         await instanceUnderTest.getEmailMessageWithBody({
           id: receivedMessageId!,
-          emailAddressId: receiverMask.id,
+          emailAddressId: receiverEmailAddress.id,
         })
       expect(receivedMessageWithBody).toStrictEqual<EmailMessageWithBody>({
         id: receivedMessageId!,
@@ -553,6 +553,10 @@ describe('getEmailMessageWithBody test suite', () => {
         plainTextType: '',
         __typename: 'SealedAttribute',
       },
+      rfc822DataAttributes: {
+        key: 'dummy-s3-key',
+        bucket,
+      },
       seen: false,
       repliedTo: false,
       forwarded: false,
@@ -583,6 +587,7 @@ describe('getEmailMessageWithBody test suite', () => {
     const authToken = await userClient.getLatestAuthToken()
     const keyForAddress = `${identityId}/email/${emailAddress.id}`
     const keyForMessage = `${keyForAddress}/${legacyEmailMessageId}-${legacyEmailMessageKeyId}`
+    dummySealedEmailMessage.rfc822DataAttributes.key = keyForMessage
     const identityServiceConfig =
       internal.getIdentityServiceConfig().identityService
     const providerName = `cognito-idp.${region}.amazonaws.com/${identityServiceConfig.poolId}`

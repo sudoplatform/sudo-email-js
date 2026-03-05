@@ -660,7 +660,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
   }: GetEmailMessageWithBodyInput): Promise<
     EmailMessageWithBodyEntity | undefined
   > {
-    this.log.debug(this.getEmailMessageWithBody.name, { id, emailAddressId })
+    this.log.debug(this.getEmailMessageWithBody.name, { id })
     const data = await this.getEmailMessageRfc822Data({ id, emailAddressId })
     if (!data) {
       return undefined
@@ -682,19 +682,19 @@ export class DefaultEmailMessageService implements EmailMessageService {
     emailAddressId,
   }: GetEmailMessageRfc822DataInput): Promise<ArrayBuffer | undefined> {
     const sealedEmailMessage = await this.appSync.getEmailMessage(id)
-    if (!sealedEmailMessage) {
+    if (
+      !sealedEmailMessage ||
+      sealedEmailMessage.emailAddressId !== emailAddressId
+    ) {
       return undefined
     }
-    const s3Key = await this.constructS3KeyForEmailMessage(
-      emailAddressId,
-      id,
-      sealedEmailMessage.rfc822Header.keyId,
-    )
+
+    const s3Key = sealedEmailMessage.rfc822DataAttributes.key
     this.log.debug('s3 key', { key: s3Key })
     let sealedString: string
     try {
       const result = await this.s3Client.download({
-        bucket: this.emailServiceConfig.bucket,
+        bucket: sealedEmailMessage.rfc822DataAttributes.bucket,
         region: this.emailServiceConfig.region,
         key: s3Key,
       })
@@ -906,16 +906,6 @@ export class DefaultEmailMessageService implements EmailMessageService {
     return `${identityId}/email/${emailAddressId}`
   }
 
-  private async constructS3KeyForEmailMessage(
-    emailAddressId: string,
-    emailMessageId: string,
-    publicKeyId: string,
-  ): Promise<string> {
-    const keyForAddress =
-      await this.constructS3KeyForEmailAddressId(emailAddressId)
-    return `${keyForAddress}/${emailMessageId}-${publicKeyId}`
-  }
-
   // Visible for testing
   public async unsealEmailMessage(
     sealedEmailMessage: SealedEmailMessageEntity,
@@ -949,6 +939,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       size: sealedEmailMessage.size,
       encryptionStatus: sealedEmailMessage.encryptionStatus,
       date: undefined,
+      emailMaskId: sealedEmailMessage.emailMaskId,
     }
 
     const status = await this.deviceKeyWorker.keyExists(

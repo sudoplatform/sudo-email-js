@@ -38,7 +38,7 @@ describe('GetEmailMessageRfc822DataUseCase', () => {
     await expect(
       implementationUnderTest.execute({
         id: 'messageToGet',
-        emailAddressId: 'email-address-of-message',
+        emailAddressId: 'testEmailAddressId',
       }),
     ).resolves.toStrictEqual({
       id: 'messageToGet',

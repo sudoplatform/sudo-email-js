@@ -13,6 +13,7 @@ import {
   DraftEmailMessage,
   DraftEmailMessageMetadata,
   EmailAddress,
+  MessageSizeLimitExceededError,
   SudoEmailClient,
 } from '../../../src'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
@@ -176,5 +177,170 @@ describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
         emailAddressId: emailAddress.id,
       }),
     ).resolves.toBeDefined()
+  })
+
+  describe('throws MessageSizeLimitExceedError for outbound emails exceeding max message size with', () => {
+    const defaultBody = 'Hello world'
+
+    const pdfAttachment = {
+      mimeType: 'application/pdf',
+      filename: 'attachment-1.pdf',
+      data: Buffer.from(
+        '0'.repeat(
+          50000000, // 50 MB
+        ),
+      ).toString('base64'),
+      inlineAttachment: false,
+    }
+
+    const imageAttachment = {
+      mimeType: 'image/jpeg',
+      filename: 'attachment-2.jpeg',
+      data: Buffer.from(
+        '0'.repeat(
+          50000000, // 50 MB
+        ),
+      ).toString('base64'),
+      inlineAttachment: false,
+    }
+
+    it('body size that exceeds the max message size', async () => {
+      const largeBody = '0'.repeat(
+        (await instanceUnderTest.getConfigurationData())
+          .emailMessageMaxOutboundMessageSize * 2,
+      )
+
+      const message = Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body: largeBody,
+        attachments: [],
+      })
+      await expect(
+        instanceUnderTest.createDraftEmailMessage({
+          senderEmailAddressId: emailAddress.id,
+          rfc822Data: message,
+        }),
+      ).rejects.toBeInstanceOf(MessageSizeLimitExceededError)
+    })
+
+    it('attached attachments each exceeding the max message size', async () => {
+      const pdf = {
+        ...pdfAttachment,
+        inlineAttachment: false,
+      }
+
+      const image = {
+        ...imageAttachment,
+        inlineAttachment: false,
+      }
+
+      const message = Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body: defaultBody,
+        attachments: [pdf, image],
+      })
+      await expect(
+        instanceUnderTest.createDraftEmailMessage({
+          senderEmailAddressId: emailAddress.id,
+          rfc822Data: message,
+        }),
+      ).rejects.toBeInstanceOf(MessageSizeLimitExceededError)
+    })
+
+    it('inline attachments each exceeding the max message size', async () => {
+      const pdf = {
+        ...pdfAttachment,
+        inlineAttachment: true,
+      }
+
+      const image = {
+        ...imageAttachment,
+        inlineAttachment: true,
+      }
+
+      const message = Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body: defaultBody,
+        attachments: [pdf, image],
+      })
+      await expect(
+        instanceUnderTest.createDraftEmailMessage({
+          senderEmailAddressId: emailAddress.id,
+          rfc822Data: message,
+        }),
+      ).rejects.toBeInstanceOf(MessageSizeLimitExceededError)
+    })
+
+    it('inline and attached attachments each exceeding the max message size', async () => {
+      const pdf = {
+        ...pdfAttachment,
+        inlineAttachment: false,
+      }
+
+      const image = {
+        ...imageAttachment,
+        inlineAttachment: true,
+      }
+
+      const message = Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body: defaultBody,
+        attachments: [pdf, image],
+      })
+      await expect(
+        instanceUnderTest.createDraftEmailMessage({
+          senderEmailAddressId: emailAddress.id,
+          rfc822Data: message,
+        }),
+      ).rejects.toBeInstanceOf(MessageSizeLimitExceededError)
+    })
+
+    it('body, inline and attached attachments each exceeding the max message size', async () => {
+      const largeBody = '0'.repeat(
+        (await instanceUnderTest.getConfigurationData())
+          .emailMessageMaxOutboundMessageSize * 2,
+      )
+      const pdf = {
+        ...pdfAttachment,
+        inlineAttachment: false,
+      }
+
+      const image = {
+        ...imageAttachment,
+        inlineAttachment: true,
+      }
+
+      const message = Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailAddress.emailAddress }],
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body: largeBody,
+        attachments: [pdf, image],
+      })
+      await expect(
+        instanceUnderTest.createDraftEmailMessage({
+          senderEmailAddressId: emailAddress.id,
+          rfc822Data: message,
+        }),
+      ).rejects.toBeInstanceOf(MessageSizeLimitExceededError)
+    })
   })
 })

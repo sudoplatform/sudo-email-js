@@ -25,7 +25,6 @@ import {
   GetEmailAddressBlocklistResponseFragment,
   KeyFormat,
   Owner,
-  ProvisionEmailAddressPublicKeyInput,
   ProvisionEmailMaskPublicKeyInput,
   PublicKey,
   ScheduledDraftMessage,
@@ -196,6 +195,10 @@ export class GraphQLDataFactory {
       plainTextType: 'json-string',
       base64EncodedSealedData: 'rfc822Header',
     },
+    rfc822DataAttributes: {
+      bucket: 'testBucket',
+      key: 'testKey',
+    },
     sortDateEpochMs: 1.0,
     size: 12345,
     emailMaskId: undefined,
@@ -232,6 +235,7 @@ export class GraphQLDataFactory {
         keyFormat: KeyFormat.RsaPublicKey,
         algorithm: 'testAlgorithm',
       },
+      enableEncryption: true,
     },
     {
       emailAddress: `${GraphQLDataFactory.emailAddress.emailAddress}_2`,
@@ -243,6 +247,7 @@ export class GraphQLDataFactory {
         keyFormat: KeyFormat.Spki,
         algorithm: 'testAlgorithm_2',
       },
+      enableEncryption: true,
     },
   ]
 

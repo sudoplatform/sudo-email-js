@@ -373,6 +373,12 @@ input SendMaskedEmailMessageInput {
   rfc822Header: Rfc822HeaderInput!
 }
 
+input VerifyExternalEmailAddressInput {
+  emailAddress: String!
+  emailMaskId: String!
+  verificationCode: String
+}
+
 type EmailConfigurationData {
   deleteEmailMessagesLimit: Int!
   updateEmailMessagesLimit: Int!
@@ -389,6 +395,11 @@ type EmailConfigurationData {
 type Owner {
   id: String!
   issuer: String!
+}
+
+type Rfc822DataAttributesType {
+  bucket: String!
+  key: String!
 }
 
 type EmailAddress {
@@ -442,6 +453,7 @@ type SealedEmailMessage {
   state: EmailMessageState!
   clientRefId: String
   rfc822Header: SealedAttribute!
+  rfc822DataAttributes: Rfc822DataAttributesType!
   size: Float!
   encryptionStatus: EmailMessageEncryptionStatus
   deletedAtEpochMs: Float
@@ -496,6 +508,7 @@ type EmailAddressPublicInfo {
   keyId: String!
   publicKey: String!
   publicKeyDetails: EmailAddressPublicKey!
+  enableEncryption: Boolean
 }
 
 type LookupEmailAddressesPublicInfoResponse {
@@ -588,6 +601,11 @@ type ScheduledDraftMessageConnection {
 type EmailMaskConnection {
   items: [EmailMask!]!
   nextToken: String
+}
+
+type VerifyExternalEmailAddressResult {
+  isVerified: Boolean!
+  reason: String
 }
 
 type Query {
@@ -714,6 +732,10 @@ type Mutation {
   sendMaskedEmailMessage(
     input: SendMaskedEmailMessageInput!
   ): SendEmailMessageResult!
+
+  verifyExternalEmailAddress(
+    input: VerifyExternalEmailAddressInput!
+  ): VerifyExternalEmailAddressResult!
 }
 
 type Subscription {

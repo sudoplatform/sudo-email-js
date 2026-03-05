@@ -19,6 +19,7 @@ export class EmailAddressPublicInfoAPITransformer {
       publicKeyDetails: EmailAddressPublicKeyAPITransformer.transformEntity(
         entity.publicKeyDetails,
       ),
+      enableEncryption: entity.enableEncryption,
     }
   }
 }

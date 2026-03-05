@@ -7,7 +7,6 @@
 import { DefaultLogger } from '@sudoplatform/sudo-common'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
-import _ from 'lodash'
 import { EmailAddress, LimitExceededError, SudoEmailClient } from '../../../src'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
@@ -80,6 +79,7 @@ describe('SudoEmailClient LookupEmailAddressesPublicInfo Test Suite', () => {
           keyFormat: expect.any(Number),
           algorithm: expect.any(String),
         },
+        enableEncryption: true,
       })
     })
   })

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -26,6 +26,7 @@ import {
   ListEmailMasksForOwnerInput as ListEmailMasksForOwnerRequest,
   SealedAttribute,
   KeyFormat as GraphQLKeyFormat,
+  VerifyExternalEmailAddressInput,
 } from '../../../gen/graphqlTypes'
 import { EmailMaskEntity } from '../../domain/entities/mask/emailMaskEntity'
 import { ApiClient } from '../common/apiClient'
@@ -38,6 +39,7 @@ import { EmailMaskTransformer } from './transformer/emailMaskTransformer'
 import { secondsSinceEpoch } from '../../util/date'
 import { EmailMaskFilterTransformer } from './transformer/emailMaskFilterTransformer'
 import { EmailAccountServiceConfig } from '../account/defaultEmailAccountService'
+import { VerifyExternalEmailAddressResult } from '../../../public/typings/verifyExternalEmailAddress'
 
 export class DefaultEmailMaskService implements EmailMaskService {
   private readonly log: Logger
@@ -193,6 +195,19 @@ export class DefaultEmailMaskService implements EmailMaskService {
       emailMasks,
       nextToken: result.nextToken ?? undefined,
     }
+  }
+
+  async verifyExternalEmailAddress(
+    input: VerifyExternalEmailAddressInput,
+  ): Promise<VerifyExternalEmailAddressResult | undefined> {
+    this.log.debug(this.verifyExternalEmailAddress.name, { input })
+    const result = await this.appSync.verifyExternalEmailAddress(input)
+    return result
+      ? {
+          isVerified: result!.isVerified,
+          reason: result!.reason ?? undefined,
+        }
+      : result
   }
 
   private async sealMetadata(

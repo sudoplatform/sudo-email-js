@@ -122,6 +122,12 @@ mutation SendMaskedEmailMessage($input: SendMaskedEmailMessageInput!) {
   }
 }
 
+mutation VerifyExternalEmailAddress($input: VerifyExternalEmailAddressInput!) {
+  verifyExternalEmailAddress(input: $input) {
+    ...VerifyExternalEmailAddressResult
+  }
+}
+
 ##########
 # Keys
 ##########

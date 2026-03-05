@@ -364,6 +364,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
             keyFormat: PublicKeyFormat.RSAPublicKey,
             algorithm: 'testAlgorithm',
           },
+          enableEncryption: true,
         },
       ]
       senderEmailAddressId = v4()
@@ -2562,9 +2563,9 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
       const [s3DownloadArg] = capture(mockS3Client.download).first()
       expect(s3DownloadArg).toEqual({
-        bucket: 'bucket',
+        bucket: 'testBucket',
         region: 'region',
-        key: 'identityId/email/testEmailAddressId/testId-testKeyId',
+        key: 'testKey',
       })
       verify(mockS3Client.download(anything())).once()
 
@@ -2591,9 +2592,9 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
       const [s3DownloadArg] = capture(mockS3Client.download).first()
       expect(s3DownloadArg).toEqual({
-        bucket: 'bucket',
+        bucket: 'testBucket',
         region: 'region',
-        key: 'identityId/email/testEmailAddressId/testId-testKeyId',
+        key: 'testKey',
       })
       verify(mockS3Client.download(anything())).once()
 
@@ -2619,9 +2620,9 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
       const [s3DownloadArg] = capture(mockS3Client.download).first()
       expect(s3DownloadArg).toEqual({
-        bucket: 'bucket',
+        bucket: 'testBucket',
         region: 'region',
-        key: 'identityId/email/testEmailAddressId/testId-testKeyId',
+        key: 'testKey',
       })
       verify(mockS3Client.download(anything())).once()
 
@@ -2671,9 +2672,9 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
       const [s3DownloadArg] = capture(mockS3Client.download).first()
       expect(s3DownloadArg).toEqual({
-        bucket: 'bucket',
+        bucket: 'testBucket',
         region: 'region',
-        key: 'identityId/email/testEmailAddressId/testId-testKeyId',
+        key: 'testKey',
       })
       verify(mockS3Client.download(anything())).once()
 
@@ -2719,9 +2720,9 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
       const [s3DownloadArg] = capture(mockS3Client.download).first()
       expect(s3DownloadArg).toEqual({
-        bucket: 'bucket',
+        bucket: 'testBucket',
         region: 'region',
-        key: 'identityId/email/testEmailAddressId/testId-testKeyId',
+        key: 'testKey',
       })
       verify(mockS3Client.download(anything())).once()
 
@@ -2750,9 +2751,9 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
       const [s3DownloadArg] = capture(mockS3Client.download).first()
       expect(s3DownloadArg).toEqual({
-        bucket: 'bucket',
+        bucket: 'testBucket',
         region: 'region',
-        key: 'identityId/email/testEmailAddressId/testId-testKeyId',
+        key: 'testKey',
       })
       verify(mockS3Client.download(anything())).once()
 

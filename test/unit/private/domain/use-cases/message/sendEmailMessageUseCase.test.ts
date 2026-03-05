@@ -60,9 +60,13 @@ describe('SendEmailMessageUseCase', () => {
     when(mockEmailDomainService.getConfiguredEmailDomains()).thenResolve([
       EntityDataFactory.emailDomain,
     ])
+    when(mockEmailDomainService.getEmailMaskDomains()).thenResolve([
+      EntityDataFactory.maskDomain,
+    ])
     when(mockEmailConfigurationDataService.getConfigurationData()).thenResolve({
       sendEncryptedEmailEnabled: true,
       emailMessageMaxOutboundMessageSize,
+      emailMasksEnabled: true,
     } as unknown as EmailConfigurationDataEntity)
     instanceUnderTest = new SendEmailMessageUseCase(
       instance(mockMessageService),
@@ -138,6 +142,7 @@ describe('SendEmailMessageUseCase', () => {
             keyFormat: PublicKeyFormat.RSAPublicKey,
             algorithm: 'mockAlgorithm',
           },
+          enableEncryption: true,
         },
       ])
       when(mockMessageService.sendMessage(anything())).thenResolve({
@@ -244,6 +249,7 @@ describe('SendEmailMessageUseCase', () => {
             keyFormat: PublicKeyFormat.RSAPublicKey,
             algorithm: 'mockAlgorithm',
           },
+          enableEncryption: true,
         },
         {
           emailAddress: fromAddress,
@@ -253,6 +259,7 @@ describe('SendEmailMessageUseCase', () => {
             keyFormat: PublicKeyFormat.RSAPublicKey,
             algorithm: 'mockAlgorithm',
           },
+          enableEncryption: true,
         },
       ])
     })
@@ -297,6 +304,7 @@ describe('SendEmailMessageUseCase', () => {
               keyFormat: PublicKeyFormat.RSAPublicKey,
               algorithm: 'mockAlgorithm',
             },
+            enableEncryption: true,
           },
           {
             emailAddress: fromAddress,
@@ -306,6 +314,7 @@ describe('SendEmailMessageUseCase', () => {
               keyFormat: PublicKeyFormat.RSAPublicKey,
               algorithm: 'mockAlgorithm',
             },
+            enableEncryption: true,
           },
         ],
         emailMessageMaxOutboundMessageSize,
@@ -424,6 +433,7 @@ describe('SendEmailMessageUseCase', () => {
               keyFormat: PublicKeyFormat.RSAPublicKey,
               algorithm: 'mockAlgorithm',
             },
+            enableEncryption: true,
           },
           {
             emailAddress: fromAddress,
@@ -433,6 +443,7 @@ describe('SendEmailMessageUseCase', () => {
               keyFormat: PublicKeyFormat.RSAPublicKey,
               algorithm: 'mockAlgorithm',
             },
+            enableEncryption: true,
           },
         ],
         emailMessageMaxOutboundMessageSize,

@@ -24,6 +24,10 @@ fragment SealedEmailMessage on SealedEmailMessage {
     plainTextType
     base64EncodedSealedData
   }
+  rfc822DataAttributes {
+    key
+    bucket
+  }
   size
   encryptionStatus
   emailMaskId

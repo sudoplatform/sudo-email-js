@@ -11,4 +11,5 @@ fragment EmailAddressPublicInfo on EmailAddressPublicInfo {
   publicKeyDetails  {
     ...EmailAddressPublicKey
   }
+  enableEncryption
 }

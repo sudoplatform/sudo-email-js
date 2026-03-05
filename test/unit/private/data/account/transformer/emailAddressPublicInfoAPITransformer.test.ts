@@ -22,6 +22,7 @@ describe('EmailAddressPublicInfoAPITransformer Test Suite', () => {
         keyFormat: entity.publicKeyDetails.keyFormat,
         algorithm: entity.publicKeyDetails.algorithm,
       },
+      enableEncryption: true,
     }
     expect(instanceUnderTest.transformEntity(entity)).toStrictEqual(
       expectedResult,

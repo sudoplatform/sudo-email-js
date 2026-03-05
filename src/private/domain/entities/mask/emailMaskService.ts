@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -71,6 +71,20 @@ export interface EnableEmailMaskInput {
  */
 export interface DisableEmailMaskInput {
   emailMaskId: string
+}
+
+/**
+ * Input for `EmailMaskService.verifyExternalEmailAddress`
+ *
+ * @interface VerifyExternalEmailAddressInput
+ * @property {string} emailAddress The external email address to be verified.
+ * @property {string} emailMaskId The id of the email mask associated with the email address.
+ * @property {string} verificationCode The verification code to verify.
+ */
+export interface VerifyExternalEmailAddressInput {
+  emailAddress: string
+  emailMaskId: string
+  verificationCode?: string
 }
 
 /**
@@ -195,6 +209,18 @@ export interface ListEmailMasksOutput {
 }
 
 /**
+ * Core entity reprentation for a result of verifying an external email address.
+ *
+ * @interface VerifyExternalEmailAddressResult
+ * @property {boolean} isVerified True if verification passes, otherwise false.
+ * @property {string} reason If not verified, the reason why.
+ */
+export interface VerifyExternalEmailAddressResult {
+  isVerified: boolean
+  reason?: string
+}
+
+/**
  * Core entity representation of an email mask service used in business logic
  *
  * @interface EmailMaskService
@@ -251,4 +277,15 @@ export interface EmailMaskService {
   listEmailMasksForOwner(
     input?: ListEmailMasksForOwnerInput,
   ): Promise<ListEmailMasksOutput>
+
+  /**
+   * Sends an email verification code or verifies an external email address given a verification code.
+   *
+   * @param {VerifyExternalEmailAddressInput} input The input parameters for verifying an external email address
+   * @returns {VerifyExternalEmailAddressResult | undefined} A promise that resolves to a verify external email address
+   * result entity if a verification code was provided in the request or undefined if a verification code was sent.
+   */
+  verifyExternalEmailAddress(
+    input: VerifyExternalEmailAddressInput,
+  ): Promise<VerifyExternalEmailAddressResult | undefined>
 }

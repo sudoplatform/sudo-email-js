@@ -187,6 +187,7 @@ export type EmailAddressMetadataUpdateValuesInput = {
 export type EmailAddressPublicInfo = {
   __typename?: 'EmailAddressPublicInfo'
   emailAddress: Scalars['String']['output']
+  enableEncryption?: Maybe<Scalars['Boolean']['output']>
   keyId: Scalars['String']['output']
   publicKey: Scalars['String']['output']
   publicKeyDetails: EmailAddressPublicKey
@@ -448,6 +449,7 @@ export type Mutation = {
   updateEmailAddressMetadata: Scalars['ID']['output']
   updateEmailMask: EmailMask
   updateEmailMessagesV2: UpdateEmailMessagesV2Result
+  verifyExternalEmailAddress: VerifyExternalEmailAddressResult
 }
 
 export type MutationBlockEmailAddressesArgs = {
@@ -540,6 +542,10 @@ export type MutationUpdateEmailMaskArgs = {
 
 export type MutationUpdateEmailMessagesV2Args = {
   input: UpdateEmailMessagesInput
+}
+
+export type MutationVerifyExternalEmailAddressArgs = {
+  input: VerifyExternalEmailAddressInput
 }
 
 export type Owner = {
@@ -694,6 +700,12 @@ export type QueryLookupEmailAddressesPublicInfoArgs = {
   input: LookupEmailAddressesPublicInfoInput
 }
 
+export type Rfc822DataAttributesType = {
+  __typename?: 'Rfc822DataAttributesType'
+  bucket: Scalars['String']['output']
+  key: Scalars['String']['output']
+}
+
 export type Rfc822HeaderInput = {
   bcc: Array<Scalars['String']['input']>
   cc: Array<Scalars['String']['input']>
@@ -790,6 +802,7 @@ export type SealedEmailMessage = {
   owners: Array<Owner>
   previousFolderId?: Maybe<Scalars['ID']['output']>
   repliedTo: Scalars['Boolean']['output']
+  rfc822DataAttributes: Rfc822DataAttributesType
   rfc822Header: SealedAttribute
   seen: Scalars['Boolean']['output']
   size: Scalars['Float']['output']
@@ -905,6 +918,18 @@ export type UpdatedEmailMessageSuccess = {
   createdAtEpochMs: Scalars['Float']['output']
   id: Scalars['ID']['output']
   updatedAtEpochMs: Scalars['Float']['output']
+}
+
+export type VerifyExternalEmailAddressInput = {
+  emailAddress: Scalars['String']['input']
+  emailMaskId: Scalars['String']['input']
+  verificationCode?: InputMaybe<Scalars['String']['input']>
+}
+
+export type VerifyExternalEmailAddressResult = {
+  __typename?: 'VerifyExternalEmailAddressResult'
+  isVerified: Scalars['Boolean']['output']
+  reason?: Maybe<Scalars['String']['output']>
 }
 
 export type BlockedAddressFragment = {
@@ -1032,6 +1057,7 @@ export type EmailAddressPublicInfoFragment = {
   emailAddress: string
   keyId: string
   publicKey: string
+  enableEncryption?: boolean | null
   publicKeyDetails: {
     __typename?: 'EmailAddressPublicKey'
     publicKey: string
@@ -1188,6 +1214,11 @@ export type SealedEmailMessageFragment = {
     plainTextType: string
     base64EncodedSealedData: string
   }
+  rfc822DataAttributes: {
+    __typename?: 'Rfc822DataAttributesType'
+    key: string
+    bucket: string
+  }
 }
 
 export type SendEmailMessageResultFragment = {
@@ -1210,6 +1241,12 @@ export type UpdateEmailMessagesResultFragment = {
     createdAtEpochMs: number
     updatedAtEpochMs: number
   }> | null
+}
+
+export type VerifyExternalEmailAddressResultFragment = {
+  __typename?: 'VerifyExternalEmailAddressResult'
+  isVerified: boolean
+  reason?: string | null
 }
 
 export type DeleteEmailMessagesMutationVariables = Exact<{
@@ -1721,6 +1758,19 @@ export type SendMaskedEmailMessageMutation = {
   }
 }
 
+export type VerifyExternalEmailAddressMutationVariables = Exact<{
+  input: VerifyExternalEmailAddressInput
+}>
+
+export type VerifyExternalEmailAddressMutation = {
+  __typename?: 'Mutation'
+  verifyExternalEmailAddress: {
+    __typename?: 'VerifyExternalEmailAddressResult'
+    isVerified: boolean
+    reason?: string | null
+  }
+}
+
 export type CreatePublicKeyForEmailMutationVariables = Exact<{
   input: CreatePublicKeyInput
 }>
@@ -1979,6 +2029,7 @@ export type LookupEmailAddressesPublicInfoQuery = {
       emailAddress: string
       keyId: string
       publicKey: string
+      enableEncryption?: boolean | null
       publicKeyDetails: {
         __typename?: 'EmailAddressPublicKey'
         publicKey: string
@@ -2056,6 +2107,11 @@ export type GetEmailMessageQuery = {
       plainTextType: string
       base64EncodedSealedData: string
     }
+    rfc822DataAttributes: {
+      __typename?: 'Rfc822DataAttributesType'
+      key: string
+      bucket: string
+    }
   } | null
 }
 
@@ -2095,6 +2151,11 @@ export type ListEmailMessagesQuery = {
         keyId: string
         plainTextType: string
         base64EncodedSealedData: string
+      }
+      rfc822DataAttributes: {
+        __typename?: 'Rfc822DataAttributesType'
+        key: string
+        bucket: string
       }
     }>
   }
@@ -2137,6 +2198,11 @@ export type ListEmailMessagesForEmailAddressIdQuery = {
         plainTextType: string
         base64EncodedSealedData: string
       }
+      rfc822DataAttributes: {
+        __typename?: 'Rfc822DataAttributesType'
+        key: string
+        bucket: string
+      }
     }>
   }
 }
@@ -2177,6 +2243,11 @@ export type ListEmailMessagesForEmailFolderIdQuery = {
         keyId: string
         plainTextType: string
         base64EncodedSealedData: string
+      }
+      rfc822DataAttributes: {
+        __typename?: 'Rfc822DataAttributesType'
+        key: string
+        bucket: string
       }
     }>
   }
@@ -2378,6 +2449,11 @@ export type OnEmailMessageDeletedSubscription = {
       plainTextType: string
       base64EncodedSealedData: string
     }
+    rfc822DataAttributes: {
+      __typename?: 'Rfc822DataAttributesType'
+      key: string
+      bucket: string
+    }
   }
 }
 
@@ -2415,6 +2491,11 @@ export type OnEmailMessageCreatedSubscription = {
       plainTextType: string
       base64EncodedSealedData: string
     }
+    rfc822DataAttributes: {
+      __typename?: 'Rfc822DataAttributesType'
+      key: string
+      bucket: string
+    }
   }
 }
 
@@ -2451,6 +2532,11 @@ export type OnEmailMessageUpdatedSubscription = {
       keyId: string
       plainTextType: string
       base64EncodedSealedData: string
+    }
+    rfc822DataAttributes: {
+      __typename?: 'Rfc822DataAttributesType'
+      key: string
+      bucket: string
     }
   }
 }
@@ -3002,6 +3088,7 @@ export const EmailAddressPublicInfoFragmentDoc = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'enableEncryption' } },
         ],
       },
     },
@@ -3358,6 +3445,17 @@ export const SealedEmailMessageFragmentDoc = {
               ],
             },
           },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'rfc822DataAttributes' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailMaskId' } },
@@ -3434,6 +3532,26 @@ export const UpdateEmailMessagesResultFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<UpdateEmailMessagesResultFragment, unknown>
+export const VerifyExternalEmailAddressResultFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'VerifyExternalEmailAddressResult' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'VerifyExternalEmailAddressResult' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'isVerified' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<VerifyExternalEmailAddressResultFragment, unknown>
 export const DeleteEmailMessagesDocument = {
   kind: 'Document',
   definitions: [
@@ -5597,6 +5715,81 @@ export const SendMaskedEmailMessageDocument = {
   SendMaskedEmailMessageMutation,
   SendMaskedEmailMessageMutationVariables
 >
+export const VerifyExternalEmailAddressDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'VerifyExternalEmailAddress' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'VerifyExternalEmailAddressInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'verifyExternalEmailAddress' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: {
+                    kind: 'Name',
+                    value: 'VerifyExternalEmailAddressResult',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'VerifyExternalEmailAddressResult' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'VerifyExternalEmailAddressResult' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'isVerified' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'reason' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  VerifyExternalEmailAddressMutation,
+  VerifyExternalEmailAddressMutationVariables
+>
 export const CreatePublicKeyForEmailDocument = {
   kind: 'Document',
   definitions: [
@@ -6649,6 +6842,7 @@ export const LookupEmailAddressesPublicInfoDocument = {
               ],
             },
           },
+          { kind: 'Field', name: { kind: 'Name', value: 'enableEncryption' } },
         ],
       },
     },
@@ -6895,6 +7089,17 @@ export const GetEmailMessageDocument = {
               ],
             },
           },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'rfc822DataAttributes' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailMaskId' } },
@@ -7020,6 +7225,17 @@ export const ListEmailMessagesDocument = {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'base64EncodedSealedData' },
                 },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'rfc822DataAttributes' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
               ],
             },
           },
@@ -7154,6 +7370,17 @@ export const ListEmailMessagesForEmailAddressIdDocument = {
               ],
             },
           },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'rfc822DataAttributes' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailMaskId' } },
@@ -7282,6 +7509,17 @@ export const ListEmailMessagesForEmailFolderIdDocument = {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'base64EncodedSealedData' },
                 },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'rfc822DataAttributes' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
               ],
             },
           },
@@ -8109,6 +8347,17 @@ export const OnEmailMessageDeletedDocument = {
               ],
             },
           },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'rfc822DataAttributes' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailMaskId' } },
@@ -8224,6 +8473,17 @@ export const OnEmailMessageCreatedDocument = {
               ],
             },
           },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'rfc822DataAttributes' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
+              ],
+            },
+          },
           { kind: 'Field', name: { kind: 'Name', value: 'size' } },
           { kind: 'Field', name: { kind: 'Name', value: 'encryptionStatus' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailMaskId' } },
@@ -8336,6 +8596,17 @@ export const OnEmailMessageUpdatedDocument = {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'base64EncodedSealedData' },
                 },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'rfc822DataAttributes' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
               ],
             },
           },

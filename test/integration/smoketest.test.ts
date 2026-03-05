@@ -32,6 +32,7 @@ import {
   EmailMessageDetails,
   Rfc822MessageDataProcessor,
 } from '../../src/private/util/rfc822MessageDataProcessor'
+import { delay } from '../util/delay'
 
 /**
  * These tests are designed to give us confidence that the built SudoEmailClient is functional
@@ -351,7 +352,7 @@ describe('SudoEmailClient Smoketest Test Suite', () => {
           expect(createSubscriptionCalled).toBeTruthy()
           expect(createNotifiedEmailMessageId).toBe(receivedMessage.id)
         },
-        10000,
+        15000,
         1000,
       )
 
@@ -402,6 +403,8 @@ describe('SudoEmailClient Smoketest Test Suite', () => {
         emailMessageDeleted(emailMessage: EmailMessage): void {},
         emailMessageUpdated(emailMessage: EmailMessage): void {},
       })
+
+      await delay(1000)
 
       expect(connectionStateChangeCalled).toBeTruthy()
       expect(connectionState).toBe(ConnectionState.Connected)

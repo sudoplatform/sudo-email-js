@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -101,6 +101,7 @@ import { SendEmailMessageUseCase } from '../private/domain/use-cases/message/sen
 import { SubscribeToEmailMessagesUseCase } from '../private/domain/use-cases/message/subscribeToEmailMessagesUseCase'
 import { UnsubscribeFromEmailMessagesUseCase } from '../private/domain/use-cases/message/unsubscribeFromEmailMessagesUseCase'
 import { UpdateEmailMessagesUseCase } from '../private/domain/use-cases/message/updateEmailMessagesUseCase'
+import { VerifyExternalEmailAddressUseCase } from '../private/domain/use-cases/mask/verifyExternalEmailAddressUseCase'
 import { InvalidArgumentError } from './errors'
 import {
   BlockEmailAddressesInput,
@@ -186,6 +187,10 @@ import {
 } from './typings/listOperationResult'
 import { EmailAddressBlocklistService } from '../private/domain/entities/blocklist/emailAddressBlocklistService'
 import { EmailCryptoService } from '../private/domain/entities/secure/emailCryptoService'
+import {
+  VerifyExternalEmailAddressInput,
+  VerifyExternalEmailAddressResult,
+} from './typings/verifyExternalEmailAddress'
 
 export class DefaultSudoEmailClient implements SudoEmailClient {
   private readonly apiClient: ApiClient
@@ -1261,6 +1266,14 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       items: emailMasks,
       nextToken: result.nextToken,
     }
+  }
+
+  public async verifyExternalEmailAddress(
+    input: VerifyExternalEmailAddressInput,
+  ): Promise<VerifyExternalEmailAddressResult | undefined> {
+    this.log.debug(this.verifyExternalEmailAddress.name, { input })
+    const useCase = new VerifyExternalEmailAddressUseCase(this.emailMaskService)
+    return useCase.execute(input)
   }
 
   public async subscribeToEmailMessages(

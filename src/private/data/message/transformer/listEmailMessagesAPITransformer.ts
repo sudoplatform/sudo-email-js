@@ -53,6 +53,7 @@ export class ListEmailMessagesAPITransformer {
         size: entity.size,
         encryptionStatus: entity.encryptionStatus,
         date: entity.date,
+        emailMaskId: entity.emailMaskId,
       }))
     const failed = entities
       .filter((entity) => entity.status.type === 'Failed')
@@ -77,6 +78,7 @@ export class ListEmailMessagesAPITransformer {
           size: entity.size,
           encryptionStatus: entity.encryptionStatus,
           date: entity.date,
+          emailMaskId: entity.emailMaskId,
         },
         cause:
           entity.status.type === 'Failed' ? entity.status.cause : new Error(),

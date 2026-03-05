@@ -83,6 +83,7 @@ export class APIDataFactory {
       keyFormat: PublicKeyFormat.RSAPublicKey,
       algorithm: 'testAlgorithm',
     },
+    enableEncryption: true,
   }
 
   static readonly emailFolderListOutput: ListOutput<EmailFolder> = {

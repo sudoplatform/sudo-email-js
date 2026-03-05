@@ -71,4 +71,5 @@ export interface EmailMessageEntity {
   size: number
   encryptionStatus: EncryptionStatus
   date?: Date
+  emailMaskId?: string
 }

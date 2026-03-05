@@ -7,11 +7,14 @@
 import JSDOMEnvironment from 'jest-environment-jsdom'
 import { TextDecoder, TextEncoder } from 'util'
 import waitForExpect from 'wait-for-expect'
+import { setImmediate } from 'timers'
 
 require('dotenv').config({ quiet: true })
 
 waitForExpect.defaults.interval = 500
 waitForExpect.defaults.timeout = 30000
+
+global.setImmediate = setImmediate
 
 export default class JSDomEnvironmentPlusMissing extends JSDOMEnvironment {
   constructor(...args: ConstructorParameters<typeof JSDOMEnvironment>) {

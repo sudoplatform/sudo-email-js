@@ -411,7 +411,7 @@ describe('getEmailMessageRfc822Data test suite', () => {
           fail(`result status unexpectedly not Success`)
         }
         const receivedMessage = receiverMessages.items.find(
-          (m) => m.to[0].emailAddress === receiverMask.maskAddress,
+          (m) => m.emailMaskId === receiverMask.id,
         )
         expect(receivedMessage).toBeDefined()
         receivedMessageId = receivedMessage!.id
@@ -420,7 +420,7 @@ describe('getEmailMessageRfc822Data test suite', () => {
       const receivedRfc822Data =
         await instanceUnderTest.getEmailMessageRfc822Data({
           id: receivedMessageId!,
-          emailAddressId: receiverMask.id,
+          emailAddressId: receiverEmailAddress.id,
         })
       const receivedArrBuf = receivedRfc822Data?.rfc822Data
       expect(receivedRfc822Data?.id).toStrictEqual(receivedMessageId)

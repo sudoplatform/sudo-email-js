@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -27,3 +27,4 @@ export * from './listOperationResult'
 export * from './scheduledDraftMessage'
 export * from './sortOrder'
 export * from './updatedEmailMessage'
+export * from './verifyExternalEmailAddress'

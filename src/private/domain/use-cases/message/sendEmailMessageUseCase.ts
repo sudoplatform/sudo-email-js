@@ -16,6 +16,7 @@ import { EmailConfigurationDataService } from '../../entities/configuration/conf
 import { EmailMessageService } from '../../entities/message/emailMessageService'
 import { EmailDomainService } from '../../entities/emailDomain/emailDomainService'
 import { EmailMessageUtil } from '../../../util/emailMessageUtil'
+import { EmailAddressPublicInfoEntity } from '../../entities/account/emailAddressPublicInfoEntity'
 
 /**
  * Input object containing information required to send an email message.
@@ -169,19 +170,30 @@ export class SendEmailMessageUseCase {
       allRecipients,
       domains,
     )
-
+    let encryptAllRecipients = allRecipientsInternal
+    let emailAddressesPublicInfo: EmailAddressPublicInfoEntity[] = []
     if (allRecipientsInternal) {
+      emailAddressesPublicInfo =
+        await emailMessageUtil.retrieveAndVerifyPublicInfo(
+          allRecipients,
+          from.emailAddress,
+        )
+      if (
+        !EmailMessageUtil.allRecipientsAcceptEncryption(
+          emailAddressesPublicInfo,
+        )
+      ) {
+        encryptAllRecipients = false
+      }
+    }
+
+    if (encryptAllRecipients) {
       if (allRecipients.length > encryptedEmailMessageRecipientsLimit) {
         throw new LimitExceededError(
           `Cannot send encrypted message to more than ${encryptedEmailMessageRecipientsLimit} recipients`,
         )
       }
-      // If we do not have an external recipient, lookup public key information for each recipient and sender
-      const emailAddressesPublicInfo =
-        await emailMessageUtil.retrieveAndVerifyPublicInfo(
-          allRecipients,
-          from.emailAddress,
-        )
+
       // Process encrypted email message
       return await this.messageService.sendEncryptedMessage({
         ...inputBase,

@@ -18,6 +18,7 @@ export class EmailAddressPublicInfoEntityTransformer {
       publicKeyDetails: EmailAddressPublicKeyEntityTransformer.transformGraphQL(
         graphql.publicKeyDetails,
       ),
+      enableEncryption: graphql.enableEncryption ?? true,
     }
 
     return transformed
@@ -33,6 +34,7 @@ export class EmailAddressPublicInfoEntityTransformer {
       publicKeyDetails: EmailAddressPublicKeyEntityTransformer.transformEntity(
         entity.publicKeyDetails,
       ),
+      enableEncryption: entity.enableEncryption,
     }
 
     return transformed

@@ -1,0 +1,4 @@
+fragment VerifyExternalEmailAddressResult on VerifyExternalEmailAddressResult {
+  isVerified
+  reason
+}

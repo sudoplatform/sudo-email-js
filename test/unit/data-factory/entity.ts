@@ -61,6 +61,9 @@ export class EntityDataFactory {
   static readonly emailAddress: EmailAddressEntity = {
     emailAddress: 'testie@unittest.org',
   }
+  static readonly emailMaskAddress: EmailAddressEntity = {
+    emailAddress: 'testie@unitmask.org',
+  }
 
   static readonly emailAddressesPublicInfo: EmailAddressPublicInfoEntity[] = [
     {
@@ -71,6 +74,7 @@ export class EntityDataFactory {
         keyFormat: PublicKeyFormat.RSAPublicKey,
         algorithm: 'testAlgorithm',
       },
+      enableEncryption: true,
     },
     {
       emailAddress: `${EntityDataFactory.emailAddress.emailAddress}_2`,
@@ -80,6 +84,7 @@ export class EntityDataFactory {
         keyFormat: PublicKeyFormat.SPKI,
         algorithm: 'testAlgorithm_2',
       },
+      enableEncryption: true,
     },
   ]
 
@@ -133,6 +138,9 @@ export class EntityDataFactory {
   static readonly emailDomain: EmailDomainEntity = {
     domain: 'unittest.org',
   }
+  static readonly maskDomain: EmailDomainEntity = {
+    domain: 'unitmask.org',
+  }
 
   static readonly emailMessage: EmailMessageEntity = {
     ...EntityDataFactory.commonProps,
@@ -160,6 +168,7 @@ export class EntityDataFactory {
     size: 12345,
     encryptionStatus: EncryptionStatus.UNENCRYPTED,
     date: new Date(2.0),
+    emailMaskId: undefined,
   }
 
   static readonly sealedEmailMessage: SealedEmailMessageEntity = {

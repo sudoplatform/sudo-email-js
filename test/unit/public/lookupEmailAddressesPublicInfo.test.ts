@@ -36,6 +36,7 @@ describe('SudoEmailClient.lookupEmailAddressesPublicInfo Test Suite', () => {
         keyFormat: PublicKeyFormat.RSAPublicKey,
         algorithm: 'testAlgorithm',
       },
+      enableEncryption: true,
     },
     {
       emailAddress: emailAddresses[1],
@@ -46,6 +47,7 @@ describe('SudoEmailClient.lookupEmailAddressesPublicInfo Test Suite', () => {
         keyFormat: PublicKeyFormat.SPKI,
         algorithm: 'testAlgorithm_2',
       },
+      enableEncryption: true,
     },
   ]
 

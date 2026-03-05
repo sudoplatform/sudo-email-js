@@ -90,19 +90,25 @@ export class EmailMessageUtil {
       allRecipients,
       domains,
     )
+    let encryptAllRecipients =
+      allRecipientsInternal && sendEncryptedEmailEnabled
+    let emailAddressesPublicInfo: EmailAddressPublicInfoEntity[] = []
 
     if (allRecipientsInternal && sendEncryptedEmailEnabled) {
+      emailAddressesPublicInfo = await this.retrieveAndVerifyPublicInfo(
+        allRecipients,
+        messageDetails.from[0].emailAddress,
+      )
+      encryptAllRecipients = EmailMessageUtil.allRecipientsAcceptEncryption(
+        emailAddressesPublicInfo,
+      )
+    }
+    if (encryptAllRecipients) {
       if (allRecipients.length > encryptedEmailMessageRecipientsLimit) {
         throw new LimitExceededError(
           `Cannot send message to more than ${encryptedEmailMessageRecipientsLimit} recipients`,
         )
       }
-      // If we do not have an external recipient, lookup public key information for each recipient and sender
-      const emailAddressesPublicInfo = await this.retrieveAndVerifyPublicInfo(
-        allRecipients,
-        messageDetails.from[0].emailAddress,
-      )
-
       processedRfc822Data = await this.encryptInNetworkMessage(
         messageDetails,
         emailAddressesPublicInfo,
@@ -131,6 +137,13 @@ export class EmailMessageUtil {
           address.toLowerCase().includes(domain.domain),
         ),
       )
+    )
+  }
+  public static allRecipientsAcceptEncryption(
+    emailAddressesPublicInfo: EmailAddressPublicInfoEntity[],
+  ): boolean {
+    return emailAddressesPublicInfo.every(
+      (emailAddress) => emailAddress.enableEncryption,
     )
   }
 

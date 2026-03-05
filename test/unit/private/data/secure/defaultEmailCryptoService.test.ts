@@ -67,6 +67,7 @@ describe('DefaultEmailCryptoService Test Suite', () => {
           keyFormat: PublicKeyFormat.RSAPublicKey,
           algorithm: 'mockAlgorithm1',
         },
+        enableEncryption: true,
       },
       {
         emailAddress: 'foobar2@example.com',
@@ -76,6 +77,7 @@ describe('DefaultEmailCryptoService Test Suite', () => {
           keyFormat: PublicKeyFormat.SPKI,
           algorithm: 'mockAlgorithm2',
         },
+        enableEncryption: true,
       },
     ]
 

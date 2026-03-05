@@ -36,6 +36,7 @@ import { EmailMessageRfc822DataFactory } from '../../../../data-factory/emailMes
 import { PublicKeyFormat } from '@sudoplatform/sudo-common'
 import { SecurePackageDataFactory } from '../../../../data-factory/securePackage'
 import { EmailAddressDetail } from '../../../../../../src'
+import { EmailAddressPublicInfoEntity } from '../../../../../../src/private/domain/entities/account/emailAddressPublicInfoEntity'
 
 describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
   const emailMessageMaxOutboundMessageSize = 9999999
@@ -207,6 +208,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
 
     it('throws LimitExceededError if too many recipients', async () => {
       const to: EmailAddressDetail[] = []
+      const publicInfo: EmailAddressPublicInfoEntity[] = []
       for (
         let i = 0;
         i < EntityDataFactory.configurationData.emailMessageRecipientsLimit + 1;
@@ -215,6 +217,16 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
         to.push({
           emailAddress: `recipient${i}@${EntityDataFactory.emailDomain.domain}`,
         })
+        publicInfo.push({
+          emailAddress: `recipient${i}@${EntityDataFactory.emailDomain.domain}`,
+          keyId: `keyId-${v4()}`,
+          publicKeyDetails: {
+            publicKey: `testPublicKey_${i}`,
+            keyFormat: PublicKeyFormat.RSAPublicKey,
+            algorithm: 'testAlgorithm',
+          },
+          enableEncryption: true,
+        })
       }
       const messageDetailsWithTooManyRecipients =
         EmailMessageRfc822DataFactory.emailMessageDetails({
@@ -222,6 +234,9 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
         })
       parseInternetMessageDataSpy.mockResolvedValue(
         messageDetailsWithTooManyRecipients,
+      )
+      when(mockEmailAccountService.lookupPublicInfo(anything())).thenResolve(
+        publicInfo,
       )
       const id = v4()
       const senderEmailAddressId = v4()
@@ -287,6 +302,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
               keyFormat: PublicKeyFormat.RSAPublicKey,
               algorithm: 'testAlgorithm',
             },
+            enableEncryption: true,
           },
           {
             emailAddress: recipientAddress,
@@ -296,6 +312,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
               keyFormat: PublicKeyFormat.SPKI,
               algorithm: 'testAlgorithm_2',
             },
+            enableEncryption: true,
           },
         ])
         when(
@@ -353,6 +370,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
 
       it('throws LimitExceededError if too many encrypted recipients', async () => {
         const to: EmailAddressDetail[] = []
+        const publicInfo: EmailAddressPublicInfoEntity[] = []
         for (
           let i = 0;
           i <
@@ -364,7 +382,20 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
           to.push({
             emailAddress: `recipient${i}@${EntityDataFactory.emailDomain.domain}`,
           })
+          publicInfo.push({
+            emailAddress: `recipient${i}@${EntityDataFactory.emailDomain.domain}`,
+            keyId: `keyId-${v4()}`,
+            publicKeyDetails: {
+              publicKey: `testPublicKey_${i}`,
+              keyFormat: PublicKeyFormat.RSAPublicKey,
+              algorithm: 'testAlgorithm',
+            },
+            enableEncryption: true,
+          })
         }
+        when(mockEmailAccountService.lookupPublicInfo(anything())).thenResolve(
+          publicInfo,
+        )
         const messageDetailsWithTooManyRecipients =
           EmailMessageRfc822DataFactory.emailMessageDetails({
             from: [{ emailAddress: senderAddress }],
@@ -391,7 +422,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
         verify(mockEmailConfigurationDataService.getConfigurationData()).once()
         expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(1)
         verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
-        verify(mockEmailAccountService.lookupPublicInfo(anything())).never()
+        verify(mockEmailAccountService.lookupPublicInfo(anything())).once()
         verify(mockEmailCryptoService.encrypt(anything(), anything())).never()
         expect(encodeToInternetMessageBufferSpy).toHaveBeenCalledTimes(0)
         verify(mockEmailMessageService.saveDraft(anything())).never()
@@ -407,6 +438,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
               keyFormat: PublicKeyFormat.RSAPublicKey,
               algorithm: 'testAlgorithm',
             },
+            enableEncryption: true,
           },
         ])
         const id = v4()

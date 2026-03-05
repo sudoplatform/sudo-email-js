@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -86,6 +86,10 @@ import {
   UpdateEmailMaskInput,
 } from './inputs/emailMask'
 import { EmailMask } from './typings/emailMask'
+import {
+  VerifyExternalEmailAddressInput,
+  VerifyExternalEmailAddressResult,
+} from './typings/verifyExternalEmailAddress'
 
 export interface SudoEmailClient {
   /**
@@ -676,6 +680,17 @@ export interface SudoEmailClient {
   listEmailMasksForOwner(
     input?: ListEmailMasksForOwnerInput,
   ): Promise<ListOutput<EmailMask>>
+
+  /**
+   * Sends an email verification code or verifies an external email address given a verification code.
+   *
+   * @param {VerifyExternalEmailAddressInput} input The input parameters for verifying an external email address
+   * @returns {VerifyExternalEmailAddressResult | undefined} A promise that resolves to a result if a verification code was
+   * provided in the request or undefined if a verification code was sent.
+   */
+  verifyExternalEmailAddress(
+    input: VerifyExternalEmailAddressInput,
+  ): Promise<VerifyExternalEmailAddressResult | undefined>
 
   /**
    * Subscribe to email message events.

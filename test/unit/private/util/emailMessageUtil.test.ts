@@ -40,6 +40,7 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { v4 } from 'uuid'
 
 describe('EmailMessageUtil', () => {
   let mockAccountService = mock<EmailAccountService>()
@@ -69,6 +70,7 @@ describe('EmailMessageUtil', () => {
         keyFormat: PublicKeyFormat.RSAPublicKey,
         algorithm: 'algorithm',
       },
+      enableEncryption: true,
     },
     {
       emailAddress: 'user2@example.com',
@@ -78,6 +80,7 @@ describe('EmailMessageUtil', () => {
         keyFormat: PublicKeyFormat.RSAPublicKey,
         algorithm: 'algorithm',
       },
+      enableEncryption: true,
     },
   ]
 
@@ -291,6 +294,7 @@ describe('EmailMessageUtil', () => {
             keyFormat: PublicKeyFormat.RSAPublicKey,
             algorithm: 'RSA',
           },
+          enableEncryption: true,
         },
       ]
 
@@ -559,6 +563,7 @@ bodyData
             keyFormat: PublicKeyFormat.RSAPublicKey,
             algorithm: 'RSA',
           },
+          enableEncryption: true,
         }, // Same keyId as first
       ]
 
@@ -611,6 +616,7 @@ bodyData
             keyFormat: PublicKeyFormat.RSAPublicKey,
             algorithm: 'RSA',
           },
+          enableEncryption: true,
         },
       ])
 
@@ -668,12 +674,25 @@ bodyData
       const manyRecipients = Array.from({ length: 30 }, (_, i) => ({
         emailAddress: `user${i}@example.com`,
       }))
+      const manyPublicInfo = Array.from({ length: 30 }, (_, i) => ({
+        emailAddress: `user${i}@example.com`,
+        keyId: `keyId-${v4()}`,
+        publicKeyDetails: {
+          publicKey: `testPublicKey_${i}`,
+          keyFormat: PublicKeyFormat.RSAPublicKey,
+          algorithm: 'testAlgorithm',
+        },
+        enableEncryption: true,
+      }))
       const messageWithManyRecipients = createMockMessageDetails({
         to: manyRecipients,
       })
       jest
         .spyOn(Rfc822MessageDataProcessor, 'parseInternetMessageData')
         .mockResolvedValue(messageWithManyRecipients)
+      when(mockAccountService.lookupPublicInfo(anything())).thenResolve(
+        manyPublicInfo,
+      )
 
       await expect(
         emailMessageUtil.processMessageForS3Upload(
@@ -735,6 +754,7 @@ bodyData
             keyFormat: PublicKeyFormat.RSAPublicKey,
             algorithm: 'RSA',
           },
+          enableEncryption: true,
         },
         {
           emailAddress: 'cc@example.com',
@@ -744,6 +764,7 @@ bodyData
             keyFormat: PublicKeyFormat.RSAPublicKey,
             algorithm: 'RSA',
           },
+          enableEncryption: true,
         },
         {
           emailAddress: 'bcc@example.com',
@@ -753,6 +774,7 @@ bodyData
             keyFormat: PublicKeyFormat.RSAPublicKey,
             algorithm: 'RSA',
           },
+          enableEncryption: true,
         },
         {
           emailAddress: 'sender@example.com',
@@ -762,6 +784,7 @@ bodyData
             keyFormat: PublicKeyFormat.RSAPublicKey,
             algorithm: 'RSA',
           },
+          enableEncryption: true,
         },
       ])
 

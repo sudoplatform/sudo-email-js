@@ -11,7 +11,13 @@ const headerRule = {
       source: 'string',
       style: 'jsdoc',
       content:
-        'Copyright © 2025 Anonyome Labs, Inc. All rights reserved.\n\nSPDX-License-Identifier: Apache-2.0',
+        'Copyright © (year) Anonyome Labs, Inc. All rights reserved.\n\nSPDX-License-Identifier: Apache-2.0',
+      patterns: {
+        year: {
+          pattern: '\\d{4}',
+          defaultValue: new Date().getFullYear().toString(),
+        },
+      },
     },
   ],
 }
