@@ -64,6 +64,14 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
   })
 
   it('returns expected output', async () => {
+    // Set up callback to track sign-in guard behavior
+    let callbackExecuted = false
+    instanceUnderTest.setSignInCallback({
+      signIn: async () => {
+        callbackExecuted = true
+      },
+    })
+
     const localPart = generateSafeLocalPart()
     const emailAddressAlias = 'Some Alias'
     const emailAddress = await provisionEmailAddress(
@@ -96,6 +104,10 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
         `emailAddress.folders has unexpected length ${emailAddress.folders.length}`,
       )
     }
+
+    // Verify that ensureSignedIn was called (callback should not execute in normal flow)
+    // Since user is already signed in during integration tests, callback should not be called
+    expect(callbackExecuted).toBe(false)
   })
 
   it('provisions an address with multi-byte UTF-8 characters in alias', async () => {
@@ -282,6 +294,49 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
         expect(emailAddress.folders.map((f) => f.folderName)).toEqual(
           expect.arrayContaining(['INBOX', 'SENT', 'OUTBOX', 'TRASH']),
         )
+      }
+    })
+
+    it('executes sign-in callback when ensureSignedIn is triggered', async () => {
+      // Set up callback to track when it gets executed
+      let callbackExecuted = false
+      let callbackError: Error | undefined
+      instanceUnderTest.setSignInCallback({
+        signIn: async () => {
+          callbackExecuted = true
+          // Re-sign in the user since we signed them out for this test
+          try {
+            await userClient.signInWithKey()
+          } catch (error) {
+            callbackError = error as Error
+            throw error
+          }
+        },
+      })
+
+      // Sign out the user to trigger the callback
+      await userClient.signOut()
+
+      try {
+        // This should trigger the ensureSignedIn callback
+        const localPart = generateSafeLocalPart()
+        const emailAddress = await provisionEmailAddress(
+          ownershipProofToken,
+          instanceUnderTest,
+          { localPart },
+        )
+        emailAddresses.push(emailAddress)
+
+        // Verify the callback was executed and successful
+        expect(callbackExecuted).toBe(true)
+        expect(callbackError).toBeUndefined()
+        expect(emailAddress.id).toBeDefined()
+      } catch (error) {
+        // If test fails, make sure we're signed back in for cleanup
+        if (!callbackExecuted) {
+          await userClient.signInWithKey()
+        }
+        throw error
       }
     })
   })

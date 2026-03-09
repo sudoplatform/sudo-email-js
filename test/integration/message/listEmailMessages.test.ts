@@ -147,6 +147,14 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('lists expected email messages', async () => {
       expectSetupComplete()
 
+      // Set up callback to track sign-in guard behavior
+      let callbackExecuted = false
+      instanceUnderTest.setSignInCallback({
+        signIn: async () => {
+          callbackExecuted = true
+        },
+      })
+
       await waitForExpect(
         async () => {
           const messages = await readAllPages((nextToken?: string) =>
@@ -184,6 +192,10 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         10000,
         1000,
       )
+
+      // Verify that ensureSignedIn was called (callback should not execute in normal flow)
+      // Since user is already signed in during integration tests, callback should not be called
+      expect(callbackExecuted).toBe(false)
     })
 
     it('lists expected email messages respecting limit', async () => {
@@ -1547,6 +1559,47 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         30000,
         1000,
       )
+    })
+
+    it('executes sign-in callback when ensureSignedIn is triggered', async () => {
+      expectSetupComplete()
+
+      // Set up callback to track when it gets executed
+      let callbackExecuted = false
+      let callbackError: Error | undefined
+      instanceUnderTest.setSignInCallback({
+        signIn: async () => {
+          callbackExecuted = true
+          // Re-sign in the user since we signed them out for this test
+          try {
+            await userClient.signInWithKey()
+          } catch (error) {
+            callbackError = error as Error
+            throw error
+          }
+        },
+      })
+
+      // Sign out the user to trigger the callback
+      await userClient.globalSignOut()
+
+      try {
+        // This should trigger the ensureSignedIn callback
+        const messages = await instanceUnderTest.listEmailMessages({
+          limit: 1,
+        })
+
+        // Verify the callback was executed and successful
+        expect(callbackExecuted).toBe(true)
+        expect(callbackError).toBeUndefined()
+        expect(messages.status).toBe(ListOperationResultStatus.Success)
+      } catch (error) {
+        // If test fails, make sure we're signed back in for cleanup
+        if (!callbackExecuted) {
+          await userClient.signInWithKey()
+        }
+        throw error
+      }
     })
   })
 })

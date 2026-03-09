@@ -51,13 +51,9 @@ import { DefaultConfigurationDataService } from '../../../src/private/data/confi
 import { EmailConfigurationDataService } from '../../../src/private/domain/entities/configuration/configurationDataService'
 
 // [START] - Polyfills
-global.fetch = require('node-fetch')
+// Crypto and fetch are now handled in jest.setup.ts
+// Keeping isomorphic-fetch for compatibility
 require('isomorphic-fetch')
-// jsdom does some crypto polyfill magic but we want to use crypto.subtle so we need to add it back in
-const localCrypto = require('crypto').webcrypto
-global.crypto = localCrypto
-// @ts-ignore
-global.crypto.subtle = localCrypto.subtle
 // [END] - Polyfills
 
 export const sudoIssuer = 'sudoplatform.sudoservice'

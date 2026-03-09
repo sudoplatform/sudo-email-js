@@ -26,5 +26,29 @@ export default class JSDomEnvironmentPlusMissing extends JSDOMEnvironment {
     // TextDecoder.
     this.global.TextEncoder = TextEncoder as typeof global.TextEncoder
     this.global.TextDecoder = TextDecoder as typeof global.TextDecoder
+
+    // Add proper crypto support for v17 sudo-user JWT operations
+    const { webcrypto } = require('crypto')
+    if (!this.global.crypto || !this.global.crypto.subtle) {
+      Object.defineProperty(this.global, 'crypto', {
+        value: webcrypto,
+        writable: true,
+        configurable: true
+      })
+    }
+
+    // Ensure proper fetch support
+    if (!this.global.fetch) {
+      Object.defineProperty(this.global, 'fetch', {
+        value: require('node-fetch'),
+        writable: true,
+        configurable: true
+      })
+    }
+
+    // Fix Uint8Array for jose library compatibility
+    // jose requires actual Uint8Array instances, not jsdom's version
+    this.global.Uint8Array = Uint8Array
+    this.global.ArrayBuffer = ArrayBuffer
   }
 }

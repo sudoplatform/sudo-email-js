@@ -18,5 +18,5 @@
     ".*\\.ts$": ["ts-jest", { "tsconfig": "tsconfig.test.json" }]
   },
   "testRunner": "jest-jasmine2",
-  "transformIgnorePatterns": ["node_modules/(?!(mimetext)/)"]
+  "transformIgnorePatterns": ["node_modules/(?!(mimetext|jose)/)"]
 }

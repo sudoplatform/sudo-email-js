@@ -57,6 +57,13 @@ describe('SudoEmailClient.listEmailAccounts Test Suite', () => {
     expect(JestMockListEmailAccountsUseCase).toHaveBeenCalledTimes(1)
   })
   it('calls use case as expected', async () => {
+    // Spy on the private ensureSignedIn method to verify it's called
+    const ensureSignedInSpy = jest.spyOn(
+      instanceUnderTest as any,
+      'ensureSignedIn',
+    )
+    ensureSignedInSpy.mockResolvedValue(undefined)
+
     const limit = 100
     const nextToken = v4()
     await instanceUnderTest.listEmailAddresses({
@@ -69,6 +76,12 @@ describe('SudoEmailClient.listEmailAccounts Test Suite', () => {
       limit,
       nextToken,
     })
+
+    // Verify that ensureSignedIn was called
+    expect(ensureSignedInSpy).toHaveBeenCalledTimes(1)
+    expect(ensureSignedInSpy).toHaveBeenCalledWith()
+
+    ensureSignedInSpy.mockRestore()
   })
 
   it('returns empty list if use case result is empty list', async () => {

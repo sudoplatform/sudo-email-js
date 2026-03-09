@@ -16,8 +16,10 @@ import {
   SudoKeyManager,
 } from '@sudoplatform/sudo-common'
 import {
+  SudoPlatformSignInCallback,
   SudoUserClient,
   internal as SudoUserInternal,
+  SignInGuard,
 } from '@sudoplatform/sudo-user'
 import { WebSudoCryptoProvider } from '@sudoplatform/sudo-web-crypto-provider'
 import { Mutex } from 'async-mutex'
@@ -207,6 +209,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   private readonly keyManager: SudoKeyManager
   private readonly identityServiceConfig: SudoUserInternal.IdentityServiceConfig
   private readonly emailServiceConfig: EmailServiceConfig
+  private readonly signInGuard: SignInGuard
   private readonly log: Logger
   private readonly mutex: Mutex
 
@@ -271,9 +274,15 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       this.apiClient,
       deviceKeyWorker,
     )
+    this.signInGuard = new SignInGuard(this.userClient)
+  }
+
+  public setSignInCallback(callback?: SudoPlatformSignInCallback): void {
+    this.signInGuard.setCallback(callback)
   }
 
   public async getConfigurationData(): Promise<ConfigurationData> {
+    await this.ensureSignedIn()
     const useCase = new GetConfigurationDataUseCase(
       this.configurationDataService,
     )
@@ -289,6 +298,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     alias,
     allowSymmetricKeyGeneration = true,
   }: ProvisionEmailAddressInput): Promise<EmailAddress> {
+    await this.ensureSignedIn()
     return await this.mutex.runExclusive(async () => {
       const useCase = new ProvisionEmailAccountUseCase(this.emailAccountService)
       const entityTransformer = new EmailAddressEntityTransformer()
@@ -307,6 +317,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   }
 
   public async deprovisionEmailAddress(id: string): Promise<EmailAddress> {
+    await this.ensureSignedIn()
     return await this.mutex.runExclusive(async () => {
       const useCase = new DeprovisionEmailAccountUseCase(
         this.emailAccountService,
@@ -321,6 +332,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     id,
     values,
   }: UpdateEmailAddressMetadataInput): Promise<string> {
+    await this.ensureSignedIn()
     const updateEmailAddressMetadataUseCase =
       new UpdateEmailAccountMetadataUseCase(this.emailAccountService)
     return await updateEmailAddressMetadataUseCase.execute({
@@ -338,6 +350,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     replyingMessageId,
     forwardingMessageId,
   }: SendEmailMessageInput): Promise<SendEmailMessageResult> {
+    await this.ensureSignedIn()
     const sendEmailMessageUseCase = new SendEmailMessageUseCase(
       this.emailMessageService,
       this.emailAccountService,
@@ -364,6 +377,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     replyingMessageId,
     forwardingMessageId,
   }: SendMaskedEmailMessageInput): Promise<SendEmailMessageResult> {
+    await this.ensureSignedIn()
     const sendEmailMessageUseCase = new SendEmailMessageUseCase(
       this.emailMessageService,
       this.emailAccountService,
@@ -390,6 +404,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       EmailMessageOperationFailureResult
     >
   > {
+    await this.ensureSignedIn()
     this.log.debug(this.provisionEmailAddress.name, { ids, values })
     const idSet = new Set(ids)
     const useCase = new UpdateEmailMessagesUseCase(
@@ -408,6 +423,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async deleteEmailMessage(
     id: string,
   ): Promise<DeleteEmailMessageSuccessResult | undefined> {
+    await this.ensureSignedIn()
     const idSet = new Set([id])
     const deleteEmailMessageUseCase = new DeleteEmailMessagesUseCase(
       this.emailMessageService,
@@ -420,6 +436,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async deleteMessagesForFolderId(
     input: DeleteMessagesForFolderIdInput,
   ): Promise<string> {
+    await this.ensureSignedIn()
     const deleteMessagesByFolderIdUseCase = new DeleteMessagesByFolderIdUseCase(
       this.emailFolderService,
     )
@@ -438,6 +455,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       EmailMessageOperationFailureResult
     >
   > {
+    await this.ensureSignedIn()
     const idSet = new Set(ids)
     const deleteEmailMessageUseCase = new DeleteEmailMessagesUseCase(
       this.emailMessageService,
@@ -471,12 +489,14 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   }
 
   public async getSupportedEmailDomains(): Promise<string[]> {
+    await this.ensureSignedIn()
     const useCase = new GetSupportedEmailDomainsUseCase(this.emailDomainService)
     const result = await useCase.execute()
     return result.map((domain) => domain.domain)
   }
 
   public async getConfiguredEmailDomains(): Promise<string[]> {
+    await this.ensureSignedIn()
     const useCase = new GetConfiguredEmailDomainsUseCase(
       this.emailDomainService,
     )
@@ -485,6 +505,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   }
 
   public async getEmailMaskDomains(): Promise<string[]> {
+    await this.ensureSignedIn()
     const useCase = new GetEmailMaskDomainsUseCase(this.emailDomainService)
     const result = await useCase.execute()
     return result.map((domain) => domain.domain)
@@ -494,6 +515,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     localParts,
     domains,
   }: CheckEmailAddressAvailabilityInput): Promise<string[]> {
+    await this.ensureSignedIn()
     const useCase = new CheckEmailAddressAvailabilityUseCase(
       this.emailAccountService,
     )
@@ -514,6 +536,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async getEmailAddress({
     id,
   }: GetEmailAddressInput): Promise<EmailAddress | undefined> {
+    await this.ensureSignedIn()
     return await this.mutex.runExclusive(async () => {
       this.log.debug(this.getEmailAddress.name, {
         id,
@@ -530,6 +553,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async listEmailAddresses(
     input?: ListEmailAddressesInput,
   ): Promise<ListEmailAddressesResult> {
+    await this.ensureSignedIn()
     return await this.mutex.runExclusive(async () => {
       this.log.debug(this.listEmailAddresses.name, { input })
       const useCase = new ListEmailAccountsUseCase(this.emailAccountService)
@@ -546,6 +570,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     limit,
     nextToken,
   }: ListEmailAddressesForSudoIdInput): Promise<ListEmailAddressesResult> {
+    await this.ensureSignedIn()
     return await this.mutex.runExclusive(async () => {
       this.log.debug(this.listEmailAddressesForSudoId.name, {
         sudoId,
@@ -566,6 +591,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async lookupEmailAddressesPublicInfo({
     emailAddresses,
   }: LookupEmailAddressesPublicInfoInput): Promise<EmailAddressPublicInfo[]> {
+    await this.ensureSignedIn()
     this.log.debug(this.lookupEmailAddressesPublicInfo.name, {
       emailAddresses,
     })
@@ -586,6 +612,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     limit,
     nextToken,
   }: ListEmailFoldersForEmailAddressIdInput): Promise<ListOutput<EmailFolder>> {
+    await this.ensureSignedIn()
     this.log.debug(this.listEmailFoldersForEmailAddressId.name, {
       emailAddressId,
       limit,
@@ -613,6 +640,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     customFolderName,
     allowSymmetricKeyGeneration = true,
   }: CreateCustomEmailFolderInput): Promise<EmailFolder> {
+    await this.ensureSignedIn()
     this.log.debug(this.createCustomEmailFolder.name, {
       emailAddressId,
       customFolderName,
@@ -633,6 +661,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     emailFolderId,
     emailAddressId,
   }: DeleteCustomEmailFolderInput): Promise<EmailFolder | undefined> {
+    await this.ensureSignedIn()
     this.log.debug(this.deleteCustomEmailFolder.name, {
       emailFolderId,
       emailAddressId,
@@ -651,6 +680,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     values,
     allowSymmetricKeyGeneration = true,
   }: UpdateCustomEmailFolderInput): Promise<EmailFolder> {
+    await this.ensureSignedIn()
     this.log.debug(this.updateCustomEmailFolder.name, {
       emailAddressId,
       emailFolderId,
@@ -672,6 +702,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async blockEmailAddresses(
     input: BlockEmailAddressesInput,
   ): Promise<BatchOperationResult<string>> {
+    await this.ensureSignedIn()
     this.log.debug(this.blockEmailAddresses.name, { input })
 
     const useCase = new BlockEmailAddressesUseCase(
@@ -705,6 +736,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async unblockEmailAddresses(
     input: UnblockEmailAddressesInput,
   ): Promise<BatchOperationResult<string>> {
+    await this.ensureSignedIn()
     this.log.debug(this.unblockEmailAddresses.name, { input })
 
     const useCase = new UnblockEmailAddressesUseCase(
@@ -734,6 +766,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async unblockEmailAddressesByHashedValue(
     input: UnblockEmailAddressesByHashedValueInput,
   ): Promise<BatchOperationResult<string>> {
+    await this.ensureSignedIn()
     this.log.debug(this.unblockEmailAddressesByHashedValue.name, { input })
 
     const useCase = new UnblockEmailAddressesByHashedValueUseCase(
@@ -759,6 +792,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   }
 
   public async getEmailAddressBlocklist(): Promise<UnsealedBlockedAddress[]> {
+    await this.ensureSignedIn()
     const useCase = new GetEmailAddressBlocklistUseCase(
       this.emailAddressBlocklistService,
       this.userClient,
@@ -771,6 +805,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     rfc822Data,
     senderEmailAddressId,
   }: CreateDraftEmailMessageInput): Promise<DraftEmailMessageMetadata> {
+    await this.ensureSignedIn()
     this.log.debug(this.createDraftEmailMessage.name, {
       rfc822Data,
       senderEmailAddressId,
@@ -790,6 +825,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     rfc822Data,
     senderEmailAddressId,
   }: UpdateDraftEmailMessageInput): Promise<DraftEmailMessageMetadata> {
+    await this.ensureSignedIn()
     this.log.debug(this.updateDraftEmailMessage.name, {
       id,
       rfc822Data,
@@ -814,6 +850,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       EmailMessageOperationFailureResult
     >
   > {
+    await this.ensureSignedIn()
     const idSet = new Set(ids)
     const useCase = new DeleteDraftEmailMessagesUseCase(
       this.emailAccountService,
@@ -853,12 +890,14 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     id,
     emailAddressId,
   }: GetDraftEmailMessageInput): Promise<DraftEmailMessage | undefined> {
+    await this.ensureSignedIn()
     this.log.debug(this.deleteDraftEmailMessages.name, { id })
     const useCase = new GetDraftEmailMessageUseCase(this.emailMessageService)
     return await useCase.execute({ id, emailAddressId })
   }
 
   public async listDraftEmailMessages(): Promise<DraftEmailMessage[]> {
+    await this.ensureSignedIn()
     this.log.debug(this.listDraftEmailMessages.name)
 
     const useCase = new ListDraftEmailMessagesUseCase(
@@ -877,6 +916,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   }: ListDraftEmailMessagesForEmailAddressIdInput): Promise<
     ListOutput<DraftEmailMessage>
   > {
+    await this.ensureSignedIn()
     this.log.debug(this.listDraftEmailMessagesForEmailAddressId.name, {
       emailAddressId,
       limit,
@@ -906,6 +946,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async listDraftEmailMessageMetadata(): Promise<
     DraftEmailMessageMetadata[]
   > {
+    await this.ensureSignedIn()
     this.log.debug(this.listDraftEmailMessageMetadata.name)
 
     const useCase = new ListDraftEmailMessageMetadataUseCase(
@@ -924,6 +965,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   }: ListDraftEmailMessageMetadataForEmailAddressIdInput): Promise<
     ListOutput<DraftEmailMessageMetadata>
   > {
+    await this.ensureSignedIn()
     this.log.debug(this.listDraftEmailMessageMetadataForEmailAddressId.name, {
       emailAddressId,
       limit,
@@ -944,10 +986,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       items: metadata,
       nextToken: resultNextToken,
     }
-    return {
-      items: metadata,
-      nextToken: resultNextToken,
-    }
   }
 
   public async scheduleSendDraftMessage({
@@ -955,6 +993,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     emailAddressId,
     sendAt,
   }: ScheduleSendDraftMessageInput): Promise<ScheduledDraftMessage> {
+    await this.ensureSignedIn()
     this.log.debug(this.scheduleSendDraftMessage.name, {
       id,
       emailAddressId,
@@ -977,6 +1016,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     id,
     emailAddressId,
   }: CancelScheduledDraftMessageInput): Promise<string> {
+    await this.ensureSignedIn()
     this.log.debug(this.cancelScheduledDraftMessage.name, {
       id,
       emailAddressId,
@@ -998,6 +1038,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   }: ListScheduledDraftMessagesForEmailAddressIdInput): Promise<
     ListOutput<ScheduledDraftMessage>
   > {
+    await this.ensureSignedIn()
     this.log.debug(this.listScheduledDraftMessagesForEmailAddressId.name, {
       emailAddressId,
       filter,
@@ -1027,6 +1068,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async getEmailMessage({
     id,
   }: GetEmailMessageInput): Promise<EmailMessage | undefined> {
+    await this.ensureSignedIn()
     this.log.debug(this.getEmailMessage.name, {
       id,
     })
@@ -1042,6 +1084,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     id,
     emailAddressId,
   }: GetEmailMessageWithBodyInput): Promise<EmailMessageWithBody | undefined> {
+    await this.ensureSignedIn()
     this.log.debug(this.getEmailMessageWithBody.name, { id, emailAddressId })
     const getEmailMessageWithBodyUseCase = new GetEmailMessageWithBodyUseCase(
       this.emailMessageService,
@@ -1055,6 +1098,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   }: GetEmailMessageRfc822DataInput): Promise<
     EmailMessageRfc822Data | undefined
   > {
+    await this.ensureSignedIn()
     const getEmailMessageRfc822DataUseCase =
       new GetEmailMessageRfc822DataUseCase(this.emailMessageService)
     return await getEmailMessageRfc822DataUseCase.execute({
@@ -1070,6 +1114,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     nextToken,
     includeDeletedMessages,
   }: ListEmailMessagesInput): Promise<ListEmailMessagesResult> {
+    await this.ensureSignedIn()
     this.log.debug(this.listEmailMessages.name, {
       dateRange,
       limit,
@@ -1100,6 +1145,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     nextToken,
     includeDeletedMessages,
   }: ListEmailMessagesForEmailAddressIdInput): Promise<ListEmailMessagesResult> {
+    await this.ensureSignedIn()
     this.log.debug(this.listEmailMessagesForEmailAddressId.name, {
       emailAddressId,
       dateRange,
@@ -1134,6 +1180,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     nextToken,
     includeDeletedMessages,
   }: ListEmailMessagesForEmailFolderIdInput): Promise<ListEmailMessagesResult> {
+    await this.ensureSignedIn()
     this.log.debug(this.listEmailMessagesForEmailFolderId.name, {
       folderId,
       dateRange,
@@ -1167,6 +1214,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     expiresAt,
     metadata,
   }: ProvisionEmailMaskInput): Promise<EmailMask> {
+    await this.ensureSignedIn()
     this.log.debug(this.provisionEmailMask.name, {
       maskAddress,
       realAddress,
@@ -1190,6 +1238,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async deprovisionEmailMask(
     input: DeprovisionEmailMaskInput,
   ): Promise<EmailMask> {
+    await this.ensureSignedIn()
     this.log.debug(this.deprovisionEmailMask.name, { input })
 
     const useCase = new DeprovisionEmailMaskUseCase(this.emailMaskService)
@@ -1203,6 +1252,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async updateEmailMask(
     input: UpdateEmailMaskInput,
   ): Promise<EmailMask> {
+    await this.ensureSignedIn()
     this.log.debug(this.updateEmailMask.name, { input })
 
     const useCase = new UpdateEmailMaskUseCase(this.emailMaskService)
@@ -1218,6 +1268,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async enableEmailMask(
     input: EnableEmailMaskInput,
   ): Promise<EmailMask> {
+    await this.ensureSignedIn()
     this.log.debug(this.enableEmailMask.name, { input })
 
     const useCase = new EnableEmailMaskUseCase(this.emailMaskService)
@@ -1231,6 +1282,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async disableEmailMask(
     input: DisableEmailMaskInput,
   ): Promise<EmailMask> {
+    await this.ensureSignedIn()
     this.log.debug(this.disableEmailMask.name, { input })
 
     const useCase = new DisableEmailMaskUseCase(this.emailMaskService)
@@ -1244,6 +1296,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async listEmailMasksForOwner(
     input?: ListEmailMasksForOwnerInput,
   ): Promise<ListOutput<EmailMask>> {
+    await this.ensureSignedIn()
     this.log.debug(this.listEmailMasksForOwner.name, { input })
 
     const useCase = new ListEmailMasksForOwnerUseCase(this.emailMaskService)
@@ -1271,6 +1324,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async verifyExternalEmailAddress(
     input: VerifyExternalEmailAddressInput,
   ): Promise<VerifyExternalEmailAddressResult | undefined> {
+    await this.ensureSignedIn()
     this.log.debug(this.verifyExternalEmailAddress.name, { input })
     const useCase = new VerifyExternalEmailAddressUseCase(this.emailMaskService)
     return useCase.execute(input)
@@ -1315,5 +1369,15 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
 
   public async reset(): Promise<void> {
     await this.keyManager.removeAllKeys()
+  }
+
+  /**
+   * Checks if user is signed in and invokes callback if needed.
+   * Only performs check if callback is configured.
+   *
+   * Throws: Any error thrown by the sign-in callback
+   */
+  private async ensureSignedIn(): Promise<void> {
+    await this.signInGuard.ensureSignedIn()
   }
 }

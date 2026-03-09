@@ -79,6 +79,13 @@ describe('SudoEmailClient.lookupEmailAddressesPublicInfo Test Suite', () => {
   })
 
   it('calls use case as expected', async () => {
+    // Spy on the private ensureSignedIn method to verify it's called
+    const ensureSignedInSpy = jest.spyOn(
+      instanceUnderTest as any,
+      'ensureSignedIn',
+    )
+    ensureSignedInSpy.mockResolvedValue(undefined)
+
     await instanceUnderTest.lookupEmailAddressesPublicInfo({
       emailAddresses,
     })
@@ -89,6 +96,12 @@ describe('SudoEmailClient.lookupEmailAddressesPublicInfo Test Suite', () => {
     expect(actualArgs).toEqual<typeof actualArgs>({
       emailAddresses,
     })
+
+    // Verify that ensureSignedIn was called
+    expect(ensureSignedInSpy).toHaveBeenCalledTimes(1)
+    expect(ensureSignedInSpy).toHaveBeenCalledWith()
+
+    ensureSignedInSpy.mockRestore()
   })
 
   it('returns expected result', async () => {

@@ -9,7 +9,10 @@ import {
   SudoCryptoProvider,
   SudoKeyManager,
 } from '@sudoplatform/sudo-common'
-import { SudoUserClient } from '@sudoplatform/sudo-user'
+import {
+  SudoPlatformSignInCallback,
+  SudoUserClient,
+} from '@sudoplatform/sudo-user'
 import {
   BlockEmailAddressesInput,
   UnblockEmailAddressesByHashedValueInput,
@@ -733,6 +736,21 @@ export interface SudoEmailClient {
    * @param archiveData Key archive data to import the keys from.
    */
   importKeys(archiveData: ArrayBuffer): Promise<void>
+
+  /**
+   * Sets an optional callback to handle sign-in when operations are attempted
+   * while not signed in.
+   *
+   * When set, all operations (exception subscriptions and initialization/reset) will
+   * check sign-in status before performing their normal behavior. If the client is
+   * not signed in, the callback will be invoked to allow the host app to perform
+   * sign-in. Once the callback completes, then the client will attempt the original
+   * operation that triggered the callback.
+   * If the callback throws an error, then the error will be propagated to the caller
+   * and the original operation will not be attempted.
+   * To clear the callback, call this method with no arguments or undefined.
+   */
+  setSignInCallback(callback?: SudoPlatformSignInCallback): void
 
   /**
    * Removes any cached data maintained by this client.
