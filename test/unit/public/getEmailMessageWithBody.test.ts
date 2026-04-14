@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,16 +13,17 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import { SudoEmailClient } from '../../../src'
 import { GetEmailMessageWithBodyUseCase } from '../../../src/private/domain/use-cases/message/getEmailMessageWithBodyUseCase'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/message/getEmailMessageWithBodyUseCase',
 )
-const JestMockGetEmailMessageWithBodyUseCase =
-  GetEmailMessageWithBodyUseCase as jest.MockedClass<
+const ViMockGetEmailMessageWithBodyUseCase =
+  GetEmailMessageWithBodyUseCase as MockedClass<
     typeof GetEmailMessageWithBodyUseCase
   >
 
@@ -38,11 +39,11 @@ describe('SudoEmailClient.getEmailMessageWithBody Test Suite', () => {
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockGetEmailMessageWithBodyUseCase)
-    JestMockGetEmailMessageWithBodyUseCase.mockClear()
+    ViMockGetEmailMessageWithBodyUseCase.mockClear()
 
-    JestMockGetEmailMessageWithBodyUseCase.mockImplementation(() =>
-      instance(mockGetEmailMessageWithBodyUseCase),
-    )
+    ViMockGetEmailMessageWithBodyUseCase.mockImplementation(function () {
+      return instance(mockGetEmailMessageWithBodyUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -58,7 +59,7 @@ describe('SudoEmailClient.getEmailMessageWithBody Test Suite', () => {
       id: '',
       emailAddressId: 'emailAddressId',
     })
-    expect(JestMockGetEmailMessageWithBodyUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockGetEmailMessageWithBodyUseCase).toHaveBeenCalledTimes(1)
   })
   it('calls use case as expected', async () => {
     const id = v4()

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,6 +13,7 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import {
   BatchOperationResultStatus,
@@ -20,7 +21,6 @@ import {
   BlockedEmailAddressLevel,
   SudoEmailClient,
 } from '../../../src'
-
 import {
   BlockEmailAddressesUseCase,
   BlockEmailAddressesUseCaseInput,
@@ -28,11 +28,9 @@ import {
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 import { UpdateEmailMessagesStatus } from '../../../src/private/domain/entities/message/updateEmailMessagesStatus'
 
-jest.mock('../../../src/private/domain/use-cases/blocklist/blockEmailAddresses')
-const JestMockBlockEmailAddressesUseCase =
-  BlockEmailAddressesUseCase as jest.MockedClass<
-    typeof BlockEmailAddressesUseCase
-  >
+vi.mock('../../../src/private/domain/use-cases/blocklist/blockEmailAddresses')
+const ViMockBlockEmailAddressesUseCase =
+  BlockEmailAddressesUseCase as MockedClass<typeof BlockEmailAddressesUseCase>
 
 describe('SudoEmailClient.blockEmailAddresses Test Suite', () => {
   const sudoEmailClientTestsBase = new SudoEmailClientTestBase()
@@ -44,11 +42,11 @@ describe('SudoEmailClient.blockEmailAddresses Test Suite', () => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockBlockEmailAddressesUseCase)
 
-    JestMockBlockEmailAddressesUseCase.mockClear()
+    ViMockBlockEmailAddressesUseCase.mockClear()
 
-    JestMockBlockEmailAddressesUseCase.mockImplementation(() =>
-      instance(mockBlockEmailAddressesUseCase),
-    )
+    ViMockBlockEmailAddressesUseCase.mockImplementation(function () {
+      return instance(mockBlockEmailAddressesUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -61,7 +59,7 @@ describe('SudoEmailClient.blockEmailAddresses Test Suite', () => {
     await instanceUnderTest.blockEmailAddresses({
       addressesToBlock: [`spammyMcSpamface${v4()}@spambot.com`],
     })
-    expect(JestMockBlockEmailAddressesUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockBlockEmailAddressesUseCase).toHaveBeenCalledTimes(1)
   })
 
   it('calls use case as expected with default action', async () => {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -344,28 +344,29 @@ bodyData
 --boundary123--`
 
     beforeEach(() => {
-      jest
-        .spyOn(Rfc822MessageDataProcessor, 'parseInternetMessageData')
-        .mockResolvedValue({
-          from: [{ emailAddress: 'sender@example.com' }],
-          to: [{ emailAddress: 'recipient@example.com' }],
-          attachments: [
-            {
-              contentId: SecureEmailAttachmentType.KEY_EXCHANGE.contentId,
-              data: 'keyData',
-              filename: 'key.dat',
-              mimeType: 'application/octet-stream',
-              inlineAttachment: false,
-            },
-            {
-              contentId: SecureEmailAttachmentType.BODY.contentId,
-              data: 'bodyData',
-              filename: 'body.dat',
-              mimeType: 'application/octet-stream',
-              inlineAttachment: false,
-            },
-          ],
-        })
+      vi.spyOn(
+        Rfc822MessageDataProcessor,
+        'parseInternetMessageData',
+      ).mockResolvedValue({
+        from: [{ emailAddress: 'sender@example.com' }],
+        to: [{ emailAddress: 'recipient@example.com' }],
+        attachments: [
+          {
+            contentId: SecureEmailAttachmentType.KEY_EXCHANGE.contentId,
+            data: 'keyData',
+            filename: 'key.dat',
+            mimeType: 'application/octet-stream',
+            inlineAttachment: false,
+          },
+          {
+            contentId: SecureEmailAttachmentType.BODY.contentId,
+            data: 'bodyData',
+            filename: 'body.dat',
+            mimeType: 'application/octet-stream',
+            inlineAttachment: false,
+          },
+        ],
+      })
     })
 
     it('should throw error when emailCryptoService is not provided', async () => {
@@ -393,12 +394,13 @@ bodyData
     })
 
     it('should throw DecodeError when no attachments found', async () => {
-      jest
-        .spyOn(Rfc822MessageDataProcessor, 'parseInternetMessageData')
-        .mockResolvedValue({
-          from: [{ emailAddress: 'sender@example.com' }],
-          attachments: [],
-        })
+      vi.spyOn(
+        Rfc822MessageDataProcessor,
+        'parseInternetMessageData',
+      ).mockResolvedValue({
+        from: [{ emailAddress: 'sender@example.com' }],
+        attachments: [],
+      })
 
       await expect(
         emailMessageUtil.processDownloadedEncryptedMessage(
@@ -408,20 +410,21 @@ bodyData
     })
 
     it('should throw DecodeError when no key attachments found', async () => {
-      jest
-        .spyOn(Rfc822MessageDataProcessor, 'parseInternetMessageData')
-        .mockResolvedValue({
-          from: [{ emailAddress: 'sender@example.com' }],
-          attachments: [
-            {
-              contentId: 'some-other-content',
-              data: 'data',
-              filename: 'file.dat',
-              mimeType: 'application/octet-stream',
-              inlineAttachment: false,
-            },
-          ],
-        })
+      vi.spyOn(
+        Rfc822MessageDataProcessor,
+        'parseInternetMessageData',
+      ).mockResolvedValue({
+        from: [{ emailAddress: 'sender@example.com' }],
+        attachments: [
+          {
+            contentId: 'some-other-content',
+            data: 'data',
+            filename: 'file.dat',
+            mimeType: 'application/octet-stream',
+            inlineAttachment: false,
+          },
+        ],
+      })
 
       await expect(
         emailMessageUtil.processDownloadedEncryptedMessage(
@@ -431,20 +434,21 @@ bodyData
     })
 
     it('should throw DecodeError when no body attachment found', async () => {
-      jest
-        .spyOn(Rfc822MessageDataProcessor, 'parseInternetMessageData')
-        .mockResolvedValue({
-          from: [{ emailAddress: 'sender@example.com' }],
-          attachments: [
-            {
-              contentId: SecureEmailAttachmentType.KEY_EXCHANGE.contentId,
-              data: 'keyData',
-              filename: 'key.dat',
-              mimeType: 'application/octet-stream',
-              inlineAttachment: false,
-            },
-          ],
-        })
+      vi.spyOn(
+        Rfc822MessageDataProcessor,
+        'parseInternetMessageData',
+      ).mockResolvedValue({
+        from: [{ emailAddress: 'sender@example.com' }],
+        attachments: [
+          {
+            contentId: SecureEmailAttachmentType.KEY_EXCHANGE.contentId,
+            data: 'keyData',
+            filename: 'key.dat',
+            mimeType: 'application/octet-stream',
+            inlineAttachment: false,
+          },
+        ],
+      })
 
       await expect(
         emailMessageUtil.processDownloadedEncryptedMessage(
@@ -454,27 +458,28 @@ bodyData
     })
 
     it('should handle legacy content IDs', async () => {
-      jest
-        .spyOn(Rfc822MessageDataProcessor, 'parseInternetMessageData')
-        .mockResolvedValue({
-          from: [{ emailAddress: 'sender@example.com' }],
-          attachments: [
-            {
-              contentId: LEGACY_KEY_EXCHANGE_CONTENT_ID,
-              data: 'keyData',
-              filename: 'key.dat',
-              mimeType: 'application/octet-stream',
-              inlineAttachment: false,
-            },
-            {
-              contentId: LEGACY_BODY_CONTENT_ID,
-              data: 'bodyData',
-              filename: 'body.dat',
-              mimeType: 'application/octet-stream',
-              inlineAttachment: false,
-            },
-          ],
-        })
+      vi.spyOn(
+        Rfc822MessageDataProcessor,
+        'parseInternetMessageData',
+      ).mockResolvedValue({
+        from: [{ emailAddress: 'sender@example.com' }],
+        attachments: [
+          {
+            contentId: LEGACY_KEY_EXCHANGE_CONTENT_ID,
+            data: 'keyData',
+            filename: 'key.dat',
+            mimeType: 'application/octet-stream',
+            inlineAttachment: false,
+          },
+          {
+            contentId: LEGACY_BODY_CONTENT_ID,
+            data: 'bodyData',
+            filename: 'body.dat',
+            mimeType: 'application/octet-stream',
+            inlineAttachment: false,
+          },
+        ],
+      })
 
       const expectedDecryptedData = new ArrayBuffer(100)
       when(mockEmailCryptoService.decrypt(anything())).thenResolve(
@@ -502,9 +507,10 @@ bodyData
     }
 
     beforeEach(() => {
-      jest
-        .spyOn(Rfc822MessageDataProcessor, 'encodeToInternetMessageBuffer')
-        .mockReturnValue(new ArrayBuffer(500))
+      vi.spyOn(
+        Rfc822MessageDataProcessor,
+        'encodeToInternetMessageBuffer',
+      ).mockReturnValue(new ArrayBuffer(500))
     })
 
     it('should throw error when emailCryptoService is not provided', async () => {
@@ -520,7 +526,7 @@ bodyData
 
     it('should successfully encrypt message', async () => {
       const mockSecurePackage = {
-        toArray: jest.fn().mockReturnValue([
+        toArray: vi.fn().mockReturnValue([
           {
             contentId: 'key1',
             data: 'keyData',
@@ -568,7 +574,7 @@ bodyData
       ]
 
       const mockSecurePackage = {
-        toArray: jest.fn().mockReturnValue([]),
+        toArray: vi.fn().mockReturnValue([]),
       }
       when(mockEmailCryptoService.encrypt(anything(), anything())).thenResolve(
         mockSecurePackage as any,
@@ -600,9 +606,10 @@ bodyData
     })
 
     beforeEach(() => {
-      jest
-        .spyOn(Rfc822MessageDataProcessor, 'parseInternetMessageData')
-        .mockResolvedValue(createMockMessageDetails())
+      vi.spyOn(
+        Rfc822MessageDataProcessor,
+        'parseInternetMessageData',
+      ).mockResolvedValue(createMockMessageDetails())
       when(mockDomainService.getConfiguredEmailDomains()).thenResolve(
         unitTestDomains,
       )
@@ -621,15 +628,16 @@ bodyData
       ])
 
       const mockSecurePackage = {
-        toArray: jest.fn().mockReturnValue([]),
+        toArray: vi.fn().mockReturnValue([]),
       }
       when(mockEmailCryptoService.encrypt(anything(), anything())).thenResolve(
         mockSecurePackage as any,
       )
 
-      jest
-        .spyOn(Rfc822MessageDataProcessor, 'encodeToInternetMessageBuffer')
-        .mockReturnValue(new ArrayBuffer(500))
+      vi.spyOn(
+        Rfc822MessageDataProcessor,
+        'encodeToInternetMessageBuffer',
+      ).mockReturnValue(new ArrayBuffer(500))
     })
 
     it('should throw error when domainService is not provided', async () => {
@@ -647,9 +655,10 @@ bodyData
       const externalMessage = createMockMessageDetails({
         to: [{ emailAddress: 'external@external.com' }],
       })
-      jest
-        .spyOn(Rfc822MessageDataProcessor, 'parseInternetMessageData')
-        .mockResolvedValue(externalMessage)
+      vi.spyOn(
+        Rfc822MessageDataProcessor,
+        'parseInternetMessageData',
+      ).mockResolvedValue(externalMessage)
 
       const result = await emailMessageUtil.processMessageForS3Upload(
         mockRfc822Data,
@@ -687,9 +696,10 @@ bodyData
       const messageWithManyRecipients = createMockMessageDetails({
         to: manyRecipients,
       })
-      jest
-        .spyOn(Rfc822MessageDataProcessor, 'parseInternetMessageData')
-        .mockResolvedValue(messageWithManyRecipients)
+      vi.spyOn(
+        Rfc822MessageDataProcessor,
+        'parseInternetMessageData',
+      ).mockResolvedValue(messageWithManyRecipients)
       when(mockAccountService.lookupPublicInfo(anything())).thenResolve(
         manyPublicInfo,
       )
@@ -709,9 +719,10 @@ bodyData
       const messageWithManyRecipients = createMockMessageDetails({
         to: manyExternalRecipients,
       })
-      jest
-        .spyOn(Rfc822MessageDataProcessor, 'parseInternetMessageData')
-        .mockResolvedValue(messageWithManyRecipients)
+      vi.spyOn(
+        Rfc822MessageDataProcessor,
+        'parseInternetMessageData',
+      ).mockResolvedValue(messageWithManyRecipients)
 
       await expect(
         emailMessageUtil.processMessageForS3Upload(
@@ -723,9 +734,10 @@ bodyData
 
     it('should enforce message size limit', async () => {
       const largeMockRfc822Data = new ArrayBuffer(20000000) // 20MB, larger than limit
-      jest
-        .spyOn(Rfc822MessageDataProcessor, 'encodeToInternetMessageBuffer')
-        .mockReturnValue(new ArrayBuffer(20000000))
+      vi.spyOn(
+        Rfc822MessageDataProcessor,
+        'encodeToInternetMessageBuffer',
+      ).mockReturnValue(new ArrayBuffer(20000000))
       await expect(
         emailMessageUtil.processMessageForS3Upload(
           largeMockRfc822Data,
@@ -740,9 +752,10 @@ bodyData
         cc: [{ emailAddress: 'cc@example.com' }],
         bcc: [{ emailAddress: 'bcc@example.com' }],
       })
-      jest
-        .spyOn(Rfc822MessageDataProcessor, 'parseInternetMessageData')
-        .mockResolvedValue(messageWithAllRecipients)
+      vi.spyOn(
+        Rfc822MessageDataProcessor,
+        'parseInternetMessageData',
+      ).mockResolvedValue(messageWithAllRecipients)
 
       // Mock additional public info for new addresses
       when(mockAccountService.lookupPublicInfo(anything())).thenResolve([
@@ -816,9 +829,10 @@ bodyData
           inlineAttachment: false,
         },
       ]
-      jest
-        .spyOn(Rfc822MessageDataProcessor, 'parseInternetMessageData')
-        .mockResolvedValue(messageWithBadAttachment)
+      vi.spyOn(
+        Rfc822MessageDataProcessor,
+        'parseInternetMessageData',
+      ).mockResolvedValue(messageWithBadAttachment)
 
       await expect(
         emailMessageUtil.processMessageForS3Upload(

@@ -23,6 +23,7 @@ import { ScheduledDraftMessageState } from '../../../../public'
 export interface ScheduledDraftMessageEntity {
   id: string
   emailAddressId: string
+  emailMaskId?: string
   sendAt: Date
   state: ScheduledDraftMessageState
   createdAt: Date

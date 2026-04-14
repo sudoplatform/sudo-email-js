@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,17 +13,18 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { SudoEmailClient } from '../../../src'
 import { UpdateCustomEmailFolderUseCase } from '../../../src/private/domain/use-cases/folder/updateCustomEmailFolderUseCase'
 import { APIDataFactory } from '../data-factory/api'
 import { EntityDataFactory } from '../data-factory/entity'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/folder/updateCustomEmailFolderUseCase',
 )
-const JestMockUpdateCustomEmailFolderUseCase =
-  UpdateCustomEmailFolderUseCase as jest.MockedClass<
+const ViMockUpdateCustomEmailFolderUseCase =
+  UpdateCustomEmailFolderUseCase as MockedClass<
     typeof UpdateCustomEmailFolderUseCase
   >
 
@@ -38,11 +39,11 @@ describe('SudoEmailClient.updateCustomEmailFolder Test Suite', () => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockUpdateCustomEmailFolderUseCase)
 
-    JestMockUpdateCustomEmailFolderUseCase.mockClear()
+    ViMockUpdateCustomEmailFolderUseCase.mockClear()
 
-    JestMockUpdateCustomEmailFolderUseCase.mockImplementation(() =>
-      instance(mockUpdateCustomEmailFolderUseCase),
-    )
+    ViMockUpdateCustomEmailFolderUseCase.mockImplementation(function () {
+      return instance(mockUpdateCustomEmailFolderUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -57,7 +58,7 @@ describe('SudoEmailClient.updateCustomEmailFolder Test Suite', () => {
       emailAddressId: '',
       values: { customFolderName: 'CUSTOM' },
     })
-    expect(JestMockUpdateCustomEmailFolderUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockUpdateCustomEmailFolderUseCase).toHaveBeenCalledTimes(1)
   })
 
   it('calls use case as expected', async () => {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -34,6 +34,13 @@ export class DefaultEmailDomainService implements EmailDomainService {
     const result = await this.appSync.getEmailMaskDomains()
     return result.domains.map((domain) =>
       this.emailDomainTransformer.transformGraphQL(domain),
+    )
+  }
+
+  async listEmailDomains(): Promise<EmailDomainEntity[]> {
+    const result = await this.appSync.listEmailDomains()
+    return result.map((domain) =>
+      this.emailDomainTransformer.transformListEmailDomainsGraphQL(domain),
     )
   }
 }

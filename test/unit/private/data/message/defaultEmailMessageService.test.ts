@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -21,6 +21,7 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import {
   ConnectionState,
@@ -92,13 +93,14 @@ const unsealedHeaderDetailsString =
 const unsealedHeaderDetailsNoDateString =
   '{"bcc":[],"to":[{"emailAddress":"testie@unittest.org"}],"from":[{"emailAddress":"testie@unittest.org"}],"cc":[],"replyTo":[],"subject":"testSubject","hasAttachments":false}'
 
-jest.mock('../../../../../src/private/data/common/subscriptionManager')
-const JestMockSubscriptionManager = SubscriptionManager as jest.MockedClass<
+vi.mock('../../../../../src/private/data/common/subscriptionManager')
+const ViMockSubscriptionManager = SubscriptionManager as MockedClass<
   typeof SubscriptionManager
 >
-jest.mock('../../../../../src/private/data/secure/defaultEmailCryptoService')
+vi.mock('../../../../../src/private/data/secure/defaultEmailCryptoService')
 
 describe('DefaultEmailMessageService Test Suite', () => {
+  const mockSymmetricKeyId = 'symmetricKeyId'
   const mockAppSync = mock<ApiClient>()
   const mockUserClient = mock<SudoUserClient>()
   const mockDeviceKeyWorker = mock<DeviceKeyWorker>()
@@ -111,8 +113,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
         EmailMessageSubscriber
       >
     >()
-  const gunzipSpy = jest.spyOn(zlibAsync, 'gunzipAsync')
-  const parseInternetMessageDataSpy = jest.spyOn(
+  const gunzipSpy = vi.spyOn(zlibAsync, 'gunzipAsync')
+  const parseInternetMessageDataSpy = vi.spyOn(
     Rfc822MessageDataProcessor,
     'parseInternetMessageData',
   )
@@ -121,6 +123,9 @@ describe('DefaultEmailMessageService Test Suite', () => {
   let mockMessageId: string
 
   beforeEach(() => {
+    ViMockSubscriptionManager.mockImplementation(function () {
+      return instance(mockSubscriptionManager)
+    })
     reset(mockAppSync)
     reset(mockUserClient)
     reset(mockDeviceKeyWorker)
@@ -140,7 +145,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     )
     when(mockUserClient.getUserClaim(anything())).thenResolve('identityId')
     when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve(
-      'symmetricKeyId',
+      mockSymmetricKeyId,
     )
     when(mockDeviceKeyWorker.sealString(anything())).thenResolve('')
     when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
@@ -154,15 +159,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
       id: mockMessageId,
       createdAtEpochMs: timestamp.getMilliseconds(),
     })
-    JestMockSubscriptionManager.mockImplementation(() =>
-      instance(mockSubscriptionManager),
-    )
   })
 
   describe('sendMessage', () => {
     const emailMessageMaxOutboundMessageSize = 9999999
     const encodedOriginalMessage = stringToArrayBuffer(v4())
-    const encodeToInternetMessageBufferSpy = jest.spyOn(
+    const encodeToInternetMessageBufferSpy = vi.spyOn(
       Rfc822MessageDataProcessor,
       'encodeToInternetMessageBuffer',
     )
@@ -307,7 +309,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
   describe('sendEncryptedMessage', () => {
     const emailMessageMaxOutboundMessageSize = 9999999
-    const encodeToInternetMessageBufferSpy = jest.spyOn(
+    const encodeToInternetMessageBufferSpy = vi.spyOn(
       Rfc822MessageDataProcessor,
       'encodeToInternetMessageBuffer',
     )
@@ -1745,9 +1747,61 @@ describe('DefaultEmailMessageService Test Suite', () => {
         rfc822Data,
         senderEmailAddressId,
       })
-      const [uploadArgs] = capture(mockS3Client.upload).first()
       verify(mockS3Client.upload(anything())).once()
+      const [uploadArgs] = capture(mockS3Client.upload).first()
       expect(uploadArgs.body).toStrictEqual('')
+    })
+
+    it('calls s3 upload with correct parameters', async () => {
+      when(mockS3Client.upload(anything())).thenResolve({
+        key: '',
+        lastModified: new Date(),
+      })
+      const rfc822Data = stringToArrayBuffer(v4())
+      const senderEmailAddressId = v4()
+      const result = await instanceUnderTest.saveDraft({
+        rfc822Data,
+        senderEmailAddressId,
+      })
+      verify(mockS3Client.upload(anything())).once()
+      const [uploadArgs] = capture(mockS3Client.upload).first()
+      expect(uploadArgs.body).toStrictEqual('')
+      expect(uploadArgs.key).toContain(senderEmailAddressId)
+      expect(uploadArgs.key).toContain(`draft/${result.id}`)
+      expect(uploadArgs.bucket).toStrictEqual(identityServiceConfig.bucket)
+      expect(uploadArgs.region).toStrictEqual(identityServiceConfig.region)
+      expect(uploadArgs.metadata).toStrictEqual({
+        [instanceUnderTest['Defaults'].Metadata.KeyIdName]: mockSymmetricKeyId,
+        [instanceUnderTest['Defaults'].Metadata.AlgorithmName]:
+          instanceUnderTest['Defaults'].SymmetricKeyEncryptionAlgorithm,
+      })
+    })
+
+    it('properly handles email mask id', async () => {
+      const emailMaskId = v4()
+      when(mockS3Client.upload(anything())).thenResolve({
+        key: '',
+        lastModified: new Date(),
+      })
+      const rfc822Data = stringToArrayBuffer(v4())
+      const senderEmailAddressId = v4()
+      const result = await instanceUnderTest.saveDraft({
+        rfc822Data,
+        senderEmailAddressId,
+        emailMaskId,
+      })
+      verify(mockS3Client.upload(anything())).once()
+      const [uploadArgs] = capture(mockS3Client.upload).first()
+      expect(uploadArgs.body).toStrictEqual('')
+      expect(uploadArgs.key).toContain(senderEmailAddressId)
+      expect(uploadArgs.key).toContain(`draft/mask/${emailMaskId}/${result.id}`)
+      expect(uploadArgs.bucket).toStrictEqual(identityServiceConfig.bucket)
+      expect(uploadArgs.region).toStrictEqual(identityServiceConfig.region)
+      expect(uploadArgs.metadata).toStrictEqual({
+        [instanceUnderTest['Defaults'].Metadata.KeyIdName]: mockSymmetricKeyId,
+        [instanceUnderTest['Defaults'].Metadata.AlgorithmName]:
+          instanceUnderTest['Defaults'].SymmetricKeyEncryptionAlgorithm,
+      })
     })
   })
 
@@ -1791,6 +1845,56 @@ describe('DefaultEmailMessageService Test Suite', () => {
       verify(mockDeviceKeyWorker.unsealString(anything())).once()
       expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(0)
       verify(mockEmailCryptoService.decrypt(anything())).never()
+
+      const [downloadArgs] = capture(mockS3Client.download).first()
+      expect(downloadArgs.bucket).toStrictEqual(identityServiceConfig.bucket)
+      expect(downloadArgs.region).toStrictEqual(identityServiceConfig.region)
+      expect(downloadArgs.key).toContain(
+        DraftEmailMessageDataFactory.getDraftInput.emailAddressId,
+      )
+      expect(downloadArgs.key).toContain(
+        `draft/${DraftEmailMessageDataFactory.getDraftInput.id}`,
+      )
+    })
+
+    it('successfully gets draft with email mask id', async () => {
+      const emailMaskId = v4()
+      when(mockS3Client.download(anything())).thenResolve(
+        DraftEmailMessageDataFactory.s3ClientDownloadOutput,
+      )
+      const unsealedDraft = 'unsealedDraft'
+      when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
+        unsealedDraft,
+      )
+      await expect(
+        instanceUnderTest.getDraft({
+          ...DraftEmailMessageDataFactory.getDraftInput,
+          emailMaskId,
+        }),
+      ).resolves.toEqual<DraftEmailMessageEntity>({
+        id: DraftEmailMessageDataFactory.getDraftInput.id,
+        emailAddressId:
+          DraftEmailMessageDataFactory.getDraftInput.emailAddressId,
+        updatedAt:
+          DraftEmailMessageDataFactory.s3ClientDownloadOutput.lastModified,
+        rfc822Data: BufferUtil.fromString(unsealedDraft),
+        emailMaskId,
+      })
+
+      verify(mockS3Client.download(anything())).once()
+      verify(mockDeviceKeyWorker.unsealString(anything())).once()
+      expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(0)
+      verify(mockEmailCryptoService.decrypt(anything())).never()
+
+      const [downloadArgs] = capture(mockS3Client.download).first()
+      expect(downloadArgs.bucket).toStrictEqual(identityServiceConfig.bucket)
+      expect(downloadArgs.region).toStrictEqual(identityServiceConfig.region)
+      expect(downloadArgs.key).toContain(
+        DraftEmailMessageDataFactory.getDraftInput.emailAddressId,
+      )
+      expect(downloadArgs.key).toContain(
+        `draft/mask/${emailMaskId}/${DraftEmailMessageDataFactory.getDraftInput.id}`,
+      )
     })
 
     it('returns undefined if s3 download throws NoSuchKey', async () => {
@@ -1998,6 +2102,57 @@ describe('DefaultEmailMessageService Test Suite', () => {
         nextToken: undefined,
         emailAddressId,
       })
+
+      verify(mockS3Client.list(anything())).once()
+      const [listArgs] = capture(mockS3Client.list).first()
+      expect(listArgs.bucket).toStrictEqual(identityServiceConfig.bucket)
+      expect(listArgs.region).toStrictEqual(identityServiceConfig.region)
+      expect(listArgs.prefix).toContain(emailAddressId)
+      expect(listArgs.prefix).toContain('draft/')
+    })
+
+    it('properly handles drafts with mask id in key', async () => {
+      const emailAddressId = 'emailAddressId'
+      const emailMaskId = 'emailMaskId'
+      const drafts: S3ClientListOutput = {
+        results: [
+          {
+            key: `draft/mask/${emailMaskId}/draft1`,
+            lastModified: new Date(1),
+          },
+          {
+            key: `draft/mask/${emailMaskId}/draft2`,
+            lastModified: new Date(2),
+          },
+          {
+            key: `draft/mask/${emailMaskId}/draft3`,
+            lastModified: new Date(3),
+          },
+        ],
+      }
+      when(mockS3Client.list(anything())).thenResolve(drafts)
+      await expect(
+        instanceUnderTest.listDraftsMetadataForEmailAddressId({
+          emailAddressId,
+        }),
+      ).resolves.toEqual({
+        items:
+          drafts.results?.map((s3) => ({
+            id: s3.key,
+            emailAddressId,
+            updatedAt: s3.lastModified,
+            emailMaskId,
+          })) ?? [],
+        nextToken: undefined,
+        emailAddressId,
+      })
+
+      verify(mockS3Client.list(anything())).once()
+      const [listArgs] = capture(mockS3Client.list).first()
+      expect(listArgs.bucket).toStrictEqual(identityServiceConfig.bucket)
+      expect(listArgs.region).toStrictEqual(identityServiceConfig.region)
+      expect(listArgs.prefix).toContain(emailAddressId)
+      expect(listArgs.prefix).toContain('draft/')
     })
 
     it('removes key prefix correctly', async () => {
@@ -2158,6 +2313,14 @@ describe('DefaultEmailMessageService Test Suite', () => {
           emailAddressId: 'emailAddressId',
         }),
       ).resolves.toStrictEqual([])
+
+      verify(mockS3Client.bulkDelete(anything())).once()
+      const [s3DeleteArgs] = capture(mockS3Client.bulkDelete).first()
+      expect(s3DeleteArgs.bucket).toStrictEqual(identityServiceConfig.bucket)
+      expect(s3DeleteArgs.region).toStrictEqual(identityServiceConfig.region)
+      expect(s3DeleteArgs.keys).toHaveLength(1)
+      expect(s3DeleteArgs.keys[0]).toContain('emailAddressId')
+      expect(s3DeleteArgs.keys[0]).toContain(`draft/${draftIdToDelete}`)
     })
 
     it('deletes multiple drafts successfully', async () => {
@@ -2169,6 +2332,39 @@ describe('DefaultEmailMessageService Test Suite', () => {
           emailAddressId: 'emailAddressId',
         }),
       ).resolves.toStrictEqual([])
+
+      verify(mockS3Client.bulkDelete(anything())).once()
+      const [s3DeleteArgs] = capture(mockS3Client.bulkDelete).first()
+      expect(s3DeleteArgs.bucket).toStrictEqual(identityServiceConfig.bucket)
+      expect(s3DeleteArgs.region).toStrictEqual(identityServiceConfig.region)
+      expect(s3DeleteArgs.keys).toHaveLength(draftIdsToDelete.length)
+      s3DeleteArgs.keys.forEach((key, index) => {
+        expect(key).toContain('emailAddressId')
+        expect(key).toContain(`draft/${draftIdsToDelete[index]}`)
+      })
+    })
+
+    it('properly deletes draft with a mask id', async () => {
+      const draftIdToDelete = 'draftIdToDelete'
+      const emailMaskId = 'emailMaskId'
+      when(mockS3Client.bulkDelete(anything())).thenResolve([])
+      await expect(
+        instanceUnderTest.deleteDrafts({
+          ids: [draftIdToDelete],
+          emailAddressId: 'emailAddressId',
+          emailMaskId,
+        }),
+      ).resolves.toStrictEqual([])
+
+      verify(mockS3Client.bulkDelete(anything())).once()
+      const [s3DeleteArgs] = capture(mockS3Client.bulkDelete).first()
+      expect(s3DeleteArgs.bucket).toStrictEqual(identityServiceConfig.bucket)
+      expect(s3DeleteArgs.region).toStrictEqual(identityServiceConfig.region)
+      expect(s3DeleteArgs.keys).toHaveLength(1)
+      expect(s3DeleteArgs.keys[0]).toContain('emailAddressId')
+      expect(s3DeleteArgs.keys[0]).toContain(
+        `draft/mask/${emailMaskId}/${draftIdToDelete}`,
+      )
     })
 
     it('throws EmailMessageServiceDeleteDraftsError if s3 delete throws S3BulkDeleteError', async () => {
@@ -2182,7 +2378,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         }),
       ).rejects.toThrow(
         new EmailMessageServiceDeleteDraftsError(
-          ['deleteKey'],
+          ['draftIdToDelete'],
           'Failed to delete Keys: deleteKey',
         ),
       )
@@ -2398,6 +2594,38 @@ describe('DefaultEmailMessageService Test Suite', () => {
       expect(scheduleArgs).toStrictEqual<typeof scheduleArgs>({
         draftMessageKey: `identityId/email/${emailAddressId}/draft/${id}`,
         emailAddressId,
+        emailMaskId: undefined,
+        sendAtEpochMs: sendAt.getTime(),
+        symmetricKey: Base64.encode(mockSymmetricKey),
+      })
+    })
+
+    it('passes emailMaskId to appSync when provided', async () => {
+      when(mockAppSync.scheduleSendDraftMessage(anything())).thenResolve(
+        GraphQLDataFactory.scheduledDraftMessageWithEmailMaskId,
+      )
+
+      const { id, emailAddressId } = EntityDataFactory.scheduledDraftMessage
+      const emailMaskId =
+        EntityDataFactory.scheduledDraftMessageWithEmailMaskId.emailMaskId
+      const result = await instanceUnderTest.scheduleSendDraftMessage({
+        id,
+        emailAddressId,
+        emailMaskId,
+        sendAt,
+      })
+
+      expect(result).toStrictEqual(
+        EntityDataFactory.scheduledDraftMessageWithEmailMaskId,
+      )
+      verify(mockAppSync.scheduleSendDraftMessage(anything())).once()
+      const [scheduleArgs] = capture(
+        mockAppSync.scheduleSendDraftMessage,
+      ).first()
+      expect(scheduleArgs).toStrictEqual<typeof scheduleArgs>({
+        draftMessageKey: `identityId/email/${emailAddressId}/draft/${id}`,
+        emailAddressId,
+        emailMaskId,
         sendAtEpochMs: sendAt.getTime(),
         symmetricKey: Base64.encode(mockSymmetricKey),
       })
@@ -2434,6 +2662,28 @@ describe('DefaultEmailMessageService Test Suite', () => {
       expect(cancelArgs).toStrictEqual<typeof cancelArgs>({
         draftMessageKey: `identityId/email/${emailAddressId}/draft/${id}`,
         emailAddressId,
+        emailMaskId: undefined,
+      })
+    })
+
+    it('passes emailMaskId to appSync when provided', async () => {
+      const { id, emailAddressId } = EntityDataFactory.scheduledDraftMessage
+      const emailMaskId =
+        EntityDataFactory.scheduledDraftMessageWithEmailMaskId.emailMaskId
+      await instanceUnderTest.cancelScheduledDraftMessage({
+        id,
+        emailAddressId,
+        emailMaskId,
+      })
+
+      verify(mockAppSync.cancelScheduledDraftMessage(anything())).once()
+      const [cancelArgs] = capture(
+        mockAppSync.cancelScheduledDraftMessage,
+      ).first()
+      expect(cancelArgs).toStrictEqual<typeof cancelArgs>({
+        draftMessageKey: `identityId/email/${emailAddressId}/draft/${id}`,
+        emailAddressId,
+        emailMaskId,
       })
     })
   })
@@ -2494,7 +2744,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
 
   describe('getEmailMessageWithBody', () => {
     it('calls getEmailMessageRfc822Data with the same arguments', async () => {
-      const mockEmailMessageRfc822Data = jest
+      const mockEmailMessageRfc822Data = vi
         .spyOn(instanceUnderTest, 'getEmailMessageRfc822Data')
         .mockResolvedValue(stringToArrayBuffer('dummy-data'))
       await instanceUnderTest.getEmailMessageWithBody(
@@ -2508,7 +2758,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     })
 
     it('returns undefined if getEmailMessageRfc822Data returns undefined', async () => {
-      const mockEmailMessageRfc822Data = jest
+      const mockEmailMessageRfc822Data = vi
         .spyOn(instanceUnderTest, 'getEmailMessageRfc822Data')
         .mockResolvedValue(undefined)
       const result = await instanceUnderTest.getEmailMessageWithBody(
@@ -2519,7 +2769,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     })
 
     it('passes result from getEmailMessageRfc822Data to parseInternetMessageData and returns proper values', async () => {
-      const mockEmailMessageRfc822Data = jest
+      const mockEmailMessageRfc822Data = vi
         .spyOn(instanceUnderTest, 'getEmailMessageRfc822Data')
         .mockResolvedValue(stringToArrayBuffer('dummy-data'))
       const body = 'mockBody'

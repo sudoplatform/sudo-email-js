@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,17 +13,18 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import { SudoEmailClient } from '../../../src'
 import { UpdateDraftEmailMessageUseCase } from '../../../src/private/domain/use-cases/draft/updateDraftEmailMessageUseCase'
 import { stringToArrayBuffer } from '../../../src/private/util/buffer'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/draft/updateDraftEmailMessageUseCase',
 )
-const JestMockUpdateDraftEmailMessageUseCase =
-  UpdateDraftEmailMessageUseCase as jest.MockedClass<
+const ViMockUpdateDraftEmailMessageUseCase =
+  UpdateDraftEmailMessageUseCase as MockedClass<
     typeof UpdateDraftEmailMessageUseCase
   >
 
@@ -38,11 +39,11 @@ describe('SudoEmailClient.updateDraftEmailMessage Test Suite', () => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockUpdateDraftEmailMessageUseCase)
 
-    JestMockUpdateDraftEmailMessageUseCase.mockClear()
+    ViMockUpdateDraftEmailMessageUseCase.mockClear()
 
-    JestMockUpdateDraftEmailMessageUseCase.mockImplementation(() =>
-      instance(mockUpdateDraftEmailMessageUseCase),
-    )
+    ViMockUpdateDraftEmailMessageUseCase.mockImplementation(function () {
+      return instance(mockUpdateDraftEmailMessageUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -60,7 +61,7 @@ describe('SudoEmailClient.updateDraftEmailMessage Test Suite', () => {
       rfc822Data: stringToArrayBuffer(''),
       senderEmailAddressId: '',
     })
-    expect(JestMockUpdateDraftEmailMessageUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockUpdateDraftEmailMessageUseCase).toHaveBeenCalledTimes(1)
   })
 
   it('calls use case as expected', async () => {
@@ -94,6 +95,29 @@ describe('SudoEmailClient.updateDraftEmailMessage Test Suite', () => {
       id: 'draftId',
       emailAddressId: 'emailAddressId',
       updatedAt,
+    })
+  })
+
+  it('properly passed email mask id if provided', async () => {
+    const id = v4()
+    const rfc822Data = stringToArrayBuffer(v4())
+    const senderEmailAddressId = v4()
+    const emailMaskId = v4()
+    await instanceUnderTest.updateDraftEmailMessage({
+      id,
+      rfc822Data,
+      senderEmailAddressId,
+      emailMaskId,
+    })
+    verify(mockUpdateDraftEmailMessageUseCase.execute(anything())).once()
+    const [actualArgs] = capture(
+      mockUpdateDraftEmailMessageUseCase.execute,
+    ).first()
+    expect(actualArgs).toEqual<typeof actualArgs>({
+      id,
+      rfc822Data,
+      senderEmailAddressId,
+      emailMaskId,
     })
   })
 })

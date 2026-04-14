@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -17,7 +17,6 @@ import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 
 describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
 
   let instanceUnderTest: SudoEmailClient
@@ -149,7 +148,7 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
   })
 
   // Temporarily disabled until completion of PEMC-1039
-  xdescribe('Singleton Public Key tests', () => {
+  describe.skip('Singleton Public Key tests', () => {
     let instanceUnderTest: SudoEmailClient
     let profilesClient: SudoProfilesClient
     let userClient: SudoUserClient

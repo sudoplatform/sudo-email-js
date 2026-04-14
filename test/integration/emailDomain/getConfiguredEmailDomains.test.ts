@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -11,8 +11,6 @@ import { SudoEmailClient } from '../../../src'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 
 describe('SudoEmailClient GetConfiguredEmailDomains Test Suite', () => {
-  jest.setTimeout(240000)
-
   let instanceUnderTest: SudoEmailClient
   let profilesClient: SudoProfilesClient
   let userClient: SudoUserClient

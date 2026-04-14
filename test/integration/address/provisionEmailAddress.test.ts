@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -33,7 +33,6 @@ import {
 import waitForExpect from 'wait-for-expect'
 
 describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
 
   let emailAddresses: EmailAddress[] = []
@@ -100,7 +99,7 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
         expect.arrayContaining(['INBOX', 'SENT', 'OUTBOX', 'TRASH', 'SPAM']),
       )
     } else {
-      fail(
+      assert.fail(
         `emailAddress.folders has unexpected length ${emailAddress.folders.length}`,
       )
     }
@@ -140,7 +139,7 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
         expect.arrayContaining(['INBOX', 'SENT', 'OUTBOX', 'TRASH', 'SPAM']),
       )
     } else {
-      fail(
+      assert.fail(
         `emailAddress.folders has unexpected length ${emailAddress.folders.length}`,
       )
     }
@@ -155,7 +154,7 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
       const addresses = await instanceUnderTest.listEmailAddresses({})
       expect(addresses.status).toEqual(ListOperationResultStatus.Success)
       if (addresses.status !== ListOperationResultStatus.Success) {
-        fail(`addresses.status unexpected value`)
+        assert.fail(`addresses.status unexpected value`)
       }
       expect(addresses.items).toEqual([emailAddress])
     })
@@ -228,7 +227,7 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
   })
 
   // Temporarily disabled until completion of PEMC-1039
-  xdescribe('Singleton Public Key tests', () => {
+  describe.skip('Singleton Public Key tests', () => {
     let emailAddresses: EmailAddress[] = []
 
     let instanceUnderTest: SudoEmailClient

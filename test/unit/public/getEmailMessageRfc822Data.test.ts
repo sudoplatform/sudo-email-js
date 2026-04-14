@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,17 +13,18 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import { SudoEmailClient } from '../../../src'
 import { GetEmailMessageRfc822DataUseCase } from '../../../src/private/domain/use-cases/message/getEmailMessageRfc822DataUseCase'
 import { stringToArrayBuffer } from '../../../src/private/util/buffer'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/message/getEmailMessageRfc822DataUseCase',
 )
-const JestMockGetEmailMessageRfc822DataUseCase =
-  GetEmailMessageRfc822DataUseCase as jest.MockedClass<
+const ViMockGetEmailMessageRfc822DataUseCase =
+  GetEmailMessageRfc822DataUseCase as MockedClass<
     typeof GetEmailMessageRfc822DataUseCase
   >
 
@@ -37,11 +38,11 @@ describe('SudoEmailClient.getEmailMessageRfc822Data Test Suite', () => {
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockGetEmailMessageRfc822DataUseCase)
-    JestMockGetEmailMessageRfc822DataUseCase.mockClear()
+    ViMockGetEmailMessageRfc822DataUseCase.mockClear()
 
-    JestMockGetEmailMessageRfc822DataUseCase.mockImplementation(() =>
-      instance(mockGetEmailMessageRfc822DataUseCase),
-    )
+    ViMockGetEmailMessageRfc822DataUseCase.mockImplementation(function () {
+      return instance(mockGetEmailMessageRfc822DataUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -55,7 +56,7 @@ describe('SudoEmailClient.getEmailMessageRfc822Data Test Suite', () => {
       id: '',
       emailAddressId: 'emailAddressId',
     })
-    expect(JestMockGetEmailMessageRfc822DataUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockGetEmailMessageRfc822DataUseCase).toHaveBeenCalledTimes(1)
   })
   it('calls use case as expected', async () => {
     const id = v4()

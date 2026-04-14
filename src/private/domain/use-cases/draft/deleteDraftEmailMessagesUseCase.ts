@@ -17,10 +17,12 @@ import { EmailMessageOperationFailureResult } from '../../../../public'
  * @property {Set<string>} ids Identifiers of draft email messages to be deleted.
  * @property {string} emailAddressId Identifier of the email address associated with the
  *  draft email messages.
+ * @property {string} emailMaskId Optional identifier of the email mask associated with the draft email messages.
  */
 interface DeleteDraftEmailMessagesUseCaseInput {
   ids: Set<string>
   emailAddressId: string
+  emailMaskId?: string
 }
 
 /**
@@ -53,8 +55,9 @@ export class DeleteDraftEmailMessagesUseCase {
   async execute({
     ids,
     emailAddressId,
+    emailMaskId,
   }: DeleteDraftEmailMessagesUseCaseInput): Promise<DeleteDraftEmailMessagesUseCaseOutput> {
-    this.log.debug(this.constructor.name, { ids, emailAddressId })
+    this.log.debug(this.constructor.name, { ids, emailAddressId, emailMaskId })
     const account = await this.emailAccountService.get({
       id: emailAddressId,
     })
@@ -70,6 +73,7 @@ export class DeleteDraftEmailMessagesUseCase {
     const results = await this.emailMessageService.deleteDrafts({
       emailAddressId,
       ids: [...ids],
+      emailMaskId,
     })
     const errorMap: Map<string, string> = new Map()
     results.forEach((result) => errorMap.set(result.id, result.reason))
@@ -90,6 +94,7 @@ export class DeleteDraftEmailMessagesUseCase {
           await this.emailMessageService.cancelScheduledDraftMessage({
             id,
             emailAddressId,
+            emailMaskId,
           })
         } catch (e) {
           this.log.warn(`Failed to cancel scheduled draft ${id}: ${e}`)

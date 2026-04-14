@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -11,12 +11,16 @@ import _ from 'lodash'
 import { DraftEmailMessage, EmailAddress, SudoEmailClient } from '../../../src'
 import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 import { delay } from '../../util/delay'
-import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
+import {
+  emailMasksEnabled,
+  setupEmailClient,
+  teardown,
+} from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { arrayBufferToString } from '../../../src/private/util/buffer'
+import { provisionEmailMask } from '../util/provisionEmailMask'
 
 describe('SudoEmailClient listDraftEmailMessagesForEmailAddressId Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
 
   let instanceUnderTest: SudoEmailClient
@@ -24,6 +28,7 @@ describe('SudoEmailClient listDraftEmailMessagesForEmailAddressId Test Suite', (
   let userClient: SudoUserClient
   let sudo: Sudo
   let sudoOwnershipProofToken: string
+  let runMaskTests: boolean = false
 
   let emailAddress: EmailAddress
   let draftData: DraftEmailMessage[] = []
@@ -36,6 +41,7 @@ describe('SudoEmailClient listDraftEmailMessagesForEmailAddressId Test Suite', (
     userClient = result.userClient
     sudo = result.sudo
     sudoOwnershipProofToken = result.ownershipProofToken
+    runMaskTests = await emailMasksEnabled(instanceUnderTest)
 
     emailAddress = await provisionEmailAddress(
       sudoOwnershipProofToken,
@@ -372,5 +378,57 @@ describe('SudoEmailClient listDraftEmailMessagesForEmailAddressId Test Suite', (
     // Verify all IDs are unique
     const uniqueIds = new Set(allDrafts.map((d) => d.id))
     expect(uniqueIds.size).toBe(totalDrafts)
+  })
+
+  it('should include email mask id in draft metadata', async ({ skip }) => {
+    skip(runMaskTests === false, 'Email mask tests are disabled')
+    const emailMask = await provisionEmailMask(
+      sudoOwnershipProofToken,
+      instanceUnderTest,
+      { realAddress: emailAddress.emailAddress },
+    )
+
+    const body = 'test draft message'
+    const draftDataArrays = _.range(3).map(() =>
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailMask.maskAddress }],
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body,
+        attachments: [],
+      }),
+    )
+
+    for (let d of draftDataArrays) {
+      const metadata = await instanceUnderTest.createDraftEmailMessage({
+        senderEmailAddressId: emailAddress.id,
+        rfc822Data: d,
+        emailMaskId: emailMask.id,
+      })
+      draftData.push({ ...metadata, rfc822Data: d })
+      // delay to avoid hitting request limit
+      await delay(10)
+    }
+
+    const result =
+      await instanceUnderTest.listDraftEmailMessagesForEmailAddressId({
+        emailAddressId: emailAddress.id,
+      })
+
+    result.items.forEach((d) => {
+      expect(draftData).toContainEqual({
+        ...d,
+        id: d.id,
+        emailAddressId: d.emailAddressId,
+        updatedAt: d.updatedAt,
+        rfc822Data: expect.anything(),
+        emailMaskId: emailMask.id,
+      })
+      const draftResDataStr = arrayBufferToString(d!.rfc822Data)
+      expect(draftResDataStr).toContain(body)
+      expect(draftResDataStr).toContain(emailAddress.emailAddress)
+    })
   })
 })

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -14,6 +14,7 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { DefaultSudoEmailClient, SudoEmailClient } from '../../../src'
 import { PrivateSudoEmailClientOptions } from '../../../src/private/data/common/privateSudoEmailClientOptions'
 import { SudoCryptoProvider, SudoKeyManager } from '@sudoplatform/sudo-common'
@@ -33,11 +34,11 @@ import { APIDataFactory } from '../data-factory/api'
 import { CheckEmailAddressAvailabilityUseCase } from '../../../src/private/domain/use-cases/account/checkEmailAddressAvailabilityUseCase'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/account/checkEmailAddressAvailabilityUseCase',
 )
-const JestMockCheckEmailAddressAvailabilityUseCase =
-  CheckEmailAddressAvailabilityUseCase as jest.MockedClass<
+const ViMockCheckEmailAddressAvailabilityUseCase =
+  CheckEmailAddressAvailabilityUseCase as MockedClass<
     typeof CheckEmailAddressAvailabilityUseCase
   >
 
@@ -52,11 +53,11 @@ describe('SudoEmailClient.checkEmailAddressAvailability Test Suite', () => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockCheckEmailAddressAvailabilityUseCase)
 
-    JestMockCheckEmailAddressAvailabilityUseCase.mockClear()
+    ViMockCheckEmailAddressAvailabilityUseCase.mockClear()
 
-    JestMockCheckEmailAddressAvailabilityUseCase.mockImplementation(() =>
-      instance(mockCheckEmailAddressAvailabilityUseCase),
-    )
+    ViMockCheckEmailAddressAvailabilityUseCase.mockImplementation(function () {
+      return instance(mockCheckEmailAddressAvailabilityUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -69,9 +70,7 @@ describe('SudoEmailClient.checkEmailAddressAvailability Test Suite', () => {
       localParts: new Set(['']),
       domains: new Set(['']),
     })
-    expect(JestMockCheckEmailAddressAvailabilityUseCase).toHaveBeenCalledTimes(
-      1,
-    )
+    expect(ViMockCheckEmailAddressAvailabilityUseCase).toHaveBeenCalledTimes(1)
   })
   it('calls use case as expected', async () => {
     const localPart = v4()

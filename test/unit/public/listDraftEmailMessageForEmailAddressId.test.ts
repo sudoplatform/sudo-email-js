@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,6 +13,7 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import { DraftEmailMessage, SudoEmailClient } from '../../../src'
 import { ListDraftEmailMessagesForEmailAddressIdUseCase } from '../../../src/private/domain/use-cases/draft/listDraftEmailMessagesForEmailAddressIdUseCase'
@@ -20,11 +21,11 @@ import { stringToArrayBuffer } from '../../../src/private/util/buffer'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 import { ListOutput } from '@sudoplatform/sudo-common'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/draft/listDraftEmailMessagesForEmailAddressIdUseCase',
 )
-const JestMockListDraftEmailMessagesForEmailAddressIdUseCase =
-  ListDraftEmailMessagesForEmailAddressIdUseCase as jest.MockedClass<
+const ViMockListDraftEmailMessagesForEmailAddressIdUseCase =
+  ListDraftEmailMessagesForEmailAddressIdUseCase as MockedClass<
     typeof ListDraftEmailMessagesForEmailAddressIdUseCase
   >
 
@@ -40,10 +41,12 @@ describe('SudoEmailClient.listDraftEmailMessagesForEmailAddressId Test Suite', (
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockListDraftEmailMessagesForEmailAddressIdUseCase)
-    JestMockListDraftEmailMessagesForEmailAddressIdUseCase.mockClear()
+    ViMockListDraftEmailMessagesForEmailAddressIdUseCase.mockClear()
 
-    JestMockListDraftEmailMessagesForEmailAddressIdUseCase.mockImplementation(
-      () => instance(mockListDraftEmailMessagesForEmailAddressIdUseCase),
+    ViMockListDraftEmailMessagesForEmailAddressIdUseCase.mockImplementation(
+      function () {
+        return instance(mockListDraftEmailMessagesForEmailAddressIdUseCase)
+      },
     )
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
@@ -62,7 +65,7 @@ describe('SudoEmailClient.listDraftEmailMessagesForEmailAddressId Test Suite', (
       emailAddressId: '',
     })
     expect(
-      JestMockListDraftEmailMessagesForEmailAddressIdUseCase,
+      ViMockListDraftEmailMessagesForEmailAddressIdUseCase,
     ).toHaveBeenCalledTimes(1)
   })
 

@@ -12,9 +12,11 @@
  * @property {string} emailAddressId Unique identifier of the email address associated with the draft
  *  email message.
  * @property {Date} updatedAt Time at which the draft was last updated
+ * @property {string} [emailMaskId] Unique identifier of the email mask associated with the draft email message, if any.
  */
 export interface DraftEmailMessageMetadata {
   id: string
   emailAddressId: string
   updatedAt: Date
+  emailMaskId?: string
 }

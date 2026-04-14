@@ -18,8 +18,8 @@
  *   })
  * )
  *
- * This is preferable to defining aliases to describe or describe.skip as the
- * eslint-plugin-jest does not recognize the aliased function names.
+ * This is preferable to defining aliases to describe or describe.skip as
+ * lint plugins may not recognize the aliased function names.
  *
  * @param name
  * @param condition

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,17 +13,18 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { SudoEmailClient } from '../../../src'
 import { DeleteCustomEmailFolderUseCase } from '../../../src/private/domain/use-cases/folder/deleteCustomEmailFolderUseCase'
 import { APIDataFactory } from '../data-factory/api'
 import { EntityDataFactory } from '../data-factory/entity'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/folder/deleteCustomEmailFolderUseCase',
 )
-const JestMockDeleteCustomEmailFolderUseCase =
-  DeleteCustomEmailFolderUseCase as jest.MockedClass<
+const ViMockDeleteCustomEmailFolderUseCase =
+  DeleteCustomEmailFolderUseCase as MockedClass<
     typeof DeleteCustomEmailFolderUseCase
   >
 
@@ -38,11 +39,11 @@ describe('SudoEmailClient.deleteCustomEmailFolder Test Suite', () => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockDeleteCustomEmailFolderUseCase)
 
-    JestMockDeleteCustomEmailFolderUseCase.mockClear()
+    ViMockDeleteCustomEmailFolderUseCase.mockClear()
 
-    JestMockDeleteCustomEmailFolderUseCase.mockImplementation(() =>
-      instance(mockDeleteCustomEmailFolderUseCase),
-    )
+    ViMockDeleteCustomEmailFolderUseCase.mockImplementation(function () {
+      return instance(mockDeleteCustomEmailFolderUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -55,7 +56,7 @@ describe('SudoEmailClient.deleteCustomEmailFolder Test Suite', () => {
       emailFolderId: '',
       emailAddressId: '',
     })
-    expect(JestMockDeleteCustomEmailFolderUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockDeleteCustomEmailFolderUseCase).toHaveBeenCalledTimes(1)
   })
 
   it('calls use case as expected', async () => {

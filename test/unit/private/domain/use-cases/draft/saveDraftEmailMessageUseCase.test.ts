@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -47,11 +47,11 @@ describe('SaveDraftEmailMessageUseCase Test Suite', () => {
   const mockEmailCryptoService = mock<EmailCryptoService>()
   const mockS3Client = mock<S3Client>()
 
-  const parseInternetMessageDataSpy = jest.spyOn(
+  const parseInternetMessageDataSpy = vi.spyOn(
     Rfc822MessageDataProcessor,
     'parseInternetMessageData',
   )
-  const encodeToInternetMessageBufferSpy = jest.spyOn(
+  const encodeToInternetMessageBufferSpy = vi.spyOn(
     Rfc822MessageDataProcessor,
     'encodeToInternetMessageBuffer',
   )
@@ -109,6 +109,7 @@ describe('SaveDraftEmailMessageUseCase Test Suite', () => {
     expect(actualArgs).toStrictEqual<typeof actualArgs>({
       rfc822Data,
       senderEmailAddressId,
+      emailMaskId: undefined,
     })
   })
 
@@ -275,6 +276,30 @@ describe('SaveDraftEmailMessageUseCase Test Suite', () => {
     verify(mockEmailMessageService.saveDraft(anything())).never()
   })
 
+  it('passes and returns email mask id when provided', async () => {
+    const senderEmailAddressId = v4()
+    const emailMaskId = v4()
+    const rfc822Data = stringToArrayBuffer(v4())
+    await instanceUnderTest.execute({
+      senderEmailAddressId,
+      rfc822Data,
+      emailMaskId,
+    })
+
+    verify(mockEmailAccountService.get(anything())).once()
+    verify(mockEmailConfigurationDataService.getConfigurationData()).once()
+    expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(1)
+    verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
+    verify(mockEmailMessageService.saveDraft(anything())).once()
+
+    const [actualArgs] = capture(mockEmailMessageService.saveDraft).first()
+    expect(actualArgs).toStrictEqual<typeof actualArgs>({
+      rfc822Data,
+      senderEmailAddressId,
+      emailMaskId,
+    })
+  })
+
   describe('E2EE path', () => {
     const senderAddress = `sender@${EntityDataFactory.emailDomain.domain}`
     const recipientAddress = `recipient@${EntityDataFactory.emailDomain.domain}`
@@ -348,13 +373,10 @@ describe('SaveDraftEmailMessageUseCase Test Suite', () => {
       verify(mockEmailMessageService.saveDraft(anything())).once()
 
       const [actualArgs] = capture(mockEmailMessageService.saveDraft).first()
-      console.debug({
-        expectedData: mockDecryptedData,
-        argsData: actualArgs.rfc822Data,
-      })
       expect(actualArgs).toStrictEqual<typeof actualArgs>({
         rfc822Data: mockDecryptedData,
         senderEmailAddressId,
+        emailMaskId: undefined,
       })
     })
 

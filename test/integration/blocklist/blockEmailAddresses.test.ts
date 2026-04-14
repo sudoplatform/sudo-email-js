@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -30,7 +30,6 @@ import { getFolderByName } from '../util/folder'
 import { delay } from '../../util/delay'
 
 describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
   const dummyAddress = 'spammymcspamface@spambot.com'
 
@@ -189,7 +188,7 @@ describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
         })
 
         if (messages.status !== ListOperationResultStatus.Success) {
-          fail(`Expect result not returned: ${messages}`)
+          assert.fail(`Expect result not returned: ${messages}`)
         }
         expect(messages.items).toHaveLength(1)
       },
@@ -221,7 +220,7 @@ describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
         })
 
         if (messages.status !== ListOperationResultStatus.Success) {
-          fail(`Expect result not returned: ${messages}`)
+          assert.fail(`Expect result not returned: ${messages}`)
         }
         // Original email from blocked address is still there
         expect(messages.items).toHaveLength(1)
@@ -254,7 +253,7 @@ describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
         })
 
         if (messages.status !== ListOperationResultStatus.Success) {
-          fail(`Expect result not returned: ${messages}`)
+          assert.fail(`Expect result not returned: ${messages}`)
         }
         // Original message plus this last one
         expect(messages.items).toHaveLength(2)
@@ -280,7 +279,7 @@ describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
     }
 
     if (!folder) {
-      fail('Could not find folder')
+      assert.fail('Could not find folder')
     }
 
     const blockingResult = await instanceUnderTest.blockEmailAddresses({
@@ -331,7 +330,7 @@ describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
         })
 
         if (messages.status !== ListOperationResultStatus.Success) {
-          fail(`Expect result not returned: ${messages}`)
+          assert.fail(`Expect result not returned: ${messages}`)
         }
         if (folder.folderName === 'SPAM') {
           // We're looking in spam, so it should appear
@@ -412,7 +411,7 @@ describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
           })
 
         if (messages.status !== ListOperationResultStatus.Success) {
-          fail(`Expect result not returned: ${messages}`)
+          assert.fail(`Expect result not returned: ${messages}`)
         }
         expect(messages.items).toHaveLength(1)
       },
@@ -429,7 +428,7 @@ describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
           })
 
         if (messages.status !== ListOperationResultStatus.Success) {
-          fail(`Expect result not returned: ${messages.status}`)
+          assert.fail(`Expect result not returned: ${messages.status}`)
         }
         expect(messages.items).toHaveLength(0)
       },
@@ -475,7 +474,7 @@ describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
         })
 
         if (messages.status !== ListOperationResultStatus.Success) {
-          fail(`Expect result not returned: ${messages.status}`)
+          assert.fail(`Expect result not returned: ${messages.status}`)
         }
         expect(messages.items).toHaveLength(0)
       },

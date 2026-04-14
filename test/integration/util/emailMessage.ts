@@ -7,7 +7,6 @@
 import {
   EmailAddressDetail,
   EmailAttachment,
-  InternetMessageFormatHeader,
   SendEmailMessageInput,
 } from '../../../src'
 
@@ -60,10 +59,39 @@ export const constructSendMessageInputSansSenderId = ({
 
 /**
  * Given a HTML body of a verification code email, extracts the OTP.
+ * Tries multiple patterns in priority order:
+ * 1. HTML tag pattern: 6 digits within HTML tags (e.g., >123456<)
+ * 2. Standalone line: 6 digits on their own line, excluding color specs
+ * 3. Word boundary: Any 6 digits with word boundaries, excluding color specs
+ *
  * @param {string} body HTML body string
- * @returns {string} OTP within the verification code email
+ * @returns {string} OTP within the verification code email, or empty string if not found
  */
 export function extractOtp(body: string | false): string {
   if (!body) return ''
-  return body.match(/(?<=otp">)\d+/gm)?.[0] ?? ''
+
+  // Pattern 1: 6 digits within HTML tags
+  const htmlTagMatch = body.match(/>(\d{6})</)?.[1]
+  if (htmlTagMatch) {
+    return htmlTagMatch
+  }
+
+  // Pattern 2: Line with only 6 digits (not preceded by #)
+  const lines = body.split(/\r?\n/)
+  for (const line of lines) {
+    const trimmed = line.trim()
+    // Match 6 digits on their own line, not preceded by #
+    if (/^(?!#)\d{6}$/.test(trimmed)) {
+      return trimmed
+    }
+  }
+
+  // Pattern 3: Any 6 digits with word boundaries (not preceded by #)
+  // Using negative lookbehind to avoid matching hex colors like #000000
+  const boundaryMatch = body.match(/(?<!#)\b(\d{6})\b/)?.[1]
+  if (boundaryMatch) {
+    return boundaryMatch
+  }
+
+  return ''
 }

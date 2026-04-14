@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -17,12 +17,16 @@ import {
   SudoEmailClient,
 } from '../../../src'
 import { delay } from '../../util/delay'
-import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
+import {
+  emailMasksEnabled,
+  setupEmailClient,
+  teardown,
+} from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
+import { provisionEmailMask } from '../util/provisionEmailMask'
 
 describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
 
   let instanceUnderTest: SudoEmailClient
@@ -30,6 +34,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
   let userClient: SudoUserClient
   let sudo: Sudo
   let sudoOwnershipProofToken: string
+  let runMaskTests: boolean = false
 
   let emailAddress: EmailAddress
   let draftMetadata: DraftEmailMessageMetadata
@@ -43,6 +48,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
     userClient = result.userClient
     sudo = result.sudo
     sudoOwnershipProofToken = result.ownershipProofToken
+    runMaskTests = await emailMasksEnabled(instanceUnderTest)
 
     emailAddress = await provisionEmailAddress(
       sudoOwnershipProofToken,
@@ -198,6 +204,93 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
       status: BatchOperationResultStatus.Success,
       successValues: expect.arrayContaining(mapIdsToSuccessIds(ids)),
       failureValues: [],
+    })
+  })
+
+  describe('Email Mask Tests', () => {
+    it('deletes a draft successfully with email mask', async ({ skip }) => {
+      skip(runMaskTests === false, 'Email mask tests are disabled')
+      const emailMask = await provisionEmailMask(
+        sudoOwnershipProofToken,
+        instanceUnderTest,
+        {
+          realAddress: emailAddress.emailAddress,
+        },
+      )
+      const draftEmailMessageBuffer =
+        Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+          from: [{ emailAddress: emailMask.maskAddress }],
+          to: [],
+          cc: [],
+          bcc: [],
+          replyTo: [],
+          body: 'test draft message',
+          attachments: [],
+        })
+      const draftMetadata = await instanceUnderTest.createDraftEmailMessage({
+        rfc822Data: draftEmailMessageBuffer,
+        senderEmailAddressId: emailAddress.id,
+        emailMaskId: emailMask.id,
+      })
+
+      const ids = [draftMetadata.id]
+      await expect(
+        instanceUnderTest.deleteDraftEmailMessages({
+          emailAddressId: emailAddress.id,
+          ids,
+          emailMaskId: emailMask.id,
+        }),
+      ).resolves.toStrictEqual({
+        status: BatchOperationResultStatus.Success,
+        successValues: expect.arrayContaining(mapIdsToSuccessIds(ids)),
+        failureValues: [],
+      })
+    })
+
+    it('deletes multiple drafts in one operation successfully with email mask', async ({
+      skip,
+    }) => {
+      skip(runMaskTests === false, 'Email mask tests are disabled')
+      const emailMask = await provisionEmailMask(
+        sudoOwnershipProofToken,
+        instanceUnderTest,
+        {
+          realAddress: emailAddress.emailAddress,
+        },
+      )
+      const draftBuffers = _.range(9).map(() =>
+        Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+          from: [{ emailAddress: emailMask.maskAddress }],
+          to: [],
+          cc: [],
+          bcc: [],
+          replyTo: [],
+          body: 'test draft message',
+          attachments: [],
+        }),
+      )
+      const draftMetadata = await Promise.all(
+        draftBuffers.map(
+          async (ds) =>
+            await instanceUnderTest.createDraftEmailMessage({
+              senderEmailAddressId: emailAddress.id,
+              rfc822Data: ds,
+              emailMaskId: emailMask.id,
+            }),
+        ),
+      )
+      const ids = draftMetadata.map((m) => m.id)
+      const deleteResult = await instanceUnderTest.deleteDraftEmailMessages({
+        emailAddressId: emailAddress.id,
+        ids,
+        emailMaskId: emailMask.id,
+      })
+
+      expect(deleteResult).toStrictEqual({
+        status: BatchOperationResultStatus.Success,
+        successValues: expect.arrayContaining(mapIdsToSuccessIds(ids)),
+        failureValues: [],
+      })
     })
   })
 })

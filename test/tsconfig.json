@@ -1,0 +1,8 @@
+{
+  "extends": "../tsconfig.commonjs.json",
+  "include": ["./**/*.ts", "../src/**/*.ts"],
+  "compilerOptions": {
+    "allowJs": true,
+    "types": ["vitest/globals", "node"]
+  }
+}

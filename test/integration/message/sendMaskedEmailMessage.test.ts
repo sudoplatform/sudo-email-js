@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -43,7 +43,6 @@ import { SudoEntitlementsAdminClient } from '@sudoplatform/sudo-entitlements-adm
 import { getImageFileData, getPdfFileData } from '../../util/files/fileData'
 
 describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
 
   let emailAddresses: EmailAddress[] = []

@@ -1,19 +1,20 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { instance, mock, reset } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { SudoEmailClient } from '../../../src'
 import { UnsubscribeFromEmailMessagesUseCase } from '../../../src/private/domain/use-cases/message/unsubscribeFromEmailMessagesUseCase'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/message/unsubscribeFromEmailMessagesUseCase',
 )
-const JestMockUnsubscribeFromEmailMessagesUseCase =
-  UnsubscribeFromEmailMessagesUseCase as jest.MockedClass<
+const ViMockUnsubscribeFromEmailMessagesUseCase =
+  UnsubscribeFromEmailMessagesUseCase as MockedClass<
     typeof UnsubscribeFromEmailMessagesUseCase
   >
 
@@ -27,17 +28,17 @@ describe('SudoEmailClient.unsubscribeFromEmailMessages Test Suite', () => {
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockUnsubscribeFromEmailMessagesUseCase)
-    JestMockUnsubscribeFromEmailMessagesUseCase.mockClear()
+    ViMockUnsubscribeFromEmailMessagesUseCase.mockClear()
 
-    JestMockUnsubscribeFromEmailMessagesUseCase.mockImplementation(() =>
-      instance(mockUnsubscribeFromEmailMessagesUseCase),
-    )
+    ViMockUnsubscribeFromEmailMessagesUseCase.mockImplementation(function () {
+      return instance(mockUnsubscribeFromEmailMessagesUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
   })
   it('generates use case', () => {
     instanceUnderTest.unsubscribeFromEmailMessages('subscriber-id')
 
-    expect(JestMockUnsubscribeFromEmailMessagesUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockUnsubscribeFromEmailMessagesUseCase).toHaveBeenCalledTimes(1)
   })
 })

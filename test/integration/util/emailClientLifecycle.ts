@@ -49,12 +49,8 @@ import { EntitlementsBuilder } from './entitlements'
 
 import { DefaultConfigurationDataService } from '../../../src/private/data/configuration/defaultConfigurationDataService'
 import { EmailConfigurationDataService } from '../../../src/private/domain/entities/configuration/configurationDataService'
-
-// [START] - Polyfills
-// Crypto and fetch are now handled in jest.setup.ts
-// Keeping isomorphic-fetch for compatibility
-require('isomorphic-fetch')
-// [END] - Polyfills
+import { S3Client } from '../../../src/private/data/common/s3Client'
+import { internal as SudoUserInternal } from '@sudoplatform/sudo-user'
 
 export const sudoIssuer = 'sudoplatform.sudoservice'
 
@@ -102,6 +98,8 @@ export interface SetupEmailClientOutput {
   }
   configurationDataService: EmailConfigurationDataService
   apiClient: ApiClient
+  s3Client: S3Client
+  identityId: string
 }
 
 export const setupEmailClient = async (
@@ -210,6 +208,13 @@ export const setupEmailClient = async (
       apiClient,
     )
 
+    const identityServiceConfig: SudoUserInternal.IdentityServiceConfig =
+      SudoUserInternal.getIdentityServiceConfig().identityService
+    const s3Client = new S3Client(userClient, identityServiceConfig)
+    const identityId = (await userClient.getUserClaim(
+      'custom:identityId',
+    )) as string
+
     return {
       ownershipProofToken,
       emailClient,
@@ -230,6 +235,8 @@ export const setupEmailClient = async (
       },
       configurationDataService,
       apiClient,
+      s3Client,
+      identityId,
     }
   } catch (err) {
     log.error(`${setupEmailClient.name} FAILED`)
@@ -298,4 +305,32 @@ export const getEmailConfig = async (emailClient: SudoEmailClient) => {
   const config = await emailClient.getConfigurationData()
   emailConfig = config
   return emailConfig
+}
+
+export const emailMasksEnabled = async (
+  emailClient: SudoEmailClient,
+): Promise<boolean> => {
+  const config = await getEmailConfig(emailClient)
+  return config.emailMasksEnabled
+}
+
+/**
+ * Returns the TestSentEmailBucket name from the platform config if configured,
+ * or undefined if the service is using SES for email delivery.
+ */
+export const getTestSentEmailBucket = (): string | undefined => {
+  try {
+    const configJson = JSON.parse(fs.readFileSync(configFile).toString())
+    return configJson.emService?.testSentEmailBucket
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * Returns the emService region from the platform config.
+ */
+export const getEmailServiceRegion = (): string => {
+  const configJson = JSON.parse(fs.readFileSync(configFile).toString())
+  return configJson.emService?.region ?? 'us-east-1'
 }

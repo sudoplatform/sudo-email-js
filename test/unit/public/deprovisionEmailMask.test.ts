@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,6 +13,7 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import { SudoEmailClient } from '../../../src'
 import { DeprovisionEmailMaskUseCase } from '../../../src/private/domain/use-cases/mask/deprovisionEmailMaskUseCase'
@@ -20,13 +21,11 @@ import { APIDataFactory } from '../data-factory/api'
 import { EntityDataFactory } from '../data-factory/entity'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/mask/deprovisionEmailMaskUseCase',
 )
-const JestMockDeprovisionEmailMaskUseCase =
-  DeprovisionEmailMaskUseCase as jest.MockedClass<
-    typeof DeprovisionEmailMaskUseCase
-  >
+const ViMockDeprovisionEmailMaskUseCase =
+  DeprovisionEmailMaskUseCase as MockedClass<typeof DeprovisionEmailMaskUseCase>
 
 describe('SudoEmailClient.deprovisionEmailMask Test Suite', () => {
   const sudoEmailClientTestsBase = new SudoEmailClientTestBase()
@@ -37,10 +36,10 @@ describe('SudoEmailClient.deprovisionEmailMask Test Suite', () => {
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockDeprovisionEmailMaskUseCase)
-    JestMockDeprovisionEmailMaskUseCase.mockClear()
-    JestMockDeprovisionEmailMaskUseCase.mockImplementation(() =>
-      instance(mockDeprovisionEmailMaskUseCase),
-    )
+    ViMockDeprovisionEmailMaskUseCase.mockClear()
+    ViMockDeprovisionEmailMaskUseCase.mockImplementation(function () {
+      return instance(mockDeprovisionEmailMaskUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -53,7 +52,7 @@ describe('SudoEmailClient.deprovisionEmailMask Test Suite', () => {
     await instanceUnderTest.deprovisionEmailMask({
       emailMaskId: 'test-id',
     })
-    expect(JestMockDeprovisionEmailMaskUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockDeprovisionEmailMaskUseCase).toHaveBeenCalledTimes(1)
   })
 
   it('calls use case as expected', async () => {

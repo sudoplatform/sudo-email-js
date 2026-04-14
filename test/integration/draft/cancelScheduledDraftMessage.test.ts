@@ -1,15 +1,17 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DefaultLogger, ServiceError } from '@sudoplatform/sudo-common'
+import { DefaultLogger } from '@sudoplatform/sudo-common'
 import {
   AddressNotFoundError,
   DraftEmailMessageMetadata,
   EmailAddress,
-  RecordNotFoundError,
+  EmailMask,
+  ScheduledDraftMessage,
+  ScheduledDraftMessageState,
   SudoEmailClient,
 } from '../../../src'
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
@@ -19,9 +21,10 @@ import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 import { DateTime } from 'luxon'
 import { v4 } from 'uuid'
+import { provisionEmailMask } from '../util/provisionEmailMask'
+import waitForExpect from 'wait-for-expect'
 
 describe('CancelScheduledDraftMessage Integration Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger(
     'CancelScheduledDraftMessage Integration Test Suite',
   )
@@ -122,5 +125,185 @@ describe('CancelScheduledDraftMessage Integration Test Suite', () => {
     })
 
     expect(result).toEqual(draftMetadata.id)
+    const drafts =
+      await instanceUnderTest.listScheduledDraftMessagesForEmailAddressId({
+        emailAddressId: emailAddress.id,
+      })
+    expect(drafts.items.length).toBeGreaterThan(0)
+    const cancelledDraft = drafts.items.find((m) => m.id == draftMetadata.id)
+    expect(cancelledDraft?.state).toEqual(ScheduledDraftMessageState.CANCELLED)
+  })
+
+  async function verifyDraftHasState(
+    draftId: string,
+    expectedState: ScheduledDraftMessageState,
+    emailMask?: EmailMask,
+  ): Promise<ScheduledDraftMessage | undefined> {
+    const messages =
+      await instanceUnderTest.listScheduledDraftMessagesForEmailAddressId({
+        emailAddressId: emailAddress.id,
+      })
+    expect(messages.items.length).toBeGreaterThan(0)
+    const maskDraft = messages.items.find((m) => m.id === draftId)
+
+    expect(maskDraft?.emailMaskId).toEqual(emailMask?.id) // will work even if undefined
+    expect(maskDraft?.emailAddressId).toEqual(emailAddress.id)
+    expect(maskDraft?.state).toEqual(expectedState)
+
+    return maskDraft
+  }
+
+  describe('CancelScheduledDraftMessage from email masks', () => {
+    let runTests = true
+    let emailMask: EmailMask
+    let draftIds: string[] = []
+
+    beforeEach(async ({ skip }) => {
+      const config = await instanceUnderTest.getConfigurationData()
+      runTests = config.emailMasksEnabled
+      skip(!runTests, 'Email masks are not enabled, skipping')
+
+      // Provision an email mask associated with the provisioned address
+      emailMask = await provisionEmailMask(
+        sudoOwnershipProofToken,
+        instanceUnderTest,
+        {
+          realAddress: emailAddress.emailAddress,
+        },
+      )
+    })
+
+    afterEach(async () => {
+      // Clean up the mask draft
+      await instanceUnderTest.deleteDraftEmailMessages({
+        ids: draftIds,
+        emailAddressId: emailAddress.id,
+      })
+      await instanceUnderTest.deprovisionEmailMask({
+        emailMaskId: emailMask.id,
+      })
+      draftIds = []
+    })
+
+    it('Schedule a draft message from a mask id, then cancel it', async () => {
+      // Create a new draft from the mask address
+      const maskDraftBuffer =
+        Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+          from: [{ emailAddress: emailMask.maskAddress }],
+          to: [{ emailAddress: emailAddress.emailAddress }],
+          cc: [],
+          bcc: [],
+          replyTo: [],
+          body: 'Hello from mask',
+          attachments: [],
+          subject: 'mask draft subject',
+        })
+      const maskDraftMetadata = await instanceUnderTest.createDraftEmailMessage(
+        {
+          rfc822Data: maskDraftBuffer,
+          senderEmailAddressId: emailAddress.id,
+        },
+      )
+      draftIds.push(maskDraftMetadata.id)
+
+      // Schedule the draft using the mask id
+      const sendAt = DateTime.now().plus({ day: 1 }).toJSDate()
+      const result = await instanceUnderTest.scheduleSendDraftMessage({
+        id: maskDraftMetadata.id,
+        emailAddressId: emailAddress.id,
+        emailMaskId: emailMask.id,
+        sendAt,
+      })
+
+      // Verify that the response is consistent
+      expect(result.id).toEqual(maskDraftMetadata.id)
+      expect(result.emailAddressId).toEqual(emailAddress.id)
+      expect(result.emailMaskId).toEqual(emailMask.id)
+      expect(result.sendAt).toEqual(sendAt)
+      expect(result.state).toEqual(ScheduledDraftMessageState.SCHEDULED)
+
+      const draft = await verifyDraftHasState(
+        maskDraftMetadata.id,
+        ScheduledDraftMessageState.SCHEDULED,
+        emailMask,
+      )
+      expect(draft).toBeDefined()
+      expect(draft?.sendAt).toEqual(sendAt)
+
+      await instanceUnderTest.cancelScheduledDraftMessage({
+        id: maskDraftMetadata.id,
+        emailAddressId: emailAddress.id,
+        emailMaskId: emailMask.id,
+      })
+
+      await waitForExpect(async () => {
+        const cancelledDraft = await verifyDraftHasState(
+          maskDraftMetadata.id,
+          ScheduledDraftMessageState.CANCELLED,
+          emailMask,
+        )
+        expect(cancelledDraft?.sendAt).toEqual(sendAt)
+      })
+    })
+
+    it('Cancel should succeed but be ineffective if missing or incorrect mask id is provided', async () => {
+      // Create a new draft from the mask address
+      const maskDraftBuffer =
+        Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+          from: [{ emailAddress: emailMask.maskAddress }],
+          to: [{ emailAddress: emailAddress.emailAddress }],
+          cc: [],
+          bcc: [],
+          replyTo: [],
+          body: 'Hello from mask',
+          attachments: [],
+          subject: 'mask draft subject',
+        })
+      const maskDraftMetadata = await instanceUnderTest.createDraftEmailMessage(
+        {
+          rfc822Data: maskDraftBuffer,
+          senderEmailAddressId: emailAddress.id,
+        },
+      )
+      draftIds.push(maskDraftMetadata.id)
+
+      // Schedule the draft using the mask id
+      const sendAt = DateTime.now().plus({ day: 1 }).toJSDate()
+      const result = await instanceUnderTest.scheduleSendDraftMessage({
+        id: maskDraftMetadata.id,
+        emailAddressId: emailAddress.id,
+        emailMaskId: emailMask.id,
+        sendAt,
+      })
+
+      // Verify that the response is consistent
+      expect(result.id).toEqual(maskDraftMetadata.id)
+      expect(result.emailAddressId).toEqual(emailAddress.id)
+      expect(result.emailMaskId).toEqual(emailMask.id)
+      expect(result.sendAt).toEqual(sendAt)
+      expect(result.state).toEqual(ScheduledDraftMessageState.SCHEDULED)
+
+      await instanceUnderTest.cancelScheduledDraftMessage({
+        id: maskDraftMetadata.id,
+        emailAddressId: emailAddress.id,
+      })
+      // Check that the actual draft was not cancelled
+      await verifyDraftHasState(
+        maskDraftMetadata.id,
+        ScheduledDraftMessageState.SCHEDULED,
+        emailMask,
+      )
+
+      await instanceUnderTest.cancelScheduledDraftMessage({
+        id: maskDraftMetadata.id,
+        emailAddressId: emailAddress.id,
+        emailMaskId: 'invalid-mask-id',
+      })
+      await verifyDraftHasState(
+        maskDraftMetadata.id,
+        ScheduledDraftMessageState.SCHEDULED,
+        emailMask,
+      )
+    })
   })
 })

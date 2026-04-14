@@ -1,20 +1,21 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { anything, capture, instance, mock, reset, when } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { SudoEmailClient } from '../../../src'
 import { ListScheduledDraftMessagesForEmailAddressIdUseCase } from '../../../src/private/domain/use-cases/draft/listScheduledDraftMessagesForEmailAddressIdUseCase'
 import { EntityDataFactory } from '../data-factory/entity'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/draft/listScheduledDraftMessagesForEmailAddressIdUseCase',
 )
-const JestMockListScheduledDraftMessagesForEmailAddressIdUseCase =
-  ListScheduledDraftMessagesForEmailAddressIdUseCase as jest.MockedClass<
+const ViMockListScheduledDraftMessagesForEmailAddressIdUseCase =
+  ListScheduledDraftMessagesForEmailAddressIdUseCase as MockedClass<
     typeof ListScheduledDraftMessagesForEmailAddressIdUseCase
   >
 
@@ -28,10 +29,12 @@ describe('SudoEmailClient.listScheduledDraftMessagesForEmailAddressId Test Suite
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mocklistScheduledDraftMessagesForEmailAddressIdUseCase)
-    JestMockListScheduledDraftMessagesForEmailAddressIdUseCase.mockClear()
+    ViMockListScheduledDraftMessagesForEmailAddressIdUseCase.mockClear()
 
-    JestMockListScheduledDraftMessagesForEmailAddressIdUseCase.mockImplementation(
-      () => instance(mocklistScheduledDraftMessagesForEmailAddressIdUseCase),
+    ViMockListScheduledDraftMessagesForEmailAddressIdUseCase.mockImplementation(
+      function () {
+        return instance(mocklistScheduledDraftMessagesForEmailAddressIdUseCase)
+      },
     )
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()

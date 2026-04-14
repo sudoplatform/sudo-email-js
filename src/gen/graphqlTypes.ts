@@ -88,6 +88,7 @@ export type BlockedEmailAddressInput = {
 export type CancelScheduledDraftMessageInput = {
   draftMessageKey: Scalars['String']['input']
   emailAddressId: Scalars['String']['input']
+  emailMaskId?: InputMaybe<Scalars['String']['input']>
 }
 
 export type CheckEmailAddressAvailabilityInput = {
@@ -210,6 +211,13 @@ export type EmailConfigurationData = {
   prohibitedFileExtensions: Array<Scalars['String']['output']>
   sendEncryptedEmailEnabled: Scalars['Boolean']['output']
   updateEmailMessagesLimit: Scalars['Int']['output']
+}
+
+export type EmailDomain = {
+  __typename?: 'EmailDomain'
+  domain: Scalars['String']['output']
+  isMaskDomain: Scalars['Boolean']['output']
+  metadata: Scalars['String']['output']
 }
 
 export type EmailFolder = {
@@ -622,6 +630,7 @@ export type Query = {
   getPublicKeysForEmail: PaginatedPublicKey
   listEmailAddresses: EmailAddressConnection
   listEmailAddressesForSudoId: EmailAddressConnection
+  listEmailDomains: Array<EmailDomain>
   listEmailFoldersForEmailAddressId: EmailFolderConnection
   listEmailMasksForOwner: EmailMaskConnection
   listEmailMessages: EmailMessageConnection
@@ -726,6 +735,7 @@ export type S3EmailObjectInput = {
 export type ScheduleSendDraftMessageInput = {
   draftMessageKey: Scalars['String']['input']
   emailAddressId: Scalars['ID']['input']
+  emailMaskId?: InputMaybe<Scalars['ID']['input']>
   sendAtEpochMs: Scalars['Float']['input']
   symmetricKey: Scalars['String']['input']
 }
@@ -735,6 +745,7 @@ export type ScheduledDraftMessage = {
   createdAtEpochMs: Scalars['Float']['output']
   draftMessageKey: Scalars['String']['output']
   emailAddressId: Scalars['ID']['output']
+  emailMaskId?: Maybe<Scalars['ID']['output']>
   owner: Scalars['ID']['output']
   owners: Array<Owner>
   sendAtEpochMs: Scalars['Float']['output']
@@ -1078,6 +1089,13 @@ export type EmailConfigurationDataFragment = {
   externalEmailMasksEnabled: boolean
 }
 
+export type EmailDomainFragment = {
+  __typename?: 'EmailDomain'
+  domain: string
+  isMaskDomain: boolean
+  metadata: string
+}
+
 export type EmailFolderFragment = {
   __typename?: 'EmailFolder'
   id: string
@@ -1168,6 +1186,7 @@ export type ScheduledDraftMessageFragment = {
   __typename?: 'ScheduledDraftMessage'
   draftMessageKey: string
   emailAddressId: string
+  emailMaskId?: string | null
   sendAtEpochMs: number
   state: ScheduledDraftMessageState
   createdAtEpochMs: number
@@ -1540,6 +1559,7 @@ export type ScheduleSendDraftMessageMutation = {
     __typename?: 'ScheduledDraftMessage'
     draftMessageKey: string
     emailAddressId: string
+    emailMaskId?: string | null
     sendAtEpochMs: number
     state: ScheduledDraftMessageState
     createdAtEpochMs: number
@@ -2403,6 +2423,7 @@ export type ListScheduledDraftMessagesForEmailAddressIdQuery = {
       __typename?: 'ScheduledDraftMessage'
       draftMessageKey: string
       emailAddressId: string
+      emailMaskId?: string | null
       sendAtEpochMs: number
       state: ScheduledDraftMessageState
       createdAtEpochMs: number
@@ -2411,6 +2432,18 @@ export type ListScheduledDraftMessagesForEmailAddressIdQuery = {
       owners: Array<{ __typename?: 'Owner'; id: string; issuer: string }>
     }>
   }
+}
+
+export type ListEmailDomainsQueryVariables = Exact<{ [key: string]: never }>
+
+export type ListEmailDomainsQuery = {
+  __typename?: 'Query'
+  listEmailDomains: Array<{
+    __typename?: 'EmailDomain'
+    domain: string
+    isMaskDomain: boolean
+    metadata: string
+  }>
 }
 
 export type OnEmailMessageDeletedSubscriptionVariables = Exact<{
@@ -3166,6 +3199,27 @@ export const EmailConfigurationDataFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<EmailConfigurationDataFragment, unknown>
+export const EmailDomainFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EmailDomain' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EmailDomain' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'domain' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isMaskDomain' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'metadata' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<EmailDomainFragment, unknown>
 export const EmailMaskFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -3364,6 +3418,7 @@ export const ScheduledDraftMessageFragmentDoc = {
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'draftMessageKey' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailMaskId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'sendAtEpochMs' } },
           { kind: 'Field', name: { kind: 'Name', value: 'state' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
@@ -4909,6 +4964,7 @@ export const ScheduleSendDraftMessageDocument = {
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'draftMessageKey' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailMaskId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'sendAtEpochMs' } },
           { kind: 'Field', name: { kind: 'Name', value: 'state' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
@@ -8217,6 +8273,7 @@ export const ListScheduledDraftMessagesForEmailAddressIdDocument = {
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'draftMessageKey' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailAddressId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailMaskId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'sendAtEpochMs' } },
           { kind: 'Field', name: { kind: 'Name', value: 'state' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
@@ -8240,6 +8297,53 @@ export const ListScheduledDraftMessagesForEmailAddressIdDocument = {
 } as unknown as DocumentNode<
   ListScheduledDraftMessagesForEmailAddressIdQuery,
   ListScheduledDraftMessagesForEmailAddressIdQueryVariables
+>
+export const ListEmailDomainsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ListEmailDomains' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'listEmailDomains' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'EmailDomain' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EmailDomain' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EmailDomain' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'domain' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isMaskDomain' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'metadata' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  ListEmailDomainsQuery,
+  ListEmailDomainsQueryVariables
 >
 export const OnEmailMessageDeletedDocument = {
   kind: 'Document',

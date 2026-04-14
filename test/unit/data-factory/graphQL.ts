@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -8,6 +8,7 @@ import {
   AvailableAddresses,
   BlockEmailAddressesBulkUpdateResult,
   ConfiguredDomains,
+  EmailDomain,
   EmailAddress,
   EmailAddressConnection,
   EmailAddressPublicInfo,
@@ -143,6 +144,19 @@ export class GraphQLDataFactory {
     domains: ['unittest.org', 'foobar.com'],
   }
 
+  static readonly emailDomains: EmailDomain[] = [
+    {
+      domain: 'unittest.org',
+      isMaskDomain: false,
+      metadata: JSON.stringify({ provider: 'internal' }),
+    },
+    {
+      domain: 'mask.example.com',
+      isMaskDomain: true,
+      metadata: JSON.stringify({ provider: 'external', priority: 1 }),
+    },
+  ]
+
   static readonly emailFolderConnection: EmailFolderConnection = {
     items: [GraphQLDataFactory.emailFolder],
     nextToken: undefined,
@@ -262,6 +276,11 @@ export class GraphQLDataFactory {
     updatedAtEpochMs: new Date(1.0).getTime(),
     __typename: 'ScheduledDraftMessage',
   }
+  static readonly scheduledDraftMessageWithEmailMaskId: ScheduledDraftMessage =
+    {
+      ...GraphQLDataFactory.scheduledDraftMessage,
+      emailMaskId: 'dummyEmailMaskId',
+    }
 
   static readonly scheduledDraftMessageConnection: ScheduledDraftMessageConnection =
     {

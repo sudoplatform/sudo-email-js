@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,6 +13,7 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import { SortOrder, SudoEmailClient } from '../../../src'
 import { ListEmailMessagesUseCase } from '../../../src/private/domain/use-cases/message/listEmailMessagesUseCase'
@@ -20,11 +21,12 @@ import { APIDataFactory } from '../data-factory/api'
 import { EntityDataFactory } from '../data-factory/entity'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/message/listEmailMessagesUseCase',
 )
-const JestMockListEmailMessagesUseCase =
-  ListEmailMessagesUseCase as jest.MockedClass<typeof ListEmailMessagesUseCase>
+const ViMockListEmailMessagesUseCase = ListEmailMessagesUseCase as MockedClass<
+  typeof ListEmailMessagesUseCase
+>
 
 describe('SudoEmailClient.listEmailMessages Test Suite', () => {
   const sudoEmailClientTestsBase = new SudoEmailClientTestBase()
@@ -35,11 +37,11 @@ describe('SudoEmailClient.listEmailMessages Test Suite', () => {
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockListEmailMessagesUseCase)
-    JestMockListEmailMessagesUseCase.mockClear()
+    ViMockListEmailMessagesUseCase.mockClear()
 
-    JestMockListEmailMessagesUseCase.mockImplementation(() =>
-      instance(mockListEmailMessagesUseCase),
-    )
+    ViMockListEmailMessagesUseCase.mockImplementation(function () {
+      return instance(mockListEmailMessagesUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -54,7 +56,7 @@ describe('SudoEmailClient.listEmailMessages Test Suite', () => {
       sortOrder: SortOrder.Desc,
       nextToken: '',
     })
-    expect(JestMockListEmailMessagesUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockListEmailMessagesUseCase).toHaveBeenCalledTimes(1)
   })
   it('calls use case as expected', async () => {
     const dateRange = {

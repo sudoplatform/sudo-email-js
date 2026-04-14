@@ -45,7 +45,11 @@ describe('GetDraftEmailMessageUseCase Test Suite', () => {
     await instanceUnderTest.execute({ id, emailAddressId })
     verify(mockEmailMessageService.getDraft(anything())).once()
     const [actualArgs] = capture(mockEmailMessageService.getDraft).first()
-    expect(actualArgs).toStrictEqual<typeof actualArgs>({ id, emailAddressId })
+    expect(actualArgs).toStrictEqual<typeof actualArgs>({
+      id,
+      emailAddressId,
+      emailMaskId: undefined,
+    })
   })
 
   it('returns undefined draftDetails if service returns undefined', async () => {
@@ -75,6 +79,40 @@ describe('GetDraftEmailMessageUseCase Test Suite', () => {
       emailAddressId,
       updatedAt,
       rfc822Data,
+    })
+  })
+
+  it('returns the expected output with emailMaskId', async () => {
+    const id = v4()
+    const emailAddressId = v4()
+    const rfc822Data = stringToArrayBuffer(v4())
+    const updatedAt = new Date()
+    const emailMaskId = v4()
+
+    when(mockEmailMessageService.getDraft(anything())).thenResolve({
+      id,
+      emailAddressId,
+      updatedAt,
+      rfc822Data,
+      emailMaskId,
+    })
+
+    await expect(
+      instanceUnderTest.execute({ id, emailAddressId, emailMaskId }),
+    ).resolves.toEqual<GetDraftEmailMessageUseCaseOutput>({
+      id,
+      emailAddressId,
+      updatedAt,
+      rfc822Data,
+      emailMaskId,
+    })
+
+    verify(mockEmailMessageService.getDraft(anything())).once()
+    const [actualArgs] = capture(mockEmailMessageService.getDraft).first()
+    expect(actualArgs).toStrictEqual<typeof actualArgs>({
+      id,
+      emailAddressId,
+      emailMaskId,
     })
   })
 })

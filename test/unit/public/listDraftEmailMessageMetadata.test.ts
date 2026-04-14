@@ -1,19 +1,20 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { instance, mock, reset, verify, when } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { DraftEmailMessageMetadata, SudoEmailClient } from '../../../src'
 import { ListDraftEmailMessageMetadataUseCase } from '../../../src/private/domain/use-cases/draft/listDraftEmailMessageMetadataUseCase'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/draft/listDraftEmailMessageMetadataUseCase',
 )
-const JestMockListDraftEmailMessageMetadataUseCase =
-  ListDraftEmailMessageMetadataUseCase as jest.MockedClass<
+const ViMockListDraftEmailMessageMetadataUseCase =
+  ListDraftEmailMessageMetadataUseCase as MockedClass<
     typeof ListDraftEmailMessageMetadataUseCase
   >
 
@@ -28,11 +29,11 @@ describe('SudoEmailClient.listDraftEmailMessageMetadata Test Suite', () => {
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockListDraftEmailMessageMetadataUseCase)
-    JestMockListDraftEmailMessageMetadataUseCase.mockClear()
+    ViMockListDraftEmailMessageMetadataUseCase.mockClear()
 
-    JestMockListDraftEmailMessageMetadataUseCase.mockImplementation(() =>
-      instance(mockListDraftEmailMessageMetadataUseCase),
-    )
+    ViMockListDraftEmailMessageMetadataUseCase.mockImplementation(function () {
+      return instance(mockListDraftEmailMessageMetadataUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -43,9 +44,7 @@ describe('SudoEmailClient.listDraftEmailMessageMetadata Test Suite', () => {
 
   it('generates use case', async () => {
     await instanceUnderTest.listDraftEmailMessageMetadata()
-    expect(JestMockListDraftEmailMessageMetadataUseCase).toHaveBeenCalledTimes(
-      1,
-    )
+    expect(ViMockListDraftEmailMessageMetadataUseCase).toHaveBeenCalledTimes(1)
   })
 
   it('calls use case as expected', async () => {

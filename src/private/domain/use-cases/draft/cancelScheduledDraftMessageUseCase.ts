@@ -15,10 +15,12 @@ import { AddressNotFoundError } from '../../../../public'
  * @interface CancelScheduledDraftMessageUseCaseInput
  * @property {string} id The identifier of the draft message to cancel
  * @property {string} emailAddressId The identifier of the email address that owns the message.
+ * @property {string} emailMaskId The identifier of the email mask associated with the message.
  */
 interface CancelScheduledDraftMessageUseCaseInput {
   id: string
   emailAddressId: string
+  emailMaskId?: string
 }
 
 export class CancelScheduledDraftMessageUseCase {
@@ -34,8 +36,9 @@ export class CancelScheduledDraftMessageUseCase {
   async execute({
     id,
     emailAddressId,
+    emailMaskId,
   }: CancelScheduledDraftMessageUseCaseInput): Promise<string> {
-    this.log.debug(this.execute.name, { id, emailAddressId })
+    this.log.debug(this.execute.name, { id, emailAddressId, emailMaskId })
     const account = await this.emailAccountService.get({
       id: emailAddressId,
     })
@@ -46,6 +49,7 @@ export class CancelScheduledDraftMessageUseCase {
     return await this.emailMessageService.cancelScheduledDraftMessage({
       id,
       emailAddressId,
+      emailMaskId,
     })
   }
 }

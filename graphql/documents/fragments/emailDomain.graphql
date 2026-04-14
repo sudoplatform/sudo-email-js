@@ -1,0 +1,5 @@
+fragment EmailDomain on EmailDomain {
+  domain
+  isMaskDomain
+  metadata
+}

@@ -1,9 +1,10 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 import { SudoUserClient, internal as userSdk } from '@sudoplatform/sudo-user'
+import { vi, type MockedClass, type Mocked } from 'vitest'
 import { DefaultSudoEmailClient, SudoEmailClient } from '../../src'
 import { PrivateSudoEmailClientOptions } from '../../src/private/data/common/privateSudoEmailClientOptions'
 import {
@@ -23,51 +24,40 @@ import { WebSudoCryptoProvider } from '@sudoplatform/sudo-web-crypto-provider'
 import { DefaultDeviceKeyWorker } from '../../src/private/data/common/deviceKeyWorker'
 import { instance, mock, reset } from 'ts-mockito'
 
-jest.mock(
-  '../../src/private/data/configuration/defaultConfigurationDataService',
-)
-jest.mock('../../src/private/data/account/defaultEmailAccountService')
-jest.mock('../../src/private/data/emailDomain/defaultEmailDomainService')
-jest.mock('../../src/private/data/folder/defaultEmailFolderService')
-jest.mock('../../src/private/data/message/defaultEmailMessageService')
-jest.mock(
-  '../../src/private/data/blocklist/defaultEmailAddressBlocklistService',
-)
-jest.mock('../../src/private/data/common/apiClient')
-jest.mock('@sudoplatform/sudo-web-crypto-provider')
-jest.mock('@sudoplatform/sudo-user')
-jest.mock('../../src/private/data/common/deviceKeyWorker')
+vi.mock('../../src/private/data/configuration/defaultConfigurationDataService')
+vi.mock('../../src/private/data/account/defaultEmailAccountService')
+vi.mock('../../src/private/data/emailDomain/defaultEmailDomainService')
+vi.mock('../../src/private/data/folder/defaultEmailFolderService')
+vi.mock('../../src/private/data/message/defaultEmailMessageService')
+vi.mock('../../src/private/data/blocklist/defaultEmailAddressBlocklistService')
+vi.mock('../../src/private/data/common/apiClient')
+vi.mock('@sudoplatform/sudo-web-crypto-provider')
+vi.mock('@sudoplatform/sudo-user')
+vi.mock('../../src/private/data/common/deviceKeyWorker')
 
 export class SudoEmailClientTestBase {
-  private JestMockDefaultConfigurationDataService =
-    DefaultConfigurationDataService as jest.MockedClass<
+  private ViMockDefaultConfigurationDataService =
+    DefaultConfigurationDataService as MockedClass<
       typeof DefaultConfigurationDataService
     >
-  private JestMockDefaultEmailAccountService =
-    DefaultEmailAccountService as jest.MockedClass<
-      typeof DefaultEmailAccountService
-    >
-  private JestMockDefaultEmailDomainService =
-    DefaultEmailDomainService as jest.MockedClass<
-      typeof DefaultEmailDomainService
-    >
-  private JestMockDefaultEmailFolderService =
-    DefaultEmailFolderService as jest.MockedClass<
-      typeof DefaultEmailFolderService
-    >
-  private JestMockDefaultEmailMessageService =
-    DefaultEmailMessageService as jest.MockedClass<
-      typeof DefaultEmailMessageService
-    >
-  private JestMockDefaultEmailAddressBlocklistService =
-    DefaultEmailAddressBlocklistService as jest.MockedClass<
+  private ViMockDefaultEmailAccountService =
+    DefaultEmailAccountService as MockedClass<typeof DefaultEmailAccountService>
+  private ViMockDefaultEmailDomainService =
+    DefaultEmailDomainService as MockedClass<typeof DefaultEmailDomainService>
+  private ViMockDefaultEmailFolderService =
+    DefaultEmailFolderService as MockedClass<typeof DefaultEmailFolderService>
+  private ViMockDefaultEmailMessageService =
+    DefaultEmailMessageService as MockedClass<typeof DefaultEmailMessageService>
+  private ViMockDefaultEmailAddressBlocklistService =
+    DefaultEmailAddressBlocklistService as MockedClass<
       typeof DefaultEmailAddressBlocklistService
     >
-  private JestMockApiClient = ApiClient as jest.MockedClass<typeof ApiClient>
-  private JestMockWebSudoCryptoProvider =
-    WebSudoCryptoProvider as jest.MockedClass<typeof WebSudoCryptoProvider>
-  private JestMockUserConfig = userSdk as jest.Mocked<typeof userSdk>
-  private JestMockDeviceKeyWorker = DefaultDeviceKeyWorker as jest.MockedClass<
+  private ViMockApiClient = ApiClient as MockedClass<typeof ApiClient>
+  private ViMockWebSudoCryptoProvider = WebSudoCryptoProvider as MockedClass<
+    typeof WebSudoCryptoProvider
+  >
+  private ViMockUserConfig = userSdk as Mocked<typeof userSdk>
+  private ViMockDeviceKeyWorker = DefaultDeviceKeyWorker as MockedClass<
     typeof DefaultDeviceKeyWorker
   >
   private mockSudoUserClient: SudoUserClient
@@ -146,39 +136,57 @@ export class SudoEmailClientTestBase {
     reset(this.mockConfigurationDataService)
     reset(this.mockEmailAddressBlocklistService)
 
-    this.JestMockDefaultEmailAccountService.mockClear()
-    this.JestMockDefaultEmailDomainService.mockClear()
-    this.JestMockDefaultEmailFolderService.mockClear()
-    this.JestMockDefaultEmailMessageService.mockClear()
-    this.JestMockDefaultConfigurationDataService.mockClear()
-    this.JestMockDefaultEmailAddressBlocklistService.mockClear()
-    this.JestMockApiClient.mockClear()
-    this.JestMockWebSudoCryptoProvider.mockClear()
-    this.JestMockDeviceKeyWorker.mockClear()
-    this.JestMockUserConfig.getIdentityServiceConfig.mockClear()
+    this.ViMockDefaultEmailAccountService.mockClear()
+    this.ViMockDefaultEmailDomainService.mockClear()
+    this.ViMockDefaultEmailFolderService.mockClear()
+    this.ViMockDefaultEmailMessageService.mockClear()
+    this.ViMockDefaultConfigurationDataService.mockClear()
+    this.ViMockDefaultEmailAddressBlocklistService.mockClear()
+    this.ViMockApiClient.mockClear()
+    this.ViMockWebSudoCryptoProvider.mockClear()
+    this.ViMockDeviceKeyWorker.mockClear()
+    this.ViMockUserConfig.getIdentityServiceConfig.mockClear()
 
-    this.JestMockDefaultConfigurationDataService.mockImplementation(() =>
-      instance(this.mockConfigurationDataService),
+    const mockConfigurationDataServiceInstance = instance(
+      this.mockConfigurationDataService,
     )
-    this.JestMockDefaultEmailAccountService.mockImplementation(() =>
-      instance(this.mockEmailAccountService),
+    const mockEmailAccountServiceInstance = instance(
+      this.mockEmailAccountService,
     )
-    this.JestMockDefaultEmailDomainService.mockImplementation(() =>
-      instance(this.mockEmailDomainService),
+    const mockEmailDomainServiceInstance = instance(this.mockEmailDomainService)
+    const mockEmailFolderServiceInstance = instance(this.mockEmailFolderService)
+    const mockEmailMessageServiceInstance = instance(
+      this.mockEmailMessageService,
     )
-    this.JestMockDefaultEmailFolderService.mockImplementation(() =>
-      instance(this.mockEmailFolderService),
+    const mockEmailAddressBlocklistServiceInstance = instance(
+      this.mockEmailAddressBlocklistService,
     )
-    this.JestMockDefaultEmailMessageService.mockImplementation(() =>
-      instance(this.mockEmailMessageService),
+    const mockApiClientInstance = instance(this.mockApiClient)
+
+    this.ViMockDefaultConfigurationDataService.mockImplementation(function () {
+      return mockConfigurationDataServiceInstance
+    })
+    this.ViMockDefaultEmailAccountService.mockImplementation(function () {
+      return mockEmailAccountServiceInstance
+    })
+    this.ViMockDefaultEmailDomainService.mockImplementation(function () {
+      return mockEmailDomainServiceInstance
+    })
+    this.ViMockDefaultEmailFolderService.mockImplementation(function () {
+      return mockEmailFolderServiceInstance
+    })
+    this.ViMockDefaultEmailMessageService.mockImplementation(function () {
+      return mockEmailMessageServiceInstance
+    })
+    this.ViMockDefaultEmailAddressBlocklistService.mockImplementation(
+      function () {
+        return mockEmailAddressBlocklistServiceInstance
+      },
     )
-    this.JestMockDefaultEmailAddressBlocklistService.mockImplementation(() =>
-      instance(this.mockEmailAddressBlocklistService),
-    )
-    this.JestMockApiClient.mockImplementation(() =>
-      instance(this.mockApiClient),
-    )
-    this.JestMockUserConfig.getIdentityServiceConfig.mockImplementation(() => ({
+    this.ViMockApiClient.mockImplementation(function () {
+      return mockApiClientInstance
+    })
+    this.ViMockUserConfig.getIdentityServiceConfig.mockImplementation(() => ({
       identityService: this.mockIdentityServiceConfig,
     }))
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,6 +13,7 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import { SudoEmailClient } from '../../../src'
 import { ProvisionEmailAccountUseCase } from '../../../src/private/domain/use-cases/account/provisionEmailAccountUseCase'
@@ -20,11 +21,11 @@ import { APIDataFactory } from '../data-factory/api'
 import { EntityDataFactory } from '../data-factory/entity'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/account/provisionEmailAccountUseCase',
 )
-const JestMockProvisionEmailAccountUseCase =
-  ProvisionEmailAccountUseCase as jest.MockedClass<
+const ViMockProvisionEmailAccountUseCase =
+  ProvisionEmailAccountUseCase as MockedClass<
     typeof ProvisionEmailAccountUseCase
   >
 
@@ -37,10 +38,10 @@ describe('SudoEmailClient.provisionEmailAddress Test Suite', () => {
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockProvisionEmailAccountUseCase)
-    JestMockProvisionEmailAccountUseCase.mockClear()
-    JestMockProvisionEmailAccountUseCase.mockImplementation(() =>
-      instance(mockProvisionEmailAccountUseCase),
-    )
+    ViMockProvisionEmailAccountUseCase.mockClear()
+    ViMockProvisionEmailAccountUseCase.mockImplementation(function () {
+      return instance(mockProvisionEmailAccountUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -53,7 +54,7 @@ describe('SudoEmailClient.provisionEmailAddress Test Suite', () => {
       emailAddress: '',
       ownershipProofToken: '',
     })
-    expect(JestMockProvisionEmailAccountUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockProvisionEmailAccountUseCase).toHaveBeenCalledTimes(1)
   })
   it('calls use case as expected', async () => {
     const emailAddress = v4()

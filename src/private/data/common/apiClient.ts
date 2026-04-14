@@ -57,6 +57,7 @@ import {
   DisableEmailMaskDocument,
   DisableEmailMaskInput,
   DisableEmailMaskMutation,
+  EmailDomain,
   EmailAddress,
   EmailAddressConnection,
   EmailAddressWithoutFoldersFragment,
@@ -97,6 +98,8 @@ import {
   ListEmailAddressesForSudoIdQueryVariables,
   ListEmailAddressesQuery,
   ListEmailAddressesQueryVariables,
+  ListEmailDomainsDocument,
+  ListEmailDomainsQuery,
   ListEmailFoldersForEmailAddressIdDocument,
   ListEmailFoldersForEmailAddressIdQuery,
   ListEmailFoldersForEmailAddressIdQueryVariables,
@@ -326,6 +329,14 @@ export class ApiClient {
       calleeName: this.getEmailMaskDomains.name,
     })
     return data.getEmailMaskDomains
+  }
+
+  public async listEmailDomains(): Promise<EmailDomain[]> {
+    const data = await this.performQuery<ListEmailDomainsQuery>({
+      query: ListEmailDomainsDocument,
+      calleeName: this.listEmailDomains.name,
+    })
+    return data.listEmailDomains
   }
 
   public async checkEmailAddressAvailability(

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -31,7 +31,11 @@ import {
 } from '../../../src'
 import { EmailConfigurationDataService } from '../../../src/private/domain/entities/configuration/configurationDataService'
 import { EmailMessageDetails } from '../../../src/private/util/rfc822MessageDataProcessor'
-import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
+import {
+  getTestSentEmailBucket,
+  setupEmailClient,
+  teardown,
+} from '../util/emailClientLifecycle'
 import { readAllPages } from '../util/paginator'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { runTestsIf } from '../../util/util'
@@ -40,7 +44,6 @@ import { insertLinebreaks } from '../../../src/private/util/stringUtils'
 import { encodeWordIfRequired } from '../../util/encoding'
 
 describe('SudoEmailClient SendEmailMessage Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
   const successSimulatorAddress = 'success@simulator.amazonses.com'
   const emailMessageIdRegex =
@@ -90,12 +93,12 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
     let folder = emailAddress1.folders.find((f) => f.folderName === 'INBOX')
     if (!folder) {
-      fail(`Could not find INBOX folder for ${emailAddress1.id}`)
+      assert.fail(`Could not find INBOX folder for ${emailAddress1.id}`)
     }
     inboxFolder1 = folder
     folder = emailAddress2.folders.find((f) => f.folderName === 'INBOX')
     if (!folder) {
-      fail(`Could not find INBOX folder for ${emailAddress2.id}`)
+      assert.fail(`Could not find INBOX folder for ${emailAddress2.id}`)
     }
     inboxFolder2 = folder
 
@@ -171,9 +174,11 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     emailAddresses = []
   })
 
+  const testSentEmailBucket = getTestSentEmailBucket()
+
   it.each`
     toAddress
-    ${sample(externalAccounts)}
+    ${testSentEmailBucket ? 'test-external@example.com' : sample(externalAccounts)}
     ${successSimulatorAddress}
   `('sends valid message with special characters', async ({ toAddress }) => {
     const emojiSubject = 'emoji me: 😎 ¡ ™ £ ¢ ∞ § ¶ • ª.'
@@ -409,7 +414,9 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       )
       expect(result.status).toEqual(ListOperationResultStatus.Success)
       if (result.status !== ListOperationResultStatus.Success) {
-        fail('result.status unexpectedly not ListOperationResultStatus.Success')
+        assert.fail(
+          'result.status unexpectedly not ListOperationResultStatus.Success',
+        )
       }
       expect(result.items).toHaveLength(1)
     })
@@ -480,7 +487,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         )
         expect(result.status).toEqual(ListOperationResultStatus.Success)
         if (result.status !== ListOperationResultStatus.Success) {
-          fail(
+          assert.fail(
             'result.status unexpectedly not ListOperationResultStatus.Success',
           )
         }

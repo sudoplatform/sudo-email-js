@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -27,7 +27,6 @@ import { getFolderByName } from '../util/folder'
 import waitForExpect from 'wait-for-expect'
 
 describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger(
     'SudoEmailClient DeleteMessagesByFolderId Test Suite',
   )
@@ -107,7 +106,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
     })
 
     if (!inboxFolder) {
-      fail('Inbox unexpectedly falsy')
+      assert.fail('Inbox unexpectedly falsy')
     }
 
     await waitForExpect(async () => {
@@ -116,7 +115,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
           folderId: inboxFolder.id,
         })
       if (listResult.status !== ListOperationResultStatus.Success) {
-        fail('List result not successful')
+        assert.fail('List result not successful')
       }
       expect(listResult.items).toHaveLength(1)
     })
@@ -166,7 +165,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
       await Promise.all(promises)
     } catch (err) {
       log.error('sending failed', { err })
-      fail('sending failed')
+      assert.fail('sending failed')
     }
 
     const inboxFolder = await getFolderByName({
@@ -176,7 +175,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
     })
 
     if (!inboxFolder) {
-      fail('Inbox unexpectedly falsy')
+      assert.fail('Inbox unexpectedly falsy')
     }
 
     await waitForExpect(async () => {
@@ -185,7 +184,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
           folderId: inboxFolder.id,
         })
       if (listResult.status !== ListOperationResultStatus.Success) {
-        fail('list result not successful')
+        assert.fail('list result not successful')
       }
       expect(listResult.items).toHaveLength(numMessages)
     }, 9000)
@@ -235,7 +234,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
       await Promise.all(promises)
     } catch (err) {
       log.error('sending failed', { err })
-      fail('sending failed')
+      assert.fail('sending failed')
     }
 
     const inboxFolder = await getFolderByName({
@@ -245,7 +244,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
     })
 
     if (!inboxFolder) {
-      fail('Inbox unexpectedly falsy')
+      assert.fail('Inbox unexpectedly falsy')
     }
 
     const trashFolder = await getFolderByName({
@@ -255,7 +254,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
     })
 
     if (!trashFolder) {
-      fail('Trash unexpectedly falsy')
+      assert.fail('Trash unexpectedly falsy')
     }
 
     await waitForExpect(async () => {
@@ -264,7 +263,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
           folderId: inboxFolder.id,
         })
       if (listResult.status !== ListOperationResultStatus.Success) {
-        fail('list result not successful')
+        assert.fail('list result not successful')
       }
       expect(listResult.items).toHaveLength(numMessages)
     }, 9000)
@@ -295,7 +294,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
           folderId: trashFolder.id,
         })
       if (listResult.status !== ListOperationResultStatus.Success) {
-        fail('list result not successful')
+        assert.fail('list result not successful')
       }
       expect(listResult.items).toHaveLength(numMessages)
     })
@@ -327,7 +326,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
     })
 
     if (!inboxFolder) {
-      fail('Inbox unexpectedly falsy')
+      assert.fail('Inbox unexpectedly falsy')
     }
 
     const trashFolder = await getFolderByName({
@@ -337,7 +336,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
     })
 
     if (!trashFolder) {
-      fail('Trash unexpectedly falsy')
+      assert.fail('Trash unexpectedly falsy')
     }
 
     await waitForExpect(async () => {
@@ -346,7 +345,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
           folderId: inboxFolder.id,
         })
       if (listResult.status !== ListOperationResultStatus.Success) {
-        fail('List result not successful')
+        assert.fail('List result not successful')
       }
       expect(listResult.items).toHaveLength(1)
     })
@@ -364,7 +363,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
           folderId: trashFolder.id,
         })
       if (listResult.status !== ListOperationResultStatus.Success) {
-        fail('List result not successful')
+        assert.fail('List result not successful')
       }
       expect(listResult.items).toHaveLength(1)
     })
@@ -416,7 +415,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
     })
 
     if (!inboxFolder) {
-      fail('Inbox unexpectedly falsy')
+      assert.fail('Inbox unexpectedly falsy')
     }
 
     const customFolder = await instanceUnderTest.createCustomEmailFolder({
@@ -430,7 +429,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
           folderId: inboxFolder.id,
         })
       if (listResult.status !== ListOperationResultStatus.Success) {
-        fail('List result not successful')
+        assert.fail('List result not successful')
       }
       expect(listResult.items).toHaveLength(1)
     })
@@ -448,7 +447,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
           folderId: customFolder.id,
         })
       if (listResult.status !== ListOperationResultStatus.Success) {
-        fail('List result not successful')
+        assert.fail('List result not successful')
       }
       expect(listResult.items).toHaveLength(1)
     })

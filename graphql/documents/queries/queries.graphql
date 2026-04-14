@@ -163,3 +163,9 @@ query ListScheduledDraftMessagesForEmailAddressId(
     nextToken
   }
 }
+
+query ListEmailDomains {
+  listEmailDomains {
+    ...EmailDomain
+  }
+}

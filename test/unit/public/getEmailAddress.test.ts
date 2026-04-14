@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,6 +13,7 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import { SudoEmailClient } from '../../../src'
 import { GetEmailAccountUseCase } from '../../../src/private/domain/use-cases/account/getEmailAccountUseCase'
@@ -20,11 +21,10 @@ import { APIDataFactory } from '../data-factory/api'
 import { EntityDataFactory } from '../data-factory/entity'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
-  '../../../src/private/domain/use-cases/account/getEmailAccountUseCase',
-)
-const JestMockGetEmailAccountUseCase =
-  GetEmailAccountUseCase as jest.MockedClass<typeof GetEmailAccountUseCase>
+vi.mock('../../../src/private/domain/use-cases/account/getEmailAccountUseCase')
+const ViMockGetEmailAccountUseCase = GetEmailAccountUseCase as MockedClass<
+  typeof GetEmailAccountUseCase
+>
 
 describe('SudoEmailClient.getEmailAccount Test Suite', () => {
   const sudoEmailClientTestsBase = new SudoEmailClientTestBase()
@@ -36,11 +36,11 @@ describe('SudoEmailClient.getEmailAccount Test Suite', () => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockGetEmailAccountUseCase)
 
-    JestMockGetEmailAccountUseCase.mockClear()
+    ViMockGetEmailAccountUseCase.mockClear()
 
-    JestMockGetEmailAccountUseCase.mockImplementation(() =>
-      instance(mockGetEmailAccountUseCase),
-    )
+    ViMockGetEmailAccountUseCase.mockImplementation(function () {
+      return instance(mockGetEmailAccountUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -52,7 +52,7 @@ describe('SudoEmailClient.getEmailAccount Test Suite', () => {
     await instanceUnderTest.getEmailAddress({
       id: '',
     })
-    expect(JestMockGetEmailAccountUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockGetEmailAccountUseCase).toHaveBeenCalledTimes(1)
   })
   it('calls use case as expected', async () => {
     const id = v4()

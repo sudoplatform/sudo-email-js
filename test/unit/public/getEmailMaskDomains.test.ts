@@ -1,21 +1,20 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { instance, mock, reset, verify, when } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { SudoEmailClient } from '../../../src'
 import { GetEmailMaskDomainsUseCase } from '../../../src/private/domain/use-cases/emailDomain/getEmailMaskDomainsUseCase'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/emailDomain/getEmailMaskDomainsUseCase',
 )
-const JestMockGetEmailMaskDomainsUseCase =
-  GetEmailMaskDomainsUseCase as jest.MockedClass<
-    typeof GetEmailMaskDomainsUseCase
-  >
+const ViMockGetEmailMaskDomainsUseCase =
+  GetEmailMaskDomainsUseCase as MockedClass<typeof GetEmailMaskDomainsUseCase>
 
 describe('SudoEmailClient.getEmailMaskDomains Test Suite', () => {
   const sudoEmailClientTestsBase = new SudoEmailClientTestBase()
@@ -27,11 +26,11 @@ describe('SudoEmailClient.getEmailMaskDomains Test Suite', () => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockGetEmailMaskDomainsUseCase)
 
-    JestMockGetEmailMaskDomainsUseCase.mockClear()
+    ViMockGetEmailMaskDomainsUseCase.mockClear()
 
-    JestMockGetEmailMaskDomainsUseCase.mockImplementation(() =>
-      instance(mockGetEmailMaskDomainsUseCase),
-    )
+    ViMockGetEmailMaskDomainsUseCase.mockImplementation(function () {
+      return instance(mockGetEmailMaskDomainsUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -42,7 +41,7 @@ describe('SudoEmailClient.getEmailMaskDomains Test Suite', () => {
 
   it('generates use case', async () => {
     await instanceUnderTest.getEmailMaskDomains()
-    expect(JestMockGetEmailMaskDomainsUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockGetEmailMaskDomainsUseCase).toHaveBeenCalledTimes(1)
   })
 
   it('calls use case as expected', async () => {

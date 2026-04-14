@@ -245,6 +245,7 @@ input S3EmailObjectInput {
 input ScheduleSendDraftMessageInput {
   draftMessageKey: String!
   emailAddressId: ID!
+  emailMaskId: ID
   sendAtEpochMs: Float!
   symmetricKey: String!
 }
@@ -252,6 +253,7 @@ input ScheduleSendDraftMessageInput {
 input CancelScheduledDraftMessageInput {
   draftMessageKey: String!
   emailAddressId: String!
+  emailMaskId: String
 }
 
 input ScheduledDraftMessageStateFilterInput {
@@ -480,6 +482,7 @@ type UpdateEmailMessagesV2Result {
 type ScheduledDraftMessage {
   draftMessageKey: String!
   emailAddressId: ID!
+  emailMaskId: ID
   sendAtEpochMs: Float!
   state: ScheduledDraftMessageState!
   createdAtEpochMs: Float!
@@ -578,6 +581,14 @@ type EmailMask {
   version: Int!
 }
 
+type EmailDomain {
+  domain: String!
+
+  isMaskDomain: Boolean!
+
+  metadata: String!
+}
+
 type EmailAddressConnection {
   items: [EmailAddress!]!
   nextToken: String
@@ -611,11 +622,15 @@ type VerifyExternalEmailAddressResult {
 type Query {
   getEmailConfig: EmailConfigurationData!
 
+  # Deprecated. Use listEmailDomains
   getEmailDomains: SupportedDomains!
 
   getConfiguredEmailDomains: ConfiguredDomains!
 
+  # Deprecated. Use listEmailDomains
   getEmailMaskDomains: EmailMaskDomains!
+
+  listEmailDomains: [EmailDomain!]!
 
   checkEmailAddressAvailability(
     input: CheckEmailAddressAvailabilityInput!

@@ -19,10 +19,12 @@ import { EmailCryptoService } from '../../entities/secure/emailCryptoService'
  * @interface SaveDraftEmailMessageUseCaseInput
  * @property {ArrayBuffer} rfc822Data RFC 822 formatted data of the draft email message to save.
  * @property {string} senderEmailAddressId Identifier of the sender email address that is composing the draft email message.
+ * @property {string} emailMaskId Optional identifier of the email mask associated with the draft email message.
  */
 interface SaveDraftEmailMessageUseCaseInput {
   rfc822Data: ArrayBuffer
   senderEmailAddressId: string
+  emailMaskId?: string
 }
 
 interface SaveDraftEmailMessageUseCaseOutput {
@@ -49,8 +51,13 @@ export class SaveDraftEmailMessageUseCase {
   async execute({
     rfc822Data,
     senderEmailAddressId,
+    emailMaskId,
   }: SaveDraftEmailMessageUseCaseInput): Promise<SaveDraftEmailMessageUseCaseOutput> {
-    this.log.debug(this.constructor.name, { rfc822Data, senderEmailAddressId })
+    this.log.debug(this.constructor.name, {
+      rfc822Data,
+      senderEmailAddressId,
+      emailMaskId,
+    })
     const account = await this.emailAccountService.get({
       id: senderEmailAddressId,
     })
@@ -71,6 +78,7 @@ export class SaveDraftEmailMessageUseCase {
     const metadata = await this.emailMessageService.saveDraft({
       rfc822Data: processedRfc822Data,
       senderEmailAddressId,
+      emailMaskId,
     })
     return metadata
   }

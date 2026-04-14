@@ -201,15 +201,18 @@ export class DefaultEmailMessageService implements EmailMessageService {
     rfc822Data,
     senderEmailAddressId,
     id,
+    emailMaskId,
   }: SaveDraftInput): Promise<DraftEmailMessageMetadataEntity> {
     const keyId = await this.deviceKeyWorker.getCurrentSymmetricKeyId()
     if (!keyId) {
       throw new KeyNotFoundError('Symmetric key not found')
     }
-    const keyPrefix =
+    let keyPrefix =
       await this.constructS3KeyForEmailAddressId(senderEmailAddressId)
+    keyPrefix = `${keyPrefix}/draft`
+    keyPrefix = this.addEmailMaskIdToS3KeyPrefix(keyPrefix, emailMaskId)
     const draftId = id ?? v4()
-    const key = `${keyPrefix}/draft/${draftId}`
+    const key = `${keyPrefix}/${draftId}`
     const sealed = await this.deviceKeyWorker.sealString({
       keyType: KeyType.SymmetricKey,
       payload: rfc822Data,
@@ -235,15 +238,19 @@ export class DefaultEmailMessageService implements EmailMessageService {
       id: draftId,
       emailAddressId: senderEmailAddressId,
       updatedAt: draft.lastModified,
+      emailMaskId,
     }
   }
 
   async deleteDrafts({
     ids,
     emailAddressId,
+    emailMaskId,
   }: DeleteDraftsInput): Promise<{ id: string; reason: string }[]> {
-    const keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
-    const keys = ids.map((id) => `${keyPrefix}/draft/${id}`)
+    let keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
+    keyPrefix = `${keyPrefix}/draft`
+    keyPrefix = this.addEmailMaskIdToS3KeyPrefix(keyPrefix, emailMaskId)
+    const keys = ids.map((id) => `${keyPrefix}/${id}`)
     try {
       const failedIds = await this.s3Client.bulkDelete({
         bucket: this.emailServiceConfig.bucket,
@@ -268,9 +275,12 @@ export class DefaultEmailMessageService implements EmailMessageService {
   async getDraft({
     id,
     emailAddressId,
+    emailMaskId,
   }: GetDraftInput): Promise<DraftEmailMessageEntity | undefined> {
-    const keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
-    const key = `${keyPrefix}/draft/${id}`
+    let keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
+    keyPrefix = `${keyPrefix}/draft`
+    keyPrefix = this.addEmailMaskIdToS3KeyPrefix(keyPrefix, emailMaskId)
+    const key = `${keyPrefix}/${id}`
     let sealedString: string
     let keyId: string | undefined
     let algorithm: string | undefined
@@ -324,6 +334,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
         emailAddressId,
         updatedAt,
         rfc822Data,
+        emailMaskId,
       }
     }
 
@@ -332,6 +343,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       emailAddressId,
       updatedAt,
       rfc822Data: BufferUtil.fromString(unsealedData),
+      emailMaskId,
     }
   }
 
@@ -349,14 +361,23 @@ export class DefaultEmailMessageService implements EmailMessageService {
       limit,
       nextToken,
     })
-
+    const items: DraftEmailMessageMetadataEntity[] = []
+    result.results?.forEach((result) => {
+      let maskId: string | undefined
+      let prefix = draftPrefix
+      if (result.key.includes('/mask')) {
+        maskId = this.extractEmailMaskIdFromDraftMessageS3Key(result.key)
+        prefix = `${draftPrefix}mask/${maskId}/`
+      }
+      items.push({
+        id: result.key.replace(prefix, ''),
+        emailAddressId,
+        updatedAt: result.lastModified,
+        emailMaskId: maskId,
+      })
+    })
     return {
-      items:
-        result.results?.map((r) => ({
-          id: r.key.replace(draftPrefix, ''),
-          emailAddressId,
-          updatedAt: r.lastModified,
-        })) ?? [],
+      items,
       nextToken: result.nextToken,
       emailAddressId,
     }
@@ -365,11 +386,13 @@ export class DefaultEmailMessageService implements EmailMessageService {
   async scheduleSendDraftMessage({
     id,
     emailAddressId,
+    emailMaskId,
     sendAt,
   }: ScheduleSendDraftMessageInput): Promise<ScheduledDraftMessageEntity> {
     this.log.debug(this.scheduleSendDraftMessage.name, {
       id,
       emailAddressId,
+      emailMaskId,
       sendAt,
     })
     const keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
@@ -426,6 +449,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     const result = await this.appSync.scheduleSendDraftMessage({
       draftMessageKey: key,
       emailAddressId,
+      emailMaskId,
       sendAtEpochMs: sendAt.getTime(),
       symmetricKey: Base64.encode(symmetricKey),
     })
@@ -435,10 +459,12 @@ export class DefaultEmailMessageService implements EmailMessageService {
   async cancelScheduledDraftMessage({
     id,
     emailAddressId,
+    emailMaskId,
   }: CancelScheduledDraftMessageInput): Promise<string> {
     this.log.debug(this.cancelScheduledDraftMessage.name, {
       id,
       emailAddressId,
+      emailMaskId,
     })
     const keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
     const key = `${keyPrefix}/draft/${id}`
@@ -446,6 +472,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     const result = await this.appSync.cancelScheduledDraftMessage({
       draftMessageKey: key,
       emailAddressId,
+      emailMaskId,
     })
     return result.substring(result.lastIndexOf('/') + 1)
   }
@@ -904,6 +931,24 @@ export class DefaultEmailMessageService implements EmailMessageService {
       throw new InternalError('Unable to find identity id')
     }
     return `${identityId}/email/${emailAddressId}`
+  }
+
+  private addEmailMaskIdToS3KeyPrefix(
+    keyPrefix: string,
+    emailMaskId?: string,
+  ): string {
+    return emailMaskId ? `${keyPrefix}/mask/${emailMaskId}` : keyPrefix
+  }
+
+  private extractEmailMaskIdFromDraftMessageS3Key(
+    key: string,
+  ): string | undefined {
+    const regex = /\/mask\/([^/]+)\// // matches '/mask/{emailMaskId}/'
+    const match = key.match(regex)
+    if (match && match[1]) {
+      return match[1]
+    }
+    return undefined
   }
 
   // Visible for testing

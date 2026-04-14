@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -40,7 +40,6 @@ import { delay } from '../util/delay'
  * as well as retrieving configuration and address and folder details.
  */
 describe('SudoEmailClient Smoketest Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientSmokeTests')
 
   let instanceUnderTest: SudoEmailClient
@@ -557,7 +556,7 @@ describe('SudoEmailClient Smoketest Test Suite', () => {
 
     it('should update email message status', async () => {
       if (!receivedMessage) {
-        fail(
+        assert.fail(
           'Run the entire test suite to ensure message is received before updating its status',
         )
       }
@@ -578,7 +577,7 @@ describe('SudoEmailClient Smoketest Test Suite', () => {
 
     it('should move message to trash', async () => {
       if (!receivedMessage) {
-        fail(
+        assert.fail(
           'Run the entire test suite to ensure message is received before updating its status',
         )
       }
@@ -624,7 +623,7 @@ describe('SudoEmailClient Smoketest Test Suite', () => {
 
     it('should delete email message', async () => {
       if (!receivedMessage) {
-        fail(
+        assert.fail(
           'Run the entire test suite to ensure message is received before updating its status',
         )
       }

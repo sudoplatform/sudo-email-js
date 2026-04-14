@@ -1,10 +1,11 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { capture, instance, mock, reset, verify, when } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import {
   BlockedEmailAddressAction,
@@ -14,11 +15,11 @@ import {
 import { GetEmailAddressBlocklistUseCase } from '../../../src/private/domain/use-cases/blocklist/getEmailAddressBlocklist'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/blocklist/getEmailAddressBlocklist',
 )
-const JestMockGetEmailAddressBlocklistUseCase =
-  GetEmailAddressBlocklistUseCase as jest.MockedClass<
+const ViMockGetEmailAddressBlocklistUseCase =
+  GetEmailAddressBlocklistUseCase as MockedClass<
     typeof GetEmailAddressBlocklistUseCase
   >
 
@@ -47,11 +48,11 @@ describe('SudoEmailClient.getEmailAddressBlocklist Test Suite', () => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockGetEmailAddressBlocklistUseCase)
 
-    JestMockGetEmailAddressBlocklistUseCase.mockClear()
+    ViMockGetEmailAddressBlocklistUseCase.mockClear()
 
-    JestMockGetEmailAddressBlocklistUseCase.mockImplementation(() =>
-      instance(mockGetEmailAddressBlocklistUseCase),
-    )
+    ViMockGetEmailAddressBlocklistUseCase.mockImplementation(function () {
+      return instance(mockGetEmailAddressBlocklistUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -62,7 +63,7 @@ describe('SudoEmailClient.getEmailAddressBlocklist Test Suite', () => {
 
   it('generates use case', async () => {
     await instanceUnderTest.getEmailAddressBlocklist()
-    expect(JestMockGetEmailAddressBlocklistUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockGetEmailAddressBlocklistUseCase).toHaveBeenCalledTimes(1)
   })
 
   it('calls use case as expected', async () => {

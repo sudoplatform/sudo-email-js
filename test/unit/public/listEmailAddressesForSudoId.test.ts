@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,6 +13,7 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import { SudoEmailClient } from '../../../src'
 import { ListEmailAccountsForSudoIdUseCase } from '../../../src/private/domain/use-cases/account/listEmailAccountsForSudoIdUseCase'
@@ -20,11 +21,11 @@ import { APIDataFactory } from '../data-factory/api'
 import { EntityDataFactory } from '../data-factory/entity'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/account/listEmailAccountsForSudoIdUseCase',
 )
-const JestMockListEmailAccountsForSudoIdUseCase =
-  ListEmailAccountsForSudoIdUseCase as jest.MockedClass<
+const ViMockListEmailAccountsForSudoIdUseCase =
+  ListEmailAccountsForSudoIdUseCase as MockedClass<
     typeof ListEmailAccountsForSudoIdUseCase
   >
 
@@ -39,11 +40,11 @@ describe('SudoEmailClient.listEmailAccountsForSudoId Test Suite', () => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockListEmailAccountsForSudoIdUseCase)
 
-    JestMockListEmailAccountsForSudoIdUseCase.mockClear()
+    ViMockListEmailAccountsForSudoIdUseCase.mockClear()
 
-    JestMockListEmailAccountsForSudoIdUseCase.mockImplementation(() =>
-      instance(mockListEmailAccountsForSudoIdUseCase),
-    )
+    ViMockListEmailAccountsForSudoIdUseCase.mockImplementation(function () {
+      return instance(mockListEmailAccountsForSudoIdUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -61,7 +62,7 @@ describe('SudoEmailClient.listEmailAccountsForSudoId Test Suite', () => {
       limit: 0,
       nextToken: '',
     })
-    expect(JestMockListEmailAccountsForSudoIdUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockListEmailAccountsForSudoIdUseCase).toHaveBeenCalledTimes(1)
   })
   it('calls use case as expected', async () => {
     const sudoId = v4()

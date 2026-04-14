@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,6 +13,7 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { DateTime } from 'luxon'
 import { v4 } from 'uuid'
 import { SudoEmailClient } from '../../../src'
@@ -21,9 +22,10 @@ import { APIDataFactory } from '../data-factory/api'
 import { EntityDataFactory } from '../data-factory/entity'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock('../../../src/private/domain/use-cases/mask/updateEmailMaskUseCase')
-const JestMockUpdateEmailMaskUseCase =
-  UpdateEmailMaskUseCase as jest.MockedClass<typeof UpdateEmailMaskUseCase>
+vi.mock('../../../src/private/domain/use-cases/mask/updateEmailMaskUseCase')
+const ViMockUpdateEmailMaskUseCase = UpdateEmailMaskUseCase as MockedClass<
+  typeof UpdateEmailMaskUseCase
+>
 
 describe('SudoEmailClient.updateEmailMask Test Suite', () => {
   const sudoEmailClientTestsBase = new SudoEmailClientTestBase()
@@ -34,10 +36,10 @@ describe('SudoEmailClient.updateEmailMask Test Suite', () => {
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockUpdateEmailMaskUseCase)
-    JestMockUpdateEmailMaskUseCase.mockClear()
-    JestMockUpdateEmailMaskUseCase.mockImplementation(() =>
-      instance(mockUpdateEmailMaskUseCase),
-    )
+    ViMockUpdateEmailMaskUseCase.mockClear()
+    ViMockUpdateEmailMaskUseCase.mockImplementation(function () {
+      return instance(mockUpdateEmailMaskUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -50,7 +52,7 @@ describe('SudoEmailClient.updateEmailMask Test Suite', () => {
     await instanceUnderTest.updateEmailMask({
       emailMaskId: 'test-id',
     })
-    expect(JestMockUpdateEmailMaskUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockUpdateEmailMaskUseCase).toHaveBeenCalledTimes(1)
   })
 
   it('calls use case as expected', async () => {

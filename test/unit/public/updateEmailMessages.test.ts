@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,18 +13,17 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { BatchOperationResultStatus, SudoEmailClient } from '../../../src'
 import { UpdateEmailMessagesStatus } from '../../../src/private/domain/entities/message/updateEmailMessagesStatus'
 import { UpdateEmailMessagesUseCase } from '../../../src/private/domain/use-cases/message/updateEmailMessagesUseCase'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/message/updateEmailMessagesUseCase',
 )
-const JestMockUpdateEmailMessagesUseCase =
-  UpdateEmailMessagesUseCase as jest.MockedClass<
-    typeof UpdateEmailMessagesUseCase
-  >
+const ViMockUpdateEmailMessagesUseCase =
+  UpdateEmailMessagesUseCase as MockedClass<typeof UpdateEmailMessagesUseCase>
 
 describe('SudoEmailClient.updateEmailMessages Test Suite', () => {
   const sudoEmailClientTestsBase = new SudoEmailClientTestBase()
@@ -36,11 +35,11 @@ describe('SudoEmailClient.updateEmailMessages Test Suite', () => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockUpdateEmailMessagesUseCase)
 
-    JestMockUpdateEmailMessagesUseCase.mockClear()
+    ViMockUpdateEmailMessagesUseCase.mockClear()
 
-    JestMockUpdateEmailMessagesUseCase.mockImplementation(() =>
-      instance(mockUpdateEmailMessagesUseCase),
-    )
+    ViMockUpdateEmailMessagesUseCase.mockImplementation(function () {
+      return instance(mockUpdateEmailMessagesUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -58,7 +57,7 @@ describe('SudoEmailClient.updateEmailMessages Test Suite', () => {
   })
   it('generates use case', async () => {
     await instanceUnderTest.updateEmailMessages({ ids: [], values: {} })
-    expect(JestMockUpdateEmailMessagesUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockUpdateEmailMessagesUseCase).toHaveBeenCalledTimes(1)
   })
   it('calls use case with unique input set', async () => {
     await instanceUnderTest.updateEmailMessages({

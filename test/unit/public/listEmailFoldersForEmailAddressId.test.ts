@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,6 +13,7 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { SudoEmailClient } from '../../../src'
 import { EntityDataFactory } from '../data-factory/entity'
 import { v4 } from 'uuid'
@@ -20,11 +21,11 @@ import { APIDataFactory } from '../data-factory/api'
 import { ListEmailFoldersForEmailAddressIdUseCase } from '../../../src/private/domain/use-cases/folder/listEmailFoldersForEmailAddressIdUseCase'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/folder/listEmailFoldersForEmailAddressIdUseCase',
 )
-const JestMockListEmailFoldersForEmailAddressIdUseCase =
-  ListEmailFoldersForEmailAddressIdUseCase as jest.MockedClass<
+const ViMockListEmailFoldersForEmailAddressIdUseCase =
+  ListEmailFoldersForEmailAddressIdUseCase as MockedClass<
     typeof ListEmailFoldersForEmailAddressIdUseCase
   >
 
@@ -39,10 +40,12 @@ describe('SudoEmailClient.listEmailFoldersForEmailAddressId Test Suite', () => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockListEmailFoldersForEmailAddressIdUseCase)
 
-    JestMockListEmailFoldersForEmailAddressIdUseCase.mockClear()
+    ViMockListEmailFoldersForEmailAddressIdUseCase.mockClear()
 
-    JestMockListEmailFoldersForEmailAddressIdUseCase.mockImplementation(() =>
-      instance(mockListEmailFoldersForEmailAddressIdUseCase),
+    ViMockListEmailFoldersForEmailAddressIdUseCase.mockImplementation(
+      function () {
+        return instance(mockListEmailFoldersForEmailAddressIdUseCase)
+      },
     )
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
@@ -60,7 +63,7 @@ describe('SudoEmailClient.listEmailFoldersForEmailAddressId Test Suite', () => {
       emailAddressId,
     })
     expect(
-      JestMockListEmailFoldersForEmailAddressIdUseCase,
+      ViMockListEmailFoldersForEmailAddressIdUseCase,
     ).toHaveBeenCalledTimes(1)
   })
   it('calls use case as expected', async () => {

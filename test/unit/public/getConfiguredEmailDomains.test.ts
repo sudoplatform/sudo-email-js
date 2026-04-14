@@ -1,19 +1,20 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { instance, mock, reset, verify, when } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { SudoEmailClient } from '../../../src'
 import { GetConfiguredEmailDomainsUseCase } from '../../../src/private/domain/use-cases/emailDomain/getConfiguredEmailDomainsUseCase'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/emailDomain/getConfiguredEmailDomainsUseCase',
 )
-const JestMockGetConfiguredEmailDomainsUseCase =
-  GetConfiguredEmailDomainsUseCase as jest.MockedClass<
+const ViMockGetConfiguredEmailDomainsUseCase =
+  GetConfiguredEmailDomainsUseCase as MockedClass<
     typeof GetConfiguredEmailDomainsUseCase
   >
 
@@ -28,11 +29,11 @@ describe('SudoEmailClient.getConfiguredEmailDomains Test Suite', () => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockGetConfiguredEmailDomainsUseCase)
 
-    JestMockGetConfiguredEmailDomainsUseCase.mockClear()
+    ViMockGetConfiguredEmailDomainsUseCase.mockClear()
 
-    JestMockGetConfiguredEmailDomainsUseCase.mockImplementation(() =>
-      instance(mockGetConfiguredEmailDomainsUseCase),
-    )
+    ViMockGetConfiguredEmailDomainsUseCase.mockImplementation(function () {
+      return instance(mockGetConfiguredEmailDomainsUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -42,7 +43,7 @@ describe('SudoEmailClient.getConfiguredEmailDomains Test Suite', () => {
   })
   it('generates use case', async () => {
     await instanceUnderTest.getConfiguredEmailDomains()
-    expect(JestMockGetConfiguredEmailDomainsUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockGetConfiguredEmailDomainsUseCase).toHaveBeenCalledTimes(1)
   })
   it('calls use case as expected', async () => {
     await instanceUnderTest.getConfiguredEmailDomains()

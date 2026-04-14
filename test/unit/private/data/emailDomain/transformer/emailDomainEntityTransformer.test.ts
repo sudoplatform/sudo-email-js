@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -18,6 +18,16 @@ describe('EmailDomainEntityTransformer Test Suite', () => {
           GraphQLDataFactory.supportedEmailDomains.domains[0],
         ),
       ).toStrictEqual(EntityDataFactory.emailDomain)
+    })
+  })
+
+  describe('transformListEmailDomainsGraphQL', () => {
+    it('transforms successfully', () => {
+      expect(
+        instanceUnderTest.transformListEmailDomainsGraphQL(
+          GraphQLDataFactory.emailDomains[0],
+        ),
+      ).toStrictEqual(EntityDataFactory.emailDomainWithMetadata)
     })
   })
 })

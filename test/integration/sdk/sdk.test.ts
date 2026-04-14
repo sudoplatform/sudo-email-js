@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -24,8 +24,6 @@ import { setupEmailClient } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 
 describe('SDK Tests', () => {
-  jest.setTimeout(240000)
-
   const logger = new DefaultLogger('IUT')
 
   it('should allow reinitialisation as a new user and be able to be used to draft emails', async () => {
@@ -149,7 +147,7 @@ describe('SDK Tests', () => {
       emailAddressId: emailAddress1.id,
     })
     if (!retrievedDraft1?.rfc822Data) {
-      fail('retrievedDraft1?.rfc822Data undefined')
+      assert.fail('retrievedDraft1?.rfc822Data undefined')
     }
     expect(new Uint8Array(retrievedDraft1.rfc822Data)).toEqual(
       new Uint8Array(draft1RFC822Data),
@@ -173,7 +171,7 @@ describe('SDK Tests', () => {
       emailAddressId: emailAddress2.id,
     })
     if (!retrievedDraft2?.rfc822Data) {
-      fail('retrievedDraft2?.rfc822Data undefined')
+      assert.fail('retrievedDraft2?.rfc822Data undefined')
     }
     expect(new Uint8Array(retrievedDraft2.rfc822Data)).toEqual(
       new Uint8Array(draft2RFC822Data),
@@ -298,7 +296,7 @@ describe('SDK Tests', () => {
       })
       expect(restoredDraft).toEqual(storedDraftEmailMessage)
     } else {
-      fail('No received email message id')
+      assert.fail('No received email message id')
     }
   })
 })

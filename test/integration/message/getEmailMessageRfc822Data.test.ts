@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -25,7 +25,6 @@ import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { provisionEmailMask } from '../util/provisionEmailMask'
 
 describe('getEmailMessageRfc822Data test suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
 
   let emailAddresses: EmailAddress[] = []
@@ -308,7 +307,7 @@ describe('getEmailMessageRfc822Data test suite', () => {
           ListOperationResultStatus.Success,
         )
         if (receiverMessages.status !== ListOperationResultStatus.Success) {
-          fail(`result status unexpectedly not Success`)
+          assert.fail(`result status unexpectedly not Success`)
         }
         const receivedMessage = receiverMessages.items.find(
           (m) => m.from[0].emailAddress === senderEmailMask.maskAddress,
@@ -408,7 +407,7 @@ describe('getEmailMessageRfc822Data test suite', () => {
           ListOperationResultStatus.Success,
         )
         if (receiverMessages.status !== ListOperationResultStatus.Success) {
-          fail(`result status unexpectedly not Success`)
+          assert.fail(`result status unexpectedly not Success`)
         }
         const receivedMessage = receiverMessages.items.find(
           (m) => m.emailMaskId === receiverMask.id,

@@ -1,20 +1,21 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { instance, mock, reset, verify, when } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { DraftEmailMessage, SudoEmailClient } from '../../../src'
 import { ListDraftEmailMessagesUseCase } from '../../../src/private/domain/use-cases/draft/listDraftEmailMessagesUseCase'
 import { stringToArrayBuffer } from '../../../src/private/util/buffer'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/draft/listDraftEmailMessagesUseCase',
 )
-const JestMockListDraftEmailMessagesUseCase =
-  ListDraftEmailMessagesUseCase as jest.MockedClass<
+const ViMockListDraftEmailMessagesUseCase =
+  ListDraftEmailMessagesUseCase as MockedClass<
     typeof ListDraftEmailMessagesUseCase
   >
 
@@ -30,11 +31,11 @@ describe('SudoEmailClient.listDraftEmailMessages Test Suite', () => {
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockListDraftEmailMessagesUseCase)
-    JestMockListDraftEmailMessagesUseCase.mockClear()
+    ViMockListDraftEmailMessagesUseCase.mockClear()
 
-    JestMockListDraftEmailMessagesUseCase.mockImplementation(() =>
-      instance(mockListDraftEmailMessagesUseCase),
-    )
+    ViMockListDraftEmailMessagesUseCase.mockImplementation(function () {
+      return instance(mockListDraftEmailMessagesUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -47,7 +48,7 @@ describe('SudoEmailClient.listDraftEmailMessages Test Suite', () => {
 
   it('generates use case', async () => {
     await instanceUnderTest.listDraftEmailMessages()
-    expect(JestMockListDraftEmailMessagesUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockListDraftEmailMessagesUseCase).toHaveBeenCalledTimes(1)
   })
 
   it('calls use case as expected', async () => {

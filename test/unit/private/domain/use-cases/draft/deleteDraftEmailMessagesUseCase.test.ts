@@ -61,7 +61,11 @@ describe('DeleteDraftEmailMessagesUseCase Test Suite', () => {
     await instanceUnderTest.execute({ ids: new Set(ids), emailAddressId })
     verify(mockEmailMessageService.deleteDrafts(anything())).once()
     const [actualArgs] = capture(mockEmailMessageService.deleteDrafts).first()
-    expect(actualArgs).toStrictEqual<typeof actualArgs>({ ids, emailAddressId })
+    expect(actualArgs).toStrictEqual<typeof actualArgs>({
+      ids,
+      emailAddressId,
+      emailMaskId: undefined,
+    })
   })
 
   it('throws AddressNotFound for non-existent email address input', async () => {
@@ -89,7 +93,9 @@ describe('DeleteDraftEmailMessagesUseCase Test Suite', () => {
     const ids = ['good-id1', 'bad-id1', 'good-id2', 'bad-id2']
     const emailAddressId = v4()
     when(
-      mockEmailMessageService.deleteDrafts(deepEqual({ ids, emailAddressId })),
+      mockEmailMessageService.deleteDrafts(
+        deepEqual({ ids, emailAddressId, emailMaskId: undefined }),
+      ),
     ).thenResolve([
       { id: 'bad-id1', reason: 'error' },
       { id: 'bad-id2', reason: 'error' },
@@ -114,7 +120,9 @@ describe('DeleteDraftEmailMessagesUseCase Test Suite', () => {
     const emailAddressId = v4()
 
     when(
-      mockEmailMessageService.deleteDrafts(deepEqual({ ids, emailAddressId })),
+      mockEmailMessageService.deleteDrafts(
+        deepEqual({ ids, emailAddressId, emailMaskId: undefined }),
+      ),
     ).thenResolve([
       { id: 'bad-id1', reason: 'error' },
       { id: 'bad-id2', reason: 'error' },
@@ -140,5 +148,23 @@ describe('DeleteDraftEmailMessagesUseCase Test Suite', () => {
 
     const calledIds = [firstCallArg.id, secondCallArg.id]
     expect(calledIds).toEqual(expect.arrayContaining(['good-id1', 'good-id2']))
+  })
+
+  it('passes email mask id properly when provided', async () => {
+    const ids = [v4()]
+    const emailAddressId = v4()
+    const emailMaskId = v4()
+    await instanceUnderTest.execute({
+      ids: new Set(ids),
+      emailAddressId,
+      emailMaskId,
+    })
+    verify(mockEmailMessageService.deleteDrafts(anything())).once()
+    const [actualArgs] = capture(mockEmailMessageService.deleteDrafts).first()
+    expect(actualArgs).toStrictEqual<typeof actualArgs>({
+      ids,
+      emailAddressId,
+      emailMaskId,
+    })
   })
 })

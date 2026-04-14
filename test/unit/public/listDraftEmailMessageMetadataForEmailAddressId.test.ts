@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,17 +13,18 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import { ListOutput } from '@sudoplatform/sudo-common'
 import { DraftEmailMessageMetadata, SudoEmailClient } from '../../../src'
 import { ListDraftEmailMessageMetadataForEmailAddressIdUseCase } from '../../../src/private/domain/use-cases/draft/listDraftEmailMessageMetadataForEmailAddressIdUseCase'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/draft/listDraftEmailMessageMetadataForEmailAddressIdUseCase',
 )
-const JestMockListDraftEmailMessageMetadataForEmailAddressIdUseCase =
-  ListDraftEmailMessageMetadataForEmailAddressIdUseCase as jest.MockedClass<
+const ViMockListDraftEmailMessageMetadataForEmailAddressIdUseCase =
+  ListDraftEmailMessageMetadataForEmailAddressIdUseCase as MockedClass<
     typeof ListDraftEmailMessageMetadataForEmailAddressIdUseCase
   >
 
@@ -38,10 +39,14 @@ describe('SudoEmailClient.listDraftEmailMessageMetadataForEmailAddressId Test Su
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockListDraftEmailMessageMetadataForEmailAddressIdUseCase)
-    JestMockListDraftEmailMessageMetadataForEmailAddressIdUseCase.mockClear()
+    ViMockListDraftEmailMessageMetadataForEmailAddressIdUseCase.mockClear()
 
-    JestMockListDraftEmailMessageMetadataForEmailAddressIdUseCase.mockImplementation(
-      () => instance(mockListDraftEmailMessageMetadataForEmailAddressIdUseCase),
+    ViMockListDraftEmailMessageMetadataForEmailAddressIdUseCase.mockImplementation(
+      function () {
+        return instance(
+          mockListDraftEmailMessageMetadataForEmailAddressIdUseCase,
+        )
+      },
     )
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
@@ -60,7 +65,7 @@ describe('SudoEmailClient.listDraftEmailMessageMetadataForEmailAddressId Test Su
       emailAddressId: '',
     })
     expect(
-      JestMockListDraftEmailMessageMetadataForEmailAddressIdUseCase,
+      ViMockListDraftEmailMessageMetadataForEmailAddressIdUseCase,
     ).toHaveBeenCalledTimes(1)
   })
 

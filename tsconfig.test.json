@@ -1,5 +1,0 @@
-{
-  "extends": "./tsconfig.commonjs.json",
-  "include": ["src/**/*.ts", "test/**/*.ts"],
-  "compilerOptions": { "allowJs": true }
-}

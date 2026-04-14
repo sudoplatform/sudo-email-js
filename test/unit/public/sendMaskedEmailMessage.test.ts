@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,16 +13,16 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import { InternetMessageFormatHeader, SudoEmailClient } from '../../../src'
 import { SendEmailMessageUseCase } from '../../../src/private/domain/use-cases/message/sendEmailMessageUseCase'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
-  '../../../src/private/domain/use-cases/message/sendEmailMessageUseCase',
-)
-const JestMockSendEmailMessageUseCase =
-  SendEmailMessageUseCase as jest.MockedClass<typeof SendEmailMessageUseCase>
+vi.mock('../../../src/private/domain/use-cases/message/sendEmailMessageUseCase')
+const ViMockSendEmailMessageUseCase = SendEmailMessageUseCase as MockedClass<
+  typeof SendEmailMessageUseCase
+>
 
 describe('SudoEmailClient.sendMaskedEmailMessage Test Suite', () => {
   const sudoEmailClientTestsBase = new SudoEmailClientTestBase()
@@ -35,11 +35,11 @@ describe('SudoEmailClient.sendMaskedEmailMessage Test Suite', () => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockSendEmailMessageUseCase)
 
-    JestMockSendEmailMessageUseCase.mockClear()
+    ViMockSendEmailMessageUseCase.mockClear()
 
-    JestMockSendEmailMessageUseCase.mockImplementation(() =>
-      instance(mockSendEmailMessageUseCase),
-    )
+    ViMockSendEmailMessageUseCase.mockImplementation(function () {
+      return instance(mockSendEmailMessageUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -58,7 +58,7 @@ describe('SudoEmailClient.sendMaskedEmailMessage Test Suite', () => {
       attachments: [],
       inlineAttachments: [],
     })
-    expect(JestMockSendEmailMessageUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockSendEmailMessageUseCase).toHaveBeenCalledTimes(1)
   })
 
   it('calls use case as expected', async () => {

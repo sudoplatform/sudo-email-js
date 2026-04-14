@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -49,7 +49,6 @@ import {
 } from '../util/entitlements'
 
 describe('getEmailMessageWithBody test suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
 
   let emailAddresses: EmailAddress[] = []
@@ -383,7 +382,7 @@ describe('getEmailMessageWithBody test suite', () => {
           ListOperationResultStatus.Success,
         )
         if (receiverMessages.status !== ListOperationResultStatus.Success) {
-          fail(`result status unexpectedly not Success`)
+          assert.fail(`result status unexpectedly not Success`)
         }
         const receivedMessage = receiverMessages.items.find(
           (m) => m.from[0].emailAddress === senderEmailMask.maskAddress,
@@ -470,7 +469,7 @@ describe('getEmailMessageWithBody test suite', () => {
           ListOperationResultStatus.Success,
         )
         if (receiverMessages.status !== ListOperationResultStatus.Success) {
-          fail(`result status unexpectedly not Success`)
+          assert.fail(`result status unexpectedly not Success`)
         }
         const receivedMessage = receiverMessages.items.find(
           (m) => m.emailMaskId === receiverMask.id,
@@ -572,9 +571,9 @@ describe('getEmailMessageWithBody test suite', () => {
      * the service into thinking that the legacy email exists in the service,
      * then manually put the RFC822 data into s3 so that it can be downloaded
      */
-    jest
-      .spyOn(apiClient, 'getEmailMessage')
-      .mockResolvedValueOnce(dummySealedEmailMessage)
+    vi.spyOn(apiClient, 'getEmailMessage').mockResolvedValueOnce(
+      dummySealedEmailMessage,
+    )
 
     // Add private key into keystore
     await keyManager.addPrivateKey(

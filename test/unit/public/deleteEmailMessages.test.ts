@@ -1,21 +1,20 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { anything, instance, mock, reset, when } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { BatchOperationResultStatus, SudoEmailClient } from '../../../src'
 import { DeleteEmailMessagesUseCase } from '../../../src/private/domain/use-cases/message/deleteEmailMessagesUseCase'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/message/deleteEmailMessagesUseCase',
 )
-const JestMockDeleteEmailMessagesUseCase =
-  DeleteEmailMessagesUseCase as jest.MockedClass<
-    typeof DeleteEmailMessagesUseCase
-  >
+const ViMockDeleteEmailMessagesUseCase =
+  DeleteEmailMessagesUseCase as MockedClass<typeof DeleteEmailMessagesUseCase>
 
 describe('SudoEmailClient.deleteEmailMessage Test Suite', () => {
   const sudoEmailClientTestsBase = new SudoEmailClientTestBase()
@@ -28,11 +27,11 @@ describe('SudoEmailClient.deleteEmailMessage Test Suite', () => {
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockDeleteEmailMessagesUseCase)
-    JestMockDeleteEmailMessagesUseCase.mockClear()
+    ViMockDeleteEmailMessagesUseCase.mockClear()
 
-    JestMockDeleteEmailMessagesUseCase.mockImplementation(() =>
-      instance(mockDeleteEmailMessagesUseCase),
-    )
+    ViMockDeleteEmailMessagesUseCase.mockImplementation(function () {
+      return instance(mockDeleteEmailMessagesUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 

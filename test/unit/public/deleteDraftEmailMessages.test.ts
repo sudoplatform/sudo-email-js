@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,16 +13,17 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import { BatchOperationResultStatus, SudoEmailClient } from '../../../src'
 import { DeleteDraftEmailMessagesUseCase } from '../../../src/private/domain/use-cases/draft/deleteDraftEmailMessagesUseCase'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/draft/deleteDraftEmailMessagesUseCase',
 )
-const JestMockDeleteDraftEmailMessagesUseCase =
-  DeleteDraftEmailMessagesUseCase as jest.MockedClass<
+const ViMockDeleteDraftEmailMessagesUseCase =
+  DeleteDraftEmailMessagesUseCase as MockedClass<
     typeof DeleteDraftEmailMessagesUseCase
   >
 
@@ -37,11 +38,11 @@ describe('SudoEmailClient.deleteDraftEmailMessages Test Suite', () => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockDeleteDraftEmailMessagesUseCase)
 
-    JestMockDeleteDraftEmailMessagesUseCase.mockClear()
+    ViMockDeleteDraftEmailMessagesUseCase.mockClear()
 
-    JestMockDeleteDraftEmailMessagesUseCase.mockImplementation(() =>
-      instance(mockDeleteDraftEmailMessagesUseCase),
-    )
+    ViMockDeleteDraftEmailMessagesUseCase.mockImplementation(function () {
+      return instance(mockDeleteDraftEmailMessagesUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -55,7 +56,7 @@ describe('SudoEmailClient.deleteDraftEmailMessages Test Suite', () => {
       ids: [],
       emailAddressId: '',
     })
-    expect(JestMockDeleteDraftEmailMessagesUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockDeleteDraftEmailMessagesUseCase).toHaveBeenCalledTimes(1)
   })
   it('calls use case with unique input set', async () => {
     const emailAddressId = v4()
@@ -139,6 +140,24 @@ describe('SudoEmailClient.deleteDraftEmailMessages Test Suite', () => {
         { id: 'id3', errorType: 'error' },
       ],
       successValues: [{ id: 'id1' }],
+    })
+  })
+
+  it('properly passed email mask id if provided', async () => {
+    const emailMaskId = v4()
+    await instanceUnderTest.deleteDraftEmailMessages({
+      ids: ['id1', 'id2'],
+      emailAddressId: '',
+      emailMaskId,
+    })
+    verify(mockDeleteDraftEmailMessagesUseCase.execute(anything())).once()
+    const [actualArgs] = capture(
+      mockDeleteDraftEmailMessagesUseCase.execute,
+    ).first()
+    expect(actualArgs).toEqual<typeof actualArgs>({
+      ids: new Set(['id1', 'id2']),
+      emailAddressId: '',
+      emailMaskId,
     })
   })
 })

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,7 +7,6 @@
 import { DefaultLogger } from '@sudoplatform/sudo-common'
 import {
   AddressNotFoundError,
-  DraftEmailMessageMetadata,
   EmailAddress,
   ScheduledDraftMessage,
   ScheduledDraftMessageFilterInput,
@@ -21,9 +20,9 @@ import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 import { DateTime } from 'luxon'
 import { v4 } from 'uuid'
+import { provisionEmailMask } from '../util/provisionEmailMask'
 
 describe('ListScheduledDraftMessagesForEmailAddressId Integration Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger(
     'ListScheduledDraftMessagesForEmailAddressId Integration Test Suite',
   )
@@ -233,5 +232,82 @@ describe('ListScheduledDraftMessagesForEmailAddressId Integration Test Suite', (
       ).toBeDefined()
     }
     expect(result.items.find((m) => m.id === toCancel!.id)).toBeFalsy()
+  })
+  describe('ListScheduledDraftMessagesForEmailAddressId from email masks', () => {
+    let runTests = true
+    beforeEach(async ({ skip }) => {
+      const config = await instanceUnderTest.getConfigurationData()
+      runTests = config.emailMasksEnabled
+      skip(!runTests, 'Email masks are not enabled, skipping tests')
+    })
+
+    it('Schedule a draft message from a mask id and verify that the list includes the mask id in the response', async () => {
+      // Provision an email mask associated with the provisioned address
+      const emailMask = await provisionEmailMask(
+        sudoOwnershipProofToken,
+        instanceUnderTest,
+        {
+          realAddress: emailAddress.emailAddress,
+        },
+      )
+
+      // Create a new draft from the mask address
+      const maskDraftBuffer =
+        Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+          from: [{ emailAddress: emailMask.maskAddress }],
+          to: [{ emailAddress: emailAddress.emailAddress }],
+          cc: [],
+          bcc: [],
+          replyTo: [],
+          body: 'Hello from mask',
+          attachments: [],
+          subject: 'mask draft subject',
+        })
+      const maskDraftMetadata = await instanceUnderTest.createDraftEmailMessage(
+        {
+          rfc822Data: maskDraftBuffer,
+          senderEmailAddressId: emailAddress.id,
+        },
+      )
+
+      // Schedule the draft using the mask id
+      const sendAt = DateTime.now().plus({ day: 1 }).toJSDate()
+      const result = await instanceUnderTest.scheduleSendDraftMessage({
+        id: maskDraftMetadata.id,
+        emailAddressId: emailAddress.id,
+        emailMaskId: emailMask.id,
+        sendAt,
+      })
+
+      // Verify that the response is consistent
+      expect(result.id).toEqual(maskDraftMetadata.id)
+      expect(result.emailAddressId).toEqual(emailAddress.id)
+      expect(result.emailMaskId).toEqual(emailMask.id)
+      expect(result.sendAt).toEqual(sendAt)
+      expect(result.state).toEqual(ScheduledDraftMessageState.SCHEDULED)
+
+      // List all drafts for this email address
+      const messages =
+        await instanceUnderTest.listScheduledDraftMessagesForEmailAddressId({
+          emailAddressId: emailAddress.id,
+        })
+      const maskDraft = messages.items.find(
+        (m) => m.id === maskDraftMetadata.id,
+      )
+
+      expect(maskDraft?.emailMaskId).toEqual(emailMask.id)
+      expect(maskDraft?.emailAddressId).toEqual(emailAddress.id)
+      expect(maskDraft?.sendAt).toEqual(sendAt)
+      expect(maskDraft?.state).toEqual(ScheduledDraftMessageState.SCHEDULED)
+
+      // Clean up the mask draft
+      await instanceUnderTest.deleteDraftEmailMessages({
+        ids: [maskDraftMetadata.id],
+        emailAddressId: emailAddress.id,
+      })
+      await instanceUnderTest.deprovisionEmailMask({
+        emailMaskId: emailMask.id,
+      })
+    })
   })
 })

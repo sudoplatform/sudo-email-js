@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -18,12 +18,12 @@ import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
+import { provisionEmailMask } from '../util/provisionEmailMask'
 import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 import { DateTime } from 'luxon'
 import { v4 } from 'uuid'
 
 describe('ScheduleSendDraftMessage Integration Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger(
     'ScheduleSendDraftMessage Integration Test Suite',
   )
@@ -136,5 +136,67 @@ describe('ScheduleSendDraftMessage Integration Test Suite', () => {
     expect(result.emailAddressId).toEqual(emailAddress.id)
     expect(result.sendAt).toEqual(sendAt)
     expect(result.state).toEqual(ScheduledDraftMessageState.SCHEDULED)
+  })
+
+  describe('ScheduleSendDraftMessage from email masks', () => {
+    let runTests = true
+    beforeEach(async ({ skip }) => {
+      const config = await instanceUnderTest.getConfigurationData()
+      runTests = config.emailMasksEnabled
+      skip(!runTests, 'Email masks are not enabled; skipping tests')
+    })
+    it('Schedule a draft message from a mask id', async () => {
+      // Provision an email mask associated with the provisioned address
+      const emailMask = await provisionEmailMask(
+        sudoOwnershipProofToken,
+        instanceUnderTest,
+        {
+          realAddress: emailAddress.emailAddress,
+        },
+      )
+
+      // Create a new draft from the mask address
+      const maskDraftBuffer =
+        Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+          from: [{ emailAddress: emailMask.maskAddress }],
+          to: [{ emailAddress: emailAddress.emailAddress }],
+          cc: [],
+          bcc: [],
+          replyTo: [],
+          body: 'Hello from mask',
+          attachments: [],
+          subject: 'mask draft subject',
+        })
+      const maskDraftMetadata = await instanceUnderTest.createDraftEmailMessage(
+        {
+          rfc822Data: maskDraftBuffer,
+          senderEmailAddressId: emailAddress.id,
+        },
+      )
+
+      // Schedule the draft using the mask id
+      const result = await instanceUnderTest.scheduleSendDraftMessage({
+        id: maskDraftMetadata.id,
+        emailAddressId: emailAddress.id,
+        emailMaskId: emailMask.id,
+        sendAt,
+      })
+
+      // Verify that the response is consistent
+      expect(result.id).toEqual(maskDraftMetadata.id)
+      expect(result.emailAddressId).toEqual(emailAddress.id)
+      expect(result.emailMaskId).toEqual(emailMask.id)
+      expect(result.sendAt).toEqual(sendAt)
+      expect(result.state).toEqual(ScheduledDraftMessageState.SCHEDULED)
+
+      // Clean up the mask draft
+      await instanceUnderTest.deleteDraftEmailMessages({
+        ids: [maskDraftMetadata.id],
+        emailAddressId: emailAddress.id,
+      })
+      await instanceUnderTest.deprovisionEmailMask({
+        emailMaskId: emailMask.id,
+      })
+    })
   })
 })

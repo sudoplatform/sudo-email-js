@@ -28,11 +28,13 @@ import { EmailMessageWithBodyEntity } from './emailMessageWithBodyEntity'
  * @property {ArrayBuffer} rfc822Data Draft email message in RFC 822 data form to save.
  * @property {string} senderEmailAddressId Identifier of the sender email address that is composing the draft email message.
  * @property {string} id Optional identifier of an existing draft email message to update.
+ * @property {string} emailMaskId Optional identifier of the email mask associated with the draft email message.
  */
 export interface SaveDraftInput {
   rfc822Data: ArrayBuffer
   senderEmailAddressId: string
   id?: string
+  emailMaskId?: string
 }
 
 /**
@@ -41,10 +43,12 @@ export interface SaveDraftInput {
  * @interface GetDraftInput
  * @property {string} id Identifier of the draft email message to retrieve.
  * @property {string} emailAddressId Identifier of the email address associated with the draft email message.
+ * @property {string} [emailMaskId] Identifier of the email mask associated with the draft email message, if any.
  */
 export interface GetDraftInput {
   id: string
   emailAddressId: string
+  emailMaskId?: string
 }
 
 /**
@@ -65,10 +69,12 @@ export interface ListDraftsMetadataForEmailAddressIdInput {
  * @interface DeleteDraftsInput
  * @property {string[]} ids Identifiers of the draft email messages to be deleted.
  * @property {string} emailAddressId Identifier of the email address associated with the draft email messages.
+ * @property {string} emailMaskId Optional identifier of the email mask associated with the draft email messages.
  */
 export interface DeleteDraftsInput {
   ids: string[]
   emailAddressId: string
+  emailMaskId?: string
 }
 
 /**
@@ -77,11 +83,13 @@ export interface DeleteDraftsInput {
  * @interface ScheduleSendDraftMessageInput
  * @property {string} id The identifier of the draft message to schedule send
  * @property {string} emailAddressId The identifier of the email address to send the draft message from.
+ * @property {string} emailMaskId The identifier of the email mask to send the draft message from.
  * @property {Date} sendAt Timestamp of when to send the message.
  */
 export interface ScheduleSendDraftMessageInput {
   id: string
   emailAddressId: string
+  emailMaskId?: string
   sendAt: Date
 }
 
@@ -91,10 +99,12 @@ export interface ScheduleSendDraftMessageInput {
  * @interface CancelScheduledDraftMessageInput
  * @property {string} id The identifier of the draft message to cancel
  * @property {string} emailAddressId The identifier of the email address that owns the message.
+ * @property {string} emailMaskId The identifier of the email mask associated with the message.
  */
 export interface CancelScheduledDraftMessageInput {
   id: string
   emailAddressId: string
+  emailMaskId?: string
 }
 
 interface EqualStateFilter {
@@ -365,8 +375,8 @@ export interface ListEmailMessagesForEmailFolderIdOutput {
  * @interface ListDraftsMetadataForEmailAddressIdOutput
  * @property emailAddressId [String] Unique identifier of the email address associated with the draft
  *  email message.
- * @property {DraftEmailMessageMetadataEntity[]} drafts List of draft email message metadata entities.
- * @property {string} [nextToken] Token to be used to fetch the next set of draft email messages, if
+ * @property items [DraftEmailMessageMetadataEntity[]] List of draft email message metadata entities.
+ * @property nextToken [string] Token to be used to fetch the next set of draft email messages, if
  *  any.
  */
 export interface ListDraftsMetadataForEmailAddressIdOutput {

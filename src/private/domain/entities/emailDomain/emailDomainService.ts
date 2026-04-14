@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -32,4 +32,11 @@ export interface EmailDomainService {
    * @returns {EmailDomainEntity[]} The list of email mask domains.
    */
   getEmailMaskDomains(): Promise<EmailDomainEntity[]>
+
+  /**
+   * List all email domains with additional metadata.
+   *
+   * @returns {EmailDomainEntity[]} The list of email domains.
+   */
+  listEmailDomains(): Promise<EmailDomainEntity[]>
 }

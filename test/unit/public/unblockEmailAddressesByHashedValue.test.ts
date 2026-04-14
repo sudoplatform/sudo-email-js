@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,6 +13,7 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import { BatchOperationResultStatus, SudoEmailClient } from '../../../src'
 import { UpdateEmailMessagesStatus } from '../../../src/private/domain/entities/message/updateEmailMessagesStatus'
@@ -22,11 +23,11 @@ import {
 } from '../../../src/private/domain/use-cases/blocklist/unblockEmailAddressesByHashedValue'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/blocklist/unblockEmailAddressesByHashedValue',
 )
-const JestMockUnblockEmailAddressesByHashedValueUseCase =
-  UnblockEmailAddressesByHashedValueUseCase as jest.MockedClass<
+const ViMockUnblockEmailAddressesByHashedValueUseCase =
+  UnblockEmailAddressesByHashedValueUseCase as MockedClass<
     typeof UnblockEmailAddressesByHashedValueUseCase
   >
 
@@ -41,10 +42,12 @@ describe('SudoEmailClient.unblockEmailAddressesByHashedValue Test Suite', () => 
     sudoEmailClientTestsBase.resetMocks()
     reset(mockUnblockEmailAddressesByHashedValueUseCase)
 
-    JestMockUnblockEmailAddressesByHashedValueUseCase.mockClear()
+    ViMockUnblockEmailAddressesByHashedValueUseCase.mockClear()
 
-    JestMockUnblockEmailAddressesByHashedValueUseCase.mockImplementation(() =>
-      instance(mockUnblockEmailAddressesByHashedValueUseCase),
+    ViMockUnblockEmailAddressesByHashedValueUseCase.mockImplementation(
+      function () {
+        return instance(mockUnblockEmailAddressesByHashedValueUseCase)
+      },
     )
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
@@ -61,7 +64,7 @@ describe('SudoEmailClient.unblockEmailAddressesByHashedValue Test Suite', () => 
       hashedValues: [`hashedValue-${v4()}`],
     })
     expect(
-      JestMockUnblockEmailAddressesByHashedValueUseCase,
+      ViMockUnblockEmailAddressesByHashedValueUseCase,
     ).toHaveBeenCalledTimes(1)
   })
 

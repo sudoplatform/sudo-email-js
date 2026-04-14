@@ -17,5 +17,13 @@ describe('ScheduledDraftMessageTransformer Test Suite', () => {
         ),
       ).toStrictEqual(EntityDataFactory.scheduledDraftMessage)
     })
+
+    it('transforms graphql to entity with emailMaskId', () => {
+      expect(
+        ScheduledDraftMessageTransformer.toEntity(
+          GraphQLDataFactory.scheduledDraftMessageWithEmailMaskId,
+        ),
+      ).toStrictEqual(EntityDataFactory.scheduledDraftMessageWithEmailMaskId)
+    })
   })
 })

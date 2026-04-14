@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -14,16 +14,16 @@ import {
   EmailAddress,
   SudoEmailClient,
 } from '../../../src'
-import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
+import {
+  emailMasksEnabled,
+  setupEmailClient,
+  teardown,
+} from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
-
-// Workaround for a bug in jest where `instanceof` does not return the
-// correct result when running  in `jsdom` test environment.
-global.Uint8Array = Uint8Array
+import { provisionEmailMask } from '../util/provisionEmailMask'
 
 describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
 
   let instanceUnderTest: SudoEmailClient
@@ -31,6 +31,7 @@ describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
   let userClient: SudoUserClient
   let sudo: Sudo
   let sudoOwnershipProofToken: string
+  let runMaskTests: boolean = false
 
   let emailAddress: EmailAddress
   let draftContents: ArrayBuffer
@@ -43,6 +44,7 @@ describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
     userClient = result.userClient
     sudo = result.sudo
     sudoOwnershipProofToken = result.ownershipProofToken
+    runMaskTests = await emailMasksEnabled(instanceUnderTest)
 
     emailAddress = await provisionEmailAddress(
       sudoOwnershipProofToken,
@@ -140,5 +142,42 @@ describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
         emailAddressId: v4(),
       }),
     ).resolves.toBeUndefined()
+  })
+
+  it('successfully returns a draft with an email mask id', async ({ skip }) => {
+    skip(runMaskTests === false, 'Email mask tests are disabled')
+    const emailMask = await provisionEmailMask(
+      sudoOwnershipProofToken,
+      instanceUnderTest,
+      {
+        realAddress: emailAddress.emailAddress,
+      },
+    )
+    const draftEmailMessageBuffer =
+      Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
+        from: [{ emailAddress: emailMask.maskAddress }],
+        to: [],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        body: 'test draft message',
+        attachments: [],
+      })
+    const draftMetadata = await instanceUnderTest.createDraftEmailMessage({
+      rfc822Data: draftEmailMessageBuffer,
+      senderEmailAddressId: emailAddress.id,
+      emailMaskId: emailMask.id,
+    })
+
+    const draft = await instanceUnderTest.getDraftEmailMessage({
+      id: draftMetadata.id,
+      emailAddressId: emailAddress.id,
+      emailMaskId: emailMask.id,
+    })
+
+    expect(draft).toEqual({
+      ...draftMetadata,
+      rfc822Data: draftEmailMessageBuffer,
+    })
   })
 })

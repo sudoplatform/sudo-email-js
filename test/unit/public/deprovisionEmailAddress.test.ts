@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,6 +13,7 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import { SudoEmailClient } from '../../../src'
 import { DeprovisionEmailAccountUseCase } from '../../../src/private/domain/use-cases/account/deprovisionEmailAccountUseCase'
@@ -20,11 +21,11 @@ import { APIDataFactory } from '../data-factory/api'
 import { EntityDataFactory } from '../data-factory/entity'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/account/deprovisionEmailAccountUseCase',
 )
-const JestMockDeprovisionEmailAccountUseCase =
-  DeprovisionEmailAccountUseCase as jest.MockedClass<
+const ViMockDeprovisionEmailAccountUseCase =
+  DeprovisionEmailAccountUseCase as MockedClass<
     typeof DeprovisionEmailAccountUseCase
   >
 
@@ -39,11 +40,11 @@ describe('SudoEmailClient.deprovisionEmailAccount Test Suite', () => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockDeprovisionEmailAccountUseCase)
 
-    JestMockDeprovisionEmailAccountUseCase.mockClear()
+    ViMockDeprovisionEmailAccountUseCase.mockClear()
 
-    JestMockDeprovisionEmailAccountUseCase.mockImplementation(() =>
-      instance(mockDeprovisionEmailAccountUseCase),
-    )
+    ViMockDeprovisionEmailAccountUseCase.mockImplementation(function () {
+      return instance(mockDeprovisionEmailAccountUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -53,7 +54,7 @@ describe('SudoEmailClient.deprovisionEmailAccount Test Suite', () => {
   })
   it('generates use case', async () => {
     await instanceUnderTest.deprovisionEmailAddress('')
-    expect(JestMockDeprovisionEmailAccountUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockDeprovisionEmailAccountUseCase).toHaveBeenCalledTimes(1)
   })
   it('calls use case as expected', async () => {
     const id = v4()

@@ -1,20 +1,21 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { PublicKeyFormat } from '@sudoplatform/sudo-common'
 import { anything, capture, instance, mock, reset, when } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { EmailAddressPublicInfo, SudoEmailClient } from '../../../src'
 import { LookupEmailAddressesPublicInfoUseCase } from '../../../src/private/domain/use-cases/account/lookupEmailAddressesPublicInfoUseCase'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/account/lookupEmailAddressesPublicInfoUseCase',
 )
-const JestMockLookupEmailAddressesPublicInfoUseCase =
-  LookupEmailAddressesPublicInfoUseCase as jest.MockedClass<
+const ViMockLookupEmailAddressesPublicInfoUseCase =
+  LookupEmailAddressesPublicInfoUseCase as MockedClass<
     typeof LookupEmailAddressesPublicInfoUseCase
   >
 
@@ -55,11 +56,11 @@ describe('SudoEmailClient.lookupEmailAddressesPublicInfo Test Suite', () => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockLookupEmailAddressesPublicInfoUseCase)
 
-    JestMockLookupEmailAddressesPublicInfoUseCase.mockClear()
+    ViMockLookupEmailAddressesPublicInfoUseCase.mockClear()
 
-    JestMockLookupEmailAddressesPublicInfoUseCase.mockImplementation(() =>
-      instance(mockLookupEmailAddressesPublicInfoUseCase),
-    )
+    ViMockLookupEmailAddressesPublicInfoUseCase.mockImplementation(function () {
+      return instance(mockLookupEmailAddressesPublicInfoUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -73,14 +74,12 @@ describe('SudoEmailClient.lookupEmailAddressesPublicInfo Test Suite', () => {
       emailAddresses,
     })
 
-    expect(JestMockLookupEmailAddressesPublicInfoUseCase).toHaveBeenCalledTimes(
-      1,
-    )
+    expect(ViMockLookupEmailAddressesPublicInfoUseCase).toHaveBeenCalledTimes(1)
   })
 
   it('calls use case as expected', async () => {
     // Spy on the private ensureSignedIn method to verify it's called
-    const ensureSignedInSpy = jest.spyOn(
+    const ensureSignedInSpy = vi.spyOn(
       instanceUnderTest as any,
       'ensureSignedIn',
     )

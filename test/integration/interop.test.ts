@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -24,7 +24,7 @@ import { getPdfFileData } from '../util/files/fileData'
 
 export const externalAccounts = [
   'sudo.platform.testing@gmail.com',
-  'sudo_platform_testing@yahoo.com',
+  // 'sudo_platform_testing@yahoo.com', // Yahoo shut down our account :(
   'sudo.platform.testing@outlook.com',
   'sudo.platform.testing@proton.me',
   // 'sudoplatformtesting@icloud.com', // No iCloud testing for now until we can get a long-lived user with a consistent address
@@ -38,7 +38,6 @@ export const externalAccounts = [
  * and await the auto-reply, ensuring that they body text is as expected.
  */
 describe('SudoEmailClient Interoperability Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientInteropTests')
 
   let instanceUnderTest: SudoEmailClient
@@ -74,7 +73,7 @@ describe('SudoEmailClient Interoperability Test Suite', () => {
 
     const folder = emailAddress.folders.find((f) => f.folderName === 'INBOX')
     if (!folder) {
-      fail(`Could not find INBOX folder for ${emailAddress.id}`)
+      assert.fail(`Could not find INBOX folder for ${emailAddress.id}`)
     }
     inboxFolder = folder
   })
@@ -132,7 +131,7 @@ describe('SudoEmailClient Interoperability Test Suite', () => {
       })
 
       if (sent === undefined) {
-        fail('Sent message unexpectedly undefined')
+        assert.fail('Sent message unexpectedly undefined')
       }
       expect(sent.id).toEqual(sentId)
       expect(sent.subject).toEqual(`Test ${timestamp.toUTCString()}`)
@@ -161,7 +160,7 @@ describe('SudoEmailClient Interoperability Test Suite', () => {
               emailAddress: emailAddress.emailAddress,
             })
             if (result.status !== ListOperationResultStatus.Success) {
-              fail(`result.status unexpectedly not success`)
+              assert.fail(`result.status unexpectedly not success`)
             }
 
             expect({

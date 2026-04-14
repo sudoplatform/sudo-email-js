@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,16 +13,17 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { SudoEmailClient } from '../../../src'
 import { DeleteMessagesByFolderIdUseCase } from '../../../src/private/domain/use-cases/folder/deleteMessagesByFolderIdUseCase'
 import { EntityDataFactory } from '../data-factory/entity'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/folder/deleteMessagesByFolderIdUseCase',
 )
-const JestMockDeleteMessagesByFolderIdUseCase =
-  DeleteMessagesByFolderIdUseCase as jest.MockedClass<
+const ViMockDeleteMessagesByFolderIdUseCase =
+  DeleteMessagesByFolderIdUseCase as MockedClass<
     typeof DeleteMessagesByFolderIdUseCase
   >
 
@@ -36,11 +37,11 @@ describe('SudoEmailClient.deleteMessagesForFolderId Test Suite', () => {
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockDeleteMessagesByFolderIdUseCase)
-    JestMockDeleteMessagesByFolderIdUseCase.mockClear()
+    ViMockDeleteMessagesByFolderIdUseCase.mockClear()
 
-    JestMockDeleteMessagesByFolderIdUseCase.mockImplementation(() =>
-      instance(mockDeleteMessagesByFolderIdUseCase),
-    )
+    ViMockDeleteMessagesByFolderIdUseCase.mockImplementation(function () {
+      return instance(mockDeleteMessagesByFolderIdUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -53,7 +54,7 @@ describe('SudoEmailClient.deleteMessagesForFolderId Test Suite', () => {
       emailAddressId: EntityDataFactory.emailFolder.emailAddressId,
       emailFolderId: EntityDataFactory.emailFolder.id,
     })
-    expect(JestMockDeleteMessagesByFolderIdUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockDeleteMessagesByFolderIdUseCase).toHaveBeenCalledTimes(1)
   })
 
   it('calls use case as expected', async () => {

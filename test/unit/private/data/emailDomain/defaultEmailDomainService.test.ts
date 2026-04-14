@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -58,6 +58,29 @@ describe('DefaultEmailDomainService Test Suite', () => {
         { domain: 'mask2.anonyome.com' },
       ])
       verify(mockAppSync.getEmailMaskDomains()).once()
+    })
+  })
+
+  describe('listEmailDomains', () => {
+    it('returns transformed result', async () => {
+      when(mockAppSync.listEmailDomains()).thenResolve(
+        GraphQLDataFactory.emailDomains,
+      )
+      await expect(instanceUnderTest.listEmailDomains()).resolves.toStrictEqual(
+        [
+          {
+            domain: 'unittest.org',
+            isMaskDomain: false,
+            metadata: JSON.stringify({ provider: 'internal' }),
+          },
+          {
+            domain: 'mask.example.com',
+            isMaskDomain: true,
+            metadata: JSON.stringify({ provider: 'external', priority: 1 }),
+          },
+        ],
+      )
+      verify(mockAppSync.listEmailDomains()).once()
     })
   })
 })

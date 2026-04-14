@@ -23,6 +23,7 @@ export enum ScheduledDraftMessageState {
  * @interface ScheduledDraftMessage
  * @property {string} id The identifier of the draft message that has been scheduled.
  * @property {string} emailAddressId The identifier of the email address associated with the message.
+ * @property {string | undefined} emailMaskId The identifier of the email mask associated with the message.
  * @property {string} owner Identifier of the user that owns the email address.
  * @property {Owner[]} owners List of identifiers of user/accounts associated with this email address.
  * @property {Date} sendAt The timestamp of when the message is scheduled to be sent.
@@ -33,6 +34,7 @@ export enum ScheduledDraftMessageState {
 export interface ScheduledDraftMessage {
   id: string
   emailAddressId: string
+  emailMaskId?: string
   owner: string
   owners: Owner[]
   sendAt: Date

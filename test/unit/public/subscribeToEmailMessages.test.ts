@@ -1,19 +1,20 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { instance, mock, reset } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { EmailMessage, SudoEmailClient } from '../../../src'
 import { SubscribeToEmailMessagesUseCase } from '../../../src/private/domain/use-cases/message/subscribeToEmailMessagesUseCase'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/message/subscribeToEmailMessagesUseCase',
 )
-const JestMockSubscribeToEmailMessagesUseCase =
-  SubscribeToEmailMessagesUseCase as jest.MockedClass<
+const ViMockSubscribeToEmailMessagesUseCase =
+  SubscribeToEmailMessagesUseCase as MockedClass<
     typeof SubscribeToEmailMessagesUseCase
   >
 
@@ -27,11 +28,11 @@ describe('SudoEmailClient.subscribeToEmailMessages Test Suite', () => {
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockSubscribeToEmailMessagesUseCase)
-    JestMockSubscribeToEmailMessagesUseCase.mockClear()
+    ViMockSubscribeToEmailMessagesUseCase.mockClear()
 
-    JestMockSubscribeToEmailMessagesUseCase.mockImplementation(() =>
-      instance(mockSubscribeToEmailMessagesUseCase),
-    )
+    ViMockSubscribeToEmailMessagesUseCase.mockImplementation(function () {
+      return instance(mockSubscribeToEmailMessagesUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
   })
@@ -41,6 +42,6 @@ describe('SudoEmailClient.subscribeToEmailMessages Test Suite', () => {
       emailMessageCreated(emailMessage: EmailMessage): void {},
       emailMessageUpdated(emailMessage: EmailMessage): void {},
     })
-    expect(JestMockSubscribeToEmailMessagesUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockSubscribeToEmailMessagesUseCase).toHaveBeenCalledTimes(1)
   })
 })

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,6 +13,7 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import { BatchOperationResultStatus, SudoEmailClient } from '../../../src'
 import { UpdateEmailMessagesStatus } from '../../../src/private/domain/entities/message/updateEmailMessagesStatus'
@@ -22,11 +23,9 @@ import {
 } from '../../../src/private/domain/use-cases/blocklist/unblockEmailAddresses'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
-  '../../../src/private/domain/use-cases/blocklist/unblockEmailAddresses',
-)
-const JestMockUnblockEmailAddressesUseCase =
-  UnblockEmailAddressesUseCase as jest.MockedClass<
+vi.mock('../../../src/private/domain/use-cases/blocklist/unblockEmailAddresses')
+const ViMockUnblockEmailAddressesUseCase =
+  UnblockEmailAddressesUseCase as MockedClass<
     typeof UnblockEmailAddressesUseCase
   >
 
@@ -40,11 +39,11 @@ describe('SudoEmailClient.unblockEmailAddresses Test Suite', () => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockUnblockEmailAddressesUseCase)
 
-    JestMockUnblockEmailAddressesUseCase.mockClear()
+    ViMockUnblockEmailAddressesUseCase.mockClear()
 
-    JestMockUnblockEmailAddressesUseCase.mockImplementation(() =>
-      instance(mockUnblockEmailAddressesUseCase),
-    )
+    ViMockUnblockEmailAddressesUseCase.mockImplementation(function () {
+      return instance(mockUnblockEmailAddressesUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -56,7 +55,7 @@ describe('SudoEmailClient.unblockEmailAddresses Test Suite', () => {
     await instanceUnderTest.unblockEmailAddresses({
       addresses: [`spammyMcSpamface${v4()}@spambot.com`],
     })
-    expect(JestMockUnblockEmailAddressesUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockUnblockEmailAddressesUseCase).toHaveBeenCalledTimes(1)
   })
 
   it('calls use case as expected', async () => {

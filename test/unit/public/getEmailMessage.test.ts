@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,6 +13,7 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { SudoEmailClient } from '../../../src'
 import { GetEmailMessageUseCase } from '../../../src/private/domain/use-cases/message/getEmailMessageUseCase'
 import { EntityDataFactory } from '../data-factory/entity'
@@ -20,14 +21,11 @@ import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 import { APIDataFactory } from '../data-factory/api'
 import { v4 } from 'uuid'
 
-jest.mock(
-  '../../../src/private/domain/use-cases/message/getEmailMessageUseCase',
-)
-const JestMockGetEmailMessageUseCase =
-  GetEmailMessageUseCase as jest.MockedClass<typeof GetEmailMessageUseCase>
-jest.mock(
-  '../../../src/private/domain/use-cases/message/getEmailMessageUseCase',
-)
+vi.mock('../../../src/private/domain/use-cases/message/getEmailMessageUseCase')
+const ViMockGetEmailMessageUseCase = GetEmailMessageUseCase as MockedClass<
+  typeof GetEmailMessageUseCase
+>
+vi.mock('../../../src/private/domain/use-cases/message/getEmailMessageUseCase')
 
 describe('SudoEmailClient.getEmailMessage Test Suite', () => {
   const sudoEmailClientTestsBase = new SudoEmailClientTestBase()
@@ -38,11 +36,11 @@ describe('SudoEmailClient.getEmailMessage Test Suite', () => {
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockGetEmailMessageUseCase)
-    JestMockGetEmailMessageUseCase.mockClear()
+    ViMockGetEmailMessageUseCase.mockClear()
 
-    JestMockGetEmailMessageUseCase.mockImplementation(() =>
-      instance(mockGetEmailMessageUseCase),
-    )
+    ViMockGetEmailMessageUseCase.mockImplementation(function () {
+      return instance(mockGetEmailMessageUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -54,7 +52,7 @@ describe('SudoEmailClient.getEmailMessage Test Suite', () => {
     await instanceUnderTest.getEmailMessage({
       id: '',
     })
-    expect(JestMockGetEmailMessageUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockGetEmailMessageUseCase).toHaveBeenCalledTimes(1)
   })
   it('calls use case as expected', async () => {
     const id = v4()

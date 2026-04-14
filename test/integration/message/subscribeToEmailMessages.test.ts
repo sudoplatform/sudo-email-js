@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -29,7 +29,6 @@ import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { EmailCryptoService } from '../../../src/private/domain/entities/secure/emailCryptoService'
 
 describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
   const successSimulatorAddress = 'success@simulator.amazonses.com'
 
@@ -66,7 +65,7 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
     toAddress: string = successSimulatorAddress,
   ) => {
     if (!senderEmailAddress) {
-      fail('Cannot send email message (no provisioned email address)')
+      assert.fail('Cannot send email message (no provisioned email address)')
     }
 
     const messageDetails = {
@@ -100,7 +99,7 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
     emailAddress?: EmailAddress,
   ): Promise<EmailMessage[]> => {
     if (!emailAddress) {
-      fail('Cannot list email messages (no provisioned email address)')
+      assert.fail('Cannot list email messages (no provisioned email address)')
     }
     const messages = await instanceUnderTest.listEmailMessagesForEmailAddressId(
       {
@@ -108,7 +107,7 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
       },
     )
     if (messages.status !== ListOperationResultStatus.Success) {
-      fail(`Failed to list email messages`)
+      assert.fail(`Failed to list email messages`)
     }
 
     return messages.items

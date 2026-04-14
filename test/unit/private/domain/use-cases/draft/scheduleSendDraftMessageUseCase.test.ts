@@ -87,6 +87,36 @@ describe('ScheduleSendDraftMessageUseCase Test Suite', () => {
     expect(scheduleArgs).toStrictEqual<typeof scheduleArgs>({
       id: EntityDataFactory.scheduledDraftMessage.id,
       emailAddressId: EntityDataFactory.emailAccount.id,
+      emailMaskId: undefined,
+      sendAt,
+    })
+  })
+
+  it('passes emailMaskId through on success', async () => {
+    when(
+      mockEmailMessageService.scheduleSendDraftMessage(anything()),
+    ).thenResolve(EntityDataFactory.scheduledDraftMessageWithEmailMaskId)
+
+    const emailMaskId =
+      EntityDataFactory.scheduledDraftMessageWithEmailMaskId.emailMaskId
+    const result = await instanceUnderTest.execute({
+      id: EntityDataFactory.scheduledDraftMessage.id,
+      emailAddressId: EntityDataFactory.emailAccount.id,
+      emailMaskId,
+      sendAt,
+    })
+
+    expect(result).toEqual(
+      EntityDataFactory.scheduledDraftMessageWithEmailMaskId,
+    )
+    verify(mockEmailMessageService.scheduleSendDraftMessage(anything())).once()
+    const [scheduleArgs] = capture(
+      mockEmailMessageService.scheduleSendDraftMessage,
+    ).first()
+    expect(scheduleArgs).toStrictEqual<typeof scheduleArgs>({
+      id: EntityDataFactory.scheduledDraftMessage.id,
+      emailAddressId: EntityDataFactory.emailAccount.id,
+      emailMaskId,
       sendAt,
     })
   })

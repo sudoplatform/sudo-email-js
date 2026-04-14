@@ -1,19 +1,20 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { instance, mock, reset, verify, when } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { SudoEmailClient } from '../../../src'
 import { GetSupportedEmailDomainsUseCase } from '../../../src/private/domain/use-cases/emailDomain/getSupportedEmailDomainsUseCase'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/emailDomain/getSupportedEmailDomainsUseCase',
 )
-const JestMockGetSupportedEmailDomainsUseCase =
-  GetSupportedEmailDomainsUseCase as jest.MockedClass<
+const ViMockGetSupportedEmailDomainsUseCase =
+  GetSupportedEmailDomainsUseCase as MockedClass<
     typeof GetSupportedEmailDomainsUseCase
   >
 
@@ -28,11 +29,11 @@ describe('SudoEmailClient.getSupportedEmailDomains Test Suite', () => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockGetSupportedEmailDomainsUseCase)
 
-    JestMockGetSupportedEmailDomainsUseCase.mockClear()
+    ViMockGetSupportedEmailDomainsUseCase.mockClear()
 
-    JestMockGetSupportedEmailDomainsUseCase.mockImplementation(() =>
-      instance(mockGetSupportedEmailDomainsUseCase),
-    )
+    ViMockGetSupportedEmailDomainsUseCase.mockImplementation(function () {
+      return instance(mockGetSupportedEmailDomainsUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -42,7 +43,7 @@ describe('SudoEmailClient.getSupportedEmailDomains Test Suite', () => {
   })
   it('generates use case', async () => {
     await instanceUnderTest.getSupportedEmailDomains()
-    expect(JestMockGetSupportedEmailDomainsUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockGetSupportedEmailDomainsUseCase).toHaveBeenCalledTimes(1)
   })
   it('calls use case as expected', async () => {
     await instanceUnderTest.getSupportedEmailDomains()

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,6 +13,7 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import { SudoEmailClient } from '../../../src'
 import { CreateCustomEmailFolderUseCase } from '../../../src/private/domain/use-cases/folder/createCustomEmailFolderUseCase'
@@ -20,11 +21,11 @@ import { APIDataFactory } from '../data-factory/api'
 import { EntityDataFactory } from '../data-factory/entity'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/folder/createCustomEmailFolderUseCase',
 )
-const JestMockCreateCustomEmailFolderUseCase =
-  CreateCustomEmailFolderUseCase as jest.MockedClass<
+const ViMockCreateCustomEmailFolderUseCase =
+  CreateCustomEmailFolderUseCase as MockedClass<
     typeof CreateCustomEmailFolderUseCase
   >
 
@@ -39,11 +40,11 @@ describe('SudoEmailClient.createCustomEmailFolder Test Suite', () => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockCreateCustomEmailFolderUseCase)
 
-    JestMockCreateCustomEmailFolderUseCase.mockClear()
+    ViMockCreateCustomEmailFolderUseCase.mockClear()
 
-    JestMockCreateCustomEmailFolderUseCase.mockImplementation(() =>
-      instance(mockCreateCustomEmailFolderUseCase),
-    )
+    ViMockCreateCustomEmailFolderUseCase.mockImplementation(function () {
+      return instance(mockCreateCustomEmailFolderUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -57,7 +58,7 @@ describe('SudoEmailClient.createCustomEmailFolder Test Suite', () => {
       emailAddressId: '',
       customFolderName: '',
     })
-    expect(JestMockCreateCustomEmailFolderUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockCreateCustomEmailFolderUseCase).toHaveBeenCalledTimes(1)
   })
   it('calls use case as expected', async () => {
     const emailAddressId = v4()

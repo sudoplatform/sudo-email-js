@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -142,18 +142,24 @@ describe('SubscriptionManager test suite', () => {
   it('subscribe same id overwrites previous subscription', async () => {
     iut.subscribe('dummy-id', {
       connectionStatusChanged(state: ConnectionState): void {
-        fail(
+        assert.fail(
           'unexpectedly invoked incorrect connection status changed callback',
         )
       },
       emailMessageDeleted(emailMessage: EmailMessage): void {
-        fail('unexpectedly invoked incorrect email message deleted callback')
+        assert.fail(
+          'unexpectedly invoked incorrect email message deleted callback',
+        )
       },
       emailMessageCreated(emailMessage: EmailMessage): void {
-        fail('unexpectedly invoked incorrect email message deleted callback')
+        assert.fail(
+          'unexpectedly invoked incorrect email message deleted callback',
+        )
       },
       emailMessageUpdated(emailMessage: EmailMessage): void {
-        fail('unexpectedly invoked incorrect email message updated callback')
+        assert.fail(
+          'unexpectedly invoked incorrect email message updated callback',
+        )
       },
     })
     iut.subscribe('dummy-id', defaultSubscriber)

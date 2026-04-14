@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -48,11 +48,11 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
   const mockEmailCryptoService = mock<EmailCryptoService>()
   const mockS3Client = mock<S3Client>()
 
-  const parseInternetMessageDataSpy = jest.spyOn(
+  const parseInternetMessageDataSpy = vi.spyOn(
     Rfc822MessageDataProcessor,
     'parseInternetMessageData',
   )
-  const encodeToInternetMessageBufferSpy = jest.spyOn(
+  const encodeToInternetMessageBufferSpy = vi.spyOn(
     Rfc822MessageDataProcessor,
     'encodeToInternetMessageBuffer',
   )
@@ -138,6 +138,14 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
       expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(1)
       verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
       verify(mockEmailMessageService.saveDraft(anything())).once()
+
+      const [actualArgs] = capture(mockEmailMessageService.saveDraft).first()
+      expect(actualArgs).toStrictEqual<typeof actualArgs>({
+        rfc822Data: rfc822Data,
+        senderEmailAddressId,
+        id,
+        emailMaskId: undefined,
+      })
     })
 
     it('throws AddressNotFound error for non-existent email address input', async () => {
@@ -280,6 +288,58 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
       verify(mockEmailMessageService.saveDraft(anything())).never()
     })
 
+    it('passes and returns email mask id when provided', async () => {
+      const id = v4()
+      const rfc822Data = stringToArrayBuffer(v4())
+      const senderEmailAddressId = v4()
+      const updatedAt = new Date()
+      const emailMaskId = v4()
+
+      when(mockEmailMessageService.getDraft(anything())).thenResolve({
+        id,
+        emailAddressId: senderEmailAddressId,
+        updatedAt,
+        rfc822Data,
+        emailMaskId,
+      })
+
+      when(mockEmailMessageService.saveDraft(anything())).thenResolve({
+        id,
+        emailAddressId: senderEmailAddressId,
+        updatedAt,
+        emailMaskId,
+      })
+
+      await expect(
+        instanceUnderTest.execute({
+          id,
+          senderEmailAddressId,
+          rfc822Data,
+          emailMaskId,
+        }),
+      ).resolves.toStrictEqual({
+        id,
+        emailAddressId: senderEmailAddressId,
+        updatedAt,
+        emailMaskId,
+      })
+
+      verify(mockEmailAccountService.get(anything())).once()
+      verify(mockEmailMessageService.getDraft(anything())).once()
+      verify(mockEmailConfigurationDataService.getConfigurationData()).once()
+      expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(1)
+      verify(mockEmailDomainService.getConfiguredEmailDomains()).once()
+      verify(mockEmailMessageService.saveDraft(anything())).once()
+
+      const [actualArgs] = capture(mockEmailMessageService.saveDraft).first()
+      expect(actualArgs).toStrictEqual<typeof actualArgs>({
+        rfc822Data: rfc822Data,
+        senderEmailAddressId,
+        id,
+        emailMaskId,
+      })
+    })
+
     describe('E2EE path', () => {
       const senderAddress = `sender@${EntityDataFactory.emailDomain.domain}`
       const recipientAddress = `recipient@${EntityDataFactory.emailDomain.domain}`
@@ -357,14 +417,12 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
         verify(mockEmailMessageService.saveDraft(anything())).once()
 
         const [actualArgs] = capture(mockEmailMessageService.saveDraft).first()
-        console.debug({
-          expectedData: mockDecryptedData,
-          argsData: actualArgs.rfc822Data,
-        })
+
         expect(actualArgs).toStrictEqual<typeof actualArgs>({
           rfc822Data: mockDecryptedData,
           senderEmailAddressId,
           id,
+          emailMaskId: undefined,
         })
       })
 

@@ -5,15 +5,16 @@
  */
 
 import { anything, instance, mock, reset, verify, when } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { SudoEmailClient } from '../../../src'
 import { VerifyExternalEmailAddressUseCase } from '../../../src/private/domain/use-cases/mask/verifyExternalEmailAddressUseCase'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/mask/verifyExternalEmailAddressUseCase',
 )
-const JestMockVerifyExternalEmailAddressUseCase =
-  VerifyExternalEmailAddressUseCase as jest.MockedClass<
+const ViMockVerifyExternalEmailAddressUseCase =
+  VerifyExternalEmailAddressUseCase as MockedClass<
     typeof VerifyExternalEmailAddressUseCase
   >
 
@@ -37,10 +38,10 @@ describe('SudoEmailClient.verifyExternalEmailAddress Test Suite', () => {
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockVerifyExternalEmailAddressUseCase)
-    JestMockVerifyExternalEmailAddressUseCase.mockClear()
-    JestMockVerifyExternalEmailAddressUseCase.mockImplementation(() =>
-      instance(mockVerifyExternalEmailAddressUseCase),
-    )
+    ViMockVerifyExternalEmailAddressUseCase.mockClear()
+    ViMockVerifyExternalEmailAddressUseCase.mockImplementation(function () {
+      return instance(mockVerifyExternalEmailAddressUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -54,7 +55,7 @@ describe('SudoEmailClient.verifyExternalEmailAddress Test Suite', () => {
 
   it('generates use case', async () => {
     await instanceUnderTest.verifyExternalEmailAddress(firstInput)
-    expect(JestMockVerifyExternalEmailAddressUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockVerifyExternalEmailAddressUseCase).toHaveBeenCalledTimes(1)
   })
 
   it('calls use case as expected', async () => {

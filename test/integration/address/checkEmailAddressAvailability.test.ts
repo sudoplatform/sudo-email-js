@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -23,7 +23,6 @@ import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { generateSafeLocalPart } from '../util/provisionEmailAddress'
 
 describe('SudoEmailClient checkEmailAddressAvailability Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
 
   let instanceUnderTest: SudoEmailClient
@@ -78,7 +77,7 @@ describe('SudoEmailClient checkEmailAddressAvailability Test Suite', () => {
   it('Checks that the email address is available with invalid auth token', async () => {
     const idToken = await userClientKeyManager.getPassword('idToken')
     if (!idToken) {
-      fail('ID token not found.')
+      assert.fail('ID token not found.')
     }
     await userClientKeyManager.deletePassword('idToken')
     await userClientKeyManager.addPassword(

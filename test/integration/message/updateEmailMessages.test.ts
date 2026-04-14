@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -25,7 +25,6 @@ import { getFolderByName } from '../util/folder'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 
 describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
   const successSimulatorAddress = 'success@simulator.amazonses.com'
 
@@ -95,7 +94,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
       },
     )
     if (messages.status !== ListOperationResultStatus.Success) {
-      fail(`Expect result not returned: ${messages}`)
+      assert.fail(`Expect result not returned: ${messages}`)
     }
     const outbound = messages.items.filter(
       (message) => message.direction === Direction.Outbound,
@@ -138,7 +137,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
       },
     )
     if (messages.status !== ListOperationResultStatus.Success) {
-      fail(`Expect result not returned: ${messages}`)
+      assert.fail(`Expect result not returned: ${messages}`)
     }
     const outbound = messages.items.filter(
       (message) => message.direction === Direction.Outbound,
@@ -190,7 +189,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
       },
     )
     if (messages.status !== ListOperationResultStatus.Success) {
-      fail(`Expect result not returned: ${messages}`)
+      assert.fail(`Expect result not returned: ${messages}`)
     }
     const outbound = messages.items.filter(
       (message) => message.direction === Direction.Outbound,
@@ -235,7 +234,7 @@ describe('SudoEmailClient UpdateEmailMessages Test Suite', () => {
           emailAddressId: emailAddress.id,
         })
       if (messages.status !== ListOperationResultStatus.Success) {
-        fail(`Expect result not returned: ${messages}`)
+        assert.fail(`Expect result not returned: ${messages}`)
       }
       const outbound = messages.items.filter(
         (message) => message.direction === Direction.Outbound,

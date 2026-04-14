@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,6 +13,7 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import { EmailMessageDateRange, SortOrder, SudoEmailClient } from '../../../src'
 import { ListEmailMessagesForEmailFolderIdUseCase } from '../../../src/private/domain/use-cases/message/listEmailMessagesForEmailFolderIdUseCase'
@@ -20,11 +21,11 @@ import { APIDataFactory } from '../data-factory/api'
 import { EntityDataFactory } from '../data-factory/entity'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/message/listEmailMessagesForEmailFolderIdUseCase',
 )
-const JestMockListEmailMessagesForEmailFolderIdUseCase =
-  ListEmailMessagesForEmailFolderIdUseCase as jest.MockedClass<
+const ViMockListEmailMessagesForEmailFolderIdUseCase =
+  ListEmailMessagesForEmailFolderIdUseCase as MockedClass<
     typeof ListEmailMessagesForEmailFolderIdUseCase
   >
 
@@ -38,10 +39,12 @@ describe('SudoEmailClient.listEmailMessagesForEmailFolderId Test Suite', () => {
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockListEmailMessagesForEmailFolderIdUseCase)
-    JestMockListEmailMessagesForEmailFolderIdUseCase.mockClear()
+    ViMockListEmailMessagesForEmailFolderIdUseCase.mockClear()
 
-    JestMockListEmailMessagesForEmailFolderIdUseCase.mockImplementation(() =>
-      instance(mockListEmailMessagesForEmailFolderIdUseCase),
+    ViMockListEmailMessagesForEmailFolderIdUseCase.mockImplementation(
+      function () {
+        return instance(mockListEmailMessagesForEmailFolderIdUseCase)
+      },
     )
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
@@ -62,7 +65,7 @@ describe('SudoEmailClient.listEmailMessagesForEmailFolderId Test Suite', () => {
       nextToken: '',
     })
     expect(
-      JestMockListEmailMessagesForEmailFolderIdUseCase,
+      ViMockListEmailMessagesForEmailFolderIdUseCase,
     ).toHaveBeenCalledTimes(1)
   })
   it('calls use case as expected', async () => {

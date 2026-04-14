@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -35,7 +35,6 @@ import {
 import { readAllPages } from '../util/paginator'
 
 describe('SudoEmailClient ListEmailMessages Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
 
   let instanceUnderTest: SudoEmailClient
@@ -115,7 +114,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       })
       expect(folder).toBeDefined()
       if (!folder) {
-        fail('Unable to get INBOX folder in setup')
+        assert.fail('Unable to get INBOX folder in setup')
       }
 
       inboxFolder = folder
@@ -128,7 +127,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
 
         expect(messagesList.status).toEqual(ListOperationResultStatus.Success)
         if (messagesList.status !== ListOperationResultStatus.Success) {
-          fail(`result status unexpectedly not Success`)
+          assert.fail(`result status unexpectedly not Success`)
         }
         expect(messagesList.items).toHaveLength(2)
       })
@@ -164,7 +163,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           )
 
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(totalMessagesSent * 2)
@@ -207,7 +206,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             limit: 1,
           })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeTruthy()
           expect(messages.items).toHaveLength(1)
@@ -236,7 +235,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }),
           )
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.items).toHaveLength(4)
           messages.items.forEach((item, index) => {
@@ -265,7 +264,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }),
           )
           if (allMessages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${allMessages}`)
+            assert.fail(`Expect result not returned: ${allMessages}`)
           }
           expect(allMessages.items).toHaveLength(4)
 
@@ -303,7 +302,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }),
           )
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.items).toHaveLength(2)
         },
@@ -329,7 +328,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }),
           )
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.items).toHaveLength(0)
         },
@@ -355,7 +354,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }),
           )
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.items).toHaveLength(0)
         },
@@ -432,7 +431,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }),
           )
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.items).toHaveLength(4)
           messages.items.forEach((item, index) => {
@@ -460,7 +459,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }),
           )
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.items).toHaveLength(4)
           messages.items.forEach((item, index) => {
@@ -492,7 +491,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             ListOperationResultStatus.Partial,
           )
           if (messages.status !== ListOperationResultStatus.Partial) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
 
           expect(messages.items).toHaveLength(0)
@@ -526,7 +525,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }),
           )
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.items).toHaveLength(totalMessagesSent * 2)
         },
@@ -544,7 +543,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }),
           )
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.items).toHaveLength(totalMessagesSent * 2 - 1)
         },
@@ -560,7 +559,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             }),
           )
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.items).toHaveLength(totalMessagesSent * 2)
         },
@@ -627,7 +626,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       })
       expect(folder).toBeDefined()
       if (!folder) {
-        fail('Unable to get INBOX folder in setup')
+        assert.fail('Unable to get INBOX folder in setup')
       }
 
       inboxFolder = folder
@@ -640,7 +639,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
 
         expect(messagesList.status).toEqual(ListOperationResultStatus.Success)
         if (messagesList.status !== ListOperationResultStatus.Success) {
-          fail(`result status unexpectedly not Success`)
+          assert.fail(`result status unexpectedly not Success`)
         }
         expect(messagesList.items).toHaveLength(2)
       })
@@ -665,7 +664,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               emailAddressId: senderAddress.id,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(totalMessagesSent)
@@ -694,7 +693,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               emailAddressId: receiverAddress.id,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(totalMessagesSent)
@@ -728,7 +727,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               limit: 1,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeTruthy()
           expect(messages.items).toHaveLength(1)
@@ -755,7 +754,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               dateRange,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(totalMessagesSent)
@@ -781,7 +780,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         async () => {
           const allMessages = await instanceUnderTest.listEmailMessages({})
           if (allMessages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${allMessages}`)
+            assert.fail(`Expect result not returned: ${allMessages}`)
           }
           expect(allMessages.items).toHaveLength(totalMessagesSent * 2)
 
@@ -818,7 +817,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               },
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(totalMessagesSent)
@@ -844,7 +843,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               },
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(0)
@@ -870,7 +869,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               },
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(0)
@@ -950,7 +949,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               sortOrder: SortOrder.Asc,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(totalMessagesSent)
@@ -978,7 +977,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               sortOrder: SortOrder.Desc,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(totalMessagesSent)
@@ -1025,7 +1024,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
             ListOperationResultStatus.Partial,
           )
           if (messages.status !== ListOperationResultStatus.Partial) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
 
           expect(messages.nextToken).toBeFalsy()
@@ -1059,7 +1058,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               emailAddressId: senderAddress.id,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(totalMessagesSent)
@@ -1077,7 +1076,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               emailAddressId: senderAddress.id,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(totalMessagesSent - 1)
@@ -1093,7 +1092,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               includeDeletedMessages: true,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(totalMessagesSent)
@@ -1161,7 +1160,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       })
       expect(folder).toBeDefined()
       if (!folder) {
-        fail('Unable to get INBOX folder in setup')
+        assert.fail('Unable to get INBOX folder in setup')
       }
 
       inboxFolder = folder
@@ -1174,7 +1173,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
 
         expect(messagesList.status).toEqual(ListOperationResultStatus.Success)
         if (messagesList.status !== ListOperationResultStatus.Success) {
-          fail(`result status unexpectedly not Success`)
+          assert.fail(`result status unexpectedly not Success`)
         }
         expect(messagesList.items).toHaveLength(2)
       })
@@ -1191,7 +1190,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               folderId: inboxFolder?.id ?? '',
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(totalMessagesSent)
@@ -1258,7 +1257,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               dateRange,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(totalMessagesSent)
@@ -1284,7 +1283,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         async () => {
           const allMessages = await instanceUnderTest.listEmailMessages({})
           if (allMessages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${allMessages}`)
+            assert.fail(`Expect result not returned: ${allMessages}`)
           }
           expect(allMessages.items).toHaveLength(totalMessagesSent * 2)
 
@@ -1321,7 +1320,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               },
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(totalMessagesSent)
@@ -1347,7 +1346,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               },
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(0)
@@ -1373,7 +1372,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               },
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(0)
@@ -1454,7 +1453,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               sortOrder: SortOrder.Asc,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(totalMessagesSent)
@@ -1482,7 +1481,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               sortOrder: SortOrder.Desc,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(totalMessagesSent)
@@ -1508,7 +1507,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         folderName: 'SENT',
       })
       if (!sentFolder) {
-        fail('Could not find sent folder')
+        assert.fail('Could not find sent folder')
       }
       await waitForExpect(
         async () => {
@@ -1517,7 +1516,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               folderId: sentFolder.id,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(totalMessagesSent)
@@ -1535,7 +1534,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               folderId: sentFolder.id,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(totalMessagesSent - 1)
@@ -1551,7 +1550,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               includeDeletedMessages: true,
             })
           if (messages.status !== ListOperationResultStatus.Success) {
-            fail(`Expect result not returned: ${messages}`)
+            assert.fail(`Expect result not returned: ${messages}`)
           }
           expect(messages.nextToken).toBeFalsy()
           expect(messages.items).toHaveLength(totalMessagesSent)

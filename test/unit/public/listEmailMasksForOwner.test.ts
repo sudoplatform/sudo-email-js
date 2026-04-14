@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,6 +13,7 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
 import {
   SudoEmailClient,
@@ -29,11 +30,11 @@ import {
   EmailMaskEntityStatus,
 } from '../../../src/private/domain/entities/mask/emailMaskEntity'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/mask/listEmailMasksForOwnerUseCase',
 )
-const JestMockListEmailMasksForOwnerUseCase =
-  ListEmailMasksForOwnerUseCase as jest.MockedClass<
+const ViMockListEmailMasksForOwnerUseCase =
+  ListEmailMasksForOwnerUseCase as MockedClass<
     typeof ListEmailMasksForOwnerUseCase
   >
 
@@ -47,10 +48,10 @@ describe('SudoEmailClient.listEmailMasksForOwner Test Suite', () => {
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockListEmailMasksForOwnerUseCase)
-    JestMockListEmailMasksForOwnerUseCase.mockClear()
-    JestMockListEmailMasksForOwnerUseCase.mockImplementation(() =>
-      instance(mockListEmailMasksForOwnerUseCase),
-    )
+    ViMockListEmailMasksForOwnerUseCase.mockClear()
+    ViMockListEmailMasksForOwnerUseCase.mockImplementation(function () {
+      return instance(mockListEmailMasksForOwnerUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -62,7 +63,7 @@ describe('SudoEmailClient.listEmailMasksForOwner Test Suite', () => {
 
   it('generates use case', async () => {
     await instanceUnderTest.listEmailMasksForOwner({})
-    expect(JestMockListEmailMasksForOwnerUseCase).toHaveBeenCalledTimes(1)
+    expect(ViMockListEmailMasksForOwnerUseCase).toHaveBeenCalledTimes(1)
   })
 
   it('calls use case as expected with no input', async () => {

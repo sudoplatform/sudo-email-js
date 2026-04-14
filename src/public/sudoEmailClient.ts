@@ -69,6 +69,7 @@ import { DraftEmailMessageMetadata } from './typings/draftEmailMessageMetadata'
 import { EmailAddress } from './typings/emailAddress'
 import { EmailAddressPublicInfo } from './typings/emailAddressPublicInfo'
 import { EmailFolder } from './typings/emailFolder'
+import { EmailDomain } from './typings/emailDomain'
 import {
   EmailMessage,
   EmailMessageSubscriber,
@@ -105,7 +106,7 @@ export interface SudoEmailClient {
    *   - Input domain parts (domain separated by `.`) must not exceed 63 characters.
    *   - Address must match standard email address pattern:
    *     `^[a-zA-Z0-9](\.?[-_a-zA-Z0-9])*@[a-zA-Z0-9](-*\.?[a-zA-Z0-9])*\.[a-zA-Z](-?[a-zA-Z0-9])+$`.
-   *   - Domain must be a registered domain retrieved from {@link SudoEmailClient.getSupportedEmailDomains}.
+   *   - Domain must be a registered domain retrieved from {@link SudoEmailClient.listEmailDomains}.
    *
    * @returns {EmailAddress} The provisioned email address.
    *
@@ -153,6 +154,7 @@ export interface SudoEmailClient {
    * @throws NotRegisteredError
    * @throws ServiceError
    */
+  /** @deprecated Use {@link SudoEmailClient.listEmailDomains}. */
   getSupportedEmailDomains(): Promise<string[]>
 
   /**
@@ -173,7 +175,18 @@ export interface SudoEmailClient {
    * @throws NotRegisteredError
    * @throws ServiceError
    */
+  /** @deprecated Use {@link SudoEmailClient.listEmailDomains} and filter by `isMaskDomain`. */
   getEmailMaskDomains(): Promise<string[]>
+
+  /**
+   * List all email domains.
+   *
+   * @returns {EmailDomain[]} A list of email domains with metadata.
+   *
+   * @throws NotRegisteredError
+   * @throws ServiceError
+   */
+  listEmailDomains(): Promise<EmailDomain[]>
 
   /**
    * Check if an email address is available to be provisioned within a domain.
@@ -376,8 +389,7 @@ export interface SudoEmailClient {
   ): Promise<DraftEmailMessage | undefined>
 
   /**
-   * @deprecated The method should not be used. Instead use listDraftEmailMessageMetadataForEmailAddressId.
-   * @deprecated The method should not be used. Instead use listDraftEmailMessageMetadataForEmailAddressId.
+   * @deprecated The method should not be used. Instead use listDraftEmailMessagesForEmailAddressId.
    * Lists the metadata and content of all draft email messages for the user.
    *
    * @returns {DraftEmailMessage[]} An array of draft email messages or an empty array if no
@@ -398,6 +410,7 @@ export interface SudoEmailClient {
   ): Promise<ListOutput<DraftEmailMessage>>
 
   /**
+   * @deprecated The method should not be used. Instead use listDraftEmailMessageMetadataForEmailAddressId.
    * Lists the metadata of all draft email messages for the user.
    *
    * @returns {DraftEmailMessageMetadata[]} An array of draft email message metadata or an empty array if no

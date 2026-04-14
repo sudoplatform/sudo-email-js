@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -138,6 +138,11 @@ export class EntityDataFactory {
   static readonly emailDomain: EmailDomainEntity = {
     domain: 'unittest.org',
   }
+  static readonly emailDomainWithMetadata: EmailDomainEntity = {
+    domain: 'unittest.org',
+    isMaskDomain: false,
+    metadata: JSON.stringify({ provider: 'internal' }),
+  }
   static readonly maskDomain: EmailDomainEntity = {
     domain: 'unitmask.org',
   }
@@ -222,6 +227,12 @@ export class EntityDataFactory {
     createdAt: new Date(1.0),
     updatedAt: new Date(1.0),
   }
+
+  static readonly scheduledDraftMessageWithEmailMaskId: ScheduledDraftMessageEntity =
+    {
+      ...EntityDataFactory.scheduledDraftMessage,
+      emailMaskId: 'dummyEmailMaskId',
+    }
 
   static readonly emailMask: EmailMaskEntity = {
     ...EntityDataFactory.commonProps,

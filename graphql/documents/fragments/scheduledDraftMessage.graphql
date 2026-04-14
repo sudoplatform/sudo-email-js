@@ -1,6 +1,7 @@
 fragment ScheduledDraftMessage on ScheduledDraftMessage {
   draftMessageKey
   emailAddressId
+  emailMaskId
   sendAtEpochMs
   state
   createdAtEpochMs

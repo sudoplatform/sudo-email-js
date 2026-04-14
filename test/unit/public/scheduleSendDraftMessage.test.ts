@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -14,16 +14,17 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import { MockedClass } from 'vitest'
 import { SudoEmailClient } from '../../../src'
 import { ScheduleSendDraftMessageUseCase } from '../../../src/private/domain/use-cases/draft/scheduleSendDraftMessageUseCase'
 import { EntityDataFactory } from '../data-factory/entity'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
-jest.mock(
+vi.mock(
   '../../../src/private/domain/use-cases/draft/scheduleSendDraftMessageUseCase',
 )
-const JestMockScheduleSendDraftMessageUseCase =
-  ScheduleSendDraftMessageUseCase as jest.MockedClass<
+const ViMockScheduleSendDraftMessageUseCase =
+  ScheduleSendDraftMessageUseCase as MockedClass<
     typeof ScheduleSendDraftMessageUseCase
   >
 
@@ -38,11 +39,11 @@ describe('SudoEmailClient.scheduleSendDraftMessage Test Suite', () => {
   beforeEach(() => {
     sudoEmailClientTestsBase.resetMocks()
     reset(mockScheduleSendDraftMessageUseCase)
-    JestMockScheduleSendDraftMessageUseCase.mockClear()
+    ViMockScheduleSendDraftMessageUseCase.mockClear()
 
-    JestMockScheduleSendDraftMessageUseCase.mockImplementation(() =>
-      instance(mockScheduleSendDraftMessageUseCase),
-    )
+    ViMockScheduleSendDraftMessageUseCase.mockImplementation(function () {
+      return instance(mockScheduleSendDraftMessageUseCase)
+    })
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
@@ -76,6 +77,30 @@ describe('SudoEmailClient.scheduleSendDraftMessage Test Suite', () => {
     expect(useCaseArgs).toStrictEqual<typeof useCaseArgs>({
       id: EntityDataFactory.scheduledDraftMessage.id,
       emailAddressId: EntityDataFactory.emailAccount.id,
+      emailMaskId: undefined,
+      sendAt,
+    })
+  })
+
+  it('passes emailMaskId through to use case', async () => {
+    const emailMaskId =
+      EntityDataFactory.scheduledDraftMessageWithEmailMaskId.emailMaskId
+    const result = await instanceUnderTest.scheduleSendDraftMessage({
+      id: EntityDataFactory.scheduledDraftMessage.id,
+      emailAddressId: EntityDataFactory.emailAccount.id,
+      emailMaskId,
+      sendAt,
+    })
+
+    expect(result).toEqual(EntityDataFactory.scheduledDraftMessage)
+    verify(mockScheduleSendDraftMessageUseCase.execute(anything())).once()
+    const [useCaseArgs] = capture(
+      mockScheduleSendDraftMessageUseCase.execute,
+    ).first()
+    expect(useCaseArgs).toStrictEqual<typeof useCaseArgs>({
+      id: EntityDataFactory.scheduledDraftMessage.id,
+      emailAddressId: EntityDataFactory.emailAccount.id,
+      emailMaskId,
       sendAt,
     })
   })

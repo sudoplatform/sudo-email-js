@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -19,7 +19,6 @@ import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 
 describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClient-ListEmailAddresses')
 
   let emailAddresses: EmailAddress[] = []
@@ -99,7 +98,7 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
           expect.arrayContaining(emailAddresses),
         )
       } else {
-        fail(`Unexpected result: ${result}`)
+        assert.fail(`Unexpected result: ${result}`)
       }
     })
   })
@@ -159,7 +158,7 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
           expect(element.item).toStrictEqual(found[0])
         })
       } else {
-        fail(`Expected result not returned: ${result}`)
+        assert.fail(`Expected result not returned: ${result}`)
       }
     })
 
@@ -182,7 +181,7 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
           expect(element.item).toStrictEqual(found[0])
         })
       } else {
-        fail(`Expected result not returned: ${result}`)
+        assert.fail(`Expected result not returned: ${result}`)
       }
     })
   })

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -24,7 +24,6 @@ import waitForExpect from 'wait-for-expect'
 import { delay } from '../../util/delay'
 
 describe('SudoEmailClient DeleteCustomEmailFolder Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
 
   const successSimulatorAddress = 'success@simulator.amazonses.com'
@@ -138,7 +137,7 @@ describe('SudoEmailClient DeleteCustomEmailFolder Test Suite', () => {
     )
 
     if (!trashFolder) {
-      fail('Trash folder unexpectedly falsy')
+      assert.fail('Trash folder unexpectedly falsy')
     }
 
     await delay(5000)

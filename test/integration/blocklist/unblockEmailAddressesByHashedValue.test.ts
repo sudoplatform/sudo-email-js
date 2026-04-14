@@ -1,5 +1,5 @@
 /**
- * Copyright © 2025 Anonyome Labs, Inc. All rights reserved.
+ * Copyright © 2026 Anonyome Labs, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -21,7 +21,6 @@ import { v4 } from 'uuid'
 import waitForExpect from 'wait-for-expect'
 
 describe('SudoEmailClient Unblock Email Addresses By Hashed Value Integration Test Suite', () => {
-  jest.setTimeout(240000)
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
   const dummyAddress = 'spammymcspamface@spambot.com'
 
