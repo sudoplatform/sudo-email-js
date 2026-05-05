@@ -11,6 +11,7 @@ import {
 } from '@sudoplatform/sudo-common'
 import {
   EmailAddress,
+  EmailAddressDetail,
   EmailAttachment,
   EmailMask,
   EmailMessage,
@@ -23,7 +24,11 @@ import {
 import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { EmailConfigurationDataService } from '../../../src/private/domain/entities/configuration/configurationDataService'
-import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
+import {
+  getTestSentEmailBucket,
+  setupEmailClient,
+  teardown,
+} from '../util/emailClientLifecycle'
 import {
   generateSafeLocalPart,
   provisionEmailAddress,
@@ -61,11 +66,15 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
   let configurationDataService: EmailConfigurationDataService
   let beforeEachComplete = false
   let runTests = true
+  const testSentEmailBucket = getTestSentEmailBucket()
 
   const imageData = getImageFileData()
   const pdfData = getPdfFileData()
 
-  beforeEach(async () => {
+  beforeEach(async ({ skip }) => {
+    if (!runTests) {
+      skip('Email masks not enabled')
+    }
     beforeEachComplete = false
     const result = await setupEmailClient(log)
     instanceUnderTest = result.emailClient
@@ -120,10 +129,6 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
 
   describe('Error paths', () => {
     it('throws UnauthorizedAddressError if unknown mask id is used', async () => {
-      if (!runTests) {
-        log.debug('Email Masks not enabled. Skipping.')
-        return
-      }
       expectSetupComplete()
       const input = constructSendMessageInputSansSenderId({
         from: { emailAddress: emailMask.maskAddress },
@@ -139,10 +144,6 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
     })
 
     it('throws UnauthorizedAddressError if from address does not match mask', async () => {
-      if (!runTests) {
-        log.debug('Email Masks not enabled. Skipping.')
-        return
-      }
       expectSetupComplete()
       const mask2 = await provisionEmailMask(
         ownershipProofToken,
@@ -165,10 +166,6 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
     })
 
     it('throws InvalidEmailContentsError if passed no from address', async () => {
-      if (!runTests) {
-        log.debug('Email Masks not enabled. Skipping.')
-        return
-      }
       expectSetupComplete()
       const input = constructSendMessageInputSansSenderId({
         from: { emailAddress: emailMask.maskAddress },
@@ -188,10 +185,6 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
     })
 
     it('throws MessageSizeLimitExceededError if message exceeds max size', async () => {
-      if (!runTests) {
-        log.debug('Email Masks not enabled. Skipping.')
-        return
-      }
       expectSetupComplete()
       const { emailMessageMaxOutboundMessageSize } =
         await configurationDataService.getConfigurationData()
@@ -222,10 +215,6 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
     })
 
     it('throws InvalidEmailContentsError if message has no recipients', async () => {
-      if (!runTests) {
-        log.debug('Email Masks not enabled. Skipping.')
-        return
-      }
       expectSetupComplete()
       const input = constructSendMessageInputSansSenderId({
         from: { emailAddress: emailMask.maskAddress },
@@ -240,10 +229,6 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
     })
 
     it('throws InvalidEmailContentsError for various prohibited attachment file extensions', async () => {
-      if (!runTests) {
-        log.debug('Email Masks not enabled. Skipping.')
-        return
-      }
       expectSetupComplete()
       const { prohibitedFileExtensions } =
         await configurationDataService.getConfigurationData()
@@ -308,10 +293,6 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
     })
 
     it('returns expected output when sending single message to success simulator', async () => {
-      if (!runTests) {
-        log.debug('Email Masks not enabled. Skipping.')
-        return
-      }
       expectSetupComplete()
       const input = constructSendMessageInputSansSenderId({
         from: { emailAddress: emailMask.maskAddress },
@@ -362,12 +343,11 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
       expect(messageWithBody!.inlineAttachments).toHaveLength(0)
     })
 
-    it('successfully sends a message with multiple recipients', async () => {
-      if (!runTests) {
-        log.debug('Email Masks not enabled. Skipping.')
-        return
-      }
+    it('successfully sends a message with multiple recipients', async ({
+      skip,
+    }) => {
       expectSetupComplete()
+      const to: EmailAddressDetail[] = []
       const recipientAddress = await provisionEmailAddress(
         ownershipProofToken,
         instanceUnderTest,
@@ -375,28 +355,39 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
           localPart: generateSafeLocalPart('mask-send-test-recip'),
         },
       )
+      to.push({ emailAddress: recipientAddress.emailAddress })
+      if (isInNetwork) {
+        to.push({ emailAddress: emailAddress2.emailAddress })
+        to.push({ emailAddress: emailMask2.maskAddress })
+      } else if (testSentEmailBucket) {
+        to.push({ emailAddress: SUCCESS_SIMULATOR_ADDRESS })
+        to.push({ emailAddress: emailMask.maskAddress })
+      } else {
+        to.push({ emailAddress: SUCCESS_SIMULATOR_ADDRESS })
+        to.push({ emailAddress: OOTO_SIMULATOR_ADDRESS })
+      }
       const input = constructSendMessageInputSansSenderId({
         from: { emailAddress: emailMask.maskAddress },
-        to: [
-          {
-            emailAddress: isInNetwork
-              ? emailAddress2.emailAddress
-              : SUCCESS_SIMULATOR_ADDRESS,
-          },
-          {
-            emailAddress: isInNetwork
-              ? emailMask2.maskAddress
-              : OOTO_SIMULATOR_ADDRESS,
-          },
-          { emailAddress: recipientAddress.emailAddress },
-        ],
+        to,
       })
 
-      const result = await instanceUnderTest.sendMaskedEmailMessage({
-        ...input,
-        senderEmailMaskId: emailMask.id,
-      })
-      const { id: sentId } = result
+      let sentId: string
+      try {
+        const result = await instanceUnderTest.sendMaskedEmailMessage({
+          ...input,
+          senderEmailMaskId: emailMask.id,
+        })
+        sentId = result.id
+      } catch (err) {
+        if (
+          err instanceof Error &&
+          err.message.includes('ServiceQuotaExceededError')
+        ) {
+          skip('*** Daily message quota exceeded ***')
+          return
+        }
+        throw err
+      }
 
       expect(sentId).toMatch(
         /^em-msg-[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
@@ -431,10 +422,6 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
     })
 
     it('successully sends a message with a cc recipient', async () => {
-      if (!runTests) {
-        log.debug('Email Masks not enabled. Skipping.')
-        return
-      }
       expectSetupComplete()
       const input = constructSendMessageInputSansSenderId({
         from: { emailAddress: emailMask.maskAddress },
@@ -486,10 +473,6 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
     })
 
     it('successfully sends a message with a bcc recipient', async () => {
-      if (!runTests) {
-        log.debug('Email Masks not enabled. Skipping.')
-        return
-      }
       expectSetupComplete()
       const input = constructSendMessageInputSansSenderId({
         from: { emailAddress: emailMask.maskAddress },
@@ -541,10 +524,6 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
     })
 
     it('successfully sends a message with all types of recipients', async () => {
-      if (!runTests) {
-        log.debug('Email Masks not enabled. Skipping.')
-        return
-      }
       expectSetupComplete()
       const recipient = isInNetwork
         ? emailAddress2.emailAddress
@@ -595,10 +574,6 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
     })
 
     it('successfully sends unencrypted message with mix of in- and out- network addresses', async () => {
-      if (!runTests) {
-        log.debug('Email Masks not enabled. Skipping.')
-        return
-      }
       expectSetupComplete()
       const recipientAddress = await provisionEmailAddress(
         ownershipProofToken,
@@ -656,10 +631,6 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
     })
 
     it('successfully sends message that includes another mask as recipient', async () => {
-      if (!runTests) {
-        log.debug('Email Masks not enabled. Skipping.')
-        return
-      }
       expectSetupComplete()
       const recipientAddress = await provisionEmailAddress(
         ownershipProofToken,
@@ -721,10 +692,6 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
     })
 
     it('successfully sends a message with special characters', async () => {
-      if (!runTests) {
-        log.debug('Email Masks not enabled. Skipping.')
-        return
-      }
       expectSetupComplete()
       const emojiSubject = 'emoji me: 😎 ¡ ™ £ ¢ ∞ § ¶ • ª.'
       const emojiBody =
@@ -782,10 +749,6 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
     })
 
     it('successfully sends a message with attachments', async () => {
-      if (!runTests) {
-        log.debug('Email Masks not enabled. Skipping.')
-        return
-      }
       expectSetupComplete()
       const imageAttachment: EmailAttachment = {
         data: imageData,
@@ -866,10 +829,6 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
     })
 
     it('successfully sends a message an inline attachment', async () => {
-      if (!runTests) {
-        log.debug('Email Masks not enabled. Skipping.')
-        return
-      }
       expectSetupComplete()
       const contentId = `content-id-${v4()}`
       const imageAttachment: EmailAttachment = {
@@ -939,10 +898,6 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
     })
 
     it('successfully sends a message with sender and recipient display names', async () => {
-      if (!runTests) {
-        log.debug('Email Masks not enabled. Skipping.')
-        return
-      }
       expectSetupComplete()
       const input = constructSendMessageInputSansSenderId({
         from: {

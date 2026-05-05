@@ -19,6 +19,7 @@ describe('SudoEmailClient listEmailDomains Test Suite', () => {
   let entitlementsClient: SudoEntitlementsClient
   let profilesClient: SudoProfilesClient
   let sudo: Sudo
+  let emailMasksEnabled = false
 
   beforeEach(async () => {
     const result = await setupEmailClient(log)
@@ -27,12 +28,17 @@ describe('SudoEmailClient listEmailDomains Test Suite', () => {
     entitlementsClient = result.entitlementsClient
     profilesClient = result.profilesClient
     sudo = result.sudo
+    const config = await instanceUnderTest.getConfigurationData()
+    emailMasksEnabled = config.emailMasksEnabled
   })
 
   it('returns expected output', async () => {
     const supportedEmailDomains =
       await instanceUnderTest.getSupportedEmailDomains()
-    const maskDomains = await instanceUnderTest.getEmailMaskDomains()
+    let maskDomains: string[] = []
+    if (emailMasksEnabled) {
+      maskDomains = await instanceUnderTest.getEmailMaskDomains()
+    }
 
     const listedDomains = await instanceUnderTest.listEmailDomains()
     const matchedDomaains: EmailDomain[] = []
