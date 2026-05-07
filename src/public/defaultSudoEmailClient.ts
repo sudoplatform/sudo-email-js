@@ -112,6 +112,7 @@ import {
   UnblockEmailAddressesByHashedValueInput,
   UnblockEmailAddressesInput,
 } from './inputs/blockedAddresses'
+import { FlushMessageBodyCacheInput } from './inputs/flushMessageBodyCache'
 import {
   CancelScheduledDraftMessageInput,
   CreateDraftEmailMessageInput,
@@ -196,6 +197,8 @@ import {
   VerifyExternalEmailAddressInput,
   VerifyExternalEmailAddressResult,
 } from './typings/verifyExternalEmailAddress'
+import { DefaultEmailMessageBodyCache } from '../private/data/message/defaultEmailMessageBodyCache'
+import { EmailMessageBodyCache } from '../private/domain/entities/message/emailMessageBodyCache'
 
 export class DefaultSudoEmailClient implements SudoEmailClient {
   private readonly apiClient: ApiClient
@@ -213,6 +216,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   private readonly identityServiceConfig: SudoUserInternal.IdentityServiceConfig
   private readonly emailServiceConfig: EmailServiceConfig
   private readonly signInGuard: SignInGuard
+  private readonly emailMessageBodyCache: EmailMessageBodyCache
   private readonly log: Logger
   private readonly mutex: Mutex
 
@@ -261,6 +265,8 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       deviceKeyWorker,
     )
     this.emailCryptoService = new DefaultEmailCryptoService(deviceKeyWorker)
+    this.emailMessageBodyCache =
+      privateOptions.emailMessageBodyCache ?? new DefaultEmailMessageBodyCache()
     this.emailMessageService = new DefaultEmailMessageService(
       this.apiClient,
       this.userClient,
@@ -268,6 +274,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       deviceKeyWorker,
       this.emailServiceConfig,
       this.emailCryptoService,
+      this.emailMessageBodyCache,
     )
     this.emailAddressBlocklistService = new DefaultEmailAddressBlocklistService(
       this.apiClient,
@@ -324,6 +331,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     return await this.mutex.runExclusive(async () => {
       const useCase = new DeprovisionEmailAccountUseCase(
         this.emailAccountService,
+        this.emailMessageBodyCache,
       )
       const result = await useCase.execute(id)
       const transformer = new EmailAddressAPITransformer()
@@ -431,6 +439,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const deleteEmailMessageUseCase = new DeleteEmailMessagesUseCase(
       this.emailMessageService,
       this.configurationDataService,
+      this.emailMessageBodyCache,
     )
     const { successIds } = await deleteEmailMessageUseCase.execute(idSet)
     return successIds.length === idSet.size ? { id } : undefined
@@ -463,6 +472,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const deleteEmailMessageUseCase = new DeleteEmailMessagesUseCase(
       this.emailMessageService,
       this.configurationDataService,
+      this.emailMessageBodyCache,
     )
 
     const deleteResult = await deleteEmailMessageUseCase.execute(idSet)
@@ -1404,6 +1414,17 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
 
   public async reset(): Promise<void> {
     await this.keyManager.removeAllKeys()
+    await this.emailMessageBodyCache.flushAll()
+  }
+
+  public async flushMessageBodyCache(
+    input: FlushMessageBodyCacheInput,
+  ): Promise<void> {
+    await this.emailMessageBodyCache.flush(input)
+  }
+
+  public async setCacheSizeLimit(bytes: number): Promise<void> {
+    await this.emailMessageBodyCache.setCacheSizeLimit(bytes)
   }
 
   /**

@@ -7,6 +7,7 @@
 import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import { EmailAccountEntity } from '../../entities/account/emailAccountEntity'
 import { EmailAccountService } from '../../entities/account/emailAccountService'
+import { EmailMessageBodyCache } from '../../entities/message/emailMessageBodyCache'
 
 /**
  * Application business logic for deprovisioning an email account.
@@ -16,6 +17,7 @@ export class DeprovisionEmailAccountUseCase {
 
   public constructor(
     private readonly emailAccountService: EmailAccountService,
+    private readonly emailMessageBodyCache: EmailMessageBodyCache,
   ) {
     this.log = new DefaultLogger(this.constructor.name)
   }
@@ -24,8 +26,11 @@ export class DeprovisionEmailAccountUseCase {
     this.log.debug(this.constructor.name, {
       id,
     })
-    return await this.emailAccountService.delete({
+    const result = await this.emailAccountService.delete({
       emailAddressId: id,
     })
+    // Flush cached message bodies for the deprovisioned email address
+    await this.emailMessageBodyCache.flush({ emailAddressId: id })
+    return result
   }
 }

@@ -89,6 +89,7 @@ import {
   ProvisionEmailMaskInput,
   UpdateEmailMaskInput,
 } from './inputs/emailMask'
+import { FlushMessageBodyCacheInput } from './inputs/flushMessageBodyCache'
 import { EmailMask } from './typings/emailMask'
 import {
   VerifyExternalEmailAddressInput,
@@ -764,6 +765,24 @@ export interface SudoEmailClient {
    * To clear the callback, call this method with no arguments or undefined.
    */
   setSignInCallback(callback?: SudoPlatformSignInCallback): void
+
+  /**
+   * Flush all cached message bodies scoped to the given sudo or email address.
+   * Call this after deleting a sudo or deprovisioning an email address.
+   *
+   * @param input Parameters specifying the scope of the flush.
+   */
+  flushMessageBodyCache(input: FlushMessageBodyCacheInput): Promise<void>
+
+  /**
+   * Update the maximum size of the local message body cache.
+   * The new limit is persisted and survives across client sessions.
+   * Set to 0 to disable caching; existing cached entries are evicted
+   * immediately when the limit is reduced.
+   *
+   * @param bytes New cache size limit in bytes. Must be >= 0.
+   */
+  setCacheSizeLimit(bytes: number): Promise<void>
 
   /**
    * Removes any cached data maintained by this client.

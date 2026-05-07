@@ -15,3 +15,4 @@ package.json.old
 .idea/
 .yarn/install-state.gz
 
+.kiro/

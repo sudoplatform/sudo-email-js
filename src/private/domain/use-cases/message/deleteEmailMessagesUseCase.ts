@@ -12,6 +12,7 @@ import {
 import { EmailMessageService } from '../../entities/message/emailMessageService'
 import { EmailMessageOperationFailureResult } from '../../../../public'
 import { EmailConfigurationDataService } from '../../entities/configuration/configurationDataService'
+import { EmailMessageBodyCache } from '../../entities/message/emailMessageBodyCache'
 
 /**
  * Output for `DeleteEmailMessagesUseCase` use case.
@@ -36,6 +37,7 @@ export class DeleteEmailMessagesUseCase {
   constructor(
     private readonly emailMessageService: EmailMessageService,
     private readonly configurationDataService: EmailConfigurationDataService,
+    private readonly emailMessageBodyCache: EmailMessageBodyCache,
   ) {
     this.log = new DefaultLogger(this.constructor.name)
   }
@@ -60,6 +62,12 @@ export class DeleteEmailMessagesUseCase {
       ids: [...ids],
     })
     const successIds = [...ids].filter((id) => !failureIds.includes(id))
+
+    // Remove successfully deleted messages from the local cache (fire-and-forget)
+    void Promise.all(
+      successIds.map((id) => this.emailMessageBodyCache.deleteMessage(id)),
+    )
+
     const emailMessageFailureResults: EmailMessageOperationFailureResult[] =
       failureIds.map((id) => ({
         id,

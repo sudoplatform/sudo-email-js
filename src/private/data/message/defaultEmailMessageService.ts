@@ -113,6 +113,7 @@ import { ScheduledDraftMessageEntity } from '../../domain/entities/message/sched
 import { ScheduledDraftMessageTransformer } from './transformer/scheduledDraftMessageTransformer'
 import { ScheduledDraftMessageFilterTransformer } from './transformer/scheduledDraftMessageFilterTransformer'
 import { EmailMessageUtil } from '../../util/emailMessageUtil'
+import { EmailMessageBodyCache } from '../../domain/entities/message/emailMessageBodyCache'
 
 const EmailAddressEntityCodec = t.intersection(
   [t.type({ emailAddress: t.string }), t.partial({ displayName: t.string })],
@@ -170,6 +171,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     private readonly deviceKeyWorker: DeviceKeyWorker,
     private readonly emailServiceConfig: EmailServiceConfig,
     private readonly emailCryptoService: EmailCryptoService,
+    private readonly emailMessageBodyCache: EmailMessageBodyCache,
   ) {
     this.log = new DefaultLogger(this.constructor.name)
     this.createSubscriptionManager = new SubscriptionManager<
@@ -719,17 +721,41 @@ export class DefaultEmailMessageService implements EmailMessageService {
     const s3Key = sealedEmailMessage.rfc822DataAttributes.key
     this.log.debug('s3 key', { key: s3Key })
     let sealedString: string
+    let contentEncoding: string | undefined
     try {
-      const result = await this.s3Client.download({
-        bucket: sealedEmailMessage.rfc822DataAttributes.bucket,
-        region: this.emailServiceConfig.region,
-        key: s3Key,
-      })
-      sealedString = result.body
+      // Cache-first retrieval: check the local cache before hitting S3
+      const cacheResult = await this.emailMessageBodyCache.get(id)
+      if (cacheResult) {
+        this.log.debug('Cache hit', { id })
+        sealedString = cacheResult.sealedBlob
+        contentEncoding = cacheResult.contentEncoding
+      } else {
+        this.log.debug('Cache miss', { id })
+        const result = await this.s3Client.download({
+          bucket: sealedEmailMessage.rfc822DataAttributes.bucket,
+          region: this.emailServiceConfig.region,
+          key: s3Key,
+        })
+        sealedString = result.body
+        contentEncoding = result.contentEncoding
+
+        // Extract sudoId from owners for cache storage (may be undefined)
+        const sudoOwner = sealedEmailMessage.owners.find(
+          (owner) => owner.issuer === 'sudoplatform.sudoservice',
+        )
+        // Fire and forget this
+        void this.emailMessageBodyCache.put({
+          messageId: id,
+          sudoId: sudoOwner?.id,
+          emailAddressId,
+          sealedBlob: sealedString,
+          contentEncoding,
+        })
+      }
       this.log.debug('sealedString', { sealedString })
 
       const contentEncodingValues = (
-        result.contentEncoding?.split(',') ?? [
+        contentEncoding?.split(',') ?? [
           'sudoplatform-crypto',
           'sudoplatform-binary-data',
         ]
@@ -1273,8 +1299,12 @@ export class DefaultEmailMessageService implements EmailMessageService {
               (data) => {
                 return data.onEmailMessageDeleted
               },
-              async (message) =>
-                this.deleteSubscriptionManager.emailMessageDeleted(message),
+              async (message) => {
+                await this.deleteSubscriptionManager.emailMessageDeleted(
+                  message,
+                )
+                await this.emailMessageBodyCache.deleteMessage(message.id)
+              },
             )
           })(result)
         },

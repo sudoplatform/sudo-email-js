@@ -57,6 +57,51 @@ export const constructSendMessageInputSansSenderId = ({
   }
 }
 
+export const constructSendMessageInput = ({
+  senderEmailAddressId,
+  from,
+  to = [],
+  cc = [],
+  bcc = [],
+  replyTo = [],
+  subject = 'Test subject',
+  body = 'Hello, World',
+  attachments = [],
+  inlineAttachments = [],
+  forwardingMessageId,
+  replyingMessageId,
+}: {
+  senderEmailAddressId: string
+  from: EmailAddressDetail
+  to?: EmailAddressDetail[]
+  cc?: EmailAddressDetail[]
+  bcc?: EmailAddressDetail[]
+  replyTo?: EmailAddressDetail[]
+  body?: string
+  subject?: string
+  attachments?: EmailAttachment[]
+  inlineAttachments?: EmailAttachment[]
+  forwardingMessageId?: string
+  replyingMessageId?: string
+}): SendEmailMessageInput => {
+  return {
+    senderEmailAddressId,
+    emailMessageHeader: {
+      from,
+      to,
+      cc,
+      bcc,
+      replyTo,
+      subject,
+    },
+    body,
+    attachments,
+    inlineAttachments,
+    forwardingMessageId,
+    replyingMessageId,
+  }
+}
+
 /**
  * Given a HTML body of a verification code email, extracts the OTP.
  * Tries multiple patterns in priority order:

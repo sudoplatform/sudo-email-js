@@ -105,6 +105,7 @@ export interface SetupEmailClientOutput {
 export const setupEmailClient = async (
   log: DefaultLogger,
   clientConfig: SudoEmailClientConfig = {},
+  privateOptions?: Omit<PrivateSudoEmailClientOptions, 'sudoUserClient'>,
 ): Promise<SetupEmailClientOutput> => {
   try {
     if (!adminApiKey) {
@@ -191,6 +192,7 @@ export const setupEmailClient = async (
 
     const apiClient = new ApiClient(apiClientManager)
     const options: PrivateSudoEmailClientOptions = {
+      ...privateOptions,
       sudoUserClient: userClient,
       sudoCryptoProvider: emailCryptoProvider,
       apiClient,

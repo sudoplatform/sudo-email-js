@@ -14,10 +14,12 @@ import {
 import { EmailMessageDataFactory } from '../../../../data-factory/emailMessage'
 import { EmailConfigurationDataService } from '../../../../../../src/private/domain/entities/configuration/configurationDataService'
 import { EmailConfigurationDataEntity } from '../../../../../../src/private/domain/entities/configuration/emailConfigurationDataEntity'
+import { EmailMessageBodyCache } from '../../../../../../src/private/domain/entities/message/emailMessageBodyCache'
 
 describe('DeleteEmailMessageUseCase tests', () => {
   const mockEmailMessageService = mock<EmailMessageService>()
   const mockEmailConfigService = mock<EmailConfigurationDataService>()
+  const mockCache = mock<EmailMessageBodyCache>()
   const mockDeleteLimit = 100
 
   let instanceUnderTest: DeleteEmailMessagesUseCase
@@ -25,13 +27,16 @@ describe('DeleteEmailMessageUseCase tests', () => {
   beforeEach(() => {
     reset(mockEmailMessageService)
     reset(mockEmailConfigService)
+    reset(mockCache)
     when(mockEmailMessageService.deleteMessages(anything())).thenResolve([])
     when(mockEmailConfigService.getConfigurationData()).thenResolve({
       deleteEmailMessagesLimit: mockDeleteLimit,
     } as EmailConfigurationDataEntity)
+    when(mockCache.deleteMessage(anything())).thenResolve()
     instanceUnderTest = new DeleteEmailMessagesUseCase(
       instance(mockEmailMessageService),
       instance(mockEmailConfigService),
+      instance(mockCache),
     )
   })
 
@@ -95,5 +100,42 @@ describe('DeleteEmailMessageUseCase tests', () => {
       { id: idsTodeleteArr[3], errorType: 'Failed to delete email message' },
       { id: idsTodeleteArr[7], errorType: 'Failed to delete email message' },
     ])
+  })
+
+  describe('cache integration', () => {
+    const mockCache = mock<EmailMessageBodyCache>()
+
+    beforeEach(() => {
+      reset(mockCache)
+      when(mockCache.deleteMessage(anything())).thenResolve()
+    })
+
+    it('calls cache.deleteMessage for each successfully deleted message', async () => {
+      when(mockEmailMessageService.deleteMessages(anything())).thenResolve([])
+      const useCaseWithCache = new DeleteEmailMessagesUseCase(
+        instance(mockEmailMessageService),
+        instance(mockEmailConfigService),
+        instance(mockCache),
+      )
+      const ids = new Set(['id-1', 'id-2', 'id-3'])
+      await useCaseWithCache.execute(ids)
+
+      verify(mockCache.deleteMessage('id-1')).once()
+      verify(mockCache.deleteMessage('id-2')).once()
+      verify(mockCache.deleteMessage('id-3')).once()
+    })
+
+    it('does not block on cache deletion (fire-and-forget)', async () => {
+      when(mockEmailMessageService.deleteMessages(anything())).thenResolve([])
+      const useCaseWithCache = new DeleteEmailMessagesUseCase(
+        instance(mockEmailMessageService),
+        instance(mockEmailConfigService),
+        instance(mockCache),
+      )
+      // The method should return without waiting for cache operations to complete
+      const result = await useCaseWithCache.execute(new Set(['id-1']))
+      expect(result.successIds).toEqual(['id-1'])
+      expect(result.failureMessages).toEqual([])
+    })
   })
 })

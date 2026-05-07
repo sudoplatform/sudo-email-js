@@ -81,6 +81,7 @@ import { SecureEmailAttachmentType } from '../../../../../src/private/domain/ent
 import { EmailCryptoService } from '../../../../../src/private/domain/entities/secure/emailCryptoService'
 import { DateTime } from 'luxon'
 import { SecurePackageDataFactory } from '../../../data-factory/securePackage'
+import { EmailMessageBodyCache } from '../../../../../src/private/domain/entities/message/emailMessageBodyCache'
 
 const identityServiceConfig = DraftEmailMessageDataFactory.identityServiceConfig
 
@@ -106,6 +107,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
   const mockDeviceKeyWorker = mock<DeviceKeyWorker>()
   const mockS3Client = mock<S3Client>()
   const mockEmailCryptoService = mock<EmailCryptoService>()
+  const mockEmailMessageBodyCache = mock<EmailMessageBodyCache>()
   const mockSubscriptionManager =
     mock<
       SubscriptionManager<
@@ -132,6 +134,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     reset(mockS3Client)
     reset(mockDeviceKeyWorker)
     reset(mockEmailCryptoService)
+    reset(mockEmailMessageBodyCache)
     reset(mockSubscriptionManager)
     timestamp = new Date(1)
     mockMessageId = v4()
@@ -142,8 +145,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
       instance(mockDeviceKeyWorker),
       identityServiceConfig,
       instance(mockEmailCryptoService),
+      instance(mockEmailMessageBodyCache),
     )
     when(mockUserClient.getUserClaim(anything())).thenResolve('identityId')
+    when(mockEmailMessageBodyCache.get(anything())).thenResolve(undefined)
+    when(mockEmailMessageBodyCache.put(anything())).thenResolve()
+    when(mockEmailMessageBodyCache.deleteMessage(anything())).thenResolve()
     when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve(
       mockSymmetricKeyId,
     )
@@ -1810,14 +1817,14 @@ describe('DefaultEmailMessageService Test Suite', () => {
       when(mockAppSync.deleteEmailMessages(anything())).thenResolve([])
       await expect(
         instanceUnderTest.deleteMessages({ ids: ['1'] }),
-      ).resolves.toStrictEqual<string[]>([])
+      ).resolves.toStrictEqual([])
     })
 
     it('deletes multiple messages successfully', async () => {
       when(mockAppSync.deleteEmailMessages(anything())).thenResolve([])
       await expect(
         instanceUnderTest.deleteMessages({ ids: ['1', '2', '3', '4'] }),
-      ).resolves.toStrictEqual<string[]>([])
+      ).resolves.toStrictEqual([])
     })
   })
 
@@ -1832,7 +1839,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       )
       await expect(
         instanceUnderTest.getDraft(DraftEmailMessageDataFactory.getDraftInput),
-      ).resolves.toEqual<DraftEmailMessageEntity>({
+      ).resolves.toEqual({
         id: DraftEmailMessageDataFactory.getDraftInput.id,
         emailAddressId:
           DraftEmailMessageDataFactory.getDraftInput.emailAddressId,
@@ -1871,7 +1878,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           ...DraftEmailMessageDataFactory.getDraftInput,
           emailMaskId,
         }),
-      ).resolves.toEqual<DraftEmailMessageEntity>({
+      ).resolves.toEqual({
         id: DraftEmailMessageDataFactory.getDraftInput.id,
         emailAddressId:
           DraftEmailMessageDataFactory.getDraftInput.emailAddressId,
@@ -1993,7 +2000,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           instanceUnderTest.getDraft(
             DraftEmailMessageDataFactory.getDraftInput,
           ),
-        ).resolves.toEqual<DraftEmailMessageEntity>({
+        ).resolves.toEqual({
           id: DraftEmailMessageDataFactory.getDraftInput.id,
           emailAddressId:
             DraftEmailMessageDataFactory.getDraftInput.emailAddressId,
@@ -3193,6 +3200,89 @@ describe('DefaultEmailMessageService Test Suite', () => {
           ConnectionState.Connected,
         ),
       ).times(3)
+    })
+  })
+
+  describe('cache integration', () => {
+    const mockCache = mock<EmailMessageBodyCache>()
+    let instanceWithCache: DefaultEmailMessageService
+
+    beforeEach(() => {
+      reset(mockCache)
+      instanceWithCache = new DefaultEmailMessageService(
+        instance(mockAppSync),
+        instance(mockUserClient),
+        instance(mockS3Client),
+        instance(mockDeviceKeyWorker),
+        identityServiceConfig,
+        instance(mockEmailCryptoService),
+        instance(mockCache),
+      )
+      when(mockAppSync.getEmailMessage(anything())).thenResolve({
+        ...GraphQLDataFactory.sealedEmailMessage,
+        owners: [{ id: 'sudoId', issuer: 'sudoplatform.sudoservice' }],
+      })
+      when(mockS3Client.download(anything())).thenResolve(
+        EmailMessageRfc822DataFactory.s3ClientDownloadOutput,
+      )
+      when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
+        Base64.encodeString('unsealedContent'),
+      )
+    })
+
+    describe('getEmailMessageRfc822Data', () => {
+      it('returns cached blob without calling S3 on a cache hit', async () => {
+        when(mockCache.get(anything())).thenResolve({
+          messageId: EmailMessageRfc822DataFactory.getEmailMessageInput.id,
+          sudoId: 'sudoId',
+          emailAddressId: 'testEmailAddressId',
+          sealedBlob: EmailMessageRfc822DataFactory.s3ClientDownloadOutput.body,
+          contentEncoding:
+            EmailMessageRfc822DataFactory.s3ClientDownloadOutput
+              .contentEncoding,
+        })
+
+        await instanceWithCache.getEmailMessageRfc822Data(
+          EmailMessageRfc822DataFactory.getEmailMessageInput,
+        )
+
+        verify(mockCache.get(anything())).once()
+        verify(mockS3Client.download(anything())).never()
+      })
+
+      it('calls S3 and populates cache on a cache miss', async () => {
+        when(mockCache.get(anything())).thenResolve(undefined)
+
+        await instanceWithCache.getEmailMessageRfc822Data(
+          EmailMessageRfc822DataFactory.getEmailMessageInput,
+        )
+
+        verify(mockS3Client.download(anything())).once()
+        verify(mockCache.put(anything())).once()
+
+        const [putArg] = capture(mockCache.put).first()
+        expect(putArg.messageId).toBe(
+          EmailMessageRfc822DataFactory.getEmailMessageInput.id,
+        )
+        expect(putArg.sudoId).toBe('sudoId')
+        expect(putArg.emailAddressId).toBe('testEmailAddressId')
+        expect(putArg.sealedBlob).toBe(
+          EmailMessageRfc822DataFactory.s3ClientDownloadOutput.body,
+        )
+        expect(putArg.contentEncoding).toBe(
+          EmailMessageRfc822DataFactory.s3ClientDownloadOutput.contentEncoding,
+        )
+      })
+
+      it('always calls S3 when no cache is configured', async () => {
+        await instanceUnderTest.getEmailMessageRfc822Data(
+          EmailMessageRfc822DataFactory.getEmailMessageInput,
+        )
+
+        verify(mockS3Client.download(anything())).once()
+        verify(mockCache.get(anything())).never()
+        verify(mockCache.put(anything())).never()
+      })
     })
   })
 })
