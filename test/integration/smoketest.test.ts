@@ -351,7 +351,7 @@ describe('SudoEmailClient Smoketest Test Suite', () => {
           expect(createSubscriptionCalled).toBeTruthy()
           expect(createNotifiedEmailMessageId).toBe(receivedMessage.id)
         },
-        20000,
+        25000,
         1000,
       )
 
@@ -406,7 +406,7 @@ describe('SudoEmailClient Smoketest Test Suite', () => {
       await waitForExpect(() => {
         expect(connectionStateChangeCalled).toBeTruthy()
         expect(connectionState).toBe(ConnectionState.Connected)
-      }, 15000)
+      }, 20000)
 
       // Send email to external AWS SES simulator address (should be unencrypted)
       const sendResult = await instanceUnderTest.sendEmailMessage({

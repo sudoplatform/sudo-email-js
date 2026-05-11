@@ -72,12 +72,15 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
   const pdfData = getPdfFileData()
 
   beforeEach(async ({ skip }) => {
-    if (!runTests) {
-      skip('Email masks not enabled')
-    }
     beforeEachComplete = false
     const result = await setupEmailClient(log)
     instanceUnderTest = result.emailClient
+
+    const configuration = await instanceUnderTest.getConfigurationData()
+    runTests = configuration.emailMasksEnabled
+    if (!runTests) {
+      skip('Email masks not enabled')
+    }
     profilesClient = result.profilesClient
     userClient = result.userClient
     sudo = result.sudo
@@ -95,9 +98,6 @@ describe('SudoEmailClient SendMaskedEmailMessage Test Suite', () => {
         value: 30,
       })
       .apply()
-
-    const configuration = await instanceUnderTest.getConfigurationData()
-    runTests = configuration.emailMasksEnabled
     sendEncryptedEmailEnabled = configuration.sendEncryptedEmailEnabled
     if (runTests) {
       emailAddress = await provisionEmailAddress(

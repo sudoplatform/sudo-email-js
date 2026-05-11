@@ -3,6 +3,7 @@
   "include": ["./**/*.ts", "../src/**/*.ts"],
   "compilerOptions": {
     "allowJs": true,
-    "types": ["vitest/globals", "node"]
+    "types": ["vitest/globals", "node"],
+    "rootDir": ".."
   }
 }
