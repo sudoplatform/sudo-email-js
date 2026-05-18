@@ -1,7 +1,9 @@
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
-  logLevel: 'error', // Suppress warnings like sourcemap issues
+  server: {
+    sourcemapIgnoreList: (sourcePath) => sourcePath.includes('node_modules'),
+  },
   test: {
     globals: true,
     environment: 'node', // Use node for all tests - jsdom causes issues with jose library

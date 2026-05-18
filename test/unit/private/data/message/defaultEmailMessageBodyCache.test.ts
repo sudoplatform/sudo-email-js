@@ -11,17 +11,17 @@ import * as path from 'path'
 import {
   DefaultEmailMessageBodyCache,
   DefaultEmailMessageBodyCacheOptions,
-} from '../../../../../src/private/data/message/defaultEmailMessageBodyCache'
+} from '../../../../../src/private/data/message/cache/defaultEmailMessageBodyCache'
 import { InvalidArgumentError } from '../../../../../src/public/errors'
 
 describe('DefaultEmailMessageBodyCache', () => {
   let tmpDir: string
   let fsStoragePath: string
 
-  function createCache(
+  async function createCache(
     overrides?: Partial<DefaultEmailMessageBodyCacheOptions>,
-  ): DefaultEmailMessageBodyCache {
-    return new DefaultEmailMessageBodyCache({
+  ): Promise<DefaultEmailMessageBodyCache> {
+    return await DefaultEmailMessageBodyCache.create({
       cacheStoragePath: tmpDir,
       ...overrides,
     })
@@ -41,14 +41,14 @@ describe('DefaultEmailMessageBodyCache', () => {
   // ---------------------------------------------------------------------------
 
   describe('schema creation and settings persistence', () => {
-    it('should create the database file and storage directory on construction', () => {
-      createCache()
+    it('should create the database file and storage directory on construction', async () => {
+      await createCache()
       expect(fs.existsSync(path.join(tmpDir, 'email-cache.db'))).toBe(true)
       expect(fs.existsSync(fsStoragePath)).toBe(true)
     })
 
     it('should write initialCacheSizeLimitBytes to settings on first construction', async () => {
-      const cache = createCache({ initialCacheSizeLimitBytes: 500 })
+      const cache = await createCache({ initialCacheSizeLimitBytes: 500 })
       // Verify by checking that a blob of 501 bytes is rejected
       await cache.put({
         messageId: 'msg-1',
@@ -62,11 +62,11 @@ describe('DefaultEmailMessageBodyCache', () => {
 
     it('should use persisted value on subsequent construction, ignoring initialCacheSizeLimitBytes', async () => {
       // First construction with 1000 byte limit
-      const cache1 = createCache({ initialCacheSizeLimitBytes: 1000 })
+      const cache1 = await createCache({ initialCacheSizeLimitBytes: 1000 })
       await cache1.setCacheSizeLimit(500)
 
       // Second construction with a different initial value — should be ignored
-      const cache2 = createCache({ initialCacheSizeLimitBytes: 2000 })
+      const cache2 = await createCache({ initialCacheSizeLimitBytes: 2000 })
 
       // The persisted 500 byte limit should be in effect
       await cache2.put({
@@ -80,11 +80,11 @@ describe('DefaultEmailMessageBodyCache', () => {
     })
 
     it('should persist setCacheSizeLimit value in the settings table', async () => {
-      const cache1 = createCache({ initialCacheSizeLimitBytes: 10000 })
+      const cache1 = await createCache({ initialCacheSizeLimitBytes: 10000 })
       await cache1.setCacheSizeLimit(200)
 
       // New instance reads the persisted value
-      const cache2 = createCache({ initialCacheSizeLimitBytes: 10000 })
+      const cache2 = await createCache({ initialCacheSizeLimitBytes: 10000 })
       await cache2.put({
         messageId: 'msg-1',
         sudoId: 'sudo-1',
@@ -96,7 +96,7 @@ describe('DefaultEmailMessageBodyCache', () => {
     })
 
     it('should disable caching after setCacheSizeLimit(0)', async () => {
-      const cache = createCache({ initialCacheSizeLimitBytes: 10000 })
+      const cache = await createCache({ initialCacheSizeLimitBytes: 10000 })
 
       // Store something first
       await cache.put({
@@ -124,7 +124,7 @@ describe('DefaultEmailMessageBodyCache', () => {
     })
 
     it('should use default 300 MB limit when no initialCacheSizeLimitBytes is provided', async () => {
-      const cache = createCache()
+      const cache = await createCache()
       // A small blob should be cacheable with the default 300 MB limit
       await cache.put({
         messageId: 'msg-1',
@@ -144,13 +144,13 @@ describe('DefaultEmailMessageBodyCache', () => {
 
   describe('get', () => {
     it('should return undefined for a missing entry', async () => {
-      const cache = createCache()
+      const cache = await createCache()
       const result = await cache.get('nonexistent')
       expect(result).toBeUndefined()
     })
 
     it('should return the blob and update lastAccessedAt for a present inline entry', async () => {
-      const cache = createCache()
+      const cache = await createCache()
       await cache.put({
         messageId: 'msg-1',
         sudoId: 'sudo-1',
@@ -171,7 +171,7 @@ describe('DefaultEmailMessageBodyCache', () => {
 
     it('should return the blob for a large-message (filesystem) entry', async () => {
       const largeBlob = 'x'.repeat(2 * 1024 * 1024) // 2 MB
-      const cache = createCache({
+      const cache = await createCache({
         initialCacheSizeLimitBytes: 10 * 1024 * 1024,
         largeMessageThresholdBytes: 1 * 1024 * 1024,
       })
@@ -189,7 +189,7 @@ describe('DefaultEmailMessageBodyCache', () => {
     })
 
     it('should remove a stale entry (missing fs file) and return undefined', async () => {
-      const cache = createCache({
+      const cache = await createCache({
         initialCacheSizeLimitBytes: 10 * 1024 * 1024,
         largeMessageThresholdBytes: 10, // Force filesystem storage for small blobs
       })
@@ -219,7 +219,7 @@ describe('DefaultEmailMessageBodyCache', () => {
 
   describe('put', () => {
     it('should store a small blob inline in the SQLite row', async () => {
-      const cache = createCache()
+      const cache = await createCache()
       await cache.put({
         messageId: 'msg-1',
         sudoId: 'sudo-1',
@@ -237,7 +237,7 @@ describe('DefaultEmailMessageBodyCache', () => {
 
     it('should store a large blob on the filesystem', async () => {
       const largeBlob = 'y'.repeat(2 * 1024 * 1024)
-      const cache = createCache({
+      const cache = await createCache({
         initialCacheSizeLimitBytes: 10 * 1024 * 1024,
         largeMessageThresholdBytes: 1 * 1024 * 1024,
       })
@@ -259,7 +259,7 @@ describe('DefaultEmailMessageBodyCache', () => {
     })
 
     it('should skip storage when blob exceeds cacheSizeLimitBytes', async () => {
-      const cache = createCache({ initialCacheSizeLimitBytes: 100 })
+      const cache = await createCache({ initialCacheSizeLimitBytes: 100 })
 
       await cache.put({
         messageId: 'msg-oversized',
@@ -273,7 +273,7 @@ describe('DefaultEmailMessageBodyCache', () => {
     })
 
     it('should evict LRU entries when the cache is full', async () => {
-      const cache = createCache({ initialCacheSizeLimitBytes: 100 })
+      const cache = await createCache({ initialCacheSizeLimitBytes: 100 })
 
       // Fill the cache with two entries
       await cache.put({
@@ -308,7 +308,7 @@ describe('DefaultEmailMessageBodyCache', () => {
     })
 
     it('should be a no-op when cacheSizeLimitBytes is 0', async () => {
-      const cache = createCache({ initialCacheSizeLimitBytes: 0 })
+      const cache = await createCache({ initialCacheSizeLimitBytes: 0 })
 
       await cache.put({
         messageId: 'msg-1',
@@ -328,7 +328,7 @@ describe('DefaultEmailMessageBodyCache', () => {
 
   describe('deleteMessage', () => {
     it('should remove an existing entry and its filesystem file', async () => {
-      const cache = createCache({
+      const cache = await createCache({
         initialCacheSizeLimitBytes: 10 * 1024 * 1024,
         largeMessageThresholdBytes: 10,
       })
@@ -349,7 +349,7 @@ describe('DefaultEmailMessageBodyCache', () => {
     })
 
     it('should be a no-op for a missing entry', async () => {
-      const cache = createCache()
+      const cache = await createCache()
       // Should not throw
       await cache.deleteMessage('nonexistent')
       expect(await cache.getTotalSize()).toBe(0)
@@ -358,7 +358,7 @@ describe('DefaultEmailMessageBodyCache', () => {
 
   describe('flush', () => {
     it('should remove only entries matching the given sudoId', async () => {
-      const cache = createCache()
+      const cache = await createCache()
 
       await cache.put({
         messageId: 'msg-1',
@@ -387,7 +387,7 @@ describe('DefaultEmailMessageBodyCache', () => {
     })
 
     it('should remove only entries matching the given emailAddressId', async () => {
-      const cache = createCache()
+      const cache = await createCache()
 
       await cache.put({
         messageId: 'msg-1',
@@ -409,14 +409,14 @@ describe('DefaultEmailMessageBodyCache', () => {
     })
 
     it('should throw InvalidArgumentError when neither sudoId nor emailAddressId is provided', async () => {
-      const cache = createCache()
+      const cache = await createCache()
       await expect(cache.flush({})).rejects.toThrow(InvalidArgumentError)
     })
   })
 
   describe('flushAll', () => {
     it('should remove all entries and filesystem files', async () => {
-      const cache = createCache({
+      const cache = await createCache({
         initialCacheSizeLimitBytes: 10 * 1024 * 1024,
         largeMessageThresholdBytes: 10,
       })
@@ -446,7 +446,7 @@ describe('DefaultEmailMessageBodyCache', () => {
 
   describe('setCacheSizeLimit', () => {
     it('should trigger immediate LRU eviction when current usage exceeds the new limit', async () => {
-      const cache = createCache({ initialCacheSizeLimitBytes: 1000 })
+      const cache = await createCache({ initialCacheSizeLimitBytes: 1000 })
 
       await cache.put({
         messageId: 'msg-1',
@@ -472,7 +472,7 @@ describe('DefaultEmailMessageBodyCache', () => {
     })
 
     it('should throw InvalidArgumentError for a negative value', async () => {
-      const cache = createCache()
+      const cache = await createCache()
       await expect(cache.setCacheSizeLimit(-1)).rejects.toThrow(
         InvalidArgumentError,
       )
@@ -486,7 +486,7 @@ describe('DefaultEmailMessageBodyCache', () => {
   // Feature: pemc-1740, Property 4: Cache entry schema round-trip
   describe('Property 4: Cache entry schema round-trip', () => {
     it('after put then get, returned blob equals original and metadata is preserved', async () => {
-      const cache = createCache({
+      const cache = await createCache({
         initialCacheSizeLimitBytes: 50 * 1024 * 1024,
       })
 
@@ -525,7 +525,7 @@ describe('DefaultEmailMessageBodyCache', () => {
   describe('Property 5: Storage routing by blob size', () => {
     it('blobs <= threshold are stored inline; blobs > threshold are stored on filesystem', async () => {
       const threshold = 500
-      const cache = createCache({
+      const cache = await createCache({
         initialCacheSizeLimitBytes: 50 * 1024 * 1024,
         largeMessageThresholdBytes: threshold,
       })
@@ -571,7 +571,7 @@ describe('DefaultEmailMessageBodyCache', () => {
     it('accessing an entry via get prevents it from being evicted before unaccessed entries', async () => {
       const entrySize = 60
       const limit = entrySize * 3 + 10
-      const cache = createCache({ initialCacheSizeLimitBytes: limit })
+      const cache = await createCache({ initialCacheSizeLimitBytes: limit })
 
       await fc.assert(
         fc.asyncProperty(fc.uuid(), async () => {
@@ -628,7 +628,7 @@ describe('DefaultEmailMessageBodyCache', () => {
   describe('Property 7: LRU eviction maintains size invariant', () => {
     it('total cache size never exceeds cacheSizeLimitBytes after any put', async () => {
       const limit = 500
-      const cache = createCache({ initialCacheSizeLimitBytes: limit })
+      const cache = await createCache({ initialCacheSizeLimitBytes: limit })
 
       await fc.assert(
         fc.asyncProperty(
@@ -663,7 +663,7 @@ describe('DefaultEmailMessageBodyCache', () => {
   // Feature: pemc-1740, Property 8: Size limit reduction triggers immediate eviction
   describe('Property 8: Size limit reduction triggers immediate eviction', () => {
     it('after setCacheSizeLimit(L), total cached size is <= L', async () => {
-      const cache = createCache({ initialCacheSizeLimitBytes: 10000 })
+      const cache = await createCache({ initialCacheSizeLimitBytes: 10000 })
 
       await fc.assert(
         fc.asyncProperty(
@@ -697,7 +697,7 @@ describe('DefaultEmailMessageBodyCache', () => {
   describe('Property 10: Oversized messages never cached', () => {
     it('put with a blob larger than cacheSizeLimitBytes leaves cache unchanged', async () => {
       const limit = 500
-      const cache = createCache({ initialCacheSizeLimitBytes: limit })
+      const cache = await createCache({ initialCacheSizeLimitBytes: limit })
 
       await fc.assert(
         fc.asyncProperty(
@@ -727,7 +727,7 @@ describe('DefaultEmailMessageBodyCache', () => {
   // Feature: pemc-1740, Property 11: Scoped flush removes exactly matching entries
   describe('Property 11: Scoped flush removes exactly matching entries', () => {
     it('flush by sudoId removes only matching entries', async () => {
-      const cache = createCache({
+      const cache = await createCache({
         initialCacheSizeLimitBytes: 50 * 1024 * 1024,
       })
 
@@ -765,7 +765,7 @@ describe('DefaultEmailMessageBodyCache', () => {
     })
 
     it('flush by emailAddressId removes only matching entries', async () => {
-      const cache = createCache({
+      const cache = await createCache({
         initialCacheSizeLimitBytes: 50 * 1024 * 1024,
       })
 
@@ -806,7 +806,7 @@ describe('DefaultEmailMessageBodyCache', () => {
   // Feature: pemc-1740, Property 12: Delete by message ID is idempotent
   describe('Property 12: Delete by message ID is idempotent', () => {
     it('deleteMessage succeeds regardless of whether entry exists', async () => {
-      const cache = createCache({
+      const cache = await createCache({
         initialCacheSizeLimitBytes: 50 * 1024 * 1024,
       })
 

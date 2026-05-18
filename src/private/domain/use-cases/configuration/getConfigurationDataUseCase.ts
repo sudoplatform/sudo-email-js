@@ -18,6 +18,7 @@ export interface GetConfigurationDataUseCaseOutput {
   prohibitedFileExtensions: string[]
   emailMasksEnabled: boolean
   externalEmailMasksEnabled: boolean
+  allowOwnerEmailAddressReuse: boolean
 }
 
 /**

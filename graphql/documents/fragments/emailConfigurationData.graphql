@@ -9,4 +9,5 @@ fragment EmailConfigurationData on EmailConfigurationData {
   prohibitedFileExtensions
   emailMasksEnabled
   externalEmailMasksEnabled
+  allowOwnerEmailAddressReuse
 }

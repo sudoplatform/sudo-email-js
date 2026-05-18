@@ -22,7 +22,7 @@ import {
   CachePutInput,
   EmailMessageBodyCache,
 } from '../../../src/private/domain/entities/message/emailMessageBodyCache'
-import { DefaultEmailMessageBodyCache } from '../../../src/private/data/message/defaultEmailMessageBodyCache'
+import { DefaultEmailMessageBodyCache } from '../../../src/private/data/message/cache/defaultEmailMessageBodyCache'
 import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
@@ -115,7 +115,7 @@ describe('Email Message Body Cache Integration Tests', () => {
     tmpCacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'email-cache-integ-'))
 
     // Create the instrumented cache wrapping a real DefaultEmailMessageBodyCache
-    const realCache = new DefaultEmailMessageBodyCache({
+    const realCache = await DefaultEmailMessageBodyCache.create({
       cacheStoragePath: tmpCacheDir,
     })
     instrumentedCache = new InstrumentedEmailMessageBodyCache(realCache)

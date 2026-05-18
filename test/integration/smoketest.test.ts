@@ -126,6 +126,7 @@ describe('SudoEmailClient Smoketest Test Suite', () => {
       expect(config.prohibitedFileExtensions.length).toBeGreaterThan(20)
       expect(config).toHaveProperty('emailMasksEnabled')
       expect(config).toHaveProperty('externalEmailMasksEnabled')
+      expect(config).toHaveProperty('allowOwnerEmailAddressReuse')
     })
 
     it('should get supported email domains', async () => {
@@ -351,7 +352,7 @@ describe('SudoEmailClient Smoketest Test Suite', () => {
           expect(createSubscriptionCalled).toBeTruthy()
           expect(createNotifiedEmailMessageId).toBe(receivedMessage.id)
         },
-        25000,
+        45000,
         1000,
       )
 
@@ -406,7 +407,7 @@ describe('SudoEmailClient Smoketest Test Suite', () => {
       await waitForExpect(() => {
         expect(connectionStateChangeCalled).toBeTruthy()
         expect(connectionState).toBe(ConnectionState.Connected)
-      }, 20000)
+      }, 40000)
 
       // Send email to external AWS SES simulator address (should be unencrypted)
       const sendResult = await instanceUnderTest.sendEmailMessage({

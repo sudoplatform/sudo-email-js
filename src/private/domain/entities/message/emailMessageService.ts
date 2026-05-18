@@ -242,18 +242,6 @@ export interface DeleteEmailMessagesInput {
 }
 
 /**
- * Input for `EmailMessageService.getEmailMessageRfc822Data` method.
- *
- * @interface GetEmailMessageRfc822DataInput
- * @property {string} id Identifier of the message to retrieve.
- * @property {string} emailAddressId Identifier of the email address associated with the email message.
- */
-export interface GetEmailMessageRfc822DataInput {
-  id: string
-  emailAddressId: string
-}
-
-/**
  * Input for `EmailMessageService.getEmailMessageWithBody` method.
  *
  * @interface GetEmailMessageWithBodyInput
@@ -539,16 +527,6 @@ export interface EmailMessageService {
    * @returns {string[]} The identifiers of any email messages that failed to delete.
    */
   deleteMessages(input: DeleteEmailMessagesInput): Promise<string[]>
-
-  /**
-   * Get the RFC 822 data of an email message.
-   *
-   * @param {GetEmailMessageRfc822DataInput} input Parameters used to get the RFC 822 data of an email message.
-   * @returns {ArrayBuffer | undefined} The draft email message, or undefined if not found.
-   */
-  getEmailMessageRfc822Data(
-    input: GetEmailMessageRfc822DataInput,
-  ): Promise<ArrayBuffer | undefined>
 
   /**
    * Get the body and attachments of an email message.

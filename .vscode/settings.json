@@ -3,6 +3,8 @@
   "eslint.validate": [
     "typescript"
   ],
+  "jestrunner.jestCommand": "yarn vitest",
+  "jestrunner.vitestCommand": "yarn vitest",
   "cSpell.words": [
     "dset",
     "mutex",

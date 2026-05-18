@@ -152,16 +152,12 @@ describe('getEmailMessageWithBody test suite', () => {
     }
   }
 
-  function waitForRfc822Data(
-    emailMessageId: string,
-    emailAddressId?: string,
-  ): Promise<any> {
+  function waitForEmailMessage(emailMessageId: string): Promise<any> {
     return waitForExpect(
       () =>
         expect(
-          instanceUnderTest.getEmailMessageRfc822Data({
+          instanceUnderTest.getEmailMessage({
             id: emailMessageId,
-            emailAddressId: emailAddressId ?? emailAddress.id,
           }),
         ).resolves.toBeDefined(),
       60000,
@@ -186,7 +182,7 @@ describe('getEmailMessageWithBody test suite', () => {
       expect(emailMessageIds.length).toEqual(emailBodies.length)
 
       for (let index = 0; index < emailMessageIds.length; ++index) {
-        await waitForRfc822Data(emailMessageIds[index])
+        await waitForEmailMessage(emailMessageIds[index])
         const messageWithBody = await instanceUnderTest.getEmailMessageWithBody(
           {
             id: emailMessageIds[index],
@@ -224,7 +220,7 @@ describe('getEmailMessageWithBody test suite', () => {
       const result = await instanceUnderTest.sendEmailMessage(input)
       expect(result.id).toBeDefined()
 
-      await waitForRfc822Data(result.id)
+      await waitForEmailMessage(result.id)
 
       const messageWithBody = await instanceUnderTest.getEmailMessageWithBody({
         emailAddressId: emailAddress.id,
@@ -259,7 +255,7 @@ describe('getEmailMessageWithBody test suite', () => {
       expect(emailMessageIds.length).toEqual(emailBodies.length)
 
       for (let index = 0; index < emailMessageIds.length; ++index) {
-        await waitForRfc822Data(emailMessageIds[index])
+        await waitForEmailMessage(emailMessageIds[index])
         const messageWithBody = await instanceUnderTest.getEmailMessageWithBody(
           {
             id: emailMessageIds[index],
@@ -296,7 +292,7 @@ describe('getEmailMessageWithBody test suite', () => {
 
       const sendResult = await instanceUnderTest.sendEmailMessage(input)
 
-      await waitForRfc822Data(sendResult.id)
+      await waitForEmailMessage(sendResult.id)
 
       const messageWithBody = await instanceUnderTest.getEmailMessageWithBody({
         id: sendResult.id,
@@ -358,7 +354,7 @@ describe('getEmailMessageWithBody test suite', () => {
         ...sendInput,
         senderEmailMaskId: senderEmailMask.id,
       })
-      await waitForRfc822Data(sendResult.id, senderEmailAddress.id)
+      await waitForEmailMessage(sendResult.id)
       const sentMessageWithBody =
         await instanceUnderTest.getEmailMessageWithBody({
           id: sendResult.id,
@@ -445,7 +441,7 @@ describe('getEmailMessageWithBody test suite', () => {
       )
 
       const sendResult = await instanceUnderTest.sendEmailMessage(sendInput)
-      await waitForRfc822Data(sendResult.id)
+      await waitForEmailMessage(sendResult.id)
       const sentMessageWithBody =
         await instanceUnderTest.getEmailMessageWithBody({
           id: sendResult.id,

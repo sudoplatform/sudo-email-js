@@ -25,6 +25,7 @@ export class ConfigurationDataAPITransformer {
       prohibitedFileExtensions: entity.prohibitedFileExtensions,
       emailMasksEnabled: entity.emailMasksEnabled,
       externalEmailMasksEnabled: entity.externalEmailMasksEnabled,
+      allowOwnerEmailAddressReuse: entity.allowOwnerEmailAddressReuse,
     }
 
     return transformed
@@ -44,6 +45,7 @@ export class ConfigurationDataAPITransformer {
       prohibitedFileExtensions: data.prohibitedFileExtensions,
       emailMasksEnabled: data.emailMasksEnabled,
       externalEmailMasksEnabled: data.externalEmailMasksEnabled,
+      allowOwnerEmailAddressReuse: data.allowOwnerEmailAddressReuse,
     }
   }
 }

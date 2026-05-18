@@ -57,7 +57,6 @@ import {
   EmailMessageServiceUnsubscribeFromEmailMessagesInput,
   GetDraftInput,
   GetEmailMessageInput,
-  GetEmailMessageRfc822DataInput,
   GetEmailMessageWithBodyInput,
   ListDraftsMetadataForEmailAddressIdInput,
   ListDraftsMetadataForEmailAddressIdOutput,
@@ -84,7 +83,7 @@ import {
   LEGACY_BODY_CONTENT_ID,
   SecureEmailAttachmentType,
 } from '../../domain/entities/secure/secureEmailAttachmentType'
-import { arrayBufferToString, stringToArrayBuffer } from '../../util/buffer'
+import { arrayBufferToString } from '../../util/buffer'
 import {
   EmailMessageDetails,
   Rfc822MessageDataProcessor,
@@ -690,26 +689,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     EmailMessageWithBodyEntity | undefined
   > {
     this.log.debug(this.getEmailMessageWithBody.name, { id })
-    const data = await this.getEmailMessageRfc822Data({ id, emailAddressId })
-    if (!data) {
-      return undefined
-    }
 
-    const message = await Rfc822MessageDataProcessor.parseInternetMessageData(
-      arrayBufferToString(data),
-    )
-    return {
-      id,
-      body: message.body ?? '',
-      attachments: message.attachments ?? [],
-      inlineAttachments: message.inlineAttachments ?? [],
-    }
-  }
-
-  async getEmailMessageRfc822Data({
-    id,
-    emailAddressId,
-  }: GetEmailMessageRfc822DataInput): Promise<ArrayBuffer | undefined> {
     const sealedEmailMessage = await this.appSync.getEmailMessage(id)
     if (
       !sealedEmailMessage ||
@@ -791,11 +771,22 @@ export class DefaultEmailMessageService implements EmailMessageService {
         const emailMessageUtil = new EmailMessageUtil({
           emailCryptoService: this.emailCryptoService,
         })
-        return await emailMessageUtil.processDownloadedEncryptedMessage(
-          decodedString,
-        )
+        const data =
+          await emailMessageUtil.processDownloadedEncryptedMessage(
+            decodedString,
+          )
+        decodedString = arrayBufferToString(data)
       }
-      return stringToArrayBuffer(decodedString)
+
+      const message =
+        await Rfc822MessageDataProcessor.parseInternetMessageData(decodedString)
+
+      return {
+        id,
+        body: message.body ?? '',
+        attachments: message.attachments ?? [],
+        inlineAttachments: message.inlineAttachments ?? [],
+      }
     } catch (error: unknown) {
       this.log.error('Error getting RFC822 data', { error })
       const s3DownloadError = error as S3DownloadError

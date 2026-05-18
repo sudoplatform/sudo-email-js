@@ -47,7 +47,6 @@ import {
 } from './inputs/emailFolder'
 import {
   GetEmailMessageInput,
-  GetEmailMessageRfc822DataInput,
   GetEmailMessageWithBodyInput,
   ListEmailMessagesForEmailAddressIdInput,
   ListEmailMessagesForEmailFolderIdInput,
@@ -75,7 +74,6 @@ import {
   EmailMessageSubscriber,
   SendEmailMessageResult,
 } from './typings/emailMessage'
-import { EmailMessageRfc822Data } from './typings/emailMessageRfc822Data'
 import { EmailMessageWithBody } from './typings/emailMessageWithBody'
 import {
   ListEmailAddressesResult,
@@ -604,19 +602,6 @@ export interface SudoEmailClient {
   getEmailMessageWithBody(
     input: GetEmailMessageWithBodyInput,
   ): Promise<EmailMessageWithBody | undefined>
-
-  /**
-   * @deprecated Use `getEmailMessageWithBody` instead to retrieve the body and attachment data.
-   *
-   * Get the RFC 6854 (supersedes RFC 822) data of the email message.
-   *
-   * @param {GetEmailMessageRfc822DataInput} input Parameters used to retrieve the data of the email message.
-   * @returns {EmailMessageRfc822Data | undefined} The data associated with the email message or
-   *  undefined if the email message cannot be found.
-   */
-  getEmailMessageRfc822Data(
-    input: GetEmailMessageRfc822DataInput,
-  ): Promise<EmailMessageRfc822Data | undefined>
 
   /**
    * Get the list of all email messages for the user.

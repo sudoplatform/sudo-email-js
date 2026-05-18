@@ -159,18 +159,6 @@ export interface UpdateEmailMessagesInput {
 }
 
 /**
- * Input for `SudoEmailClient.getEmailMessageRfc822Data`.
- *
- * @interface GetEmailMessageRfc822DataInput
- * @property {string} id The identifier of the email message RFC 822 data to be retrieved.
- * @property {string} emailAddressId The identifier of the email address associated with the email message.
- */
-export interface GetEmailMessageRfc822DataInput {
-  id: string
-  emailAddressId: string
-}
-
-/**
  * Input for `SudoEmailClient.getEmailMessageWithBody`.
  *
  * @interface GetEmailMessageWithBodyInput

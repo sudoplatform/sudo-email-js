@@ -4252,6 +4252,7 @@ __metadata:
     "@types/mailparser": "npm:^3.4.6"
     "@types/node": "npm:^25.6.0"
     "@types/nodemailer": "npm:^7.0.11"
+    "@types/sql.js": "npm:^1.4.11"
     "@types/websocket": "npm:^1.0.10"
     "@typescript-eslint/eslint-plugin": "npm:^8.56.1"
     "@typescript-eslint/parser": "npm:^8.56.1"
@@ -4265,6 +4266,7 @@ __metadata:
     eslint-plugin-headers: "npm:^1.3.4"
     eslint-plugin-import: "npm:^2.32.0"
     eslint-plugin-prettier: "npm:^5.5.5"
+    fake-indexeddb: "npm:^6.0.0"
     fast-check: "npm:^3.22.0"
     fflate: "npm:^0.8.2"
     fp-ts: "npm:^2.16.11"
@@ -4287,6 +4289,7 @@ __metadata:
     prettier: "npm:^3.8.1"
     redux: "npm:^5.0.1"
     rimraf: "npm:^6.1.3"
+    sql.js: "npm:^1.11.0"
     ts-mockito: "npm:^2.6.1"
     tslib: "npm:^2.8.1"
     typedoc: "npm:^0.28.17"
@@ -4299,6 +4302,13 @@ __metadata:
     "@sudoplatform/sudo-api-client": ^16.0.0
     "@sudoplatform/sudo-common": ^12.2.0
     "@sudoplatform/sudo-user": ^16.0.0
+    better-sqlite3: ^11.0.0
+    sql.js: ^1.11.0
+  peerDependenciesMeta:
+    better-sqlite3:
+      optional: true
+    sql.js:
+      optional: true
   languageName: unknown
   linkType: soft
 
@@ -4493,6 +4503,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/emscripten@npm:*":
+  version: 1.41.5
+  resolution: "@types/emscripten@npm:1.41.5"
+  checksum: 10c0/ae816da716f896434e59df7a71b67c71ae7e85ca067a32aef1616572fc4757459515d42ade6f5b8fd8d69733a9dbd0cf23010fec5b2f41ce52c09501aa350e45
+  languageName: node
+  linkType: hard
+
 "@types/estree@npm:^1.0.0, @types/estree@npm:^1.0.6":
   version: 1.0.9
   resolution: "@types/estree@npm:1.0.9"
@@ -4583,6 +4600,16 @@ __metadata:
   dependencies:
     "@types/node": "npm:*"
   checksum: 10c0/dc6472c26600e763c38721b0691fc3014eb868d20b97eb48cfbc4fe9a7a09f66c0ccd8d647033a4be91051cc3c7bdca73c006db2f7a9e8bdd1ce65bb5ec2599c
+  languageName: node
+  linkType: hard
+
+"@types/sql.js@npm:^1.4.11":
+  version: 1.4.11
+  resolution: "@types/sql.js@npm:1.4.11"
+  dependencies:
+    "@types/emscripten": "npm:*"
+    "@types/node": "npm:*"
+  checksum: 10c0/eefb0408235cb645879103414b8ef0f13c2e7f2eac69c2a6c2838b72ec0be49985d6c6711b95bc8d79c208c7c5db95a51576a6ce7bfb49dd9edcc17721ffb40f
   languageName: node
   linkType: hard
 
@@ -6548,6 +6575,13 @@ __metadata:
   dependencies:
     type: "npm:^2.7.2"
   checksum: 10c0/a8e5f34e12214e9eee3a4af3b5c9d05ba048f28996450975b369fc86e5d0ef13b6df0615f892f5396a9c65d616213c25ec5b0ad17ef42eac4a500512a19da6c7
+  languageName: node
+  linkType: hard
+
+"fake-indexeddb@npm:^6.0.0":
+  version: 6.2.5
+  resolution: "fake-indexeddb@npm:6.2.5"
+  checksum: 10c0/6c5e2fe84a61daa06d7ad63699d1041fe61847f15f92db12415634b3db94f363a64be9e08a3c3c4434af9c3c0132086b85c4d5dc5e8e06edae1e7daf70ce1f3c
   languageName: node
   linkType: hard
 
@@ -9841,6 +9875,13 @@ __metadata:
   dependencies:
     tslib: "npm:^2.0.3"
   checksum: 10c0/dbe42f300ae9f7fbd83c40f71c2a61ecf9c86b927b5668bae067d1e516e314671cc85166f87017e51b56938409b1fc042719eb46a6d5bb30cc1cf23252a82761
+  languageName: node
+  linkType: hard
+
+"sql.js@npm:^1.11.0":
+  version: 1.14.1
+  resolution: "sql.js@npm:1.14.1"
+  checksum: 10c0/3491b7642b8b6d89926e4cf1807c01697df7e3f7283b94aaebc026e6c38aaf9496065e9daf25de3109e51df835150d4f795f5249f22a1d3e6a3bb1f2e32c0710
   languageName: node
   linkType: hard
 

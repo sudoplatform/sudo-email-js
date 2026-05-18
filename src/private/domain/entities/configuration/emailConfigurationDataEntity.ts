@@ -19,6 +19,7 @@
  * @property {string[]} prohibitedFileExtensions List of file extensions that are prohibited from being attached to an email message.
  * @property {boolean} emailMasksEnabled Flag indicating whether email masks are enabled.
  * @property {boolean} externalEmailMasksEnabled Flag indicating whether external email masks are enabled.
+ * @property {boolean} allowOwnerEmailAddressReuse Flag indicating whether the owner's deprovisioned email address can be reused.
  */
 export interface EmailConfigurationDataEntity {
   deleteEmailMessagesLimit: number
@@ -31,4 +32,5 @@ export interface EmailConfigurationDataEntity {
   prohibitedFileExtensions: string[]
   emailMasksEnabled: boolean
   externalEmailMasksEnabled: boolean
+  allowOwnerEmailAddressReuse: boolean
 }

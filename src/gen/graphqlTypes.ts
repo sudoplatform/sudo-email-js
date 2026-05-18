@@ -201,6 +201,7 @@ export type EmailAddressPublicKey = {
 
 export type EmailConfigurationData = {
   __typename?: 'EmailConfigurationData'
+  allowOwnerEmailAddressReuse: Scalars['Boolean']['output']
   deleteEmailMessagesLimit: Scalars['Int']['output']
   emailMasksEnabled: Scalars['Boolean']['output']
   emailMessageMaxInboundMessageSize: Scalars['Int']['output']
@@ -1087,6 +1088,7 @@ export type EmailConfigurationDataFragment = {
   prohibitedFileExtensions: Array<string>
   emailMasksEnabled: boolean
   externalEmailMasksEnabled: boolean
+  allowOwnerEmailAddressReuse: boolean
 }
 
 export type EmailDomainFragment = {
@@ -1826,6 +1828,7 @@ export type GetEmailConfigQuery = {
     prohibitedFileExtensions: Array<string>
     emailMasksEnabled: boolean
     externalEmailMasksEnabled: boolean
+    allowOwnerEmailAddressReuse: boolean
   }
 }
 
@@ -3193,6 +3196,10 @@ export const EmailConfigurationDataFragmentDoc = {
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'externalEmailMasksEnabled' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'allowOwnerEmailAddressReuse' },
           },
         ],
       },
@@ -5999,6 +6006,10 @@ export const GetEmailConfigDocument = {
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'externalEmailMasksEnabled' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'allowOwnerEmailAddressReuse' },
           },
         ],
       },

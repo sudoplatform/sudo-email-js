@@ -20,7 +20,6 @@ import {
   EmailAttachment,
   EmailFolder,
   EmailMessage,
-  EmailMessageRfc822Data,
   EncryptionStatus,
   InNetworkAddressNotFoundError,
   InvalidEmailContentsError,
@@ -40,8 +39,6 @@ import { readAllPages } from '../util/paginator'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { runTestsIf } from '../../util/util'
 import { delay } from '../../util/delay'
-import { insertLinebreaks } from '../../../src/private/util/stringUtils'
-import { encodeWordIfRequired } from '../../util/encoding'
 
 describe('SudoEmailClient SendEmailMessage Test Suite', () => {
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
@@ -203,7 +200,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
     expect(sentId).toMatch(emailMessageIdRegex)
 
-    let sent
+    let sent: EmailMessage | undefined
     await waitForExpect(async () => {
       sent = await instanceUnderTest.getEmailMessage({
         id: sentId,
@@ -218,26 +215,16 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       date: expect.any(Date),
       subject: emojiSubject,
       to: [{ emailAddress: toAddress }],
+      from: [{ emailAddress: emailAddress1.emailAddress }],
     })
 
-    const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
-      id: sentId,
-      emailAddressId: emailAddress1.id,
-    })
-
-    const sentRfc822DataStr = new TextDecoder().decode(
-      sentRFC822Data?.rfc822Data,
-    )
-    expect(sentRfc822DataStr).toContain(`From: <${draft.from[0].emailAddress}>`)
-    expect(sentRfc822DataStr).toContain(`To: <${toAddress}>`)
-    expect(sentRfc822DataStr).toContain(emojiBody)
-
-    const sentEmailMessageBody =
+    const sentEmailMessageWithBody =
       await instanceUnderTest.getEmailMessageWithBody({
         id: sentId,
         emailAddressId: emailAddress1.id,
       })
-    expect(sentEmailMessageBody).toBeDefined()
+    expect(sentEmailMessageWithBody).toBeDefined()
+    expect(sentEmailMessageWithBody!.body).toEqual(emojiBody)
   })
 
   it('returns expected output', async () => {
@@ -259,7 +246,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
     expect(sentId).toMatch(emailMessageIdRegex)
 
-    let sent
+    let sent: EmailMessage | undefined
     await waitForExpect(async () => {
       sent = await instanceUnderTest.getEmailMessage({
         id: sentId,
@@ -272,22 +259,18 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
       id: sentId,
       hasAttachments: false,
       date: expect.any(Date),
+      from: [{ emailAddress: emailAddress1.emailAddress }],
+      to: [{ emailAddress: successSimulatorAddress }],
+      subject: draft.subject,
     })
 
-    const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
-      id: sentId,
-      emailAddressId: emailAddress1.id,
-    })
-
-    const sentRfc822DataStr = new TextDecoder().decode(
-      sentRFC822Data?.rfc822Data,
-    )
-    expect(sentRfc822DataStr).toContain(`From: <${draft.from[0].emailAddress}>`)
-    expect(sentRfc822DataStr).toContain(`To: <${draft.to![0].emailAddress}>`)
-    expect(sentRfc822DataStr).toContain(
-      `Subject: ${encodeWordIfRequired(draft.subject, EncryptionStatus.UNENCRYPTED)}`,
-    )
-    expect(sentRfc822DataStr).toContain(draft.body)
+    const sentEmailMessageWithBody =
+      await instanceUnderTest.getEmailMessageWithBody({
+        id: sentId,
+        emailAddressId: emailAddress1.id,
+      })
+    expect(sentEmailMessageWithBody).toBeDefined()
+    expect(sentEmailMessageWithBody!.body).toEqual(draft.body)
   })
 
   it('returns expected output with attachments', async () => {
@@ -309,7 +292,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
     expect(sentId).toMatch(emailMessageIdRegex)
 
-    let sent
+    let sent: EmailMessage | undefined
     await waitForExpect(async () => {
       sent = await instanceUnderTest.getEmailMessage({
         id: sentId,
@@ -318,38 +301,33 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
     })
 
     expect(sent).toMatchObject({
-      ..._.omit(draft, 'body', 'attachments'),
+      ..._.omit(draftWithAttachments, 'body', 'attachments'),
       id: sentId,
       hasAttachments: true,
       date: expect.any(Date),
+      from: [{ emailAddress: emailAddress1.emailAddress }],
+      to: [{ emailAddress: successSimulatorAddress }],
+      subject: draftWithAttachments.subject,
     })
 
-    const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
-      id: sentId,
-      emailAddressId: emailAddress1.id,
-    })
-
-    const sentRfc822DataStr = new TextDecoder().decode(
-      sentRFC822Data?.rfc822Data,
+    const sentEmailMessageWithBody =
+      await instanceUnderTest.getEmailMessageWithBody({
+        id: sentId,
+        emailAddressId: emailAddress1.id,
+      })
+    expect(sentEmailMessageWithBody).toBeDefined()
+    expect(sentEmailMessageWithBody!.body).toEqual(draftWithAttachments.body)
+    expect(sentEmailMessageWithBody!.attachments).toHaveLength(2)
+    const attachment1 = sentEmailMessageWithBody!.attachments!.find(
+      (att) => att.filename === draftWithAttachments.attachments![0].filename,
     )
-    expect(sentRfc822DataStr).toContain(
-      `From: <${draftWithAttachments.from[0].emailAddress}>`,
+    expect(attachment1).toBeDefined()
+    expect(attachment1?.data).toEqual(draftWithAttachments.attachments![0].data)
+    const attachment2 = sentEmailMessageWithBody!.attachments!.find(
+      (att) => att.filename === draftWithAttachments.attachments![1].filename,
     )
-    expect(sentRfc822DataStr).toContain(
-      `To: <${draftWithAttachments.to![0].emailAddress}>`,
-    )
-    expect(sentRfc822DataStr).toContain(
-      `Subject: ${encodeWordIfRequired(draftWithAttachments.subject, EncryptionStatus.UNENCRYPTED)}`,
-    )
-    expect(sentRfc822DataStr).toContain(draftWithAttachments.body)
-    const expectedAttachment1Data = insertLinebreaks(
-      draftWithAttachments.attachments![0].data,
-    )
-    expect(sentRfc822DataStr).toContain(expectedAttachment1Data)
-    const expectedAttachment2Data = insertLinebreaks(
-      draftWithAttachments.attachments![1].data,
-    )
-    expect(sentRfc822DataStr).toContain(expectedAttachment2Data)
+    expect(attachment2).toBeDefined()
+    expect(attachment2?.data).toEqual(draftWithAttachments.attachments![1].data)
   })
 
   it('returns expected output when sending to cc', async () => {
@@ -864,34 +842,54 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
       expect(sentId).toMatch(emailMessageIdRegex)
 
-      let sent: EmailMessageRfc822Data | undefined
+      let sent: EmailMessage | undefined
       await waitForExpect(async () => {
-        sent = await instanceUnderTest.getEmailMessageRfc822Data({
+        sent = await instanceUnderTest.getEmailMessage({
           id: sentId,
-          emailAddressId: emailAddress1.id,
         })
         expect(sent).toBeDefined()
       })
 
-      const sentRfc822DataStr = new TextDecoder().decode(sent?.rfc822Data)
-      expect(sentRfc822DataStr).toContain(
-        `From: <${encryptedDraftWithAttachments.from[0].emailAddress}>`,
+      expect(sent).toMatchObject({
+        ..._.omit(encryptedDraftWithAttachments, 'body', 'attachments'),
+        id: sentId,
+        hasAttachments: true,
+        date: expect.any(Date),
+        from: [{ emailAddress: emailAddress1.emailAddress }],
+        to: [
+          { emailAddress: encryptedDraftWithAttachments.to![0].emailAddress },
+        ],
+        subject: encryptedDraftWithAttachments.subject,
+      })
+
+      const sentEmailMessageWithBody =
+        await instanceUnderTest.getEmailMessageWithBody({
+          id: sentId,
+          emailAddressId: emailAddress1.id,
+        })
+      expect(sentEmailMessageWithBody).toBeDefined()
+      expect(sentEmailMessageWithBody!.body).toEqual(
+        encryptedDraftWithAttachments.body,
       )
-      expect(sentRfc822DataStr).toContain(
-        `To: <${encryptedDraftWithAttachments.to![0].emailAddress}>`,
+      expect(sentEmailMessageWithBody!.attachments).toHaveLength(2)
+      const attachment1 = sentEmailMessageWithBody!.attachments!.find(
+        (att) =>
+          att.filename ===
+          encryptedDraftWithAttachments.attachments![0].filename,
       )
-      expect(sentRfc822DataStr).toContain(
-        `Subject: ${encryptedDraftWithAttachments.subject}`,
-      )
-      expect(sentRfc822DataStr).toContain(encryptedDraftWithAttachments.body)
-      const expectedAttachment1Data = insertLinebreaks(
+      expect(attachment1).toBeDefined()
+      expect(attachment1?.data).toEqual(
         encryptedDraftWithAttachments.attachments![0].data,
       )
-      expect(sentRfc822DataStr).toContain(expectedAttachment1Data)
-      const expectedAttachment2Data = insertLinebreaks(
+      const attachment2 = sentEmailMessageWithBody!.attachments!.find(
+        (att) =>
+          att.filename ===
+          encryptedDraftWithAttachments.attachments![1].filename,
+      )
+      expect(attachment2).toBeDefined()
+      expect(attachment2?.data).toEqual(
         encryptedDraftWithAttachments.attachments![1].data,
       )
-      expect(sentRfc822DataStr).toContain(expectedAttachment2Data)
     })
 
     it('returns expected output when sending to random-cased email address', async () => {
@@ -1064,7 +1062,7 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
 
       expect(sentId).toMatch(emailMessageIdRegex)
 
-      let sent
+      let sent: EmailMessage | undefined
       await waitForExpect(async () => {
         sent = await instanceUnderTest.getEmailMessage({
           id: sentId,
@@ -1077,19 +1075,13 @@ describe('SudoEmailClient SendEmailMessage Test Suite', () => {
         id: sentId,
         hasAttachments: false,
         date: expect.any(Date),
+        to: [
+          {
+            displayName: 'Kent, Clark',
+            emailAddress: commaDisplayNameDraft.to![0].emailAddress,
+          },
+        ],
       })
-
-      const sentRFC822Data = await instanceUnderTest.getEmailMessageRfc822Data({
-        id: sentId,
-        emailAddressId: emailAddress1.id,
-      })
-
-      const sentRfc822DataStr = new TextDecoder().decode(
-        sentRFC822Data?.rfc822Data,
-      )
-      expect(sentRfc822DataStr).toContain(
-        `To: "Kent, Clark" <${commaDisplayNameDraft.to![0].emailAddress}>`,
-      )
     })
 
     runTestsIf(

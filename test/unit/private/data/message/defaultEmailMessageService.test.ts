@@ -2750,56 +2750,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
   })
 
   describe('getEmailMessageWithBody', () => {
-    it('calls getEmailMessageRfc822Data with the same arguments', async () => {
-      const mockEmailMessageRfc822Data = vi
-        .spyOn(instanceUnderTest, 'getEmailMessageRfc822Data')
-        .mockResolvedValue(stringToArrayBuffer('dummy-data'))
-      await instanceUnderTest.getEmailMessageWithBody(
-        EmailMessageRfc822DataFactory.getEmailMessageInput,
-      )
-
-      expect(mockEmailMessageRfc822Data).toHaveBeenCalledTimes(1)
-      expect(mockEmailMessageRfc822Data).toHaveBeenCalledWith(
-        EmailMessageRfc822DataFactory.getEmailMessageInput,
-      )
-    })
-
-    it('returns undefined if getEmailMessageRfc822Data returns undefined', async () => {
-      const mockEmailMessageRfc822Data = vi
-        .spyOn(instanceUnderTest, 'getEmailMessageRfc822Data')
-        .mockResolvedValue(undefined)
-      const result = await instanceUnderTest.getEmailMessageWithBody(
-        EmailMessageRfc822DataFactory.getEmailMessageInput,
-      )
-
-      expect(result).toBeUndefined()
-    })
-
-    it('passes result from getEmailMessageRfc822Data to parseInternetMessageData and returns proper values', async () => {
-      const mockEmailMessageRfc822Data = vi
-        .spyOn(instanceUnderTest, 'getEmailMessageRfc822Data')
-        .mockResolvedValue(stringToArrayBuffer('dummy-data'))
-      const body = 'mockBody'
-      parseInternetMessageDataSpy.mockResolvedValueOnce({
-        from: [{ emailAddress: 'example@example.com' }],
-        body,
-        attachments: [],
-        inlineAttachments: [],
-      })
-      const result = await instanceUnderTest.getEmailMessageWithBody(
-        EmailMessageRfc822DataFactory.getEmailMessageInput,
-      )
-      expect(result).toStrictEqual({
-        id: EmailMessageRfc822DataFactory.getEmailMessageInput.id,
-        body: body,
-        attachments: [],
-        inlineAttachments: [],
-      })
-    })
-  })
-
-  describe('getEmailMessageRfc822Data', () => {
-    const unsealedDraft = Base64.encodeString('unsealedDraft')
+    const body = 'This is the message body'
+    const unsealedBodyBase64 = Base64.encodeString(body)
     beforeEach(() => {
       when(mockS3Client.download(anything())).thenResolve(
         EmailMessageRfc822DataFactory.s3ClientDownloadOutput,
@@ -2808,15 +2760,20 @@ describe('DefaultEmailMessageService Test Suite', () => {
         GraphQLDataFactory.sealedEmailMessage,
       )
       when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
-        unsealedDraft,
+        unsealedBodyBase64,
       )
+      parseInternetMessageDataSpy.mockResolvedValue({
+        from: [{ emailAddress: 'example@example.com' }],
+        body,
+        attachments: [],
+        inlineAttachments: [],
+      })
     })
     it('gets rfc822 data successfully', async () => {
-      await expect(
-        instanceUnderTest.getEmailMessageRfc822Data(
-          EmailMessageRfc822DataFactory.getEmailMessageInput,
-        ),
-      ).resolves.toStrictEqual(stringToArrayBuffer(unsealedDraft))
+      const returnedValue = await instanceUnderTest.getEmailMessageWithBody(
+        EmailMessageRfc822DataFactory.getEmailMessageInput,
+      )
+      expect(returnedValue!.body).toEqual(body)
 
       const [s3DownloadArg] = capture(mockS3Client.download).first()
       expect(s3DownloadArg).toEqual({
@@ -2840,12 +2797,12 @@ describe('DefaultEmailMessageService Test Suite', () => {
         contentEncoding:
           'sudoplatform-compression, sudoplatform-crypto, sudoplatform-binary-data',
       })
-      gunzipSpy.mockResolvedValueOnce(stringToArrayBuffer(unsealedDraft))
+      gunzipSpy.mockResolvedValueOnce(stringToArrayBuffer(unsealedBodyBase64))
 
-      const returnedValue = await instanceUnderTest.getEmailMessageRfc822Data(
+      const returnedValue = await instanceUnderTest.getEmailMessageWithBody(
         EmailMessageRfc822DataFactory.getEmailMessageInput,
       )
-      expect(arrayBufferToString(returnedValue!)).toEqual(unsealedDraft)
+      expect(returnedValue!.body).toEqual(body)
 
       const [s3DownloadArg] = capture(mockS3Client.download).first()
       expect(s3DownloadArg).toEqual({
@@ -2869,11 +2826,10 @@ describe('DefaultEmailMessageService Test Suite', () => {
         contentEncoding: 'sudoplatform-crypto, sudoplatform-binary-data',
       })
 
-      await expect(
-        instanceUnderTest.getEmailMessageRfc822Data(
-          EmailMessageRfc822DataFactory.getEmailMessageInput,
-        ),
-      ).resolves.toStrictEqual(stringToArrayBuffer(unsealedDraft))
+      const result = await instanceUnderTest.getEmailMessageWithBody(
+        EmailMessageRfc822DataFactory.getEmailMessageInput,
+      )
+      expect(result?.body).toEqual(body)
 
       const [s3DownloadArg] = capture(mockS3Client.download).first()
       expect(s3DownloadArg).toEqual({
@@ -2914,18 +2870,17 @@ describe('DefaultEmailMessageService Test Suite', () => {
         ],
       }
       when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
-        `${unsealedDraft}\n${SecureEmailAttachmentType.BODY.contentId}`,
+        `${unsealedBodyBase64}\n${SecureEmailAttachmentType.BODY.contentId}`,
       )
       parseInternetMessageDataSpy.mockResolvedValueOnce(message)
       when(mockEmailCryptoService.decrypt(anything())).thenResolve(
-        stringToArrayBuffer(unsealedDraft),
+        stringToArrayBuffer(unsealedBodyBase64),
       )
 
-      await expect(
-        instanceUnderTest.getEmailMessageRfc822Data(
-          EmailMessageRfc822DataFactory.getEmailMessageInput,
-        ),
-      ).resolves.toStrictEqual(stringToArrayBuffer(unsealedDraft))
+      const result = await instanceUnderTest.getEmailMessageWithBody(
+        EmailMessageRfc822DataFactory.getEmailMessageInput,
+      )
+      expect(result?.body).toEqual(body)
 
       const [s3DownloadArg] = capture(mockS3Client.download).first()
       expect(s3DownloadArg).toEqual({
@@ -2941,7 +2896,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
       )
       verify(mockAppSync.getEmailMessage(anything())).once()
       expect(gunzipSpy).toHaveBeenCalledTimes(0)
-      expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(1)
+      // One each before and after decryption
+      expect(parseInternetMessageDataSpy).toHaveBeenCalledTimes(2)
       verify(mockEmailCryptoService.decrypt(anything())).once()
       const [securePackageArg] = capture(mockEmailCryptoService.decrypt).first()
       expect(securePackageArg).toBeInstanceOf(SecurePackage)
@@ -2954,7 +2910,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
 
       await expect(
-        instanceUnderTest.getEmailMessageRfc822Data(
+        instanceUnderTest.getEmailMessageWithBody(
           EmailMessageRfc822DataFactory.getEmailMessageInput,
         ),
       ).rejects.toThrow(DecodeError)
@@ -2970,7 +2926,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       )
 
       await expect(
-        instanceUnderTest.getEmailMessageRfc822Data(
+        instanceUnderTest.getEmailMessageWithBody(
           EmailMessageRfc822DataFactory.getEmailMessageInput,
         ),
       ).resolves.toBeUndefined()
@@ -3001,7 +2957,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       )
 
       await expect(
-        instanceUnderTest.getEmailMessageRfc822Data(
+        instanceUnderTest.getEmailMessageWithBody(
           EmailMessageRfc822DataFactory.getEmailMessageInput,
         ),
       ).rejects.toThrow('test error')
@@ -3026,7 +2982,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       when(mockAppSync.getEmailMessage(anything())).thenResolve(undefined)
 
       await expect(
-        instanceUnderTest.getEmailMessageRfc822Data(
+        instanceUnderTest.getEmailMessageWithBody(
           EmailMessageRfc822DataFactory.getEmailMessageInput,
         ),
       ).resolves.toBeUndefined()
@@ -3206,6 +3162,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
   describe('cache integration', () => {
     const mockCache = mock<EmailMessageBodyCache>()
     let instanceWithCache: DefaultEmailMessageService
+    const body = 'This is the message body'
 
     beforeEach(() => {
       reset(mockCache)
@@ -3228,9 +3185,15 @@ describe('DefaultEmailMessageService Test Suite', () => {
       when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
         Base64.encodeString('unsealedContent'),
       )
+      parseInternetMessageDataSpy.mockResolvedValue({
+        from: [{ emailAddress: 'example@example.com' }],
+        body,
+        attachments: [],
+        inlineAttachments: [],
+      })
     })
 
-    describe('getEmailMessageRfc822Data', () => {
+    describe('getEmailMessageWithBody', () => {
       it('returns cached blob without calling S3 on a cache hit', async () => {
         when(mockCache.get(anything())).thenResolve({
           messageId: EmailMessageRfc822DataFactory.getEmailMessageInput.id,
@@ -3242,7 +3205,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
               .contentEncoding,
         })
 
-        await instanceWithCache.getEmailMessageRfc822Data(
+        await instanceWithCache.getEmailMessageWithBody(
           EmailMessageRfc822DataFactory.getEmailMessageInput,
         )
 
@@ -3253,7 +3216,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       it('calls S3 and populates cache on a cache miss', async () => {
         when(mockCache.get(anything())).thenResolve(undefined)
 
-        await instanceWithCache.getEmailMessageRfc822Data(
+        await instanceWithCache.getEmailMessageWithBody(
           EmailMessageRfc822DataFactory.getEmailMessageInput,
         )
 
@@ -3275,7 +3238,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
 
       it('always calls S3 when no cache is configured', async () => {
-        await instanceUnderTest.getEmailMessageRfc822Data(
+        await instanceUnderTest.getEmailMessageWithBody(
           EmailMessageRfc822DataFactory.getEmailMessageInput,
         )
 

@@ -95,7 +95,6 @@ import { ListEmailMasksForOwnerUseCase } from '../private/domain/use-cases/mask/
 import { ProvisionEmailMaskUseCase } from '../private/domain/use-cases/mask/provisionEmailMaskUseCase'
 import { UpdateEmailMaskUseCase } from '../private/domain/use-cases/mask/updateEmailMaskUseCase'
 import { DeleteEmailMessagesUseCase } from '../private/domain/use-cases/message/deleteEmailMessagesUseCase'
-import { GetEmailMessageRfc822DataUseCase } from '../private/domain/use-cases/message/getEmailMessageRfc822DataUseCase'
 import { GetEmailMessageUseCase } from '../private/domain/use-cases/message/getEmailMessageUseCase'
 import { GetEmailMessageWithBodyUseCase } from '../private/domain/use-cases/message/getEmailMessageWithBodyUseCase'
 import { ListEmailMessagesForEmailAddressIdUseCase } from '../private/domain/use-cases/message/listEmailMessagesForEmailAddressIdUseCase'
@@ -150,7 +149,6 @@ import {
 } from './inputs/emailMask'
 import {
   GetEmailMessageInput,
-  GetEmailMessageRfc822DataInput,
   GetEmailMessageWithBodyInput,
   ListEmailMessagesForEmailAddressIdInput,
   ListEmailMessagesForEmailFolderIdInput,
@@ -185,7 +183,6 @@ import {
   EmailMessageSubscriber,
   SendEmailMessageResult,
 } from './typings/emailMessage'
-import { EmailMessageRfc822Data } from './typings/emailMessageRfc822Data'
 import { EmailMessageWithBody } from './typings/emailMessageWithBody'
 import {
   ListEmailAddressesResult,
@@ -197,7 +194,7 @@ import {
   VerifyExternalEmailAddressInput,
   VerifyExternalEmailAddressResult,
 } from './typings/verifyExternalEmailAddress'
-import { DefaultEmailMessageBodyCache } from '../private/data/message/defaultEmailMessageBodyCache'
+import { LazyEmailMessageBodyCache } from '../private/data/message/cache/lazyEmailMessageBodyCache'
 import { EmailMessageBodyCache } from '../private/domain/entities/message/emailMessageBodyCache'
 
 export class DefaultSudoEmailClient implements SudoEmailClient {
@@ -266,7 +263,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     )
     this.emailCryptoService = new DefaultEmailCryptoService(deviceKeyWorker)
     this.emailMessageBodyCache =
-      privateOptions.emailMessageBodyCache ?? new DefaultEmailMessageBodyCache()
+      privateOptions.emailMessageBodyCache ?? new LazyEmailMessageBodyCache()
     this.emailMessageService = new DefaultEmailMessageService(
       this.apiClient,
       this.userClient,
@@ -1135,21 +1132,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       this.emailMessageService,
     )
     return await getEmailMessageWithBodyUseCase.execute({ id, emailAddressId })
-  }
-
-  public async getEmailMessageRfc822Data({
-    id,
-    emailAddressId,
-  }: GetEmailMessageRfc822DataInput): Promise<
-    EmailMessageRfc822Data | undefined
-  > {
-    await this.ensureSignedIn()
-    const getEmailMessageRfc822DataUseCase =
-      new GetEmailMessageRfc822DataUseCase(this.emailMessageService)
-    return await getEmailMessageRfc822DataUseCase.execute({
-      id,
-      emailAddressId,
-    })
   }
 
   public async listEmailMessages({

@@ -46,6 +46,7 @@ export class APIDataFactory {
     prohibitedFileExtensions: ['.js', '.exe', '.lib'],
     emailMasksEnabled: true,
     externalEmailMasksEnabled: false,
+    allowOwnerEmailAddressReuse: true,
   }
 
   static readonly emailFolder: EmailFolder = {
