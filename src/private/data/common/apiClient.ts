@@ -173,6 +173,7 @@ import {
   VerifyExternalEmailAddressInput,
   VerifyExternalEmailAddressMutation,
   VerifyExternalEmailAddressResult,
+  EmailMessageFilterInput,
 } from '../../../gen/graphqlTypes'
 import { ErrorTransformer } from './transformer/errorTransformer'
 import { GraphQLClient } from '@sudoplatform/sudo-user'
@@ -547,12 +548,14 @@ export class ApiClient {
     sortOrder?: SortOrder,
     nextToken?: string,
     includeDeletedMessages?: boolean,
+    filter?: EmailMessageFilterInput,
   ): Promise<EmailMessageConnection> {
     const data =
       await this.performQuery<ListEmailMessagesForEmailFolderIdQuery>({
         query: ListEmailMessagesForEmailFolderIdDocument,
         variables: {
           input: {
+            filter,
             folderId,
             specifiedDateRange: dateRange,
             limit,

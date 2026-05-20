@@ -108,7 +108,7 @@ describe('SudoEmailClient.lookupEmailAddressesPublicInfo Test Suite', () => {
       instanceUnderTest.lookupEmailAddressesPublicInfo({
         emailAddresses,
       }),
-    ).resolves.toStrictEqual<EmailAddressPublicInfo[]>(publicInfo)
+    ).resolves.toStrictEqual(publicInfo)
 
     const [actualArgs] = capture(
       mockLookupEmailAddressesPublicInfoUseCase.execute,

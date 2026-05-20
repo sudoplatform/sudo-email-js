@@ -8,13 +8,13 @@ import { anything, instance, mock, reset, when } from 'ts-mockito'
 import { DefaultEmailAddressBlocklistService } from '../../../../../../src/private/data/blocklist/defaultEmailAddressBlocklistService'
 import { UnblockEmailAddressesUseCase } from '../../../../../../src/private/domain/use-cases/blocklist/unblockEmailAddresses'
 import { v4 } from 'uuid'
-import { UpdateEmailMessagesStatus } from '../../../../../../src/private/domain/entities/message/updateEmailMessagesStatus'
 import {
   BlockEmailAddressesBulkUpdateOutput,
   UnblockEmailAddressesForOwnerInput,
 } from '../../../../../../src/private/domain/entities/blocklist/emailAddressBlocklistService'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { NotSignedInError } from '@sudoplatform/sudo-common'
+import { UpdateBlockedAddressesStatus } from '../../../../../../src/private/domain/entities/blocklist/updateBlockedAddressesStatus'
 
 describe('UnblockEmailAddressesUseCase Test Suite', () => {
   const mockOwner = 'mockOwner'
@@ -32,7 +32,7 @@ describe('UnblockEmailAddressesUseCase Test Suite', () => {
     reset(mockBlockedEmailAddressService)
     when(
       mockBlockedEmailAddressService.unblockEmailAddressesForOwner(anything()),
-    ).thenResolve({ status: UpdateEmailMessagesStatus.Success })
+    ).thenResolve({ status: UpdateBlockedAddressesStatus.Success })
     when(mockUserClient.getSubject()).thenResolve(mockOwner)
 
     instanceUnderTest = new UnblockEmailAddressesUseCase(
@@ -47,7 +47,7 @@ describe('UnblockEmailAddressesUseCase Test Suite', () => {
         unblockedAddresses: emailAddresses,
       })
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Success,
+        status: UpdateBlockedAddressesStatus.Success,
       })
     })
 
@@ -56,12 +56,12 @@ describe('UnblockEmailAddressesUseCase Test Suite', () => {
         mockBlockedEmailAddressService.unblockEmailAddressesForOwner(
           anything(),
         ),
-      ).thenResolve({ status: UpdateEmailMessagesStatus.Failed })
+      ).thenResolve({ status: UpdateBlockedAddressesStatus.Failed })
       const result = await instanceUnderTest.execute({
         unblockedAddresses: emailAddresses,
       })
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Failed,
+        status: UpdateBlockedAddressesStatus.Failed,
       })
     })
 
@@ -73,7 +73,7 @@ describe('UnblockEmailAddressesUseCase Test Suite', () => {
       ).thenCall((input: UnblockEmailAddressesForOwnerInput) => {
         const [first, ...rest] = input.unblockedAddresses
         return Promise.resolve({
-          status: UpdateEmailMessagesStatus.Partial,
+          status: UpdateBlockedAddressesStatus.Partial,
           failedAddresses: [first],
           successAddresses: rest,
         })
@@ -82,7 +82,7 @@ describe('UnblockEmailAddressesUseCase Test Suite', () => {
         unblockedAddresses: emailAddresses,
       })
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Partial,
+        status: UpdateBlockedAddressesStatus.Partial,
         failedAddresses: [emailAddresses[0]],
         successAddresses: [emailAddresses[1]],
       })

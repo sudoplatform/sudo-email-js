@@ -15,7 +15,7 @@ import {
 } from 'ts-mockito'
 import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
-import { DraftEmailMessageMetadata, SudoEmailClient } from '../../../src'
+import { SudoEmailClient } from '../../../src'
 import { SaveDraftEmailMessageUseCase } from '../../../src/private/domain/use-cases/draft/saveDraftEmailMessageUseCase'
 import { stringToArrayBuffer } from '../../../src/private/util/buffer'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
@@ -85,7 +85,7 @@ describe('SudoEmailClient.createDraftEmailMessage Test Suite', () => {
         rfc822Data: stringToArrayBuffer(''),
         senderEmailAddressId: '',
       }),
-    ).resolves.toEqual<DraftEmailMessageMetadata>({
+    ).resolves.toEqual({
       id: 'draftId',
       emailAddressId: 'emailAddressId',
       updatedAt,

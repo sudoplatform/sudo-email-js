@@ -15,10 +15,7 @@ import {
 } from 'ts-mockito'
 import { v4 } from 'uuid'
 import { EmailMessageService } from '../../../../../../src/private/domain/entities/message/emailMessageService'
-import {
-  GetDraftEmailMessageUseCase,
-  GetDraftEmailMessageUseCaseOutput,
-} from '../../../../../../src/private/domain/use-cases/draft/getDraftEmailMessageUseCase'
+import { GetDraftEmailMessageUseCase } from '../../../../../../src/private/domain/use-cases/draft/getDraftEmailMessageUseCase'
 import { stringToArrayBuffer } from '../../../../../../src/private/util/buffer'
 
 describe('GetDraftEmailMessageUseCase Test Suite', () => {
@@ -74,7 +71,7 @@ describe('GetDraftEmailMessageUseCase Test Suite', () => {
 
     await expect(
       instanceUnderTest.execute({ id, emailAddressId }),
-    ).resolves.toEqual<GetDraftEmailMessageUseCaseOutput>({
+    ).resolves.toEqual({
       id,
       emailAddressId,
       updatedAt,
@@ -99,7 +96,7 @@ describe('GetDraftEmailMessageUseCase Test Suite', () => {
 
     await expect(
       instanceUnderTest.execute({ id, emailAddressId, emailMaskId }),
-    ).resolves.toEqual<GetDraftEmailMessageUseCaseOutput>({
+    ).resolves.toEqual({
       id,
       emailAddressId,
       updatedAt,

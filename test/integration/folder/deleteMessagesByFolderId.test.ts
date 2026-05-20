@@ -12,7 +12,6 @@ import {
   AddressNotFoundError,
   EmailAddress,
   EmailFolderNotFoundError,
-  ListEmailMessagesResult,
   SendEmailMessageInput,
   SendEmailMessageResult,
   SudoEmailClient,
@@ -132,7 +131,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: inboxFolder.id,
         }),
-      ).resolves.toStrictEqual<ListEmailMessagesResult>({
+      ).resolves.toStrictEqual({
         nextToken: undefined,
         status: ListOperationResultStatus.Success,
         items: [],
@@ -201,7 +200,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: inboxFolder.id,
         }),
-      ).resolves.toStrictEqual<ListEmailMessagesResult>({
+      ).resolves.toStrictEqual({
         nextToken: undefined,
         status: ListOperationResultStatus.Success,
         items: [],
@@ -281,7 +280,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: inboxFolder.id,
         }),
-      ).resolves.toStrictEqual<ListEmailMessagesResult>({
+      ).resolves.toStrictEqual({
         nextToken: undefined,
         status: ListOperationResultStatus.Success,
         items: [],
@@ -381,7 +380,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: trashFolder.id,
         }),
-      ).resolves.toStrictEqual<ListEmailMessagesResult>({
+      ).resolves.toStrictEqual({
         nextToken: undefined,
         status: ListOperationResultStatus.Success,
         items: [],
@@ -465,7 +464,7 @@ describe('SudoEmailClient DeleteMessagesByFolderId Test Suite', () => {
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: customFolder.id,
         }),
-      ).resolves.toStrictEqual<ListEmailMessagesResult>({
+      ).resolves.toStrictEqual({
         nextToken: undefined,
         status: ListOperationResultStatus.Success,
         items: [],

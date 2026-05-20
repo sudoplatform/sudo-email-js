@@ -19,7 +19,6 @@ import {
 } from '../../../../../../src/private/domain/entities/account/emailAccountService'
 import { EntityDataFactory } from '../../../../data-factory/entity'
 import { LookupEmailAddressesPublicInfoUseCase } from '../../../../../../src/private/domain/use-cases/account/lookupEmailAddressesPublicInfoUseCase'
-import { EmailAddressPublicInfoEntity } from '../../../../../../src/private/domain/entities/account/emailAddressPublicInfoEntity'
 
 describe('lookupEmailAddressesPublicInfoUseCase Test Suite', () => {
   const mockEmailAccountService = mock<EmailAccountService>()
@@ -48,9 +47,7 @@ describe('lookupEmailAddressesPublicInfoUseCase Test Suite', () => {
         instanceUnderTest.execute({
           emailAddresses: inputEmailAddresses,
         }),
-      ).resolves.toStrictEqual<EmailAddressPublicInfoEntity[]>(
-        EntityDataFactory.emailAddressesPublicInfo,
-      )
+      ).resolves.toStrictEqual(EntityDataFactory.emailAddressesPublicInfo)
 
       verify(mockEmailAccountService.lookupPublicInfo(anything())).once()
       const [inputArgs] = capture(
@@ -66,7 +63,7 @@ describe('lookupEmailAddressesPublicInfoUseCase Test Suite', () => {
 
       await expect(
         instanceUnderTest.execute({ emailAddresses: [] }),
-      ).resolves.toStrictEqual<EmailAddressPublicInfoEntity[]>([])
+      ).resolves.toStrictEqual([])
 
       verify(mockEmailAccountService.lookupPublicInfo(anything())).once()
       const [inputArgs] = capture(

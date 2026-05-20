@@ -15,3 +15,29 @@ export interface Pagination {
   limit?: number
   nextToken?: string
 }
+
+/**
+ * Interface for defining a string value which can be used as a filter on list queries. It is possible to
+ * specify more than one, but unlikely that combinations would return a sensible list since the predicates are ANDed
+ * together.
+ *
+ * @property {string} equal Specified if the list operation should return items matching the specified value
+ * @property {string} notEqual Specified if the list operation should return items not matching the specified value
+ * @property {string} beginsWith Specified if the list operation should return items starting with the specified value
+ */
+export interface StringFilter {
+  equal?: string
+  notEqual?: string
+  beginsWith?: string
+}
+
+/**
+ * Interface for defining a boolean value which can be used as a filter on list queries.
+ *
+ * @property {boolean} equal Specified if the list operation should return items matching the specified value
+ * @property {boolean} notEqual Specified if the list operation should return items not matching the specified value
+ */
+export interface BooleanFilter {
+  equal?: boolean
+  notEqual?: boolean
+}

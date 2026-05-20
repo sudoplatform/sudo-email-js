@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { UpdateEmailMessagesStatus } from '../message/updateEmailMessagesStatus'
 import {
   BlockedEmailAddressAction,
   BlockedEmailAddressLevel,
   UnsealedBlockedAddress,
 } from './blockedEmailEntity'
+import { UpdateBlockedAddressesStatus } from './updateBlockedAddressesStatus'
 
 /**
  * Input for `EmailAddressBlocklistService.blockEmailAddressesForOwner` method
@@ -78,7 +78,7 @@ export interface UnblockEmailAddressesByHashedValueInput {
  * @property {string[]} failedAddresses List of addresses that were not successfully blocked. Only populated if status is PARTIAL.
  */
 export interface BlockEmailAddressesBulkUpdateOutput {
-  status: UpdateEmailMessagesStatus
+  status: UpdateBlockedAddressesStatus
   successAddresses?: string[]
   failedAddresses?: string[]
 }

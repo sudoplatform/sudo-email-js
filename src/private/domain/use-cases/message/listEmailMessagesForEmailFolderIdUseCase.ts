@@ -9,7 +9,7 @@ import { Direction, State } from '../../../../public/typings/emailMessage'
 import { EmailMessageDateRange } from '../../../../public/typings/emailMessageDateRange'
 import { SortOrder } from '../../../../public/typings/sortOrder'
 import { EmailMessageService } from '../../entities/message/emailMessageService'
-import { EncryptionStatus } from '../../../../public'
+import { EncryptionStatus, ListEmailMessagesFilter } from '../../../../public'
 
 /**
  * Input for `ListEmailMessagesForEmailFolderIdUseCase` use case.
@@ -23,6 +23,7 @@ import { EncryptionStatus } from '../../../../public'
  * @property {boolean} includeDeletedMessages A flag to indicate if deleted messages should be included. Defaults to false.
  */
 interface ListEmailMessagesForEmailFolderIdUseCaseInput {
+  filter?: ListEmailMessagesFilter | undefined
   folderId: string
   dateRange?: EmailMessageDateRange | undefined
   limit?: number | undefined
@@ -83,6 +84,7 @@ export class ListEmailMessagesForEmailFolderIdUseCase {
   }
 
   async execute({
+    filter,
     folderId,
     dateRange,
     limit,
@@ -91,6 +93,7 @@ export class ListEmailMessagesForEmailFolderIdUseCase {
     includeDeletedMessages,
   }: ListEmailMessagesForEmailFolderIdUseCaseInput): Promise<ListEmailMessagesForEmailFolderIdUseCaseOutput> {
     this.log.debug(this.constructor.name, {
+      filter,
       folderId,
       dateRange,
       limit,
@@ -99,6 +102,7 @@ export class ListEmailMessagesForEmailFolderIdUseCase {
       includeDeletedMessages,
     })
     return await this.emailMessageService.listMessagesForEmailFolderId({
+      filter,
       folderId,
       dateRange,
       limit,

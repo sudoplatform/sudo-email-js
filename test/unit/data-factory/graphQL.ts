@@ -8,12 +8,12 @@ import {
   AvailableAddresses,
   BlockEmailAddressesBulkUpdateResult,
   ConfiguredDomains,
-  EmailDomain,
   EmailAddress,
   EmailAddressConnection,
   EmailAddressPublicInfo,
   EmailAddressWithoutFoldersFragment,
   EmailConfigurationData,
+  EmailDomain,
   EmailFolder,
   EmailFolderConnection,
   EmailMask,
@@ -34,7 +34,7 @@ import {
   SealedAttribute,
   SealedEmailMessage,
   SupportedDomains,
-  UpdateEmailMessagesStatus,
+  UpdateBlockedAddressesStatus,
 } from '../../../src/gen/graphqlTypes'
 
 export class GraphQLDataFactory {
@@ -165,7 +165,7 @@ export class GraphQLDataFactory {
 
   static readonly blockedAddressUpdateResult: BlockEmailAddressesBulkUpdateResult =
     {
-      status: UpdateEmailMessagesStatus.Success,
+      status: UpdateBlockedAddressesStatus.Success,
     }
 
   static readonly getEmailAddressBlocklistResult: GetEmailAddressBlocklistResponseFragment =

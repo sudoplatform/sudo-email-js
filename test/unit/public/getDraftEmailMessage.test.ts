@@ -15,7 +15,7 @@ import {
 } from 'ts-mockito'
 import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
-import { DraftEmailMessage, SudoEmailClient } from '../../../src'
+import { SudoEmailClient } from '../../../src'
 import { GetDraftEmailMessageUseCase } from '../../../src/private/domain/use-cases/draft/getDraftEmailMessageUseCase'
 import { stringToArrayBuffer } from '../../../src/private/util/buffer'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
@@ -94,7 +94,7 @@ describe('SudoEmailClient.getDraftEmailMessage Test Suite', () => {
         id: '',
         emailAddressId: '',
       }),
-    ).resolves.toEqual<DraftEmailMessage>({
+    ).resolves.toEqual({
       id: 'id',
       emailAddressId: 'emailAddressId',
       updatedAt,

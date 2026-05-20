@@ -8,13 +8,13 @@ import { anything, instance, mock, reset, when } from 'ts-mockito'
 import { DefaultEmailAddressBlocklistService } from '../../../../../../src/private/data/blocklist/defaultEmailAddressBlocklistService'
 import { UnblockEmailAddressesByHashedValueUseCase } from '../../../../../../src/private/domain/use-cases/blocklist/unblockEmailAddressesByHashedValue'
 import { v4 } from 'uuid'
-import { UpdateEmailMessagesStatus } from '../../../../../../src/private/domain/entities/message/updateEmailMessagesStatus'
 import {
   BlockEmailAddressesBulkUpdateOutput,
   UnblockEmailAddressesByHashedValueInput,
 } from '../../../../../../src/private/domain/entities/blocklist/emailAddressBlocklistService'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { NotSignedInError } from '@sudoplatform/sudo-common'
+import { UpdateBlockedAddressesStatus } from '../../../../../../src/private/domain/entities/blocklist/updateBlockedAddressesStatus'
 
 describe('UnblockEmailAddressesByHashedValueUseCase Test Suite', () => {
   const mockOwner = 'mockOwner'
@@ -31,7 +31,7 @@ describe('UnblockEmailAddressesByHashedValueUseCase Test Suite', () => {
       mockBlockedEmailAddressService.unblockEmailAddressesByHashedValue(
         anything(),
       ),
-    ).thenResolve({ status: UpdateEmailMessagesStatus.Success })
+    ).thenResolve({ status: UpdateBlockedAddressesStatus.Success })
     when(mockUserClient.getSubject()).thenResolve(mockOwner)
 
     instanceUnderTest = new UnblockEmailAddressesByHashedValueUseCase(
@@ -46,7 +46,7 @@ describe('UnblockEmailAddressesByHashedValueUseCase Test Suite', () => {
         hashedValues,
       })
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Success,
+        status: UpdateBlockedAddressesStatus.Success,
       })
     })
 
@@ -55,12 +55,12 @@ describe('UnblockEmailAddressesByHashedValueUseCase Test Suite', () => {
         mockBlockedEmailAddressService.unblockEmailAddressesByHashedValue(
           anything(),
         ),
-      ).thenResolve({ status: UpdateEmailMessagesStatus.Failed })
+      ).thenResolve({ status: UpdateBlockedAddressesStatus.Failed })
       const result = await instanceUnderTest.execute({
         hashedValues,
       })
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Failed,
+        status: UpdateBlockedAddressesStatus.Failed,
       })
     })
 
@@ -72,7 +72,7 @@ describe('UnblockEmailAddressesByHashedValueUseCase Test Suite', () => {
       ).thenCall((input: UnblockEmailAddressesByHashedValueInput) => {
         const [first, ...rest] = input.hashedValues
         return Promise.resolve({
-          status: UpdateEmailMessagesStatus.Partial,
+          status: UpdateBlockedAddressesStatus.Partial,
           failedAddresses: [first],
           successAddresses: rest,
         })
@@ -81,7 +81,7 @@ describe('UnblockEmailAddressesByHashedValueUseCase Test Suite', () => {
         hashedValues,
       })
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Partial,
+        status: UpdateBlockedAddressesStatus.Partial,
         failedAddresses: [hashedValues[0]],
         successAddresses: [hashedValues[1]],
       })

@@ -12,7 +12,7 @@
     "outDir": "lib",
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "sourceMap": true,
+    "sourceMap": false,
     "strict": true,
     "target": "ES2020",
     "typeRoots": ["./typings", "./node_modules/@types", "./node_modules"],

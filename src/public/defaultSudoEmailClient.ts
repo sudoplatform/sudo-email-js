@@ -53,7 +53,6 @@ import { ListEmailMessagesAPITransformer } from '../private/data/message/transfo
 import { UpdateEmailMessagesResultTransformer } from '../private/data/message/transformer/updateEmailMessagesResultTransformer'
 import { DefaultEmailCryptoService } from '../private/data/secure/defaultEmailCryptoService'
 import { EmailDomainEntity } from '../private/domain/entities/emailDomain/emailDomainEntity'
-import { UpdateEmailMessagesStatus } from '../private/domain/entities/message/updateEmailMessagesStatus'
 import { EmailMaskService } from '../private/domain/entities/mask/emailMaskService'
 import { CheckEmailAddressAvailabilityUseCase } from '../private/domain/use-cases/account/checkEmailAddressAvailabilityUseCase'
 import { DeprovisionEmailAccountUseCase } from '../private/domain/use-cases/account/deprovisionEmailAccountUseCase'
@@ -196,6 +195,7 @@ import {
 } from './typings/verifyExternalEmailAddress'
 import { LazyEmailMessageBodyCache } from '../private/data/message/cache/lazyEmailMessageBodyCache'
 import { EmailMessageBodyCache } from '../private/domain/entities/message/emailMessageBodyCache'
+import { UpdateBlockedAddressesStatus } from '../private/domain/entities/blocklist/updateBlockedAddressesStatus'
 
 export class DefaultSudoEmailClient implements SudoEmailClient {
   private readonly apiClient: ApiClient
@@ -738,11 +738,11 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     })
 
     switch (result.status) {
-      case UpdateEmailMessagesStatus.Success:
+      case UpdateBlockedAddressesStatus.Success:
         return { status: BatchOperationResultStatus.Success }
-      case UpdateEmailMessagesStatus.Failed:
+      case UpdateBlockedAddressesStatus.Failed:
         return { status: BatchOperationResultStatus.Failure }
-      case UpdateEmailMessagesStatus.Partial:
+      case UpdateBlockedAddressesStatus.Partial:
         return {
           status: BatchOperationResultStatus.Partial,
           failureValues: result.failedAddresses ?? [],
@@ -768,11 +768,11 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     })
 
     switch (result.status) {
-      case UpdateEmailMessagesStatus.Success:
+      case UpdateBlockedAddressesStatus.Success:
         return { status: BatchOperationResultStatus.Success }
-      case UpdateEmailMessagesStatus.Failed:
+      case UpdateBlockedAddressesStatus.Failed:
         return { status: BatchOperationResultStatus.Failure }
-      case UpdateEmailMessagesStatus.Partial:
+      case UpdateBlockedAddressesStatus.Partial:
         return {
           status: BatchOperationResultStatus.Partial,
           failureValues: result.failedAddresses ?? [],
@@ -796,11 +796,11 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const result = await useCase.execute({ hashedValues: input.hashedValues })
 
     switch (result.status) {
-      case UpdateEmailMessagesStatus.Success:
+      case UpdateBlockedAddressesStatus.Success:
         return { status: BatchOperationResultStatus.Success }
-      case UpdateEmailMessagesStatus.Failed:
+      case UpdateBlockedAddressesStatus.Failed:
         return { status: BatchOperationResultStatus.Failure }
-      case UpdateEmailMessagesStatus.Partial:
+      case UpdateBlockedAddressesStatus.Partial:
         return {
           status: BatchOperationResultStatus.Partial,
           failureValues: result.failedAddresses ?? [],
@@ -1200,6 +1200,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   }
 
   public async listEmailMessagesForEmailFolderId({
+    filter,
     folderId,
     dateRange,
     limit,
@@ -1209,6 +1210,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   }: ListEmailMessagesForEmailFolderIdInput): Promise<ListEmailMessagesResult> {
     await this.ensureSignedIn()
     this.log.debug(this.listEmailMessagesForEmailFolderId.name, {
+      filter,
       folderId,
       dateRange,
       limit,
@@ -1221,6 +1223,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     )
     const { emailMessages, nextToken: resultNextToken } = await useCase.execute(
       {
+        filter,
         folderId,
         dateRange,
         limit,

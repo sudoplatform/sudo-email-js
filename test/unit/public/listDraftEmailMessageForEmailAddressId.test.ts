@@ -15,11 +15,10 @@ import {
 } from 'ts-mockito'
 import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
-import { DraftEmailMessage, SudoEmailClient } from '../../../src'
+import { SudoEmailClient } from '../../../src'
 import { ListDraftEmailMessagesForEmailAddressIdUseCase } from '../../../src/private/domain/use-cases/draft/listDraftEmailMessagesForEmailAddressIdUseCase'
 import { stringToArrayBuffer } from '../../../src/private/util/buffer'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
-import { ListOutput } from '@sudoplatform/sudo-common'
 
 vi.mock(
   '../../../src/private/domain/use-cases/draft/listDraftEmailMessagesForEmailAddressIdUseCase',
@@ -107,7 +106,7 @@ describe('SudoEmailClient.listDraftEmailMessagesForEmailAddressId Test Suite', (
       instanceUnderTest.listDraftEmailMessagesForEmailAddressId({
         emailAddressId: '',
       }),
-    ).resolves.toEqual<ListOutput<DraftEmailMessage>>({
+    ).resolves.toEqual({
       items: [
         { id: 'id', emailAddressId: 'emailAddressId', updatedAt, rfc822Data },
       ],

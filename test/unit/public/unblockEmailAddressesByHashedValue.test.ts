@@ -22,6 +22,7 @@ import {
   UnblockEmailAddressesByHashedValueUseCaseInput,
 } from '../../../src/private/domain/use-cases/blocklist/unblockEmailAddressesByHashedValue'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
+import { UpdateBlockedAddressesStatus } from '../../../src/private/domain/entities/blocklist/updateBlockedAddressesStatus'
 
 vi.mock(
   '../../../src/private/domain/use-cases/blocklist/unblockEmailAddressesByHashedValue',
@@ -55,7 +56,7 @@ describe('SudoEmailClient.unblockEmailAddressesByHashedValue Test Suite', () => 
     when(
       mockUnblockEmailAddressesByHashedValueUseCase.execute(anything()),
     ).thenResolve({
-      status: UpdateEmailMessagesStatus.Success,
+      status: UpdateBlockedAddressesStatus.Success,
     })
   })
 
@@ -105,7 +106,7 @@ describe('SudoEmailClient.unblockEmailAddressesByHashedValue Test Suite', () => 
     when(
       mockUnblockEmailAddressesByHashedValueUseCase.execute(anything()),
     ).thenResolve({
-      status: UpdateEmailMessagesStatus.Failed,
+      status: UpdateBlockedAddressesStatus.Failed,
     })
     const hashedValues = [
       `hashedValue-${v4()}`,

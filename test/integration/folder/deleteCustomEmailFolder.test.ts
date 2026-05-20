@@ -14,7 +14,6 @@ import {
   BatchOperationResultStatus,
   EmailAddress,
   EmailFolder,
-  ListEmailMessagesResult,
   SendEmailMessageInput,
   SudoEmailClient,
 } from '../../../src'
@@ -113,7 +112,7 @@ describe('SudoEmailClient DeleteCustomEmailFolder Test Suite', () => {
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: customFolder.id,
         }),
-      ).resolves.toStrictEqual<ListEmailMessagesResult>({
+      ).resolves.toStrictEqual({
         nextToken: undefined,
         status: ListOperationResultStatus.Success,
         items: expect.arrayContaining([
@@ -147,7 +146,7 @@ describe('SudoEmailClient DeleteCustomEmailFolder Test Suite', () => {
         instanceUnderTest.listEmailMessagesForEmailFolderId({
           folderId: trashFolder.id,
         }),
-      ).resolves.toStrictEqual<ListEmailMessagesResult>({
+      ).resolves.toStrictEqual({
         nextToken: undefined,
         status: ListOperationResultStatus.Success,
         items: expect.arrayContaining([

@@ -15,7 +15,6 @@ import {
 } from 'ts-mockito'
 import { DefaultEmailAddressBlocklistService } from '../../../../../../src/private/data/blocklist/defaultEmailAddressBlocklistService'
 import { BlockEmailAddressesUseCase } from '../../../../../../src/private/domain/use-cases/blocklist/blockEmailAddresses'
-import { UpdateEmailMessagesStatus } from '../../../../../../src/private/domain/entities/message/updateEmailMessagesStatus'
 import { v4 } from 'uuid'
 import {
   BlockEmailAddressesBulkUpdateOutput,
@@ -29,6 +28,7 @@ import {
 } from '../../../../../../src/public'
 import { DefaultEmailAccountService } from '../../../../../../src/private/data/account/defaultEmailAccountService'
 import { EntityDataFactory } from '../../../../data-factory/entity'
+import { UpdateBlockedAddressesStatus } from '../../../../../../src/private/domain/entities/blocklist/updateBlockedAddressesStatus'
 
 describe('BlockEmailAddressesUseCase Test Suite', () => {
   const mockOwner = 'mockOwner'
@@ -48,12 +48,12 @@ describe('BlockEmailAddressesUseCase Test Suite', () => {
     reset(mockEmailAccountService)
     when(
       mockBlockedEmailAddressService.blockEmailAddressesForOwner(anything()),
-    ).thenResolve({ status: UpdateEmailMessagesStatus.Success })
+    ).thenResolve({ status: UpdateBlockedAddressesStatus.Success })
     when(
       mockBlockedEmailAddressService.blockEmailAddressesForEmailAddressId(
         anything(),
       ),
-    ).thenResolve({ status: UpdateEmailMessagesStatus.Success })
+    ).thenResolve({ status: UpdateBlockedAddressesStatus.Success })
     when(mockEmailAccountService.get(anything())).thenResolve(
       EntityDataFactory.emailAccount,
     )
@@ -74,7 +74,7 @@ describe('BlockEmailAddressesUseCase Test Suite', () => {
         blockLevel: BlockedEmailAddressLevel.ADDRESS,
       })
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Success,
+        status: UpdateBlockedAddressesStatus.Success,
       })
       verify(
         mockBlockedEmailAddressService.blockEmailAddressesForOwner(anything()),
@@ -104,7 +104,7 @@ describe('BlockEmailAddressesUseCase Test Suite', () => {
         blockLevel: BlockedEmailAddressLevel.ADDRESS,
       })
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Success,
+        status: UpdateBlockedAddressesStatus.Success,
       })
       verify(
         mockBlockedEmailAddressService.blockEmailAddressesForOwner(anything()),
@@ -134,7 +134,7 @@ describe('BlockEmailAddressesUseCase Test Suite', () => {
         blockLevel: BlockedEmailAddressLevel.DOMAIN,
       })
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Success,
+        status: UpdateBlockedAddressesStatus.Success,
       })
       verify(
         mockBlockedEmailAddressService.blockEmailAddressesForOwner(anything()),
@@ -163,7 +163,7 @@ describe('BlockEmailAddressesUseCase Test Suite', () => {
         blockLevel: BlockedEmailAddressLevel.ADDRESS,
       })
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Success,
+        status: UpdateBlockedAddressesStatus.Success,
       })
       verify(
         mockBlockedEmailAddressService.blockEmailAddressesForOwner(anything()),
@@ -188,14 +188,14 @@ describe('BlockEmailAddressesUseCase Test Suite', () => {
     it('returns failed requests correctly', async () => {
       when(
         mockBlockedEmailAddressService.blockEmailAddressesForOwner(anything()),
-      ).thenResolve({ status: UpdateEmailMessagesStatus.Failed })
+      ).thenResolve({ status: UpdateBlockedAddressesStatus.Failed })
       const result = await instanceUnderTest.execute({
         blockedAddresses: emailAddresses,
         action: BlockedEmailAddressAction.DROP,
         blockLevel: BlockedEmailAddressLevel.ADDRESS,
       })
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Failed,
+        status: UpdateBlockedAddressesStatus.Failed,
       })
       verify(
         mockBlockedEmailAddressService.blockEmailAddressesForOwner(anything()),
@@ -223,7 +223,7 @@ describe('BlockEmailAddressesUseCase Test Suite', () => {
       ).thenCall((input: BlockEmailAddressesForOwnerInput) => {
         const [first, ...rest] = input.blockedAddresses
         return Promise.resolve({
-          status: UpdateEmailMessagesStatus.Partial,
+          status: UpdateBlockedAddressesStatus.Partial,
           failedAddresses: [first],
           successAddresses: rest,
         })
@@ -234,7 +234,7 @@ describe('BlockEmailAddressesUseCase Test Suite', () => {
         blockLevel: BlockedEmailAddressLevel.ADDRESS,
       })
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Partial,
+        status: UpdateBlockedAddressesStatus.Partial,
         failedAddresses: [emailAddresses[0]],
         successAddresses: [emailAddresses[1]],
       })

@@ -19,6 +19,14 @@ import { ListEmailMessagesForEmailFolderIdUseCase } from '../../../../../../src/
 import { EmailMessageDateRange } from '../../../../../../src/public/typings/emailMessageDateRange'
 import { SortOrder } from '../../../../../../src/public/typings/sortOrder'
 import { EntityDataFactory } from '../../../../data-factory/entity'
+import {
+  ListEmailMessagesFilter,
+  MailboxType,
+} from '../../../../../../src/public'
+import {
+  Direction,
+  State,
+} from '../../../../../../src/public/typings/emailMessage'
 
 describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
   const mockEmailMessageService = mock<EmailMessageService>()
@@ -56,6 +64,7 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
         sortOrder: undefined,
         nextToken: undefined,
         includeDeletedMessages: undefined,
+        filter: undefined,
       })
       expect(result).toStrictEqual({
         emailMessages: [EntityDataFactory.emailMessage],
@@ -93,6 +102,7 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
         sortOrder: SortOrder.Desc,
         nextToken: undefined,
         includeDeletedMessages: undefined,
+        filter: undefined,
       })
       expect(result).toStrictEqual({
         emailMessages: [EntityDataFactory.emailMessage],
@@ -130,6 +140,7 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
         sortOrder: SortOrder.Desc,
         nextToken: undefined,
         includeDeletedMessages: undefined,
+        filter: undefined,
       })
       expect(result).toStrictEqual({
         emailMessages: [EntityDataFactory.emailMessage],
@@ -159,6 +170,7 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
         sortOrder: undefined,
         nextToken: undefined,
         includeDeletedMessages: undefined,
+        filter: undefined,
       })
       expect(result).toStrictEqual({
         emailMessages: [],
@@ -189,10 +201,103 @@ describe('ListEmailMessagesForEmailFolderIdUseCase Test Suite', () => {
         sortOrder: undefined,
         nextToken: undefined,
         includeDeletedMessages: true,
+        filter: undefined,
       })
       expect(result).toStrictEqual({
         emailMessages: [EntityDataFactory.emailMessage],
       })
+    })
+
+    it('passes a string filter through to the service', async () => {
+      const folderId = v4()
+      const filter: ListEmailMessagesFilter = {
+        folderId: { equal: folderId },
+      }
+      when(
+        mockEmailMessageService.listMessagesForEmailFolderId(anything()),
+      ).thenResolve({ emailMessages: [EntityDataFactory.emailMessage] })
+      await instanceUnderTest.execute({ folderId, filter })
+      const [inputArgs] = capture(
+        mockEmailMessageService.listMessagesForEmailFolderId,
+      ).first()
+      expect(inputArgs.filter).toStrictEqual(filter)
+    })
+
+    it('passes a boolean filter through to the service', async () => {
+      const folderId = v4()
+      const filter: ListEmailMessagesFilter = { seen: { equal: false } }
+      when(
+        mockEmailMessageService.listMessagesForEmailFolderId(anything()),
+      ).thenResolve({ emailMessages: [EntityDataFactory.emailMessage] })
+      await instanceUnderTest.execute({ folderId, filter })
+      const [inputArgs] = capture(
+        mockEmailMessageService.listMessagesForEmailFolderId,
+      ).first()
+      expect(inputArgs.filter).toStrictEqual(filter)
+    })
+
+    it('passes a direction filter through to the service', async () => {
+      const folderId = v4()
+      const filter: ListEmailMessagesFilter = {
+        direction: { equal: Direction.Inbound },
+      }
+      when(
+        mockEmailMessageService.listMessagesForEmailFolderId(anything()),
+      ).thenResolve({ emailMessages: [EntityDataFactory.emailMessage] })
+      await instanceUnderTest.execute({ folderId, filter })
+      const [inputArgs] = capture(
+        mockEmailMessageService.listMessagesForEmailFolderId,
+      ).first()
+      expect(inputArgs.filter).toStrictEqual(filter)
+    })
+
+    it('passes a state filter through to the service', async () => {
+      const folderId = v4()
+      const filter: ListEmailMessagesFilter = {
+        state: { oneOf: [State.Delivered, State.Received] },
+      }
+      when(
+        mockEmailMessageService.listMessagesForEmailFolderId(anything()),
+      ).thenResolve({ emailMessages: [EntityDataFactory.emailMessage] })
+      await instanceUnderTest.execute({ folderId, filter })
+      const [inputArgs] = capture(
+        mockEmailMessageService.listMessagesForEmailFolderId,
+      ).first()
+      expect(inputArgs.filter).toStrictEqual(filter)
+    })
+
+    it('passes a compound and filter through to the service', async () => {
+      const folderId = v4()
+      const filter: ListEmailMessagesFilter = {
+        and: [
+          { seen: { equal: false } },
+          { direction: { equal: Direction.Inbound } },
+        ],
+      }
+      when(
+        mockEmailMessageService.listMessagesForEmailFolderId(anything()),
+      ).thenResolve({ emailMessages: [EntityDataFactory.emailMessage] })
+      await instanceUnderTest.execute({ folderId, filter })
+      const [inputArgs] = capture(
+        mockEmailMessageService.listMessagesForEmailFolderId,
+      ).first()
+      expect(inputArgs.filter).toStrictEqual(filter)
+    })
+
+    it('passes a mailboxIds filter through to the service', async () => {
+      const folderId = v4()
+      const mailboxId = v4()
+      const filter: ListEmailMessagesFilter = {
+        mailboxIds: [{ type: MailboxType.Address, id: { equal: mailboxId } }],
+      }
+      when(
+        mockEmailMessageService.listMessagesForEmailFolderId(anything()),
+      ).thenResolve({ emailMessages: [EntityDataFactory.emailMessage] })
+      await instanceUnderTest.execute({ folderId, filter })
+      const [inputArgs] = capture(
+        mockEmailMessageService.listMessagesForEmailFolderId,
+      ).first()
+      expect(inputArgs.filter).toStrictEqual(filter)
     })
   })
 })

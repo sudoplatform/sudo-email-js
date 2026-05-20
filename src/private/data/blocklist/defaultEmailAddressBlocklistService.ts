@@ -28,7 +28,7 @@ import {
   BlockedAddressHashAlgorithm,
   BlockedEmailAddressInput,
   UnblockEmailAddressesInput,
-  UpdateEmailMessagesStatus,
+  UpdateBlockedAddressesStatus,
 } from '../../../gen/graphqlTypes'
 import EmailAddressParser from '../../domain/entities/common/mechanisms/emailAddressParser'
 import { DefaultEmailAddressParser } from '../common/mechanisms/defaultEmailAddressParser'
@@ -81,8 +81,8 @@ export class DefaultEmailAddressBlocklistService implements EmailAddressBlocklis
     )
 
     if (
-      result.status === UpdateEmailMessagesStatus.Failed ||
-      result.status === UpdateEmailMessagesStatus.Success
+      result.status === UpdateBlockedAddressesStatus.Failed ||
+      result.status === UpdateBlockedAddressesStatus.Success
     ) {
       return { status: result.status }
     }
@@ -134,8 +134,8 @@ export class DefaultEmailAddressBlocklistService implements EmailAddressBlocklis
     )
 
     if (
-      result.status === UpdateEmailMessagesStatus.Failed ||
-      result.status === UpdateEmailMessagesStatus.Success
+      result.status === UpdateBlockedAddressesStatus.Failed ||
+      result.status === UpdateBlockedAddressesStatus.Success
     ) {
       return { status: result.status }
     }
@@ -191,8 +191,8 @@ export class DefaultEmailAddressBlocklistService implements EmailAddressBlocklis
     )
 
     if (
-      result.status === UpdateEmailMessagesStatus.Failed ||
-      result.status === UpdateEmailMessagesStatus.Success
+      result.status === UpdateBlockedAddressesStatus.Failed ||
+      result.status === UpdateBlockedAddressesStatus.Success
     ) {
       return { status: result.status }
     }
@@ -231,8 +231,8 @@ export class DefaultEmailAddressBlocklistService implements EmailAddressBlocklis
     )
 
     if (
-      result.status === UpdateEmailMessagesStatus.Failed ||
-      result.status === UpdateEmailMessagesStatus.Success
+      result.status === UpdateBlockedAddressesStatus.Failed ||
+      result.status === UpdateBlockedAddressesStatus.Success
     ) {
       return { status: result.status }
     }

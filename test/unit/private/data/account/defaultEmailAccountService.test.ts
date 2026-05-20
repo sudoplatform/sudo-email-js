@@ -30,7 +30,6 @@ import {
   DeleteEmailAccountInput,
   UpdateEmailAccountMetadataInput,
 } from '../../../../../src/private/domain/entities/account/emailAccountService'
-import { EmailAddressPublicInfoEntity } from '../../../../../src/private/domain/entities/account/emailAddressPublicInfoEntity'
 import { EntityDataFactory } from '../../../data-factory/entity'
 import { GraphQLDataFactory } from '../../../data-factory/graphQL'
 
@@ -655,9 +654,7 @@ describe('DefaultEmailAccountService Test Suite', () => {
         instanceUnderTest.lookupPublicInfo({
           emailAddresses,
         }),
-      ).resolves.toEqual<EmailAddressPublicInfoEntity[]>(
-        EntityDataFactory.emailAddressesPublicInfo,
-      )
+      ).resolves.toEqual(EntityDataFactory.emailAddressesPublicInfo)
 
       verify(mockAppSync.lookupEmailAddressesPublicInfo(anything())).once()
       const [inputArgs] = capture(

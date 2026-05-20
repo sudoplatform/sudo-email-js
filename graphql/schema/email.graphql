@@ -31,6 +31,12 @@ enum UpdateEmailMessagesStatus {
   FAILED
 }
 
+enum UpdateBlockedAddressesStatus {
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
 enum SortOrder {
   ASC
   DESC
@@ -101,18 +107,21 @@ input CheckEmailAddressAvailabilityInput {
 }
 
 input ListEmailAddressesInput {
+  filter: EmailAddressFilterInput
   limit: Int
   nextToken: String
 }
 
 input ListEmailAddressesForSudoIdInput {
   sudoId: ID!
+  filter: EmailAddressFilterInput
   limit: Int
   nextToken: String
 }
 
 input ListEmailFoldersForEmailAddressIdInput {
   emailAddressId: ID!
+  filter: EmailFolderFilterInput
   limit: Int
   nextToken: String
 }
@@ -137,6 +146,7 @@ input ListEmailMessagesForEmailAddressIdInput {
 input ListEmailMessagesForEmailFolderIdInput {
   folderId: ID!
   specifiedDateRange: EmailMessageDateRangeInput
+  filter: EmailMessageFilterInput
   limit: Int
   sortOrder: SortOrder
   includeDeletedMessages: Boolean
@@ -215,10 +225,6 @@ input EmailMessageUpdateValuesInput {
 input UpdateEmailMessagesInput {
   messageIds: [ID!]!
   values: EmailMessageUpdateValuesInput!
-}
-
-input DeleteEmailMessageInput {
-  messageId: ID!
 }
 
 input OwnerInput {
@@ -304,6 +310,103 @@ input UnblockEmailAddressesInput {
 
 input GetEmailAddressBlocklistInput {
   owner: ID!
+}
+
+input EmailAddressFilterInput {
+  id: IDFilterInput
+  identityId: IDFilterInput
+  keyRingId: IDFilterInput
+  emailAddress: StringFilterInput
+  and: [EmailAddressFilterInput]
+  or: [EmailAddressFilterInput]
+  not: EmailAddressFilterInput
+}
+
+input EmailFolderFilterInput {
+  id: IDFilterInput
+  folderName: StringFilterInput
+  size: FloatFilterInput
+  unseenCount: IntFilterInput
+  and: [EmailFolderFilterInput]
+  or: [EmailFolderFilterInput]
+  not: EmailFolderFilterInput
+}
+
+enum MailboxType {
+  ADDRESS
+  MASK
+}
+
+input MailboxIdsFilterInput {
+  type: MailboxType!
+  id: StringFilterInput!
+}
+
+input EmailMessageFilterInput {
+  id: IDFilterInput
+  messageId: IDFilterInput
+  algorithm: StringFilterInput
+  keyId: IDFilterInput
+  folderId: IDFilterInput
+  direction: EmailMessageDirectionFilterInput
+  seen: BooleanFilterInput
+  repliedTo: BooleanFilterInput
+  forwarded: BooleanFilterInput
+  clientRefId: IDFilterInput
+  state: EmailMessageStateFilterInput
+  mailboxIds: [MailboxIdsFilterInput]
+  and: [EmailMessageFilterInput]
+  or: [EmailMessageFilterInput]
+  not: EmailMessageFilterInput
+}
+
+input EmailMessageStateFilterInput {
+  ne: EmailMessageState
+  eq: EmailMessageState
+  in: [EmailMessageState]
+  notIn: [EmailMessageState]
+}
+
+input EmailMessageDirectionFilterInput {
+  eq: EmailMessageDirection
+  ne: EmailMessageDirection
+}
+
+input StringFilterInput {
+  ne: String
+  eq: String
+  beginsWith: String
+}
+
+input IDFilterInput {
+  ne: ID
+  eq: ID
+  beginsWith: ID
+}
+
+input IntFilterInput {
+  ne: Int
+  eq: Int
+  le: Int
+  lt: Int
+  ge: Int
+  gt: Int
+  between: [Int]
+}
+
+input FloatFilterInput {
+  ne: Float
+  eq: Float
+  le: Float
+  lt: Float
+  ge: Float
+  gt: Float
+  between: [Float]
+}
+
+input BooleanFilterInput {
+  ne: Boolean
+  eq: Boolean
 }
 
 input ProvisionEmailMaskPublicKeyInput {
@@ -536,7 +639,7 @@ type BlockedEmailAddress {
 }
 
 type BlockEmailAddressesBulkUpdateResult {
-  status: UpdateEmailMessagesStatus!
+  status: UpdateBlockedAddressesStatus!
   failedAddresses: [String!]
   successAddresses: [String!]
 }
@@ -708,8 +811,6 @@ type Mutation {
     input: UpdateEmailMessagesInput!
   ): UpdateEmailMessagesV2Result!
 
-  deleteEmailMessage(input: DeleteEmailMessageInput!): ID!
-
   updateEmailAddressMetadata(input: UpdateEmailAddressMetadataInput!): ID!
 
   createCustomEmailFolder(input: CreateCustomEmailFolderInput!): EmailFolder!
@@ -755,7 +856,11 @@ type Mutation {
 }
 
 type Subscription {
-  onEmailMessageDeleted(owner: ID!): SealedEmailMessage!
-  onEmailMessageCreated(owner: ID!): SealedEmailMessage!
-  onEmailMessageUpdated(owner: ID!): SealedEmailMessage!
+  onEmailAddressCreated(owner: ID!): EmailAddress
+  onEmailMessageCreated(
+    owner: ID!,
+    direction: EmailMessageDirection
+  ): SealedEmailMessage!
+  onEmailMessageDeleted(owner: ID!, id: ID): SealedEmailMessage!
+  onEmailMessageUpdated(owner: ID!, id: ID): SealedEmailMessage!
 }

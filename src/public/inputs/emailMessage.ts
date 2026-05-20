@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Pagination } from './common'
+import { BooleanFilter, Pagination, StringFilter } from './common'
 import { EmailAddressDetail } from '../typings/emailAddress'
 import { EmailAttachment } from '../typings/emailAttachment'
 import { EmailMessageDateRange } from '../typings/emailMessageDateRange'
 import { SortOrder } from '../typings/sortOrder'
+import { Direction, State as EmailMessageState } from '../typings'
 
 /**
  * Input for `SudoEmailClient.getEmailMessage`.
@@ -60,6 +61,7 @@ export interface ListEmailMessagesForEmailAddressIdInput extends Pagination {
  * @property {boolean} includeDeletedMessages A flag to indicate if deleted messages should be included. Defaults to false.
  */
 export interface ListEmailMessagesForEmailFolderIdInput extends Pagination {
+  filter?: ListEmailMessagesFilter
   folderId: string
   dateRange?: EmailMessageDateRange
   sortOrder?: SortOrder
@@ -168,4 +170,105 @@ export interface UpdateEmailMessagesInput {
 export interface GetEmailMessageWithBodyInput {
   id: string
   emailAddressId: string
+}
+
+/**
+ * @property {EmailMessageState} equal Return only results that match the given state.
+ */
+export interface EqualEmailMessageStateFilter {
+  equal: EmailMessageState
+  oneOf?: never
+  notEqual?: never
+  notOneOf?: never
+}
+
+/**
+ * @property {EmailMessageState[]} oneOf Return only results that match one of the given states.
+ */
+export interface OneOfEmailMessageStateFilter {
+  oneOf: EmailMessageState[]
+  equal?: never
+  notEqual?: never
+  notOneOf?: never
+}
+
+/**
+ * @property {EmailMessageState} notEqual Return only results that do not match the given state.
+ */
+export interface NotEqualEmailMessageStateFilter {
+  notEqual: EmailMessageState
+  equal?: never
+  oneOf?: never
+  notOneOf?: never
+}
+
+/**
+ * @property {EmailMessageState[]} notOneOf Return only results that do not match any of the given states.
+ */
+export interface NotOneOfEmailMessageStateFilter {
+  notOneOf: EmailMessageState[]
+  equal?: never
+  oneOf?: never
+  notEqual?: never
+}
+
+/**
+ * @type EmailMessageStateFilter
+ * {EqualStateFilter | OneOfStateFilter | NotEqualStateFilter | NotOneOfStateFilter} Used to filter results based on `state` property
+ */
+export type EmailMessageStateFilter =
+  | EqualEmailMessageStateFilter
+  | OneOfEmailMessageStateFilter
+  | NotEqualEmailMessageStateFilter
+  | NotOneOfEmailMessageStateFilter
+
+/**
+ * @property {Direction} notEqual Return only results that do not match the given direction.
+ */
+export interface NotEqualDirectionFilter {
+  notEqual: Direction
+  equal?: never
+}
+/**
+ * @property {Direction} equal Return only results that do not match the given direction.
+ */
+export interface EqualDirectionFilter {
+  notEqual?: never
+  equal: Direction
+}
+
+/**
+ * @type EmailMessageDirectionFilter
+ * {EqualDirectionFilter | NotEqualDirectionFilter |} Used to filter results based on `direction` property
+ */
+export type EmailMessageDirectionFilter =
+  | EqualDirectionFilter
+  | NotEqualDirectionFilter
+
+export enum MailboxType {
+  Address = 'ADDRESS',
+  Mask = 'MASK',
+}
+
+export interface MailboxIdsFilter {
+  type: MailboxType
+  id: StringFilter
+}
+
+export interface ListEmailMessagesFilter {
+  id?: StringFilter
+  messageId?: StringFilter
+  algorithm?: StringFilter
+  keyId?: StringFilter
+  folderId?: StringFilter
+  clientRefId?: StringFilter
+  direction?: EmailMessageDirectionFilter
+  seen?: BooleanFilter
+  repliedTo?: BooleanFilter
+  forwarded?: BooleanFilter
+  state?: EmailMessageStateFilter
+  mailboxIds?: MailboxIdsFilter[]
+  not?: ListEmailMessagesFilter
+  and?: ListEmailMessagesFilter[]
+  or?: ListEmailMessagesFilter[]
 }

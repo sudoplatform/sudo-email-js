@@ -22,6 +22,7 @@ import {
   UnblockEmailAddressesUseCaseInput,
 } from '../../../src/private/domain/use-cases/blocklist/unblockEmailAddresses'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
+import { UpdateBlockedAddressesStatus } from '../../../src/private/domain/entities/blocklist/updateBlockedAddressesStatus'
 
 vi.mock('../../../src/private/domain/use-cases/blocklist/unblockEmailAddresses')
 const ViMockUnblockEmailAddressesUseCase =
@@ -48,7 +49,7 @@ describe('SudoEmailClient.unblockEmailAddresses Test Suite', () => {
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
     when(mockUnblockEmailAddressesUseCase.execute(anything())).thenResolve({
-      status: UpdateEmailMessagesStatus.Success,
+      status: UpdateBlockedAddressesStatus.Success,
     })
   })
   it('generates use case', async () => {
@@ -89,7 +90,7 @@ describe('SudoEmailClient.unblockEmailAddresses Test Suite', () => {
 
   it('returns expected result on failure', async () => {
     when(mockUnblockEmailAddressesUseCase.execute(anything())).thenResolve({
-      status: UpdateEmailMessagesStatus.Failed,
+      status: UpdateBlockedAddressesStatus.Failed,
     })
     const addressesToBlock = [
       `spammyMcSpamface${v4()}@spambot.com`,

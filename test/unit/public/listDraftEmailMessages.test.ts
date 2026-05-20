@@ -6,7 +6,7 @@
 
 import { instance, mock, reset, verify, when } from 'ts-mockito'
 import { MockedClass } from 'vitest'
-import { DraftEmailMessage, SudoEmailClient } from '../../../src'
+import { SudoEmailClient } from '../../../src'
 import { ListDraftEmailMessagesUseCase } from '../../../src/private/domain/use-cases/draft/listDraftEmailMessagesUseCase'
 import { stringToArrayBuffer } from '../../../src/private/util/buffer'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
@@ -66,8 +66,8 @@ describe('SudoEmailClient.listDraftEmailMessages Test Suite', () => {
   })
 
   it('returns expected result', async () => {
-    await expect(instanceUnderTest.listDraftEmailMessages()).resolves.toEqual<
-      DraftEmailMessage[]
-    >([{ id: 'id', emailAddressId: 'emailAddressId', updatedAt, rfc822Data }])
+    await expect(instanceUnderTest.listDraftEmailMessages()).resolves.toEqual([
+      { id: 'id', emailAddressId: 'emailAddressId', updatedAt, rfc822Data },
+    ])
   })
 })

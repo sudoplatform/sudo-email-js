@@ -53,7 +53,6 @@ import {
 } from '../../../../../src/private/data/common/s3Client'
 import { SubscriptionManager } from '../../../../../src/private/data/common/subscriptionManager'
 import { DefaultEmailMessageService } from '../../../../../src/private/data/message/defaultEmailMessageService'
-import { DraftEmailMessageEntity } from '../../../../../src/private/domain/entities/message/draftEmailMessageEntity'
 import { EmailMessageServiceDeleteDraftsError } from '../../../../../src/private/domain/entities/message/emailMessageService'
 import {
   InternalError,
@@ -1368,6 +1367,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const folderId = v4()
@@ -1376,6 +1376,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -1411,6 +1412,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
             anything(),
             anything(),
             anything(),
+            anything(),
           ),
         ).thenResolve(GraphQLDataFactory.emailMessageConnection)
         const folderId = v4()
@@ -1419,6 +1421,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         })
         verify(
           mockAppSync.listEmailMessagesForEmailFolderId(
+            anything(),
             anything(),
             anything(),
             anything(),
@@ -1457,6 +1460,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const folderId = v4()
@@ -1465,6 +1469,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -1497,6 +1502,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).thenResolve(GraphQLDataFactory.emailMessageConnection)
       const folderId = v4()
@@ -1516,6 +1522,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).once()
     })
@@ -1527,6 +1534,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     `('returns transformed result ordered $test', async ({ sortOrder }) => {
       when(
         mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -1553,6 +1561,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).once()
     })
@@ -1560,6 +1569,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     it('returns result for sortDate date range successfully', async () => {
       when(
         mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -1600,6 +1610,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).once()
     })
@@ -1607,6 +1618,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     it('returns result for updatedAt date range successfully', async () => {
       when(
         mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -1643,6 +1655,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
           anything(),
           anything(),
           anything(),
+          anything(),
         ),
       ).once()
     })
@@ -1650,6 +1663,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
     it('returns result for includeDeletedMessages successfully', async () => {
       when(
         mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
           anything(),
           anything(),
           anything(),
@@ -1679,6 +1693,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
       verify(
         mockAppSync.listEmailMessagesForEmailFolderId(
+          anything(),
           anything(),
           anything(),
           anything(),

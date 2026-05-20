@@ -5,14 +5,15 @@
  */
 
 import {
+  EmailMessageDateRange,
   EmailMessageOperationFailureResult,
   EmailMessageSubscriber,
+  ListEmailMessagesFilter,
   ScheduledDraftMessageState,
   UpdatedEmailMessageSuccess,
 } from '../../../../public'
 import { SortOrder } from '../../../../public/typings/sortOrder'
 import { EmailMessageDetails } from '../../../util/rfc822MessageDataProcessor'
-import { EmailMessageDateRange } from '../../../../public'
 import { EmailAddressPublicInfoEntity } from '../account/emailAddressPublicInfoEntity'
 import { UpdateEmailMessagesStatus } from './updateEmailMessagesStatus'
 import { EmailMessageEntity } from './emailMessageEntity'
@@ -343,6 +344,7 @@ export interface ListEmailMessagesForEmailFolderIdInput {
   sortOrder?: SortOrder
   nextToken?: string
   includeDeletedMessages?: boolean
+  filter?: ListEmailMessagesFilter
 }
 
 /**

@@ -27,6 +27,7 @@ import Observable from 'zen-observable'
 import { EmailServiceConfig } from '../../../src/private/data/common/config'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { EmailCryptoService } from '../../../src/private/domain/entities/secure/emailCryptoService'
+import { EmailMessageBodyCache } from '../../../src/private/domain/entities/message/emailMessageBodyCache'
 
 describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
@@ -357,6 +358,7 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
         bucket: 'bucket',
       }
       const mockEmailCryptoService = mock<EmailCryptoService>()
+      const mockEmailBodyCache = mock<EmailMessageBodyCache>()
 
       const emailMessageService = new DefaultEmailMessageService(
         instance(mockAppSync),
@@ -365,6 +367,7 @@ describe('SudoEmailClient SubscribeToEmailMessages Test Suite', () => {
         instance(mockDeviceKeyWorker),
         mockEmailServiceConfig,
         instance(mockEmailCryptoService),
+        instance(mockEmailBodyCache),
       )
 
       const networkError = {

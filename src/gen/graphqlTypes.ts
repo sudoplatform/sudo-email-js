@@ -45,7 +45,7 @@ export type AvailableAddresses = {
 export type BlockEmailAddressesBulkUpdateResult = {
   __typename?: 'BlockEmailAddressesBulkUpdateResult'
   failedAddresses?: Maybe<Array<Scalars['String']['output']>>
-  status: UpdateEmailMessagesStatus
+  status: UpdateBlockedAddressesStatus
   successAddresses?: Maybe<Array<Scalars['String']['output']>>
 }
 
@@ -83,6 +83,11 @@ export type BlockedEmailAddressInput = {
   hashAlgorithm: BlockedAddressHashAlgorithm
   hashedBlockedValue: Scalars['String']['input']
   sealedValue: SealedAttributeInput
+}
+
+export type BooleanFilterInput = {
+  eq?: InputMaybe<Scalars['Boolean']['input']>
+  ne?: InputMaybe<Scalars['Boolean']['input']>
 }
 
 export type CancelScheduledDraftMessageInput = {
@@ -126,10 +131,6 @@ export type DateRangeInput = {
 export type DeleteCustomEmailFolderInput = {
   emailAddressId: Scalars['ID']['input']
   emailFolderId: Scalars['ID']['input']
-}
-
-export type DeleteEmailMessageInput = {
-  messageId: Scalars['ID']['input']
 }
 
 export type DeleteEmailMessagesInput = {
@@ -177,6 +178,16 @@ export type EmailAddressConnection = {
   __typename?: 'EmailAddressConnection'
   items: Array<EmailAddress>
   nextToken?: Maybe<Scalars['String']['output']>
+}
+
+export type EmailAddressFilterInput = {
+  and?: InputMaybe<Array<InputMaybe<EmailAddressFilterInput>>>
+  emailAddress?: InputMaybe<StringFilterInput>
+  id?: InputMaybe<IdFilterInput>
+  identityId?: InputMaybe<IdFilterInput>
+  keyRingId?: InputMaybe<IdFilterInput>
+  not?: InputMaybe<EmailAddressFilterInput>
+  or?: InputMaybe<Array<InputMaybe<EmailAddressFilterInput>>>
 }
 
 export type EmailAddressMetadataUpdateValuesInput = {
@@ -241,6 +252,16 @@ export type EmailFolderConnection = {
   __typename?: 'EmailFolderConnection'
   items: Array<EmailFolder>
   nextToken?: Maybe<Scalars['String']['output']>
+}
+
+export type EmailFolderFilterInput = {
+  and?: InputMaybe<Array<InputMaybe<EmailFolderFilterInput>>>
+  folderName?: InputMaybe<StringFilterInput>
+  id?: InputMaybe<IdFilterInput>
+  not?: InputMaybe<EmailFolderFilterInput>
+  or?: InputMaybe<Array<InputMaybe<EmailFolderFilterInput>>>
+  size?: InputMaybe<FloatFilterInput>
+  unseenCount?: InputMaybe<IntFilterInput>
 }
 
 export type EmailMask = {
@@ -328,9 +349,32 @@ export enum EmailMessageDirection {
   Outbound = 'OUTBOUND',
 }
 
+export type EmailMessageDirectionFilterInput = {
+  eq?: InputMaybe<EmailMessageDirection>
+  ne?: InputMaybe<EmailMessageDirection>
+}
+
 export enum EmailMessageEncryptionStatus {
   Encrypted = 'ENCRYPTED',
   Unencrypted = 'UNENCRYPTED',
+}
+
+export type EmailMessageFilterInput = {
+  algorithm?: InputMaybe<StringFilterInput>
+  and?: InputMaybe<Array<InputMaybe<EmailMessageFilterInput>>>
+  clientRefId?: InputMaybe<IdFilterInput>
+  direction?: InputMaybe<EmailMessageDirectionFilterInput>
+  folderId?: InputMaybe<IdFilterInput>
+  forwarded?: InputMaybe<BooleanFilterInput>
+  id?: InputMaybe<IdFilterInput>
+  keyId?: InputMaybe<IdFilterInput>
+  mailboxIds?: InputMaybe<Array<InputMaybe<MailboxIdsFilterInput>>>
+  messageId?: InputMaybe<IdFilterInput>
+  not?: InputMaybe<EmailMessageFilterInput>
+  or?: InputMaybe<Array<InputMaybe<EmailMessageFilterInput>>>
+  repliedTo?: InputMaybe<BooleanFilterInput>
+  seen?: InputMaybe<BooleanFilterInput>
+  state?: InputMaybe<EmailMessageStateFilterInput>
 }
 
 export enum EmailMessageState {
@@ -343,6 +387,13 @@ export enum EmailMessageState {
   Undelivered = 'UNDELIVERED',
 }
 
+export type EmailMessageStateFilterInput = {
+  eq?: InputMaybe<EmailMessageState>
+  in?: InputMaybe<Array<InputMaybe<EmailMessageState>>>
+  ne?: InputMaybe<EmailMessageState>
+  notIn?: InputMaybe<Array<InputMaybe<EmailMessageState>>>
+}
+
 export type EmailMessageUpdateValuesInput = {
   folderId?: InputMaybe<Scalars['ID']['input']>
   seen?: InputMaybe<Scalars['Boolean']['input']>
@@ -350,6 +401,16 @@ export type EmailMessageUpdateValuesInput = {
 
 export type EnableEmailMaskInput = {
   emailMaskId: Scalars['ID']['input']
+}
+
+export type FloatFilterInput = {
+  between?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>
+  eq?: InputMaybe<Scalars['Float']['input']>
+  ge?: InputMaybe<Scalars['Float']['input']>
+  gt?: InputMaybe<Scalars['Float']['input']>
+  le?: InputMaybe<Scalars['Float']['input']>
+  lt?: InputMaybe<Scalars['Float']['input']>
+  ne?: InputMaybe<Scalars['Float']['input']>
 }
 
 export type GetEmailAddressBlocklistInput = {
@@ -361,24 +422,43 @@ export type GetEmailAddressBlocklistResponse = {
   blockedAddresses: Array<BlockedEmailAddress>
 }
 
+export type IdFilterInput = {
+  beginsWith?: InputMaybe<Scalars['ID']['input']>
+  eq?: InputMaybe<Scalars['ID']['input']>
+  ne?: InputMaybe<Scalars['ID']['input']>
+}
+
+export type IntFilterInput = {
+  between?: InputMaybe<Array<InputMaybe<Scalars['Int']['input']>>>
+  eq?: InputMaybe<Scalars['Int']['input']>
+  ge?: InputMaybe<Scalars['Int']['input']>
+  gt?: InputMaybe<Scalars['Int']['input']>
+  le?: InputMaybe<Scalars['Int']['input']>
+  lt?: InputMaybe<Scalars['Int']['input']>
+  ne?: InputMaybe<Scalars['Int']['input']>
+}
+
 export enum KeyFormat {
   RsaPublicKey = 'RSA_PUBLIC_KEY',
   Spki = 'SPKI',
 }
 
 export type ListEmailAddressesForSudoIdInput = {
+  filter?: InputMaybe<EmailAddressFilterInput>
   limit?: InputMaybe<Scalars['Int']['input']>
   nextToken?: InputMaybe<Scalars['String']['input']>
   sudoId: Scalars['ID']['input']
 }
 
 export type ListEmailAddressesInput = {
+  filter?: InputMaybe<EmailAddressFilterInput>
   limit?: InputMaybe<Scalars['Int']['input']>
   nextToken?: InputMaybe<Scalars['String']['input']>
 }
 
 export type ListEmailFoldersForEmailAddressIdInput = {
   emailAddressId: Scalars['ID']['input']
+  filter?: InputMaybe<EmailFolderFilterInput>
   limit?: InputMaybe<Scalars['Int']['input']>
   nextToken?: InputMaybe<Scalars['String']['input']>
 }
@@ -399,6 +479,7 @@ export type ListEmailMessagesForEmailAddressIdInput = {
 }
 
 export type ListEmailMessagesForEmailFolderIdInput = {
+  filter?: InputMaybe<EmailMessageFilterInput>
   folderId: Scalars['ID']['input']
   includeDeletedMessages?: InputMaybe<Scalars['Boolean']['input']>
   limit?: InputMaybe<Scalars['Int']['input']>
@@ -431,6 +512,16 @@ export type LookupEmailAddressesPublicInfoResponse = {
   items: Array<EmailAddressPublicInfo>
 }
 
+export type MailboxIdsFilterInput = {
+  id: StringFilterInput
+  type: MailboxType
+}
+
+export enum MailboxType {
+  Address = 'ADDRESS',
+  Mask = 'MASK',
+}
+
 export type Mutation = {
   __typename?: 'Mutation'
   blockEmailAddresses: BlockEmailAddressesBulkUpdateResult
@@ -438,7 +529,6 @@ export type Mutation = {
   createCustomEmailFolder: EmailFolder
   createPublicKeyForEmail: PublicKey
   deleteCustomEmailFolder?: Maybe<EmailFolder>
-  deleteEmailMessage: Scalars['ID']['output']
   deleteEmailMessages: Array<Scalars['ID']['output']>
   deleteMessagesByFolderId: Scalars['ID']['output']
   deprovisionEmailAddress: EmailAddress
@@ -477,10 +567,6 @@ export type MutationCreatePublicKeyForEmailArgs = {
 
 export type MutationDeleteCustomEmailFolderArgs = {
   input: DeleteCustomEmailFolderInput
-}
-
-export type MutationDeleteEmailMessageArgs = {
-  input: DeleteEmailMessageInput
 }
 
 export type MutationDeleteEmailMessagesArgs = {
@@ -853,22 +939,36 @@ export enum SortOrder {
   Desc = 'DESC',
 }
 
+export type StringFilterInput = {
+  beginsWith?: InputMaybe<Scalars['String']['input']>
+  eq?: InputMaybe<Scalars['String']['input']>
+  ne?: InputMaybe<Scalars['String']['input']>
+}
+
 export type Subscription = {
   __typename?: 'Subscription'
+  onEmailAddressCreated?: Maybe<EmailAddress>
   onEmailMessageCreated: SealedEmailMessage
   onEmailMessageDeleted: SealedEmailMessage
   onEmailMessageUpdated: SealedEmailMessage
 }
 
+export type SubscriptionOnEmailAddressCreatedArgs = {
+  owner: Scalars['ID']['input']
+}
+
 export type SubscriptionOnEmailMessageCreatedArgs = {
+  direction?: InputMaybe<EmailMessageDirection>
   owner: Scalars['ID']['input']
 }
 
 export type SubscriptionOnEmailMessageDeletedArgs = {
+  id?: InputMaybe<Scalars['ID']['input']>
   owner: Scalars['ID']['input']
 }
 
 export type SubscriptionOnEmailMessageUpdatedArgs = {
+  id?: InputMaybe<Scalars['ID']['input']>
   owner: Scalars['ID']['input']
 }
 
@@ -880,6 +980,12 @@ export type SupportedDomains = {
 export type UnblockEmailAddressesInput = {
   owner: Scalars['ID']['input']
   unblockedAddresses: Array<Scalars['String']['input']>
+}
+
+export enum UpdateBlockedAddressesStatus {
+  Failed = 'FAILED',
+  Partial = 'PARTIAL',
+  Success = 'SUCCESS',
 }
 
 export type UpdateCustomEmailFolderInput = {
@@ -964,7 +1070,7 @@ export type BlockedAddressFragment = {
 
 export type BlockAddressesResultFragment = {
   __typename?: 'BlockEmailAddressesBulkUpdateResult'
-  status: UpdateEmailMessagesStatus
+  status: UpdateBlockedAddressesStatus
   failedAddresses?: Array<string> | null
   successAddresses?: Array<string> | null
 }
@@ -1418,13 +1524,32 @@ export type UpdateEmailMessagesMutation = {
   }
 }
 
-export type DeleteEmailMessageMutationVariables = Exact<{
-  input: DeleteEmailMessageInput
+export type BlockEmailAddressesMutationVariables = Exact<{
+  input: BlockEmailAddressesInput
 }>
 
-export type DeleteEmailMessageMutation = {
+export type BlockEmailAddressesMutation = {
   __typename?: 'Mutation'
-  deleteEmailMessage: string
+  blockEmailAddresses: {
+    __typename?: 'BlockEmailAddressesBulkUpdateResult'
+    status: UpdateBlockedAddressesStatus
+    failedAddresses?: Array<string> | null
+    successAddresses?: Array<string> | null
+  }
+}
+
+export type UnblockEmailAddressesMutationVariables = Exact<{
+  input: UnblockEmailAddressesInput
+}>
+
+export type UnblockEmailAddressesMutation = {
+  __typename?: 'Mutation'
+  unblockEmailAddresses: {
+    __typename?: 'BlockEmailAddressesBulkUpdateResult'
+    status: UpdateBlockedAddressesStatus
+    failedAddresses?: Array<string> | null
+    successAddresses?: Array<string> | null
+  }
 }
 
 export type CreateCustomEmailFolderMutationVariables = Exact<{
@@ -1511,34 +1636,6 @@ export type UpdateCustomEmailFolderMutation = {
       plainTextType: string
       base64EncodedSealedData: string
     } | null
-  }
-}
-
-export type BlockEmailAddressesMutationVariables = Exact<{
-  input: BlockEmailAddressesInput
-}>
-
-export type BlockEmailAddressesMutation = {
-  __typename?: 'Mutation'
-  blockEmailAddresses: {
-    __typename?: 'BlockEmailAddressesBulkUpdateResult'
-    status: UpdateEmailMessagesStatus
-    failedAddresses?: Array<string> | null
-    successAddresses?: Array<string> | null
-  }
-}
-
-export type UnblockEmailAddressesMutationVariables = Exact<{
-  input: UnblockEmailAddressesInput
-}>
-
-export type UnblockEmailAddressesMutation = {
-  __typename?: 'Mutation'
-  unblockEmailAddresses: {
-    __typename?: 'BlockEmailAddressesBulkUpdateResult'
-    status: UpdateEmailMessagesStatus
-    failedAddresses?: Array<string> | null
-    successAddresses?: Array<string> | null
   }
 }
 
@@ -4293,13 +4390,13 @@ export const UpdateEmailMessagesDocument = {
   UpdateEmailMessagesMutation,
   UpdateEmailMessagesMutationVariables
 >
-export const DeleteEmailMessageDocument = {
+export const BlockEmailAddressesDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'mutation',
-      name: { kind: 'Name', value: 'DeleteEmailMessage' },
+      name: { kind: 'Name', value: 'BlockEmailAddresses' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -4311,7 +4408,7 @@ export const DeleteEmailMessageDocument = {
             kind: 'NonNullType',
             type: {
               kind: 'NamedType',
-              name: { kind: 'Name', value: 'DeleteEmailMessageInput' },
+              name: { kind: 'Name', value: 'BlockEmailAddressesInput' },
             },
           },
         },
@@ -4321,7 +4418,7 @@ export const DeleteEmailMessageDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'deleteEmailMessage' },
+            name: { kind: 'Name', value: 'blockEmailAddresses' },
             arguments: [
               {
                 kind: 'Argument',
@@ -4332,14 +4429,112 @@ export const DeleteEmailMessageDocument = {
                 },
               },
             ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'BlockAddressesResult' },
+                },
+              ],
+            },
           },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'BlockAddressesResult' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'BlockEmailAddressesBulkUpdateResult' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'failedAddresses' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'successAddresses' } },
         ],
       },
     },
   ],
 } as unknown as DocumentNode<
-  DeleteEmailMessageMutation,
-  DeleteEmailMessageMutationVariables
+  BlockEmailAddressesMutation,
+  BlockEmailAddressesMutationVariables
+>
+export const UnblockEmailAddressesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'UnblockEmailAddresses' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'UnblockEmailAddressesInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'unblockEmailAddresses' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'BlockAddressesResult' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'BlockAddressesResult' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'BlockEmailAddressesBulkUpdateResult' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'failedAddresses' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'successAddresses' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  UnblockEmailAddressesMutation,
+  UnblockEmailAddressesMutationVariables
 >
 export const CreateCustomEmailFolderDocument = {
   kind: 'Document',
@@ -4712,152 +4907,6 @@ export const UpdateCustomEmailFolderDocument = {
 } as unknown as DocumentNode<
   UpdateCustomEmailFolderMutation,
   UpdateCustomEmailFolderMutationVariables
->
-export const BlockEmailAddressesDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'BlockEmailAddresses' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: {
-            kind: 'Variable',
-            name: { kind: 'Name', value: 'input' },
-          },
-          type: {
-            kind: 'NonNullType',
-            type: {
-              kind: 'NamedType',
-              name: { kind: 'Name', value: 'BlockEmailAddressesInput' },
-            },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'blockEmailAddresses' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'input' },
-                value: {
-                  kind: 'Variable',
-                  name: { kind: 'Name', value: 'input' },
-                },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'BlockAddressesResult' },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'BlockAddressesResult' },
-      typeCondition: {
-        kind: 'NamedType',
-        name: { kind: 'Name', value: 'BlockEmailAddressesBulkUpdateResult' },
-      },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'failedAddresses' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'successAddresses' } },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<
-  BlockEmailAddressesMutation,
-  BlockEmailAddressesMutationVariables
->
-export const UnblockEmailAddressesDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'UnblockEmailAddresses' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: {
-            kind: 'Variable',
-            name: { kind: 'Name', value: 'input' },
-          },
-          type: {
-            kind: 'NonNullType',
-            type: {
-              kind: 'NamedType',
-              name: { kind: 'Name', value: 'UnblockEmailAddressesInput' },
-            },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'unblockEmailAddresses' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'input' },
-                value: {
-                  kind: 'Variable',
-                  name: { kind: 'Name', value: 'input' },
-                },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'BlockAddressesResult' },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'BlockAddressesResult' },
-      typeCondition: {
-        kind: 'NamedType',
-        name: { kind: 'Name', value: 'BlockEmailAddressesBulkUpdateResult' },
-      },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'failedAddresses' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'successAddresses' } },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<
-  UnblockEmailAddressesMutation,
-  UnblockEmailAddressesMutationVariables
 >
 export const DeleteMessagesByFolderIdDocument = {
   kind: 'Document',

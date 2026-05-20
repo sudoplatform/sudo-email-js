@@ -26,10 +26,10 @@ import {
 } from '../../../../../src/private/domain/entities/blocklist/emailAddressBlocklistService'
 import { GraphQLDataFactory } from '../../../data-factory/graphQL'
 import { v4 } from 'uuid'
-import { UpdateEmailMessagesStatus } from '../../../../../src/private/domain/entities/message/updateEmailMessagesStatus'
 import {
   BlockEmailAddressesInput,
   UnblockEmailAddressesInput,
+  UpdateBlockedAddressesStatus,
 } from '../../../../../src/gen/graphqlTypes'
 import {
   BlockedEmailAddressAction,
@@ -110,7 +110,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
 
       const result = await instanceUnderTest.blockEmailAddressesForOwner(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Success,
+        status: UpdateBlockedAddressesStatus.Success,
       })
       verify(mockAppSync.blockEmailAddresses(anything())).once()
       verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
@@ -158,7 +158,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
 
       const result = await instanceUnderTest.blockEmailAddressesForOwner(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Success,
+        status: UpdateBlockedAddressesStatus.Success,
       })
       verify(mockAppSync.blockEmailAddresses(anything())).once()
       verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
@@ -175,7 +175,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
 
     it('returns failed status requests correctly', async () => {
       when(mockAppSync.blockEmailAddresses(anything())).thenResolve({
-        status: UpdateEmailMessagesStatus.Failed,
+        status: UpdateBlockedAddressesStatus.Failed,
       })
       const blockedAddresses = [
         `spammyMcSpamface-${v4()}@spambot.com`,
@@ -191,7 +191,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
 
       const result = await instanceUnderTest.blockEmailAddressesForOwner(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Failed,
+        status: UpdateBlockedAddressesStatus.Failed,
       })
       verify(mockAppSync.blockEmailAddresses(anything())).once()
       verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
@@ -213,7 +213,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
             (item) => item.hashedBlockedValue,
           )
           return Promise.resolve({
-            status: UpdateEmailMessagesStatus.Partial,
+            status: UpdateBlockedAddressesStatus.Partial,
             failedAddresses: [first],
             successAddresses: rest,
           })
@@ -233,7 +233,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
 
       const result = await instanceUnderTest.blockEmailAddressesForOwner(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Partial,
+        status: UpdateBlockedAddressesStatus.Partial,
         failedAddresses: [blockedAddresses[0]],
         successAddresses: [blockedAddresses[1], blockedAddresses[2]],
       })
@@ -261,7 +261,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
 
       const result = await instanceUnderTest.blockEmailAddressesForOwner(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Success,
+        status: UpdateBlockedAddressesStatus.Success,
       })
       verify(mockAppSync.blockEmailAddresses(anything())).once()
       verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
@@ -289,7 +289,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
 
       const result = await instanceUnderTest.blockEmailAddressesForOwner(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Success,
+        status: UpdateBlockedAddressesStatus.Success,
       })
       verify(mockAppSync.blockEmailAddresses(anything())).once()
       verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
@@ -372,7 +372,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       const result =
         await instanceUnderTest.blockEmailAddressesForEmailAddressId(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Success,
+        status: UpdateBlockedAddressesStatus.Success,
       })
       verify(mockAppSync.blockEmailAddresses(anything())).once()
       verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
@@ -396,7 +396,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       const result =
         await instanceUnderTest.blockEmailAddressesForEmailAddressId(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Success,
+        status: UpdateBlockedAddressesStatus.Success,
       })
       verify(mockAppSync.blockEmailAddresses(anything())).once()
       verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
@@ -405,7 +405,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
 
     it('returns failed status requests correctly', async () => {
       when(mockAppSync.blockEmailAddresses(anything())).thenResolve({
-        status: UpdateEmailMessagesStatus.Failed,
+        status: UpdateBlockedAddressesStatus.Failed,
       })
       const blockedAddresses = [
         `spammyMcSpamface-${v4()}@spambot.com`,
@@ -423,7 +423,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       const result =
         await instanceUnderTest.blockEmailAddressesForEmailAddressId(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Failed,
+        status: UpdateBlockedAddressesStatus.Failed,
       })
       verify(mockAppSync.blockEmailAddresses(anything())).once()
       verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
@@ -437,7 +437,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
             (item) => item.hashedBlockedValue,
           )
           return Promise.resolve({
-            status: UpdateEmailMessagesStatus.Partial,
+            status: UpdateBlockedAddressesStatus.Partial,
             failedAddresses: [first],
             successAddresses: rest,
           })
@@ -459,7 +459,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       const result =
         await instanceUnderTest.blockEmailAddressesForEmailAddressId(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Partial,
+        status: UpdateBlockedAddressesStatus.Partial,
         failedAddresses: [blockedAddresses[0]],
         successAddresses: [blockedAddresses[1], blockedAddresses[2]],
       })
@@ -481,7 +481,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       const result =
         await instanceUnderTest.blockEmailAddressesForEmailAddressId(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Success,
+        status: UpdateBlockedAddressesStatus.Success,
       })
       verify(mockAppSync.blockEmailAddresses(anything())).once()
       verify(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).once()
@@ -536,7 +536,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       const result =
         await instanceUnderTest.unblockEmailAddressesForOwner(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Success,
+        status: UpdateBlockedAddressesStatus.Success,
       })
       verify(mockAppSync.unblockEmailAddresses(anything())).once()
     })
@@ -555,14 +555,14 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       const result =
         await instanceUnderTest.unblockEmailAddressesForOwner(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Success,
+        status: UpdateBlockedAddressesStatus.Success,
       })
       verify(mockAppSync.unblockEmailAddresses(anything())).once()
     })
 
     it('returns failed status requests correctly', async () => {
       when(mockAppSync.unblockEmailAddresses(anything())).thenResolve({
-        status: UpdateEmailMessagesStatus.Failed,
+        status: UpdateBlockedAddressesStatus.Failed,
       })
       const unblockedAddresses = [
         `spammyMcSpamface-${v4()}@spambot.com`,
@@ -577,7 +577,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       const result =
         await instanceUnderTest.unblockEmailAddressesForOwner(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Failed,
+        status: UpdateBlockedAddressesStatus.Failed,
       })
       verify(mockAppSync.unblockEmailAddresses(anything())).once()
     })
@@ -587,7 +587,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         (input: UnblockEmailAddressesInput) => {
           const [first, ...rest] = input.unblockedAddresses
           return Promise.resolve({
-            status: UpdateEmailMessagesStatus.Partial,
+            status: UpdateBlockedAddressesStatus.Partial,
             failedAddresses: [first],
             successAddresses: rest,
           })
@@ -606,7 +606,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       const result =
         await instanceUnderTest.unblockEmailAddressesForOwner(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Partial,
+        status: UpdateBlockedAddressesStatus.Partial,
         failedAddresses: [unblockedAddresses[0]],
         successAddresses: [unblockedAddresses[1], unblockedAddresses[2]],
       })
@@ -650,7 +650,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       const result =
         await instanceUnderTest.unblockEmailAddressesByHashedValue(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Success,
+        status: UpdateBlockedAddressesStatus.Success,
       })
       verify(mockAppSync.unblockEmailAddresses(anything())).once()
     })
@@ -669,14 +669,14 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       const result =
         await instanceUnderTest.unblockEmailAddressesByHashedValue(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Success,
+        status: UpdateBlockedAddressesStatus.Success,
       })
       verify(mockAppSync.unblockEmailAddresses(anything())).once()
     })
 
     it('returns failed status requests correctly', async () => {
       when(mockAppSync.unblockEmailAddresses(anything())).thenResolve({
-        status: UpdateEmailMessagesStatus.Failed,
+        status: UpdateBlockedAddressesStatus.Failed,
       })
       const hashedValues = [
         `hashedValue-${v4()}`,
@@ -690,7 +690,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       const result =
         await instanceUnderTest.unblockEmailAddressesByHashedValue(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Failed,
+        status: UpdateBlockedAddressesStatus.Failed,
       })
       verify(mockAppSync.unblockEmailAddresses(anything())).once()
     })
@@ -700,7 +700,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
         (input: UnblockEmailAddressesInput) => {
           const [first, ...rest] = input.unblockedAddresses
           return Promise.resolve({
-            status: UpdateEmailMessagesStatus.Partial,
+            status: UpdateBlockedAddressesStatus.Partial,
             failedAddresses: [first],
             successAddresses: rest,
           })
@@ -718,7 +718,7 @@ describe('DefaultEmailAddressBlocklist Test Suite', () => {
       const result =
         await instanceUnderTest.unblockEmailAddressesByHashedValue(input)
       expect(result).toStrictEqual<BlockEmailAddressesBulkUpdateOutput>({
-        status: UpdateEmailMessagesStatus.Partial,
+        status: UpdateBlockedAddressesStatus.Partial,
         failedAddresses: [hashedValues[0]],
         successAddresses: [hashedValues[1], hashedValues[2]],
       })

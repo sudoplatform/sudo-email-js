@@ -36,8 +36,16 @@ mutation UpdateEmailMessages($input: UpdateEmailMessagesInput!) {
   }
 }
 
-mutation DeleteEmailMessage($input: DeleteEmailMessageInput!) {
-  deleteEmailMessage(input: $input)
+mutation BlockEmailAddresses($input: BlockEmailAddressesInput!) {
+  blockEmailAddresses(input: $input) {
+    ...BlockAddressesResult
+  }
+}
+
+mutation UnblockEmailAddresses($input: UnblockEmailAddressesInput!) {
+  unblockEmailAddresses(input: $input) {
+    ...BlockAddressesResult
+  }
 }
 
 mutation CreateCustomEmailFolder($input: CreateCustomEmailFolderInput!) {
@@ -55,18 +63,6 @@ mutation DeleteCustomEmailFolder($input: DeleteCustomEmailFolderInput!) {
 mutation UpdateCustomEmailFolder($input: UpdateCustomEmailFolderInput!) {
   updateCustomEmailFolder(input: $input) {
     ...EmailFolder
-  }
-}
-
-mutation BlockEmailAddresses($input: BlockEmailAddressesInput!) {
-  blockEmailAddresses(input: $input) {
-    ...BlockAddressesResult
-  }
-}
-
-mutation UnblockEmailAddresses($input: UnblockEmailAddressesInput!) {
-  unblockEmailAddresses(input: $input) {
-    ...BlockAddressesResult
   }
 }
 

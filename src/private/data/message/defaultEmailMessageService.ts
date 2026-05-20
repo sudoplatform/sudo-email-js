@@ -105,6 +105,7 @@ import {
   SubscriptionResult,
 } from '../common/subscriptionManager'
 import { SortOrderTransformer } from '../common/transformer/sortOrderTransformer'
+import { ListEmailMessagesFilterTransformer } from '../common/transformer/listEmailMessagesFilterTransformer'
 import { withDefault } from '../common/withDefault'
 import { SealedEmailMessageEntityTransformer } from './transformer/sealedEmailMessageEntityTransformer'
 import { SendEmailMessageResultTransformer } from './transformer/sendEmailMessageResultTransformer'
@@ -894,6 +895,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
   }
 
   async listMessagesForEmailFolderId({
+    filter,
     folderId,
     dateRange,
     limit,
@@ -908,6 +910,9 @@ export class DefaultEmailMessageService implements EmailMessageService {
     const inputDateRange = dateRange
       ? this.validateDateRange(dateRange)
       : undefined
+    const inputFilter = filter
+      ? ListEmailMessagesFilterTransformer.toGraphQL(filter)
+      : undefined
 
     const response = await this.appSync.listEmailMessagesForEmailFolderId(
       folderId,
@@ -916,6 +921,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       sortOrderInput,
       nextToken,
       includeDeletedMessages,
+      inputFilter,
     )
     let sealedEmailMessages: SealedEmailMessageEntity[] = []
     if (response.items) {

@@ -15,11 +15,15 @@ import { v4 } from 'uuid'
 import waitForExpect from 'wait-for-expect'
 import {
   BatchOperationResultStatus,
+  ConfigurationData,
   Direction,
   EmailAddress,
   EmailFolder,
+  EmailMask,
   EncryptionStatus,
   InvalidArgumentError,
+  ListEmailMessagesFilter,
+  MailboxType,
   SendEmailMessageResult,
   SudoEmailClient,
 } from '../../../src'
@@ -32,6 +36,7 @@ import {
   generateSafeLocalPart,
   provisionEmailAddress,
 } from '../util/provisionEmailAddress'
+import { provisionEmailMask } from '../util/provisionEmailMask'
 import { readAllPages } from '../util/paginator'
 
 describe('SudoEmailClient ListEmailMessages Test Suite', () => {
@@ -1598,6 +1603,358 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           await userClient.signInWithKey()
         }
         throw error
+      }
+    })
+  })
+
+  describe('listEmailMessagesForEmailFolderId with filter', () => {
+    let config: ConfigurationData
+    let emailMask: EmailMask | undefined
+    let maskedMessageSent = false
+
+    beforeAll(async () => {
+      const result = await setupEmailClient(log)
+      instanceUnderTest = result.emailClient
+      profilesClient = result.profilesClient
+      userClient = result.userClient
+      sudo = result.sudo
+      sudoOwnershipProofToken = result.ownershipProofToken
+      config = await instanceUnderTest.getConfigurationData()
+
+      senderAddress = await provisionEmailAddress(
+        sudoOwnershipProofToken,
+        instanceUnderTest,
+        { localPart: generateSafeLocalPart('filter-test-sender') },
+      )
+      receiverAddress = await provisionEmailAddress(
+        sudoOwnershipProofToken,
+        instanceUnderTest,
+        { localPart: generateSafeLocalPart('filter-test-receiver') },
+      )
+
+      // Provision a mask if masks are enabled so we can exercise the mailboxIds MASK filter
+      if (config.emailMasksEnabled) {
+        emailMask = await provisionEmailMask(
+          sudoOwnershipProofToken,
+          instanceUnderTest,
+          { realAddress: receiverAddress.emailAddress },
+        )
+      }
+
+      messageDetails = {
+        from: [{ emailAddress: senderAddress.emailAddress }],
+        to: [{ emailAddress: receiverAddress.emailAddress }],
+        cc: [],
+        bcc: [],
+        replyTo: [],
+        subject: 'Filter Test Subject',
+        body: 'Filter Test Body',
+        attachments: [],
+        encryptionStatus: EncryptionStatus.ENCRYPTED,
+      }
+
+      for (let i = 0; i < totalMessagesSent; i++) {
+        sendResult = await instanceUnderTest.sendEmailMessage({
+          senderEmailAddressId: senderAddress.id,
+          emailMessageHeader: {
+            from: messageDetails.from[0],
+            to: messageDetails.to ?? [],
+            cc: [],
+            bcc: [],
+            replyTo: [],
+            subject: messageDetails.subject ?? '',
+          },
+          body: messageDetails.body ?? '',
+          attachments: [],
+          inlineAttachments: [],
+        })
+      }
+
+      // If masks are enabled, send a message from senderAddress TO the mask address.
+      // The mask's realAddress is receiverAddress, so the message will be delivered
+      // to receiverAddress's inbox with emailMaskId set — this is the message we use
+      // to exercise the Mask mailboxIds filter.
+      if (config.emailMasksEnabled && emailMask) {
+        await instanceUnderTest.sendEmailMessage({
+          senderEmailAddressId: senderAddress.id,
+          emailMessageHeader: {
+            from: { emailAddress: senderAddress.emailAddress },
+            to: [{ emailAddress: emailMask.maskAddress }],
+            cc: [],
+            bcc: [],
+            replyTo: [],
+            subject: 'Masked Filter Test',
+          },
+          body: 'Sent to mask address',
+          attachments: [],
+          inlineAttachments: [],
+        })
+        maskedMessageSent = true
+      }
+
+      const folder = await getFolderByName({
+        emailClient: instanceUnderTest,
+        emailAddressId: receiverAddress.id,
+        folderName: 'INBOX',
+      })
+      if (!folder) {
+        assert.fail('Unable to get INBOX folder in setup')
+      }
+      inboxFolder = folder
+
+      const expectedCount = totalMessagesSent + (maskedMessageSent ? 1 : 0)
+      await waitForExpect(async () => {
+        const messagesList =
+          await instanceUnderTest.listEmailMessagesForEmailFolderId({
+            folderId: inboxFolder.id,
+          })
+        expect(messagesList.status).toEqual(ListOperationResultStatus.Success)
+        if (messagesList.status !== ListOperationResultStatus.Success) {
+          assert.fail('result status unexpectedly not Success')
+        }
+        expect(messagesList.items).toHaveLength(expectedCount)
+      })
+      beforeEachComplete = true
+    })
+
+    afterAll(async () => {
+      beforeEachComplete = false
+      await teardown(
+        { emailAddresses: [senderAddress, receiverAddress], sudos: [sudo] },
+        { emailClient: instanceUnderTest, profilesClient, userClient },
+      )
+    })
+
+    it('filters by direction Inbound', async () => {
+      expectSetupComplete()
+
+      const expectedCount = totalMessagesSent + (maskedMessageSent ? 1 : 0)
+
+      await waitForExpect(
+        async () => {
+          const filter: ListEmailMessagesFilter = {
+            direction: { equal: Direction.Inbound },
+          }
+          const messages =
+            await instanceUnderTest.listEmailMessagesForEmailFolderId({
+              folderId: inboxFolder.id,
+              filter,
+            })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            assert.fail(`Unexpected status: ${messages.status}`)
+          }
+          expect(messages.items).toHaveLength(expectedCount)
+          expect(
+            messages.items.every((m) => m.direction === Direction.Inbound),
+          ).toBe(true)
+        },
+        10000,
+        1000,
+      )
+    })
+
+    it('filters by direction Outbound returns empty for inbox folder', async () => {
+      expectSetupComplete()
+
+      await waitForExpect(
+        async () => {
+          const filter: ListEmailMessagesFilter = {
+            direction: { equal: Direction.Outbound },
+          }
+          const messages =
+            await instanceUnderTest.listEmailMessagesForEmailFolderId({
+              folderId: inboxFolder.id,
+              filter,
+            })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            assert.fail(`Unexpected status: ${messages.status}`)
+          }
+          expect(messages.items).toHaveLength(0)
+        },
+        10000,
+        1000,
+      )
+    })
+
+    it('filters by seen:false returns all unseen messages', async () => {
+      expectSetupComplete()
+
+      const expectedCount = totalMessagesSent + (maskedMessageSent ? 1 : 0)
+
+      await waitForExpect(
+        async () => {
+          const filter: ListEmailMessagesFilter = {
+            seen: { equal: false },
+          }
+          const messages =
+            await instanceUnderTest.listEmailMessagesForEmailFolderId({
+              folderId: inboxFolder.id,
+              filter,
+            })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            assert.fail(`Unexpected status: ${messages.status}`)
+          }
+          expect(messages.items.length).toBeGreaterThanOrEqual(expectedCount)
+          expect(messages.items.every((m) => m.seen === false)).toBe(true)
+        },
+        10000,
+        1000,
+      )
+    })
+
+    it('filters by seen:true returns only seen messages after update', async () => {
+      expectSetupComplete()
+
+      // Get all messages in folder and mark one as seen
+      let messageId: string
+      await waitForExpect(
+        async () => {
+          const messages =
+            await instanceUnderTest.listEmailMessagesForEmailFolderId({
+              folderId: inboxFolder.id,
+            })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            assert.fail(`Unexpected status: ${messages.status}`)
+          }
+          expect(messages.items.length).toBeGreaterThan(0)
+          messageId = messages.items[0].id
+        },
+        10000,
+        1000,
+      )
+
+      await instanceUnderTest.updateEmailMessages({
+        ids: [messageId!],
+        values: { seen: true },
+      })
+
+      await waitForExpect(
+        async () => {
+          const filter: ListEmailMessagesFilter = {
+            seen: { equal: true },
+          }
+          const messages =
+            await instanceUnderTest.listEmailMessagesForEmailFolderId({
+              folderId: inboxFolder.id,
+              filter,
+            })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            assert.fail(`Unexpected status: ${messages.status}`)
+          }
+          expect(messages.items.length).toBeGreaterThanOrEqual(1)
+          expect(messages.items.every((m) => m.seen === true)).toBe(true)
+        },
+        10000,
+        1000,
+      )
+    })
+
+    it('filters by compound and filter (direction + seen)', async () => {
+      expectSetupComplete()
+
+      await waitForExpect(
+        async () => {
+          const filter: ListEmailMessagesFilter = {
+            and: [
+              { direction: { equal: Direction.Inbound } },
+              { seen: { equal: false } },
+            ],
+          }
+          const messages =
+            await instanceUnderTest.listEmailMessagesForEmailFolderId({
+              folderId: inboxFolder.id,
+              filter,
+            })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            assert.fail(`Unexpected status: ${messages.status}`)
+          }
+          expect(messages.items.length).toBeGreaterThanOrEqual(1)
+          expect(
+            messages.items.every(
+              (m) => m.direction === Direction.Inbound && m.seen === false,
+            ),
+          ).toBe(true)
+        },
+        10000,
+        1000,
+      )
+    })
+
+    it('filters by mailboxIds with Address type excludes masked messages', async () => {
+      expectSetupComplete()
+
+      await waitForExpect(
+        async () => {
+          const filter: ListEmailMessagesFilter = {
+            mailboxIds: [
+              {
+                type: MailboxType.Address,
+                id: { equal: receiverAddress.id },
+              },
+            ],
+          }
+          const messages =
+            await instanceUnderTest.listEmailMessagesForEmailFolderId({
+              folderId: inboxFolder.id,
+              filter,
+            })
+          if (messages.status !== ListOperationResultStatus.Success) {
+            assert.fail(`Unexpected status: ${messages.status}`)
+          }
+          // Only direct (non-masked) messages should be returned. When masks are
+          // enabled the inbox contains totalMessagesSent + 1 items, so this also
+          // verifies that the masked message is actively excluded by the filter.
+          expect(messages.items).toHaveLength(totalMessagesSent)
+          expect(messages.items.every((m) => m.emailMaskId === undefined)).toBe(
+            true,
+          )
+        },
+        10000,
+        1000,
+      )
+    })
+
+    it('filters by mailboxIds with Mask type', async () => {
+      expectSetupComplete()
+
+      if (config.emailMasksEnabled && emailMask) {
+        // A message was sent TO the mask address in beforeAll; it should be delivered
+        // to receiverAddress's inbox with emailMaskId set. Verify the filter returns only it.
+        await waitForExpect(
+          async () => {
+            const filter: ListEmailMessagesFilter = {
+              mailboxIds: [
+                { type: MailboxType.Mask, id: { equal: emailMask!.id } },
+              ],
+            }
+            const messages =
+              await instanceUnderTest.listEmailMessagesForEmailFolderId({
+                folderId: inboxFolder.id,
+                filter,
+              })
+            if (messages.status !== ListOperationResultStatus.Success) {
+              assert.fail(`Unexpected status: ${messages.status}`)
+            }
+            expect(messages.items).toHaveLength(1)
+            expect(messages.items[0].emailMaskId).toEqual(emailMask!.id)
+          },
+          15000,
+          1000,
+        )
+      } else {
+        // Masks not enabled — filter with a random mask id should return empty
+        const filter: ListEmailMessagesFilter = {
+          mailboxIds: [{ type: MailboxType.Mask, id: { equal: v4() } }],
+        }
+        const messages =
+          await instanceUnderTest.listEmailMessagesForEmailFolderId({
+            folderId: inboxFolder.id,
+            filter,
+          })
+        if (messages.status !== ListOperationResultStatus.Success) {
+          assert.fail(`Unexpected status: ${messages.status}`)
+        }
+        expect(messages.items).toHaveLength(0)
       }
     })
   })
