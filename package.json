@@ -155,9 +155,6 @@
     "wait-for-expect": "^4.0.0",
     "websocket": "^1.0.35"
   },
-  "engines": {
-    "node": ">=22 <23"
-  },
   "packageManager": "yarn@4.12.0+sha512.f45ab632439a67f8bc759bf32ead036a1f413287b9042726b7cc4818b7b49e14e9423ba49b18f9e06ea4941c1ad062385b1d8760a8d5091a1a31e5f6219afca8",
   "auditSuppressions": {
     "1115556": {
@@ -184,6 +181,11 @@
       "until": 1781737454,
       "untilISO": "2026-06-17T23:04:14Z",
       "reason": "Not relevant to our use case and patch is too new"
+    },
+    "1119459": {
+      "until": 1782013092,
+      "untilISO": "2026-06-21T03:38:12Z",
+      "reason": "js-cookie 2.2.1 pinned by amazon-cognito-auth-js (unmaintained) — 3.x resolved to 3.0.7"
     }
   }
 }
