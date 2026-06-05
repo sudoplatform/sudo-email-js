@@ -202,6 +202,7 @@ describe('CancelScheduledDraftMessage Integration Test Suite', () => {
         {
           rfc822Data: maskDraftBuffer,
           senderEmailAddressId: emailAddress.id,
+          emailMaskId: emailMask.id,
         },
       )
       draftIds.push(maskDraftMetadata.id)
@@ -263,6 +264,7 @@ describe('CancelScheduledDraftMessage Integration Test Suite', () => {
         {
           rfc822Data: maskDraftBuffer,
           senderEmailAddressId: emailAddress.id,
+          emailMaskId: emailMask.id,
         },
       )
       draftIds.push(maskDraftMetadata.id)

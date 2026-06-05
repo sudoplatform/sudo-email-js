@@ -2645,12 +2645,34 @@ describe('DefaultEmailMessageService Test Suite', () => {
         mockAppSync.scheduleSendDraftMessage,
       ).first()
       expect(scheduleArgs).toStrictEqual<typeof scheduleArgs>({
-        draftMessageKey: `identityId/email/${emailAddressId}/draft/${id}`,
+        draftMessageKey: `identityId/email/${emailAddressId}/draft/mask/${emailMaskId}/${id}`,
         emailAddressId,
         emailMaskId,
         sendAtEpochMs: sendAt.getTime(),
         symmetricKey: Base64.encode(mockSymmetricKey),
       })
+    })
+
+    it('constructs correct S3 key with emailMaskId for getHeadObjectData', async () => {
+      when(mockAppSync.scheduleSendDraftMessage(anything())).thenResolve(
+        GraphQLDataFactory.scheduledDraftMessageWithEmailMaskId,
+      )
+
+      const { id, emailAddressId } = EntityDataFactory.scheduledDraftMessage
+      const emailMaskId =
+        EntityDataFactory.scheduledDraftMessageWithEmailMaskId.emailMaskId
+      await instanceUnderTest.scheduleSendDraftMessage({
+        id,
+        emailAddressId,
+        emailMaskId,
+        sendAt,
+      })
+
+      verify(mockS3Client.getHeadObjectData(anything())).once()
+      const [s3Args] = capture(mockS3Client.getHeadObjectData).first()
+      expect(s3Args.key).toBe(
+        `identityId/email/${emailAddressId}/draft/mask/${emailMaskId}/${id}`,
+      )
     })
   })
 
@@ -2703,7 +2725,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         mockAppSync.cancelScheduledDraftMessage,
       ).first()
       expect(cancelArgs).toStrictEqual<typeof cancelArgs>({
-        draftMessageKey: `identityId/email/${emailAddressId}/draft/${id}`,
+        draftMessageKey: `identityId/email/${emailAddressId}/draft/mask/${emailMaskId}/${id}`,
         emailAddressId,
         emailMaskId,
       })

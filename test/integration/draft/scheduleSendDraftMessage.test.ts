@@ -171,6 +171,7 @@ describe('ScheduleSendDraftMessage Integration Test Suite', () => {
         {
           rfc822Data: maskDraftBuffer,
           senderEmailAddressId: emailAddress.id,
+          emailMaskId: emailMask.id,
         },
       )
 

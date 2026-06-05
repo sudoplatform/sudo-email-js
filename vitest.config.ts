@@ -6,6 +6,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
+    reporters: ['verbose', 'tree'],
     environment: 'node', // Use node for all tests - jsdom causes issues with jose library
     include: ['test/**/*.test.ts'],
     exclude: ['**/node_modules/**', '**/lib/**', '**/cjs/**', '**/types/**'],

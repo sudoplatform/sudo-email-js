@@ -397,8 +397,10 @@ export class DefaultEmailMessageService implements EmailMessageService {
       emailMaskId,
       sendAt,
     })
-    const keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
-    const key = `${keyPrefix}/draft/${id}`
+    let keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
+    keyPrefix = `${keyPrefix}/draft`
+    keyPrefix = this.addEmailMaskIdToS3KeyPrefix(keyPrefix, emailMaskId)
+    const key = `${keyPrefix}/${id}`
     let keyId: string | undefined
     let algorithm: string | undefined
 
@@ -468,8 +470,10 @@ export class DefaultEmailMessageService implements EmailMessageService {
       emailAddressId,
       emailMaskId,
     })
-    const keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
-    const key = `${keyPrefix}/draft/${id}`
+    let keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
+    keyPrefix = `${keyPrefix}/draft`
+    keyPrefix = this.addEmailMaskIdToS3KeyPrefix(keyPrefix, emailMaskId)
+    const key = `${keyPrefix}/${id}`
 
     const result = await this.appSync.cancelScheduledDraftMessage({
       draftMessageKey: key,
