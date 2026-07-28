@@ -280,6 +280,10 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     this.emailMaskService = new DefaultEmailMaskService(
       this.apiClient,
       deviceKeyWorker,
+      {
+        enforceSingletonPublicKey:
+          opts.sudoEmailClientConfig?.enforceSingletonPublicKey,
+      },
     )
     this.signInGuard = new SignInGuard(this.userClient)
   }
