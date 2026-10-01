@@ -123,11 +123,13 @@ export class DefaultEmailMaskService implements EmailMaskService {
     emailMaskId,
     metadata,
     expiresAt,
+    realAddress,
   }: UpdateEmailMaskInput): Promise<EmailMaskEntity> {
     this.log.debug(this.updateEmailMask.name, {
       emailMaskId,
       metadata,
       expiresAt,
+      realAddress,
     })
     const updateEmailMaskInput: UpdateEmailMaskRequest = {
       id: emailMaskId,
@@ -144,6 +146,10 @@ export class DefaultEmailMaskService implements EmailMaskService {
       updateEmailMaskInput.expiresAtEpochSec = null
     } else if (expiresAt !== undefined) {
       updateEmailMaskInput.expiresAtEpochSec = secondsSinceEpoch(expiresAt)
+    }
+
+    if (realAddress !== undefined) {
+      updateEmailMaskInput.realAddress = realAddress
     }
 
     const result = await this.appSync.updateEmailMask(updateEmailMaskInput)

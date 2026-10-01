@@ -433,6 +433,7 @@ input UpdateEmailMaskInput {
   id: ID!
   metadata: SealedAttributeInput
   expiresAtEpochSec: Int
+  realAddress: String
 }
 
 input EnableEmailMaskInput {

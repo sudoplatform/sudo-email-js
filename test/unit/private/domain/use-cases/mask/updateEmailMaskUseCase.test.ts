@@ -47,6 +47,7 @@ describe('UpdateEmailMaskUseCase Test Suite', () => {
         emailMaskId,
         metadata: undefined,
         expiresAt: undefined,
+        realAddress: undefined,
       })
     })
 
@@ -65,6 +66,7 @@ describe('UpdateEmailMaskUseCase Test Suite', () => {
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         ...input,
         expiresAt: undefined,
+        realAddress: undefined,
       })
     })
 
@@ -81,6 +83,7 @@ describe('UpdateEmailMaskUseCase Test Suite', () => {
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         ...input,
         expiresAt: undefined,
+        realAddress: undefined,
       })
     })
 
@@ -99,6 +102,7 @@ describe('UpdateEmailMaskUseCase Test Suite', () => {
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         ...input,
         metadata: undefined,
+        realAddress: undefined,
       })
     })
 
@@ -116,16 +120,36 @@ describe('UpdateEmailMaskUseCase Test Suite', () => {
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         ...input,
         metadata: undefined,
+        realAddress: undefined,
       })
     })
 
-    it('updates email mask successfully with both metadata and expiresAt', async () => {
+    it('updates email mask successfully with realAddress', async () => {
+      const input = {
+        emailMaskId: 'testMaskId',
+        realAddress: 'new@example.com',
+      }
+
+      const result = await instanceUnderTest.execute(input)
+
+      expect(result).toStrictEqual(EntityDataFactory.emailMask)
+      verify(mockEmailMaskService.updateEmailMask(anything())).once()
+      const [inputArgs] = capture(mockEmailMaskService.updateEmailMask).first()
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        ...input,
+        metadata: undefined,
+        expiresAt: undefined,
+      })
+    })
+
+    it('updates email mask successfully with all parameters', async () => {
       const metadata = { test: 'updated data' }
       const expiresAt = DateTime.now().plus({ days: 30 }).toJSDate()
       const input = {
         emailMaskId: 'testMaskId',
         metadata: metadata,
         expiresAt,
+        realAddress: 'new@example.com',
       }
 
       const result = await instanceUnderTest.execute(input)

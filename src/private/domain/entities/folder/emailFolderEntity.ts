@@ -7,8 +7,7 @@
 import { OwnerEntity } from '../common/ownerEntity'
 
 export type EmailFolderEntityStatus =
-  | { type: 'Completed' }
-  | { type: 'Failed'; cause: Error }
+  { type: 'Completed' } | { type: 'Failed'; cause: Error }
 
 /**
  * Core entity representation of an email folder business rule. Depicts the information related to a folder resource.

@@ -68,6 +68,7 @@ describe('SudoEmailClient.updateEmailMask Test Suite', () => {
       ...input,
       metadata: undefined,
       expiresAt: undefined,
+      realAddress: undefined,
     })
   })
 
@@ -92,6 +93,7 @@ describe('SudoEmailClient.updateEmailMask Test Suite', () => {
     expect(args).toStrictEqual<typeof args>({
       ...input,
       expiresAt: undefined,
+      realAddress: undefined,
     })
   })
 
@@ -108,6 +110,7 @@ describe('SudoEmailClient.updateEmailMask Test Suite', () => {
     expect(args).toStrictEqual<typeof args>({
       ...input,
       expiresAt: undefined,
+      realAddress: undefined,
     })
   })
 
@@ -124,6 +127,7 @@ describe('SudoEmailClient.updateEmailMask Test Suite', () => {
     expect(args).toStrictEqual<typeof args>({
       ...input,
       metadata: undefined,
+      realAddress: undefined,
     })
   })
 
@@ -140,6 +144,24 @@ describe('SudoEmailClient.updateEmailMask Test Suite', () => {
     expect(args).toStrictEqual<typeof args>({
       ...input,
       metadata: undefined,
+      realAddress: undefined,
+    })
+  })
+
+  it('passes realAddress parameter properly', async () => {
+    const input = {
+      emailMaskId: v4(),
+      realAddress: 'new@example.com',
+    }
+
+    await instanceUnderTest.updateEmailMask(input)
+
+    verify(mockUpdateEmailMaskUseCase.execute(anything())).once()
+    const [args] = capture(mockUpdateEmailMaskUseCase.execute).first()
+    expect(args).toStrictEqual<typeof args>({
+      ...input,
+      expiresAt: undefined,
+      metadata: undefined,
     })
   })
 
@@ -148,6 +170,7 @@ describe('SudoEmailClient.updateEmailMask Test Suite', () => {
       emailMaskId: v4(),
       metadata: { test: 'updated data' },
       expiresAt: DateTime.now().plus({ days: 30 }).toJSDate(),
+      realAddress: 'new@example.com',
     }
 
     await instanceUnderTest.updateEmailMask(input)
@@ -162,6 +185,7 @@ describe('SudoEmailClient.updateEmailMask Test Suite', () => {
       emailMaskId: v4(),
       metadata: null,
       expiresAt: null,
+      realAddress: undefined,
     }
 
     await instanceUnderTest.updateEmailMask(input)

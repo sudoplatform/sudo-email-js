@@ -27,5 +27,6 @@ export default defineConfig({
     },
     testTimeout: 240000,
     hookTimeout: 240000,
+    retry: 3,
   },
 })

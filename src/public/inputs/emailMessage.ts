@@ -242,8 +242,7 @@ export interface EqualDirectionFilter {
  * {EqualDirectionFilter | NotEqualDirectionFilter |} Used to filter results based on `direction` property
  */
 export type EmailMessageDirectionFilter =
-  | EqualDirectionFilter
-  | NotEqualDirectionFilter
+  EqualDirectionFilter | NotEqualDirectionFilter
 
 export enum MailboxType {
   Address = 'ADDRESS',

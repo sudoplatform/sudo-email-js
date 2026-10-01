@@ -32,6 +32,9 @@ export const emailMaskUserEntitledEntitlement =
 export const emailMaskMaxPerUserEntitlement =
   'sudoplatform.email.emailMaskMaxPerUser'
 
+export const emailMaskMaxProvisionsExpendableEntitlement =
+  'sudoplatform.email.emailMaskMaxProvisionsExpendable'
+
 export const emailAddressUserEntitledEntitlement =
   'sudoplatform.email.emailAddressUserEntitled'
 
@@ -41,61 +44,69 @@ export const emailMessageSendUserEntitledEntitlement =
 export const emailMessageReceiveUserEntitledEntitlement =
   'sudoplatform.email.emailMessageReceiveUserEntitled'
 
+export const DefaultTestEntitlements: Entitlement[] = [
+  {
+    name: sudoMaxPerUser,
+    description: 'Maximum number of Sudos',
+    value: 3,
+  },
+  {
+    name: emailAddressUserEntitledEntitlement,
+    description: 'System Test Entitlement',
+    value: 1,
+  },
+  {
+    name: emailAddressMaxPerSudoEntitlement,
+    description: 'Test Max Addresses Entitlement',
+    value: 3,
+  },
+  {
+    name: emailStorageMaxPerEmailAddressEntitlement,
+    description: 'Test Max Storage Per Email Address Entitlement',
+    value: 500000,
+  },
+  {
+    name: emailStorageMaxPerUserEntitlement,
+    description: 'Test Max Storage Per User Entitlement',
+    value: 500000,
+  },
+  {
+    name: emailAddressMaxProvisionsExpendableEntitlement,
+    description: 'Test Max Addresses Per User Entitlement',
+    value: 60, // Equivalent to SudoMax value
+  },
+  {
+    name: emailMessageSendUserEntitledEntitlement,
+    description: 'Test Email Message Send User Entitlement',
+    value: 1,
+  },
+  {
+    name: emailMessageReceiveUserEntitledEntitlement,
+    description: 'Test Email Message Receive User Entitlement',
+    value: 1,
+  },
+  {
+    name: emailMaskUserEntitledEntitlement,
+    description: 'System Test Mask Provision Entitlement',
+    value: 1,
+  },
+  {
+    name: emailMaskMaxPerUserEntitlement,
+    description: 'Test Email Mask Max Per User Entitlement',
+    value: 50,
+  },
+  {
+    name: emailMaskMaxProvisionsExpendableEntitlement,
+    description:
+      'Maximum number of email masks a user can provision over the lifetime of the account',
+    value: 100,
+  },
+]
+
 export class EntitlementsBuilder {
   private entitlementsClient?: SudoEntitlementsClient
   private entitlementsAdminClient?: SudoEntitlementsAdminClient
-  private entitlements: Entitlement[] = [
-    {
-      name: sudoMaxPerUser,
-      value: 3,
-    },
-    {
-      name: emailAddressUserEntitledEntitlement,
-      description: 'Test User Entitlement',
-      value: 1,
-    },
-    {
-      name: emailAddressMaxPerSudoEntitlement,
-      description: 'Test Max Addresses Entitlement',
-      value: 3,
-    },
-    {
-      name: emailStorageMaxPerEmailAddressEntitlement,
-      description: 'Test Max Storage Per Email Address Entitlement',
-      value: 500000,
-    },
-    {
-      name: emailStorageMaxPerUserEntitlement,
-      description: 'Test Max Storage Per User Entitlement',
-      value: 500000,
-    },
-    {
-      name: 'sudoplatform.email.emailAddressMaxProvisionsExpendable',
-      description:
-        'Maximum number of email addresses a user can provision over lifetime of their account',
-      value: 60,
-    },
-    {
-      name: emailMessageSendUserEntitledEntitlement,
-      description: 'Test Email Message Send User Entitlement',
-      value: 1,
-    },
-    {
-      name: emailMessageReceiveUserEntitledEntitlement,
-      description: 'Test Email Message Receive User Entitlement',
-      value: 1,
-    },
-    {
-      name: emailMaskUserEntitledEntitlement,
-      description: 'Test Email Mask User Entitlement',
-      value: 1,
-    },
-    {
-      name: emailMaskMaxPerUserEntitlement,
-      description: 'Test Max Email Masks Entitlement',
-      value: 100, // Equivalent to paid MySudo subscription
-    },
-  ]
+  private entitlements: Entitlement[] = DefaultTestEntitlements
 
   private log: Logger = new DefaultLogger(this.constructor.name)
 

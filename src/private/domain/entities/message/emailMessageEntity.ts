@@ -10,8 +10,7 @@ import { EmailAddressEntity } from '../account/emailAddressEntity'
 import { OwnerEntity } from '../common/ownerEntity'
 
 export type EmailMessageEntityStatus =
-  | { type: 'Completed' }
-  | { type: 'Failed'; cause: Error }
+  { type: 'Completed' } | { type: 'Failed'; cause: Error }
 
 /**
  * Core entity representation of an email message business rule. Depicts the metadata related to an email message resource.

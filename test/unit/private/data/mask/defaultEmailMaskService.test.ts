@@ -355,13 +355,32 @@ describe('DefaultEmailMaskService Test Suite', () => {
       })
     })
 
-    it('calls appSync correctly with both metadata and expiresAt updates', async () => {
+    it('calls appSync correctly with realAddress update', async () => {
+      const realAddress = 'new@example.com'
+      const input: UpdateEmailMaskInput = {
+        emailMaskId: 'testId',
+        realAddress,
+      }
+
+      await instanceUnderTest.updateEmailMask(input)
+
+      verify(mockAppSync.updateEmailMask(anything())).once()
+      const [inputArgs] = capture(mockAppSync.updateEmailMask).first()
+      expect(inputArgs).toStrictEqual<UpdateEmailMaskRequest>({
+        id: input.emailMaskId,
+        realAddress,
+      })
+    })
+
+    it('calls appSync correctly with all updates', async () => {
+      const realAddress = 'new@example.com'
       const metadata = { test: 'updated data' }
       const expiresAt = DateTime.now().plus({ days: 1 }).toJSDate()
       const input: UpdateEmailMaskInput = {
         emailMaskId: 'testId',
         metadata: metadata,
         expiresAt,
+        realAddress,
       }
 
       when(mockDeviceKeyWorker.getCurrentSymmetricKeyId()).thenResolve('keyId')
@@ -381,6 +400,7 @@ describe('DefaultEmailMaskService Test Suite', () => {
           algorithm: EncryptionAlgorithm.AesCbcPkcs7Padding,
         },
         expiresAtEpochSec: secondsSinceEpoch(expiresAt),
+        realAddress,
       })
     })
 

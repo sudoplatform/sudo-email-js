@@ -27,13 +27,16 @@ export const provisionEmailMask = async (
   let maskAddress = options?.maskAddress
   if (!maskAddress) {
     if (!maskDomain) {
-      const domains = await emailClient.getEmailMaskDomains()
-      if (domains.length === 0) {
+      const domainConfigs = await emailClient.listEmailDomains()
+      const maskDomains = domainConfigs
+        .filter((config) => config.isMaskDomain === true)
+        .map((config) => config.domain)
+      if (maskDomains.length === 0) {
         throw new Error(
           'No supported email domains available to provision mask',
         )
       }
-      maskDomain = domains[0]
+      maskDomain = maskDomains[0]
     }
     maskAddress = `${localPart}@${maskDomain}`
   }

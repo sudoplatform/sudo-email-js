@@ -5,8 +5,7 @@
  */
 
 export type UnsealedBlockedAddressStatus =
-  | { type: 'Completed' }
-  | { type: 'Failed'; cause: Error }
+  { type: 'Completed' } | { type: 'Failed'; cause: Error }
 
 export enum BlockedAddressHashAlgorithm {
   SHA256 = 'SHA256',

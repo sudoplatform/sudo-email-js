@@ -1294,6 +1294,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       emailMaskId: input.emailMaskId,
       metadata: input.metadata,
       expiresAt: input.expiresAt,
+      realAddress: input.realAddress,
     })
 
     return EmailMaskTransformer.entityToApi(result)

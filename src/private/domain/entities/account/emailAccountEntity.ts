@@ -9,8 +9,7 @@ import { EmailFolderEntity } from '../folder/emailFolderEntity'
 import { EmailAddressEntity } from './emailAddressEntity'
 
 export type EmailAccountEntityStatus =
-  | { type: 'Completed' }
-  | { type: 'Failed'; cause: Error }
+  { type: 'Completed' } | { type: 'Failed'; cause: Error }
 
 /**
  * Core entity representation of an email account business rule. Depicts the information related to an email account resource.

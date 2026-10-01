@@ -1193,8 +1193,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
 
   private async onSubscriptionNext<
     SubscriptionType =
-      | OnEmailMessageDeletedSubscription
-      | OnEmailMessageCreatedSubscription,
+      OnEmailMessageDeletedSubscription | OnEmailMessageCreatedSubscription,
   >(
     subscriptionName: string,
     result: SubscriptionResult<SubscriptionType>,
@@ -1230,8 +1229,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
   }
 
   private setupEmailMessagesCreatedSubscription():
-    | ZenObservable.Subscription
-    | undefined {
+    ZenObservable.Subscription | undefined {
     const subscription = this.createSubscriptionManager
       .getWatcher()
       ?.subscribe({
@@ -1270,8 +1268,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
   }
 
   private setupEmailMessagesDeletedSubscription():
-    | ZenObservable.Subscription
-    | undefined {
+    ZenObservable.Subscription | undefined {
     const subscription = this.deleteSubscriptionManager
       .getWatcher()
       ?.subscribe({
@@ -1314,8 +1311,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
   }
 
   private setupEmailMessagesUpdatedSubscription():
-    | ZenObservable.Subscription
-    | undefined {
+    ZenObservable.Subscription | undefined {
     const subscription = this.updateSubscriptionManager
       .getWatcher()
       ?.subscribe({

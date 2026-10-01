@@ -1003,6 +1003,7 @@ export type UpdateEmailMaskInput = {
   expiresAtEpochSec?: InputMaybe<Scalars['Int']['input']>
   id: Scalars['ID']['input']
   metadata?: InputMaybe<SealedAttributeInput>
+  realAddress?: InputMaybe<Scalars['String']['input']>
 }
 
 export type UpdateEmailMessagesInput = {

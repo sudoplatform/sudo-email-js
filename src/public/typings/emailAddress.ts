@@ -17,6 +17,7 @@ import { EmailFolder } from './emailFolder'
  * @property {string} emailAddress Address in format 'local-part@domain' of the email address.
  * @property {number} size The total size of all email messages assigned to the email address.
  * @property {number} numberOfEmailMessages The total number of email messages assigned to the email address.
+ * Drafts are messages that have not yet been sent or received, so they are not considered in this count.
  * @property {number} version Version of this entity, increments on update.
  * @property {Date} createdAt Date when the email address was created.
  * @property {Date} updatedAt Date when the email address was last updated.

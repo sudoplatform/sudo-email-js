@@ -16,11 +16,13 @@ import { InvalidArgumentError } from '../../../../public'
  * @property {string} emailMaskId The identifier of the email mask to update.
  * @property {JSON | null} metadata Optional metadata to associate with the email mask. To remove existing metadata, set to null.
  * @property {Date | null} expiresAt Optional expiration date for the email mask. To remove existing expiration, set to null.
+ * @property {string} realAddress Optional real email address for the email mask. Only valid for External masks in PENDING state. Intended for the use case of accidentally inputing wrong external address
  */
 interface UpdateEmailMaskUseCaseInput {
   emailMaskId: string
   metadata?: Record<string, any> | null
   expiresAt?: Date | null
+  realAddress?: string
 }
 
 /**
@@ -37,11 +39,13 @@ export class UpdateEmailMaskUseCase {
     emailMaskId,
     metadata,
     expiresAt,
+    realAddress,
   }: UpdateEmailMaskUseCaseInput): Promise<EmailMaskEntity> {
     this.log.debug(this.constructor.name, {
       emailMaskId,
       metadata,
       expiresAt,
+      realAddress,
     })
 
     // Make sure the expiration date is in the future
@@ -56,6 +60,7 @@ export class UpdateEmailMaskUseCase {
       emailMaskId,
       metadata,
       expiresAt,
+      realAddress,
     })
   }
 }
