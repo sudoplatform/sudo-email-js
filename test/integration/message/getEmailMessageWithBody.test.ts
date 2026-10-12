@@ -234,6 +234,101 @@ describe('getEmailMessageWithBody test suite', () => {
         inlineAttachments: [],
       })
     })
+
+    it('works for messages with multiple attachments with the same name', async ({
+      task,
+    }) => {
+      const body = task.name
+
+      const imageAttachment1: EmailAttachment = {
+        data: imageData,
+        filename: 'dogImage.jpg',
+        inlineAttachment: false,
+        mimeType: 'image/jpg',
+        contentTransferEncoding: 'base64',
+        contentId: v4(),
+      }
+      const imageAttachment2: EmailAttachment = {
+        data: imageData,
+        filename: 'dogImage.jpg',
+        inlineAttachment: false,
+        mimeType: 'image/jpg',
+        contentTransferEncoding: 'base64',
+        contentId: v4(),
+      }
+
+      const input = generateSendInput(
+        body,
+        [{ emailAddress: 'success@simulator.amazonses.com' }],
+        [imageAttachment1, imageAttachment2],
+      )
+
+      const result = await instanceUnderTest.sendEmailMessage(input)
+      expect(result.id).toBeDefined()
+
+      await waitForEmailMessage(result.id)
+
+      const messageWithBody = await instanceUnderTest.getEmailMessageWithBody({
+        emailAddressId: emailAddress.id,
+        id: result.id,
+      })
+
+      expect(messageWithBody).toStrictEqual<EmailMessageWithBody>({
+        id: result.id,
+        body: body,
+        attachments: [imageAttachment1, imageAttachment2],
+        inlineAttachments: [],
+      })
+    })
+
+    it('works for messages with multiple inline attachments with the same name', async ({
+      task,
+    }) => {
+      const imageAttachment1: EmailAttachment = {
+        data: imageData,
+        filename: 'dogImage.jpg',
+        inlineAttachment: true,
+        mimeType: 'image/jpg',
+        contentTransferEncoding: 'base64',
+        contentId: v4(),
+      }
+      const imageAttachment2: EmailAttachment = {
+        data: imageData,
+        filename: 'dogImage.jpg',
+        inlineAttachment: true,
+        mimeType: 'image/jpg',
+        contentTransferEncoding: 'base64',
+        contentId: v4(),
+      }
+      const body =
+        `<div>${task.name}\n` +
+        `<img src="cid:${imageAttachment1.contentId}">\n` +
+        `<img src="cid:${imageAttachment2.contentId}">\n` +
+        `</div>`
+
+      const input = generateSendInput(
+        body,
+        [{ emailAddress: 'success@simulator.amazonses.com' }],
+        [imageAttachment1, imageAttachment2],
+      )
+
+      const result = await instanceUnderTest.sendEmailMessage(input)
+      expect(result.id).toBeDefined()
+
+      await waitForEmailMessage(result.id)
+
+      const messageWithBody = await instanceUnderTest.getEmailMessageWithBody({
+        emailAddressId: emailAddress.id,
+        id: result.id,
+      })
+
+      expect(messageWithBody).toStrictEqual<EmailMessageWithBody>({
+        id: result.id,
+        body: body,
+        inlineAttachments: [imageAttachment1, imageAttachment2],
+        attachments: [],
+      })
+    })
   })
 
   describe('encrypted path', () => {
@@ -304,6 +399,101 @@ describe('getEmailMessageWithBody test suite', () => {
         body,
         attachments: [pdfAttachment],
         inlineAttachments: [],
+      })
+    })
+
+    it('works for messages with multiple attachments with the same name', async ({
+      task,
+    }) => {
+      const body = task.name
+
+      const imageAttachment1: EmailAttachment = {
+        data: imageData,
+        filename: 'dogImage.jpg',
+        inlineAttachment: false,
+        mimeType: 'image/jpg',
+        contentTransferEncoding: 'base64',
+        contentId: v4(),
+      }
+      const imageAttachment2: EmailAttachment = {
+        data: imageData,
+        filename: 'dogImage.jpg',
+        inlineAttachment: false,
+        mimeType: 'image/jpg',
+        contentTransferEncoding: 'base64',
+        contentId: v4(),
+      }
+
+      const input = generateSendInput(
+        body,
+        [{ emailAddress: emailAddress.emailAddress }],
+        [imageAttachment1, imageAttachment2],
+      )
+
+      const result = await instanceUnderTest.sendEmailMessage(input)
+      expect(result.id).toBeDefined()
+
+      await waitForEmailMessage(result.id)
+
+      const messageWithBody = await instanceUnderTest.getEmailMessageWithBody({
+        emailAddressId: emailAddress.id,
+        id: result.id,
+      })
+
+      expect(messageWithBody).toStrictEqual<EmailMessageWithBody>({
+        id: result.id,
+        body: body,
+        attachments: [imageAttachment1, imageAttachment2],
+        inlineAttachments: [],
+      })
+    })
+
+    it('works for messages with multiple inline attachments with the same name', async ({
+      task,
+    }) => {
+      const imageAttachment1: EmailAttachment = {
+        data: imageData,
+        filename: 'dogImage.jpg',
+        inlineAttachment: true,
+        mimeType: 'image/jpg',
+        contentTransferEncoding: 'base64',
+        contentId: v4(),
+      }
+      const imageAttachment2: EmailAttachment = {
+        data: imageData,
+        filename: 'dogImage.jpg',
+        inlineAttachment: true,
+        mimeType: 'image/jpg',
+        contentTransferEncoding: 'base64',
+        contentId: v4(),
+      }
+      const body =
+        `<div>${task.name}\n` +
+        `<img src="cid:${imageAttachment1.contentId}">\n` +
+        `<img src="cid:${imageAttachment2.contentId}">\n` +
+        `</div>`
+
+      const input = generateSendInput(
+        body,
+        [{ emailAddress: emailAddress.emailAddress }],
+        [imageAttachment1, imageAttachment2],
+      )
+
+      const result = await instanceUnderTest.sendEmailMessage(input)
+      expect(result.id).toBeDefined()
+
+      await waitForEmailMessage(result.id)
+
+      const messageWithBody = await instanceUnderTest.getEmailMessageWithBody({
+        emailAddressId: emailAddress.id,
+        id: result.id,
+      })
+
+      expect(messageWithBody).toStrictEqual<EmailMessageWithBody>({
+        id: result.id,
+        body: body,
+        inlineAttachments: [imageAttachment1, imageAttachment2],
+        attachments: [],
       })
     })
   })

@@ -295,8 +295,16 @@ export class Rfc822MessageDataProcessor {
         }
         // This is necessary because inline attachments are included in the parsed object twice
         if (
-          !attachments.some((a) => a.filename === attachment.filename) &&
-          !inlineAttachments.some((a) => a.filename === attachment.filename)
+          !attachments.some(
+            (a) =>
+              a.filename === attachment.filename &&
+              a.contentId === attachment.contentId,
+          ) &&
+          !inlineAttachments.some(
+            (a) =>
+              a.filename === attachment.filename &&
+              a.contentId === attachment.contentId,
+          )
         ) {
           // eslint-disable-next-line @typescript-eslint/no-unused-expressions
           attachment.inlineAttachment
