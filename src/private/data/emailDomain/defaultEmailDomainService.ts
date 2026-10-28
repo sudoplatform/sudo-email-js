@@ -30,7 +30,7 @@ export class DefaultEmailDomainService implements EmailDomainService {
     )
   }
 
-  async getEmailMaskDomains(): Promise<EmailDomainEntity[]> {
+  async getEmailAliasDomains(): Promise<EmailDomainEntity[]> {
     const result = await this.appSync.getEmailMaskDomains()
     return result.domains.map((domain) =>
       this.emailDomainTransformer.transformGraphQL(domain),

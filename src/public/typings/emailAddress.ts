@@ -22,7 +22,7 @@ import { EmailFolder } from './emailFolder'
  * @property {Date} createdAt Date when the email address was created.
  * @property {Date} updatedAt Date when the email address was last updated.
  * @property {Date} lastReceivedAt Date when the email address last received an email message.
- * @property {string} alias An alias for the email address.
+ * @property {string} displayName A display name for the email address.
  */
 export interface EmailAddress
   extends EmailAddressProps,
@@ -43,7 +43,7 @@ export interface EmailAddressProps {
   folders: EmailFolder[]
 }
 export interface SealedEmailAddressProps {
-  alias?: string
+  displayName?: string
 }
 
 export interface EmailAddressDetail {

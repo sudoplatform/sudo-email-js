@@ -144,7 +144,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
         rfc822Data: rfc822Data,
         senderEmailAddressId,
         id,
-        emailMaskId: undefined,
+        emailAliasId: undefined,
       })
     })
 
@@ -288,26 +288,26 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
       verify(mockEmailMessageService.saveDraft(anything())).never()
     })
 
-    it('passes and returns email mask id when provided', async () => {
+    it('passes and returns email alias id when provided', async () => {
       const id = v4()
       const rfc822Data = stringToArrayBuffer(v4())
       const senderEmailAddressId = v4()
       const updatedAt = new Date()
-      const emailMaskId = v4()
+      const emailAliasId = v4()
 
       when(mockEmailMessageService.getDraft(anything())).thenResolve({
         id,
         emailAddressId: senderEmailAddressId,
         updatedAt,
         rfc822Data,
-        emailMaskId,
+        emailAliasId,
       })
 
       when(mockEmailMessageService.saveDraft(anything())).thenResolve({
         id,
         emailAddressId: senderEmailAddressId,
         updatedAt,
-        emailMaskId,
+        emailAliasId,
       })
 
       await expect(
@@ -315,13 +315,13 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
           id,
           senderEmailAddressId,
           rfc822Data,
-          emailMaskId,
+          emailAliasId,
         }),
       ).resolves.toStrictEqual({
         id,
         emailAddressId: senderEmailAddressId,
         updatedAt,
-        emailMaskId,
+        emailAliasId,
       })
 
       verify(mockEmailAccountService.get(anything())).once()
@@ -336,7 +336,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
         rfc822Data: rfc822Data,
         senderEmailAddressId,
         id,
-        emailMaskId,
+        emailAliasId,
       })
     })
 
@@ -422,7 +422,7 @@ describe('UpdateDraftEmailMessageUseCase Test Suite', () => {
           rfc822Data: mockDecryptedData,
           senderEmailAddressId,
           id,
-          emailMaskId: undefined,
+          emailAliasId: undefined,
         })
       })
 

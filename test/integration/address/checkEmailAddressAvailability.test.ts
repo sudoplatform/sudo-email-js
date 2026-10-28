@@ -45,7 +45,9 @@ describe('SudoEmailClient checkEmailAddressAvailability Test Suite', () => {
     sudoOwnershipProofToken = result.ownershipProofToken
     profilesClient = result.profilesClient
 
-    supportedDomains = await instanceUnderTest.getSupportedEmailDomains()
+    supportedDomains = (await instanceUnderTest.listEmailDomains()).map(
+      (domain) => domain.domain,
+    )
 
     expect(supportedDomains.length).toBeGreaterThanOrEqual(1)
   })

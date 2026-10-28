@@ -64,7 +64,7 @@ describe('DeleteDraftEmailMessagesUseCase Test Suite', () => {
     expect(actualArgs).toStrictEqual<typeof actualArgs>({
       ids,
       emailAddressId,
-      emailMaskId: undefined,
+      emailAliasId: undefined,
     })
   })
 
@@ -94,7 +94,7 @@ describe('DeleteDraftEmailMessagesUseCase Test Suite', () => {
     const emailAddressId = v4()
     when(
       mockEmailMessageService.deleteDrafts(
-        deepEqual({ ids, emailAddressId, emailMaskId: undefined }),
+        deepEqual({ ids, emailAddressId, emailAliasId: undefined }),
       ),
     ).thenResolve([
       { id: 'bad-id1', reason: 'error' },
@@ -121,7 +121,7 @@ describe('DeleteDraftEmailMessagesUseCase Test Suite', () => {
 
     when(
       mockEmailMessageService.deleteDrafts(
-        deepEqual({ ids, emailAddressId, emailMaskId: undefined }),
+        deepEqual({ ids, emailAddressId, emailAliasId: undefined }),
       ),
     ).thenResolve([
       { id: 'bad-id1', reason: 'error' },
@@ -150,21 +150,21 @@ describe('DeleteDraftEmailMessagesUseCase Test Suite', () => {
     expect(calledIds).toEqual(expect.arrayContaining(['good-id1', 'good-id2']))
   })
 
-  it('passes email mask id properly when provided', async () => {
+  it('passes email alias id properly when provided', async () => {
     const ids = [v4()]
     const emailAddressId = v4()
-    const emailMaskId = v4()
+    const emailAliasId = v4()
     await instanceUnderTest.execute({
       ids: new Set(ids),
       emailAddressId,
-      emailMaskId,
+      emailAliasId,
     })
     verify(mockEmailMessageService.deleteDrafts(anything())).once()
     const [actualArgs] = capture(mockEmailMessageService.deleteDrafts).first()
     expect(actualArgs).toStrictEqual<typeof actualArgs>({
       ids,
       emailAddressId,
-      emailMaskId,
+      emailAliasId,
     })
   })
 })

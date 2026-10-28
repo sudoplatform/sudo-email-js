@@ -34,7 +34,8 @@ interface ListEmailAccountsUseCaseOutput {
     owners: Array<{ id: string; issuer: string }>
     identityId: string
     keyRingId: string
-    emailAddress: { emailAddress: string; alias?: string }
+    emailAddress: string
+    displayName?: string
     size: number
     numberOfEmailMessages: number
     version: number

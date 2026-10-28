@@ -6,16 +6,16 @@
 
 
 /**
- * Input for `EmailMaskService.verifyExternalEmailAddress`
+ * Input for `SudoEmailClient.verifyExternalEmailAddress`
  *
  * @interface VerifyExternalEmailAddressInput
  * @property {string} emailAddress The external email address to be verified.
- * @property {string} emailMaskId The id of the email mask associated with the email address.
+ * @property {string} emailAliasId The id of the email alias associated with the email address.
  * @property {string} verificationCode The verification code to verify.
  */
 export interface VerifyExternalEmailAddressInput {
   emailAddress: string
-  emailMaskId: string
+  emailAliasId?: string
   verificationCode?: string
 }
 

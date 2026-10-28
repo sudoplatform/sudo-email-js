@@ -19,7 +19,7 @@ export class EmailDomainEntityTransformer {
   ): EmailDomainEntity {
     return {
       domain: emailDomain.domain,
-      isMaskDomain: emailDomain.isMaskDomain,
+      isAliasDomain: emailDomain.isMaskDomain,
       metadata: emailDomain.metadata,
     }
   }

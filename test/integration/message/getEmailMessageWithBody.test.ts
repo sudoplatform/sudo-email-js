@@ -40,7 +40,7 @@ import {
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers'
 import { Upload } from '@aws-sdk/lib-storage'
 import { getFolderByName } from '../util/folder'
-import { provisionEmailMask } from '../util/provisionEmailMask'
+import { provisionEmailAlias } from '../util/provisionEmailAlias'
 import { getImageFileData, getPdfFileData } from '../../util/files/fileData'
 import {
   emailStorageMaxPerEmailAddressEntitlement,
@@ -68,7 +68,7 @@ describe('getEmailMessageWithBody test suite', () => {
   const pdfData = getPdfFileData()
 
   let emailAddress: EmailAddress
-  let emailMasksEnabled: boolean
+  let emailAliasesEnabled: boolean
 
   beforeAll(async () => {
     const result = await setupEmailClient(log)
@@ -83,7 +83,7 @@ describe('getEmailMessageWithBody test suite', () => {
     bucket = emailServiceConfig.bucket
     region = emailServiceConfig.region
     const config = await instanceUnderTest.getConfigurationData()
-    emailMasksEnabled = config.emailMasksEnabled
+    emailAliasesEnabled = config.emailAliasesEnabled
 
     const entitlementsClient = result.entitlementsClient
     const entitlementsAdminClient = result.entitlementsAdminClient
@@ -498,13 +498,13 @@ describe('getEmailMessageWithBody test suite', () => {
     })
   })
 
-  describe('email masks', () => {
-    it('can get an email sent by a mask', async () => {
-      if (!emailMasksEnabled) {
-        log.debug('Email Masks not enabled. Skipping.')
+  describe('email aliases', () => {
+    it('can get an email sent by a alias', async () => {
+      if (!emailAliasesEnabled) {
+        log.debug('Email Aliases not enabled. Skipping.')
         return
       }
-      const body = 'This message is sent by a mask'
+      const body = 'This message is sent by a alias'
       const pdfAttachment: EmailAttachment = {
         data: pdfData,
         filename: 'lorem-ipsum.pdf',
@@ -526,7 +526,7 @@ describe('getEmailMessageWithBody test suite', () => {
         instanceUnderTest,
       )
       emailAddresses.push(senderEmailAddress)
-      const senderEmailMask = await provisionEmailMask(
+      const senderEmailAlias = await provisionEmailAlias(
         ownershipProofToken,
         instanceUnderTest,
         {
@@ -537,12 +537,12 @@ describe('getEmailMessageWithBody test suite', () => {
         body,
         [{ emailAddress: emailAddress.emailAddress }],
         [pdfAttachment],
-        { emailAddress: senderEmailMask.maskAddress },
+        { emailAddress: senderEmailAlias.aliasAddress },
       )
 
-      const sendResult = await instanceUnderTest.sendMaskedEmailMessage({
+      const sendResult = await instanceUnderTest.sendEmailMessageViaAlias({
         ...sendInput,
-        senderEmailMaskId: senderEmailMask.id,
+        senderEmailAliasId: senderEmailAlias.id,
       })
       await waitForEmailMessage(sendResult.id)
       const sentMessageWithBody =
@@ -571,7 +571,7 @@ describe('getEmailMessageWithBody test suite', () => {
           assert.fail(`result status unexpectedly not Success`)
         }
         const receivedMessage = receiverMessages.items.find(
-          (m) => m.from[0].emailAddress === senderEmailMask.maskAddress,
+          (m) => m.from[0].emailAddress === senderEmailAlias.aliasAddress,
         )
         expect(receivedMessage).toBeDefined()
         receivedMessageId = receivedMessage!.id
@@ -590,12 +590,12 @@ describe('getEmailMessageWithBody test suite', () => {
       })
     })
 
-    it('can get an email sent to a mask', async () => {
-      if (!emailMasksEnabled) {
-        log.debug('Email Masks not enabled. Skipping.')
+    it('can get an email sent to a alias', async () => {
+      if (!emailAliasesEnabled) {
+        log.debug('Email Aliases not enabled. Skipping.')
         return
       }
-      const body = 'This message is sent by a mask'
+      const body = 'This message is sent by a alias'
       const imageAttachment: EmailAttachment = {
         data: imageData,
         filename: 'dogImage.jpg',
@@ -617,7 +617,7 @@ describe('getEmailMessageWithBody test suite', () => {
       if (!receiverInbox) {
         throw new Error('Receiver INBOX not found')
       }
-      const receiverMask = await provisionEmailMask(
+      const receiverAlias = await provisionEmailAlias(
         ownershipProofToken,
         instanceUnderTest,
         {
@@ -626,7 +626,7 @@ describe('getEmailMessageWithBody test suite', () => {
       )
       const sendInput = generateSendInput(
         body,
-        [{ emailAddress: receiverMask.maskAddress }],
+        [{ emailAddress: receiverAlias.aliasAddress }],
         [imageAttachment],
       )
 
@@ -658,7 +658,7 @@ describe('getEmailMessageWithBody test suite', () => {
           assert.fail(`result status unexpectedly not Success`)
         }
         const receivedMessage = receiverMessages.items.find(
-          (m) => m.emailMaskId === receiverMask.id,
+          (m) => m.emailAliasId === receiverAlias.id,
         )
         expect(receivedMessage).toBeDefined()
         receivedMessageId = receivedMessage!.id

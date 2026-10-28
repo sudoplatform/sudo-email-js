@@ -154,7 +154,7 @@ describe('SudoEmailClient ListEmailAddresses Test Suite', () => {
           const found = emailAddresses.filter(
             (emailAddress) => element.item.id === emailAddress.id,
           )
-          delete found[0].alias
+          delete found[0].displayName
           expect(element.item).toStrictEqual(found[0])
         })
       } else {

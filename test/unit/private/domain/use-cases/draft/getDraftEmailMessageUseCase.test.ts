@@ -45,7 +45,7 @@ describe('GetDraftEmailMessageUseCase Test Suite', () => {
     expect(actualArgs).toStrictEqual<typeof actualArgs>({
       id,
       emailAddressId,
-      emailMaskId: undefined,
+      emailAliasId: undefined,
     })
   })
 
@@ -79,29 +79,29 @@ describe('GetDraftEmailMessageUseCase Test Suite', () => {
     })
   })
 
-  it('returns the expected output with emailMaskId', async () => {
+  it('returns the expected output with emailAliasId', async () => {
     const id = v4()
     const emailAddressId = v4()
     const rfc822Data = stringToArrayBuffer(v4())
     const updatedAt = new Date()
-    const emailMaskId = v4()
+    const emailAliasId = v4()
 
     when(mockEmailMessageService.getDraft(anything())).thenResolve({
       id,
       emailAddressId,
       updatedAt,
       rfc822Data,
-      emailMaskId,
+      emailAliasId,
     })
 
     await expect(
-      instanceUnderTest.execute({ id, emailAddressId, emailMaskId }),
+      instanceUnderTest.execute({ id, emailAddressId, emailAliasId }),
     ).resolves.toEqual({
       id,
       emailAddressId,
       updatedAt,
       rfc822Data,
-      emailMaskId,
+      emailAliasId,
     })
 
     verify(mockEmailMessageService.getDraft(anything())).once()
@@ -109,7 +109,7 @@ describe('GetDraftEmailMessageUseCase Test Suite', () => {
     expect(actualArgs).toStrictEqual<typeof actualArgs>({
       id,
       emailAddressId,
-      emailMaskId,
+      emailAliasId,
     })
   })
 })

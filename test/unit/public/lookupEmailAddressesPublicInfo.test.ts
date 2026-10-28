@@ -31,7 +31,6 @@ describe('SudoEmailClient.lookupEmailAddressesPublicInfo Test Suite', () => {
     {
       emailAddress: emailAddresses[0],
       keyId: 'testKeyId',
-      publicKey: publicKeys[0],
       publicKeyDetails: {
         publicKey: publicKeys[0],
         keyFormat: PublicKeyFormat.RSAPublicKey,
@@ -42,7 +41,6 @@ describe('SudoEmailClient.lookupEmailAddressesPublicInfo Test Suite', () => {
     {
       emailAddress: emailAddresses[1],
       keyId: 'testKeyId_2',
-      publicKey: publicKeys[1],
       publicKeyDetails: {
         publicKey: publicKeys[1],
         keyFormat: PublicKeyFormat.SPKI,

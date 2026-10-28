@@ -81,13 +81,13 @@ describe('SudoEmailClient.provisionEmailAddress Test Suite', () => {
     ).resolves.toEqual(APIDataFactory.emailAddress)
   })
 
-  it('passes alias properly', async () => {
+  it('passes displayName properly', async () => {
     const emailAddress = v4()
     const ownershipProofToken = v4()
     await instanceUnderTest.provisionEmailAddress({
       emailAddress,
       ownershipProofToken,
-      alias: 'mockAlias',
+      displayName: 'mockAlias',
     })
     verify(mockProvisionEmailAccountUseCase.execute(anything())).once()
     const [args] = capture(mockProvisionEmailAccountUseCase.execute).first()

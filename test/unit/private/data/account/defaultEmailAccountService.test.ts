@@ -67,7 +67,7 @@ describe('DefaultEmailAccountService Test Suite', () => {
         GraphQLDataFactory.emailAddress,
       )
       const input: CreateEmailAccountInput = {
-        emailAddressEntity: EntityDataFactory.emailAccount.emailAddress,
+        emailAddressEntity: EntityDataFactory.emailAddress,
         ownershipProofToken: EntityDataFactory.owner.id,
       }
       const provisionedEmailAccount = await instanceUnderTest.create(input)
@@ -135,7 +135,7 @@ describe('DefaultEmailAccountService Test Suite', () => {
         { enforceSingletonPublicKey: true },
       )
       const createEmailAccountInput: CreateEmailAccountInput = {
-        emailAddressEntity: EntityDataFactory.emailAccount.emailAddress,
+        emailAddressEntity: EntityDataFactory.emailAddress,
         ownershipProofToken: EntityDataFactory.owner.id,
       }
       const provisionedEmailAccount = await iat.create(createEmailAccountInput)
@@ -168,7 +168,7 @@ describe('DefaultEmailAccountService Test Suite', () => {
         { enforceSingletonPublicKey: true },
       )
       const createEmailAccountInput: CreateEmailAccountInput = {
-        emailAddressEntity: EntityDataFactory.emailAccount.emailAddress,
+        emailAddressEntity: EntityDataFactory.emailAddress,
         ownershipProofToken: EntityDataFactory.owner.id,
         allowSymmetricKeyGeneration: false,
       }
@@ -197,7 +197,7 @@ describe('DefaultEmailAccountService Test Suite', () => {
         { enforceSingletonPublicKey: true },
       )
       const createEmailAccountInput: CreateEmailAccountInput = {
-        emailAddressEntity: EntityDataFactory.emailAccount.emailAddress,
+        emailAddressEntity: EntityDataFactory.emailAddress,
         ownershipProofToken: EntityDataFactory.owner.id,
       }
       const provisionedEmailAccount = await iat.create(createEmailAccountInput)
@@ -374,10 +374,7 @@ describe('DefaultEmailAccountService Test Suite', () => {
       expect(inputArg).toStrictEqual<typeof inputArg>(id)
       expect(result).toEqual({
         ...EntityDataFactory.emailAccountWithEmailAddressAlias,
-        emailAddress: {
-          ...EntityDataFactory.emailAccountWithEmailAddressAlias.emailAddress,
-          alias: '',
-        },
+        displayName: '',
       })
       verify(mockDeviceKeyWorker.unsealString(anything())).once()
     })
@@ -481,10 +478,7 @@ describe('DefaultEmailAccountService Test Suite', () => {
             status: { type: 'Completed' },
           },
           {
-            ...EntityDataFactory.emailAccountWithEmailAddressAlias,
-            emailAddress: {
-              emailAddress: 'testie@unittest.org',
-            },
+            ...EntityDataFactory.emailAccount,
             status: { type: 'Failed', cause: new KeyNotFoundError() },
           },
         ],
@@ -524,9 +518,6 @@ describe('DefaultEmailAccountService Test Suite', () => {
           },
           {
             ...EntityDataFactory.emailAccount,
-            emailAddress: {
-              emailAddress: 'testie@unittest.org',
-            },
             status: { type: 'Failed', cause: new KeyNotFoundError() },
           },
         ],

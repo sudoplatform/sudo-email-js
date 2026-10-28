@@ -75,7 +75,7 @@ const testAuthenticationProvider = new TESTAuthenticationProvider(
   { 'custom:entitlementsSet': 'email-integration-test' },
 )
 
-const maskDomains: string[] = []
+const aliasDomains: string[] = []
 let emailConfig: ConfigurationData | undefined
 
 export interface SetupEmailClientOutput {
@@ -286,18 +286,20 @@ export const teardown = async (
   )
 }
 
-export const getEmailMaskDomains = async (
+export const getEmailAliasDomains = async (
   emailClient: SudoEmailClient,
 ): Promise<string[]> => {
-  if (maskDomains.length > 0) {
-    return maskDomains
+  if (aliasDomains.length > 0) {
+    return aliasDomains
   }
-  const result = await emailClient.getEmailMaskDomains()
+  const result = (await emailClient.listEmailDomains())
+    .filter((domain) => domain.isAliasDomain)
+    .map((domain) => domain.domain)
   if (result.length === 0) {
-    throw new Error('No email mask domains available for testing')
+    throw new Error('No email alias domains available for testing')
   }
-  maskDomains.push(...result)
-  return maskDomains
+  aliasDomains.push(...result)
+  return aliasDomains
 }
 
 export const getEmailConfig = async (emailClient: SudoEmailClient) => {
@@ -309,11 +311,11 @@ export const getEmailConfig = async (emailClient: SudoEmailClient) => {
   return emailConfig
 }
 
-export const emailMasksEnabled = async (
+export const emailAliasesEnabled = async (
   emailClient: SudoEmailClient,
 ): Promise<boolean> => {
   const config = await getEmailConfig(emailClient)
-  return config.emailMasksEnabled
+  return config.emailAliasesEnabled
 }
 
 /**

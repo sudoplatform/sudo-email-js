@@ -16,7 +16,7 @@ import {
   AddressNotFoundError,
   AddressUnavailableError,
   EmailFolderNotFoundError,
-  EmailMaskNotFoundError,
+  EmailAliasNotFoundError,
   InvalidAddressError,
   InvalidArgumentError,
   InvalidEmailContentsError,
@@ -69,7 +69,7 @@ export class ErrorTransformer {
       case 'sudoplatform.email.RecordNotFound':
         return new RecordNotFoundError(error.message)
       case 'sudoplatform.email.EmailMaskNotFound':
-        return new EmailMaskNotFoundError(error.message)
+        return new EmailAliasNotFoundError(error.message)
       case 'sudoplatform.ServiceError':
         return new ServiceError(error.message)
       default:

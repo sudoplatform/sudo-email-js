@@ -213,10 +213,10 @@ describe('ListEmailMessagesFilterTransformer Test Suite', () => {
         ])
       })
 
-      it('transforms a Mask mailboxIds filter to GraphQL', () => {
+      it('transforms a Alias mailboxIds filter to GraphQL', () => {
         const id = v4()
         const filter: ListEmailMessagesFilter = {
-          mailboxIds: [{ type: MailboxType.Mask, id: { equal: id } }],
+          mailboxIds: [{ type: MailboxType.Alias, id: { equal: id } }],
         }
         const result = ListEmailMessagesFilterTransformer.toGraphQL(filter)
         expect(result.mailboxIds).toStrictEqual([

@@ -231,9 +231,17 @@ describe('SudoEmailClient Block Email Addresses Integration Test Suite', () => {
 
     messages = undefined
 
-    const unblockingResult = await instanceUnderTest.unblockEmailAddresses({
-      addresses: [senderAddress.emailAddress, dummyAddress],
-    })
+    const blocklistToUnblock =
+      await instanceUnderTest.getEmailAddressBlocklist()
+    const hashedValuesToUnblock = blocklistToUnblock
+      .filter((entry) =>
+        [senderAddress.emailAddress, dummyAddress].includes(entry.address),
+      )
+      .map((entry) => entry.hashedBlockedValue)
+    const unblockingResult =
+      await instanceUnderTest.unblockEmailAddressesByHashedValue({
+        hashedValues: hashedValuesToUnblock,
+      })
 
     expect(unblockingResult.status).toEqual(BatchOperationResultStatus.Success)
 

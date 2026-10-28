@@ -124,13 +124,13 @@ describe('SudoEmailClient Smoketest Test Suite', () => {
       expect(config.emailMessageRecipientsLimit).toBeGreaterThanOrEqual(1)
       expect(config).toHaveProperty('sendEncryptedEmailEnabled')
       expect(config.prohibitedFileExtensions.length).toBeGreaterThan(20)
-      expect(config).toHaveProperty('emailMasksEnabled')
-      expect(config).toHaveProperty('externalEmailMasksEnabled')
+      expect(config).toHaveProperty('emailAliasesEnabled')
+      expect(config).toHaveProperty('externalEmailAliasesEnabled')
       expect(config).toHaveProperty('allowOwnerEmailAddressReuse')
     })
 
     it('should get supported email domains', async () => {
-      const domains = await instanceUnderTest.getSupportedEmailDomains()
+      const domains = await instanceUnderTest.listEmailDomains()
       expect(domains.length).toBeGreaterThanOrEqual(1)
     })
 

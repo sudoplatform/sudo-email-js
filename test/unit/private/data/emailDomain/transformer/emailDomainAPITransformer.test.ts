@@ -18,7 +18,7 @@ describe('EmailDomainAPITransformer Test Suite', () => {
         ),
       ).toStrictEqual({
         domain: 'unittest.org',
-        isMaskDomain: false,
+        isAliasDomain: false,
         metadata: { provider: 'internal' },
       })
     })
@@ -27,12 +27,12 @@ describe('EmailDomainAPITransformer Test Suite', () => {
       expect(
         instanceUnderTest.transformEntity({
           domain: 'example.com',
-          isMaskDomain: true,
+          isAliasDomain: true,
           metadata: '{',
         }),
       ).toStrictEqual({
         domain: 'example.com',
-        isMaskDomain: true,
+        isAliasDomain: true,
         metadata: {},
       })
     })
@@ -41,11 +41,11 @@ describe('EmailDomainAPITransformer Test Suite', () => {
       expect(
         instanceUnderTest.transformEntity({
           domain: 'example.com',
-          isMaskDomain: true,
+          isAliasDomain: true,
         }),
       ).toStrictEqual({
         domain: 'example.com',
-        isMaskDomain: true,
+        isAliasDomain: true,
         metadata: {},
       })
     })

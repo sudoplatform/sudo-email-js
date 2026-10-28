@@ -15,7 +15,6 @@ export class EmailAddressPublicInfoAPITransformer {
     return {
       emailAddress: entity.emailAddress,
       keyId: entity.keyId,
-      publicKey: entity.publicKeyDetails.publicKey,
       publicKeyDetails: EmailAddressPublicKeyAPITransformer.transformEntity(
         entity.publicKeyDetails,
       ),

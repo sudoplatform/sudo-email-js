@@ -26,16 +26,6 @@ export interface BlockEmailAddressesInput {
 }
 
 /**
- * Input for `SudoEmailClient.UnblockEmailAddresses`
- *
- * @interface UnblockEmailAddressesInput
- * @property {string[]} addresses List of addresses to be unblocked in the [local-part]@[domain] format
- */
-export interface UnblockEmailAddressesInput {
-  addresses: string[]
-}
-
-/**
  * Input for `SudoEmailClient.UnblockEmailAddressesByHashedValue`
  *
  * @interface UnblockEmailAddressesByHashedValueInput

@@ -143,12 +143,12 @@ describe('SudoEmailClient.deleteDraftEmailMessages Test Suite', () => {
     })
   })
 
-  it('properly passed email mask id if provided', async () => {
-    const emailMaskId = v4()
+  it('properly passed email alias id if provided', async () => {
+    const emailAliasId = v4()
     await instanceUnderTest.deleteDraftEmailMessages({
       ids: ['id1', 'id2'],
       emailAddressId: '',
-      emailMaskId,
+      emailAliasId,
     })
     verify(mockDeleteDraftEmailMessagesUseCase.execute(anything())).once()
     const [actualArgs] = capture(
@@ -157,7 +157,7 @@ describe('SudoEmailClient.deleteDraftEmailMessages Test Suite', () => {
     expect(actualArgs).toEqual<typeof actualArgs>({
       ids: new Set(['id1', 'id2']),
       emailAddressId: '',
-      emailMaskId,
+      emailAliasId,
     })
   })
 })

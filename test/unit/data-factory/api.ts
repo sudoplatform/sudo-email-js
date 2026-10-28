@@ -15,9 +15,9 @@ import {
   State,
 } from '../../../src/public/typings/emailMessage'
 import {
-  EmailMask,
-  EmailMaskRealAddressType,
-  EmailMaskStatus,
+  EmailAlias,
+  EmailAliasRealAddressType,
+  EmailAliasStatus,
   EncryptionStatus,
 } from '../../../src/public'
 
@@ -44,8 +44,8 @@ export class APIDataFactory {
     encryptedEmailMessageRecipientsLimit: 10,
     sendEncryptedEmailEnabled: true,
     prohibitedFileExtensions: ['.js', '.exe', '.lib'],
-    emailMasksEnabled: true,
-    externalEmailMasksEnabled: false,
+    emailAliasesEnabled: true,
+    externalEmailAliasesEnabled: false,
     allowOwnerEmailAddressReuse: true,
   }
 
@@ -78,7 +78,6 @@ export class APIDataFactory {
   static readonly emailAddressPublicInfo: EmailAddressPublicInfo = {
     emailAddress: APIDataFactory.emailAddress.emailAddress,
     keyId: 'testKeyId',
-    publicKey: 'testPublicKey',
     publicKeyDetails: {
       publicKey: 'testPublicKey',
       keyFormat: PublicKeyFormat.RSAPublicKey,
@@ -117,14 +116,14 @@ export class APIDataFactory {
     date: new Date(2.0),
   }
 
-  static readonly emailMask: EmailMask = {
+  static readonly emailAlias: EmailAlias = {
     ...APIDataFactory.commonProps,
     owners: [APIDataFactory.owner],
     identityId: 'testIdentityId',
-    maskAddress: 'test-mask@anonyome.com',
+    aliasAddress: 'test-alias@anonyome.com',
     realAddress: 'test-real@anonyome.com',
-    realAddressType: EmailMaskRealAddressType.INTERNAL,
-    status: EmailMaskStatus.ENABLED,
+    realAddressType: EmailAliasRealAddressType.INTERNAL,
+    status: EmailAliasStatus.ENABLED,
     inboundReceived: 0,
     inboundDelivered: 0,
     outboundReceived: 0,

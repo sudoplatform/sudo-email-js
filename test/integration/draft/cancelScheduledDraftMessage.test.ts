@@ -9,7 +9,7 @@ import {
   AddressNotFoundError,
   DraftEmailMessageMetadata,
   EmailAddress,
-  EmailMask,
+  EmailAlias,
   ScheduledDraftMessage,
   ScheduledDraftMessageState,
   SudoEmailClient,
@@ -21,7 +21,7 @@ import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 import { DateTime } from 'luxon'
 import { v4 } from 'uuid'
-import { provisionEmailMask } from '../util/provisionEmailMask'
+import { provisionEmailAlias } from '../util/provisionEmailAlias'
 import waitForExpect from 'wait-for-expect'
 
 describe('CancelScheduledDraftMessage Integration Test Suite', () => {
@@ -137,34 +137,34 @@ describe('CancelScheduledDraftMessage Integration Test Suite', () => {
   async function verifyDraftHasState(
     draftId: string,
     expectedState: ScheduledDraftMessageState,
-    emailMask?: EmailMask,
+    emailAlias?: EmailAlias,
   ): Promise<ScheduledDraftMessage | undefined> {
     const messages =
       await instanceUnderTest.listScheduledDraftMessagesForEmailAddressId({
         emailAddressId: emailAddress.id,
       })
     expect(messages.items.length).toBeGreaterThan(0)
-    const maskDraft = messages.items.find((m) => m.id === draftId)
+    const aliasDraft = messages.items.find((m) => m.id === draftId)
 
-    expect(maskDraft?.emailMaskId).toEqual(emailMask?.id) // will work even if undefined
-    expect(maskDraft?.emailAddressId).toEqual(emailAddress.id)
-    expect(maskDraft?.state).toEqual(expectedState)
+    expect(aliasDraft?.emailAliasId).toEqual(emailAlias?.id) // will work even if undefined
+    expect(aliasDraft?.emailAddressId).toEqual(emailAddress.id)
+    expect(aliasDraft?.state).toEqual(expectedState)
 
-    return maskDraft
+    return aliasDraft
   }
 
-  describe('CancelScheduledDraftMessage from email masks', () => {
+  describe('CancelScheduledDraftMessage from email aliases', () => {
     let runTests = true
-    let emailMask: EmailMask
+    let emailAlias: EmailAlias
     let draftIds: string[] = []
 
     beforeEach(async ({ skip }) => {
       const config = await instanceUnderTest.getConfigurationData()
-      runTests = config.emailMasksEnabled
-      skip(!runTests, 'Email masks are not enabled, skipping')
+      runTests = config.emailAliasesEnabled
+      skip(!runTests, 'Email aliases are not enabled, skipping')
 
-      // Provision an email mask associated with the provisioned address
-      emailMask = await provisionEmailMask(
+      // Provision an email alias associated with the provisioned address
+      emailAlias = await provisionEmailAlias(
         sudoOwnershipProofToken,
         instanceUnderTest,
         {
@@ -174,137 +174,135 @@ describe('CancelScheduledDraftMessage Integration Test Suite', () => {
     })
 
     afterEach(async () => {
-      // Clean up the mask draft
+      // Clean up the alias draft
       await instanceUnderTest.deleteDraftEmailMessages({
         ids: draftIds,
         emailAddressId: emailAddress.id,
       })
-      await instanceUnderTest.deprovisionEmailMask({
-        emailMaskId: emailMask.id,
+      await instanceUnderTest.deprovisionEmailAlias({
+        emailAliasId: emailAlias.id,
       })
       draftIds = []
     })
 
-    it('Schedule a draft message from a mask id, then cancel it', async () => {
-      // Create a new draft from the mask address
-      const maskDraftBuffer =
+    it('Schedule a draft message from a alias id, then cancel it', async () => {
+      // Create a new draft from the alias address
+      const aliasDraftBuffer =
         Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
-          from: [{ emailAddress: emailMask.maskAddress }],
+          from: [{ emailAddress: emailAlias.aliasAddress }],
           to: [{ emailAddress: emailAddress.emailAddress }],
           cc: [],
           bcc: [],
           replyTo: [],
-          body: 'Hello from mask',
+          body: 'Hello from alias',
           attachments: [],
-          subject: 'mask draft subject',
+          subject: 'alias draft subject',
         })
-      const maskDraftMetadata = await instanceUnderTest.createDraftEmailMessage(
-        {
-          rfc822Data: maskDraftBuffer,
+      const aliasDraftMetadata =
+        await instanceUnderTest.createDraftEmailMessage({
+          rfc822Data: aliasDraftBuffer,
           senderEmailAddressId: emailAddress.id,
-          emailMaskId: emailMask.id,
-        },
-      )
-      draftIds.push(maskDraftMetadata.id)
+          emailAliasId: emailAlias.id,
+        })
+      draftIds.push(aliasDraftMetadata.id)
 
-      // Schedule the draft using the mask id
+      // Schedule the draft using the alias id
       const sendAt = DateTime.now().plus({ day: 1 }).toJSDate()
       const result = await instanceUnderTest.scheduleSendDraftMessage({
-        id: maskDraftMetadata.id,
+        id: aliasDraftMetadata.id,
         emailAddressId: emailAddress.id,
-        emailMaskId: emailMask.id,
+        emailAliasId: emailAlias.id,
         sendAt,
       })
 
       // Verify that the response is consistent
-      expect(result.id).toEqual(maskDraftMetadata.id)
+      expect(result.id).toEqual(aliasDraftMetadata.id)
       expect(result.emailAddressId).toEqual(emailAddress.id)
-      expect(result.emailMaskId).toEqual(emailMask.id)
+      expect(result.emailAliasId).toEqual(emailAlias.id)
       expect(result.sendAt).toEqual(sendAt)
       expect(result.state).toEqual(ScheduledDraftMessageState.SCHEDULED)
 
       const draft = await verifyDraftHasState(
-        maskDraftMetadata.id,
+        aliasDraftMetadata.id,
         ScheduledDraftMessageState.SCHEDULED,
-        emailMask,
+        emailAlias,
       )
       expect(draft).toBeDefined()
       expect(draft?.sendAt).toEqual(sendAt)
 
       await instanceUnderTest.cancelScheduledDraftMessage({
-        id: maskDraftMetadata.id,
+        id: aliasDraftMetadata.id,
         emailAddressId: emailAddress.id,
-        emailMaskId: emailMask.id,
+        emailAliasId: emailAlias.id,
       })
 
       await waitForExpect(async () => {
         const cancelledDraft = await verifyDraftHasState(
-          maskDraftMetadata.id,
+          aliasDraftMetadata.id,
           ScheduledDraftMessageState.CANCELLED,
-          emailMask,
+          emailAlias,
         )
         expect(cancelledDraft?.sendAt).toEqual(sendAt)
       })
     })
 
-    it('Cancel should succeed but be ineffective if missing or incorrect mask id is provided', async () => {
-      // Create a new draft from the mask address
-      const maskDraftBuffer =
+    it('Cancel should succeed but be ineffective if missing or incorrect alias id is provided', async () => {
+      // Create a new draft from the alias address
+      const aliasDraftBuffer =
         Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
-          from: [{ emailAddress: emailMask.maskAddress }],
+          from: [{ emailAddress: emailAlias.aliasAddress }],
           to: [{ emailAddress: emailAddress.emailAddress }],
           cc: [],
           bcc: [],
           replyTo: [],
-          body: 'Hello from mask',
+          body: 'Hello from alias',
           attachments: [],
-          subject: 'mask draft subject',
+          subject: 'alias draft subject',
         })
-      const maskDraftMetadata = await instanceUnderTest.createDraftEmailMessage(
-        {
-          rfc822Data: maskDraftBuffer,
+      const aliasDraftMetadata =
+        await instanceUnderTest.createDraftEmailMessage({
+          rfc822Data: aliasDraftBuffer,
           senderEmailAddressId: emailAddress.id,
-          emailMaskId: emailMask.id,
-        },
-      )
-      draftIds.push(maskDraftMetadata.id)
+          emailAliasId: emailAlias.id,
+        })
+      draftIds.push(aliasDraftMetadata.id)
 
-      // Schedule the draft using the mask id
+      // Schedule the draft using the alias id
       const sendAt = DateTime.now().plus({ day: 1 }).toJSDate()
       const result = await instanceUnderTest.scheduleSendDraftMessage({
-        id: maskDraftMetadata.id,
+        id: aliasDraftMetadata.id,
         emailAddressId: emailAddress.id,
-        emailMaskId: emailMask.id,
+        emailAliasId: emailAlias.id,
         sendAt,
       })
 
       // Verify that the response is consistent
-      expect(result.id).toEqual(maskDraftMetadata.id)
+      expect(result.id).toEqual(aliasDraftMetadata.id)
       expect(result.emailAddressId).toEqual(emailAddress.id)
-      expect(result.emailMaskId).toEqual(emailMask.id)
+      expect(result.emailAliasId).toEqual(emailAlias.id)
       expect(result.sendAt).toEqual(sendAt)
       expect(result.state).toEqual(ScheduledDraftMessageState.SCHEDULED)
 
       await instanceUnderTest.cancelScheduledDraftMessage({
-        id: maskDraftMetadata.id,
+        id: aliasDraftMetadata.id,
         emailAddressId: emailAddress.id,
       })
       // Check that the actual draft was not cancelled
       await verifyDraftHasState(
-        maskDraftMetadata.id,
+        aliasDraftMetadata.id,
         ScheduledDraftMessageState.SCHEDULED,
-        emailMask,
+        emailAlias,
       )
 
       await instanceUnderTest.cancelScheduledDraftMessage({
-        id: maskDraftMetadata.id,
+        id: aliasDraftMetadata.id,
         emailAddressId: emailAddress.id,
-        emailMaskId: 'invalid-mask-id',
+        emailAliasId: 'invalid-alias-id',
       })
       await verifyDraftHasState(
-        maskDraftMetadata.id,
+        aliasDraftMetadata.id,
         ScheduledDraftMessageState.SCHEDULED,
-        emailMask,
+        emailAlias,
       )
     })
   })

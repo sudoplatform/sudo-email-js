@@ -18,12 +18,12 @@ describe('ScheduledDraftMessageTransformer Test Suite', () => {
       ).toStrictEqual(EntityDataFactory.scheduledDraftMessage)
     })
 
-    it('transforms graphql to entity with emailMaskId', () => {
+    it('transforms graphql to entity with emailAliasId', () => {
       expect(
         ScheduledDraftMessageTransformer.toEntity(
-          GraphQLDataFactory.scheduledDraftMessageWithEmailMaskId,
+          GraphQLDataFactory.scheduledDraftMessageWithEmailAliasId,
         ),
-      ).toStrictEqual(EntityDataFactory.scheduledDraftMessageWithEmailMaskId)
+      ).toStrictEqual(EntityDataFactory.scheduledDraftMessageWithEmailAliasId)
     })
   })
 })

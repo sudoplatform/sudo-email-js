@@ -4,14 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { anything, instance, mock, reset, verify, when } from 'ts-mockito'
+import {
+  anything,
+  deepEqual,
+  instance,
+  mock,
+  reset,
+  verify,
+  when,
+} from 'ts-mockito'
 import { MockedClass } from 'vitest'
 import { SudoEmailClient } from '../../../src'
-import { VerifyExternalEmailAddressUseCase } from '../../../src/private/domain/use-cases/mask/verifyExternalEmailAddressUseCase'
+import { VerifyExternalEmailAddressUseCase } from '../../../src/private/domain/use-cases/alias/verifyExternalEmailAddressUseCase'
 import { SudoEmailClientTestBase } from '../../util/sudoEmailClientTestsBase'
 
 vi.mock(
-  '../../../src/private/domain/use-cases/mask/verifyExternalEmailAddressUseCase',
+  '../../../src/private/domain/use-cases/alias/verifyExternalEmailAddressUseCase',
 )
 const ViMockVerifyExternalEmailAddressUseCase =
   VerifyExternalEmailAddressUseCase as MockedClass<
@@ -27,7 +35,7 @@ describe('SudoEmailClient.verifyExternalEmailAddress Test Suite', () => {
 
   const firstInput = {
     emailAddress: 'example@domain.com',
-    emailMaskId: '1',
+    emailAliasId: '1',
   }
 
   const secondInput = { ...firstInput, verificationCode: '1' }
@@ -45,11 +53,23 @@ describe('SudoEmailClient.verifyExternalEmailAddress Test Suite', () => {
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
-    when(mockVerifyExternalEmailAddressUseCase.execute(firstInput)).thenResolve(
-      undefined,
-    )
     when(
-      mockVerifyExternalEmailAddressUseCase.execute(secondInput),
+      mockVerifyExternalEmailAddressUseCase.execute(
+        deepEqual({
+          emailAddress: firstInput.emailAddress,
+          emailAliasId: firstInput.emailAliasId,
+          verificationCode: undefined,
+        }),
+      ),
+    ).thenResolve(undefined)
+    when(
+      mockVerifyExternalEmailAddressUseCase.execute(
+        deepEqual({
+          emailAddress: secondInput.emailAddress,
+          emailAliasId: secondInput.emailAliasId,
+          verificationCode: secondInput.verificationCode,
+        }),
+      ),
     ).thenResolve(defaultValidResult)
   })
 
@@ -77,7 +97,13 @@ describe('SudoEmailClient.verifyExternalEmailAddress Test Suite', () => {
 
   it('returns expected result when verification with code fails', async () => {
     when(
-      mockVerifyExternalEmailAddressUseCase.execute(secondInput),
+      mockVerifyExternalEmailAddressUseCase.execute(
+        deepEqual({
+          emailAddress: secondInput.emailAddress,
+          emailAliasId: secondInput.emailAliasId,
+          verificationCode: secondInput.verificationCode,
+        }),
+      ),
     ).thenResolve(defaultInvalidResult)
     const result =
       await instanceUnderTest.verifyExternalEmailAddress(secondInput)

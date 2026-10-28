@@ -174,7 +174,7 @@ describe('SudoEmailClient.listEmailMessagesForEmailFolderId Test Suite', () => {
           size: 12345,
           encryptionStatus: EntityDataFactory.emailMessage.encryptionStatus,
           date: EntityDataFactory.emailMessage.date,
-          emailMaskId: EntityDataFactory.emailMessage.emailMaskId,
+          emailAliasId: EntityDataFactory.emailMessage.emailAliasId,
         },
       ],
       failed: [
@@ -199,7 +199,7 @@ describe('SudoEmailClient.listEmailMessagesForEmailFolderId Test Suite', () => {
             size: 12345,
             encryptionStatus: EntityDataFactory.emailMessage.encryptionStatus,
             date: EntityDataFactory.emailMessage.date,
-            emailMaskId: EntityDataFactory.emailMessage.emailMaskId,
+            emailAliasId: EntityDataFactory.emailMessage.emailAliasId,
           },
           cause: new Error('dummy_error'),
         },

@@ -43,7 +43,7 @@ interface SendEmailMessageUseCaseInput {
   replyingMessageId?: string
   forwardingMessageId?: string
   senderEmailAddressId?: string
-  senderEmailMaskId?: string
+  senderEmailAliasId?: string
 }
 
 /**
@@ -75,7 +75,7 @@ export class SendEmailMessageUseCase {
 
   async execute({
     senderEmailAddressId,
-    senderEmailMaskId,
+    senderEmailAliasId,
     emailMessageHeader,
     body,
     attachments,
@@ -85,7 +85,7 @@ export class SendEmailMessageUseCase {
   }: SendEmailMessageUseCaseInput): Promise<SendEmailMessageUseCaseOutput> {
     this.log.debug(this.constructor.name, {
       senderEmailAddressId,
-      senderEmailMaskId,
+      senderEmailAliasId,
       emailMessageHeader,
       body,
       attachments,
@@ -93,13 +93,13 @@ export class SendEmailMessageUseCase {
       replyingMessageId,
       forwardingMessageId,
     })
-    const senderId = senderEmailAddressId ?? senderEmailMaskId
+    const senderId = senderEmailAddressId ?? senderEmailAliasId
     const inputBase = senderEmailAddressId
       ? {
           senderEmailAddressId: senderId,
         }
       : {
-          senderEmailMaskId: senderId,
+          senderEmailAliasId: senderId,
         }
     const {
       sendEncryptedEmailEnabled,
@@ -107,7 +107,7 @@ export class SendEmailMessageUseCase {
       emailMessageRecipientsLimit,
       encryptedEmailMessageRecipientsLimit,
       prohibitedFileExtensions,
-      emailMasksEnabled,
+      emailAliasesEnabled: emailMasksEnabled,
     } = await this.configurationDataService.getConfigurationData()
 
     const emailMessageUtil = new EmailMessageUtil({
@@ -162,7 +162,7 @@ export class SendEmailMessageUseCase {
 
     const domains = await this.domainService.getConfiguredEmailDomains()
     if (emailMasksEnabled) {
-      const maskDomains = await this.domainService.getEmailMaskDomains()
+      const maskDomains = await this.domainService.getEmailAliasDomains()
       domains.push(...maskDomains)
     }
     // Check if any recipient's domain is not one of ours

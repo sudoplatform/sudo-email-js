@@ -16,7 +16,6 @@ describe('EmailAddressPublicInfoAPITransformer Test Suite', () => {
     const expectedResult: EmailAddressPublicInfo = {
       emailAddress: entity.emailAddress,
       keyId: entity.keyId,
-      publicKey: entity.publicKeyDetails.publicKey,
       publicKeyDetails: {
         publicKey: entity.publicKeyDetails.publicKey,
         keyFormat: entity.publicKeyDetails.keyFormat,

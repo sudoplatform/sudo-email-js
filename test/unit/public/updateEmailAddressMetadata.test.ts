@@ -83,7 +83,7 @@ describe('SudoEmailClient.updateEmailAccountMetadata Test Suite', () => {
   const updateInput: UpdateEmailAddressMetadataInput = {
     id: 'id',
     values: {
-      alias: 'Some Alias',
+      displayName: 'Some Alias',
     },
   }
 
@@ -108,7 +108,7 @@ describe('SudoEmailClient.updateEmailAccountMetadata Test Suite', () => {
     await instanceUnderTest.updateEmailAddressMetadata({
       id: '',
       values: {
-        alias: null,
+        displayName: null,
       },
     })
     expect(ViMockUpdateEmailAccountMetadataUseCase).toHaveBeenCalledTimes(1)
@@ -119,7 +119,12 @@ describe('SudoEmailClient.updateEmailAccountMetadata Test Suite', () => {
     const [inputArgs] = capture(
       mockUpdateEmailAccountMetadataUseCase.execute,
     ).first()
-    expect(inputArgs).toEqual(updateInput)
+    expect(inputArgs).toEqual({
+      id: 'id',
+      values: {
+        alias: 'Some Alias',
+      },
+    })
   })
   it('returns expected result', async () => {
     await expect(

@@ -32,7 +32,7 @@ import { OwnerEntity } from '../common/ownerEntity'
  * @property {Date} updatedAt Date when the email message was last updated.
  * @property {number} size Size of the email message in bytes.
  * @property {EncryptionStatus} encryptionStatus Encryption status of the email message.
- * @property {string} emailMaskId Identifier of the email mask associated with the email message, if any.
+ * @property {string} emailAliasId Identifier of the email alias associated with the email message, if any.
  */
 export interface SealedEmailMessageEntity {
   id: string
@@ -56,5 +56,5 @@ export interface SealedEmailMessageEntity {
   updatedAt: Date
   size: number
   encryptionStatus: EncryptionStatus
-  emailMaskId?: string
+  emailAliasId?: string
 }

@@ -102,14 +102,14 @@ describe('SudoEmailClient.getDraftEmailMessage Test Suite', () => {
     })
   })
 
-  it('properly passes email mask id if provided', async () => {
+  it('properly passes email alias id if provided', async () => {
     const id = v4()
     const emailAddressId = v4()
-    const emailMaskId = v4()
+    const emailAliasId = v4()
     await instanceUnderTest.getDraftEmailMessage({
       id,
       emailAddressId,
-      emailMaskId,
+      emailAliasId,
     })
     verify(mockGetDraftEmailMessageUseCase.execute(anything())).once()
     const [actualArgs] = capture(
@@ -118,7 +118,7 @@ describe('SudoEmailClient.getDraftEmailMessage Test Suite', () => {
     expect(actualArgs).toEqual<typeof actualArgs>({
       id,
       emailAddressId,
-      emailMaskId,
+      emailAliasId,
     })
   })
 })

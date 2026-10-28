@@ -109,7 +109,7 @@ describe('SaveDraftEmailMessageUseCase Test Suite', () => {
     expect(actualArgs).toStrictEqual<typeof actualArgs>({
       rfc822Data,
       senderEmailAddressId,
-      emailMaskId: undefined,
+      emailAliasId: undefined,
     })
   })
 
@@ -276,14 +276,14 @@ describe('SaveDraftEmailMessageUseCase Test Suite', () => {
     verify(mockEmailMessageService.saveDraft(anything())).never()
   })
 
-  it('passes and returns email mask id when provided', async () => {
+  it('passes and returns email alias id when provided', async () => {
     const senderEmailAddressId = v4()
-    const emailMaskId = v4()
+    const emailAliasId = v4()
     const rfc822Data = stringToArrayBuffer(v4())
     await instanceUnderTest.execute({
       senderEmailAddressId,
       rfc822Data,
-      emailMaskId,
+      emailAliasId,
     })
 
     verify(mockEmailAccountService.get(anything())).once()
@@ -296,7 +296,7 @@ describe('SaveDraftEmailMessageUseCase Test Suite', () => {
     expect(actualArgs).toStrictEqual<typeof actualArgs>({
       rfc822Data,
       senderEmailAddressId,
-      emailMaskId,
+      emailAliasId,
     })
   })
 
@@ -376,7 +376,7 @@ describe('SaveDraftEmailMessageUseCase Test Suite', () => {
       expect(actualArgs).toStrictEqual<typeof actualArgs>({
         rfc822Data: mockDecryptedData,
         senderEmailAddressId,
-        emailMaskId: undefined,
+        emailAliasId: undefined,
       })
     })
 

@@ -77,18 +77,18 @@ describe('SudoEmailClient.scheduleSendDraftMessage Test Suite', () => {
     expect(useCaseArgs).toStrictEqual<typeof useCaseArgs>({
       id: EntityDataFactory.scheduledDraftMessage.id,
       emailAddressId: EntityDataFactory.emailAccount.id,
-      emailMaskId: undefined,
+      emailAliasId: undefined,
       sendAt,
     })
   })
 
-  it('passes emailMaskId through to use case', async () => {
-    const emailMaskId =
-      EntityDataFactory.scheduledDraftMessageWithEmailMaskId.emailMaskId
+  it('passes emailAliasId through to use case', async () => {
+    const emailAliasId =
+      EntityDataFactory.scheduledDraftMessageWithEmailAliasId.emailAliasId
     const result = await instanceUnderTest.scheduleSendDraftMessage({
       id: EntityDataFactory.scheduledDraftMessage.id,
       emailAddressId: EntityDataFactory.emailAccount.id,
-      emailMaskId,
+      emailAliasId,
       sendAt,
     })
 
@@ -100,7 +100,7 @@ describe('SudoEmailClient.scheduleSendDraftMessage Test Suite', () => {
     expect(useCaseArgs).toStrictEqual<typeof useCaseArgs>({
       id: EntityDataFactory.scheduledDraftMessage.id,
       emailAddressId: EntityDataFactory.emailAccount.id,
-      emailMaskId,
+      emailAliasId,
       sendAt,
     })
   })

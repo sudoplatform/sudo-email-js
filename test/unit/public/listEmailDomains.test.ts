@@ -38,7 +38,7 @@ describe('SudoEmailClient.listEmailDomains Test Suite', () => {
     when(mockListEmailDomainsUseCase.execute()).thenResolve([
       {
         domain: 'unittest.org',
-        isMaskDomain: false,
+        isAliasDomain: false,
         metadata: JSON.stringify({ provider: 'internal' }),
       },
     ])
@@ -58,7 +58,7 @@ describe('SudoEmailClient.listEmailDomains Test Suite', () => {
     await expect(instanceUnderTest.listEmailDomains()).resolves.toEqual([
       {
         domain: 'unittest.org',
-        isMaskDomain: false,
+        isAliasDomain: false,
         metadata: { provider: 'internal' },
       },
     ])

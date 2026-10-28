@@ -17,19 +17,17 @@ export const provisionEmailAddress = async (
   const localPart = options?.localPart ?? generateSafeLocalPart()
   let address = options?.address
   if (!address) {
-    const [domain] = await emailClient
-      .getSupportedEmailDomains()
-      .catch((err) => {
-        console.log('Error getting supported email domains', { err })
-        throw err
-      })
-    address = `${localPart}@${domain}`
+    const [emailDomain] = await emailClient.listEmailDomains().catch((err) => {
+      console.log('Error getting supported email domains', { err })
+      throw err
+    })
+    address = `${localPart}@${emailDomain.domain}`
   }
 
   const provisioned = await emailClient.provisionEmailAddress({
     emailAddress: address,
     ownershipProofToken: ownershipProofToken,
-    alias: options?.alias,
+    displayName: options?.alias,
   })
 
   // Delay after provisioning to allow settling of eventual consistency of the new address.

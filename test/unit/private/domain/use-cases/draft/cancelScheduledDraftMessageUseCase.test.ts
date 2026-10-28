@@ -69,17 +69,17 @@ describe('CancelScheduledDraftMessageUseCase Test Suite', () => {
     expect(cancelArgs).toStrictEqual<typeof cancelArgs>({
       id: EntityDataFactory.scheduledDraftMessage.id,
       emailAddressId: EntityDataFactory.emailAccount.id,
-      emailMaskId: undefined,
+      emailAliasId: undefined,
     })
   })
 
-  it('passes emailMaskId through on success', async () => {
-    const emailMaskId =
-      EntityDataFactory.scheduledDraftMessageWithEmailMaskId.emailMaskId
+  it('passes emailAliasId through on success', async () => {
+    const emailAliasId =
+      EntityDataFactory.scheduledDraftMessageWithEmailAliasId.emailAliasId
     const result = await instanceUnderTest.execute({
       id: EntityDataFactory.scheduledDraftMessage.id,
       emailAddressId: EntityDataFactory.emailAccount.id,
-      emailMaskId,
+      emailAliasId,
     })
 
     expect(result).toEqual(EntityDataFactory.scheduledDraftMessage.id)
@@ -92,7 +92,7 @@ describe('CancelScheduledDraftMessageUseCase Test Suite', () => {
     expect(cancelArgs).toStrictEqual<typeof cancelArgs>({
       id: EntityDataFactory.scheduledDraftMessage.id,
       emailAddressId: EntityDataFactory.emailAccount.id,
-      emailMaskId,
+      emailAliasId,
     })
   })
 })

@@ -98,16 +98,16 @@ describe('SudoEmailClient.updateDraftEmailMessage Test Suite', () => {
     })
   })
 
-  it('properly passed email mask id if provided', async () => {
+  it('properly passed email alias id if provided', async () => {
     const id = v4()
     const rfc822Data = stringToArrayBuffer(v4())
     const senderEmailAddressId = v4()
-    const emailMaskId = v4()
+    const emailAliasId = v4()
     await instanceUnderTest.updateDraftEmailMessage({
       id,
       rfc822Data,
       senderEmailAddressId,
-      emailMaskId,
+      emailAliasId,
     })
     verify(mockUpdateDraftEmailMessageUseCase.execute(anything())).once()
     const [actualArgs] = capture(
@@ -117,7 +117,7 @@ describe('SudoEmailClient.updateDraftEmailMessage Test Suite', () => {
       id,
       rfc822Data,
       senderEmailAddressId,
-      emailMaskId,
+      emailAliasId,
     })
   })
 })

@@ -260,11 +260,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
       ).rejects.toThrow(MessageSizeLimitExceededError)
     })
 
-    it('calls s3 upload with senderEmailMaskId', async () => {
-      const senderEmailMaskId = v4()
+    it('calls s3 upload with senderEmailAliasId', async () => {
+      const senderEmailAliasId = v4()
       await instanceUnderTest.sendMessage({
         message,
-        senderEmailMaskId,
+        senderEmailAliasId,
         emailMessageMaxOutboundMessageSize,
       })
 
@@ -274,27 +274,27 @@ describe('DefaultEmailMessageService Test Suite', () => {
         bucket: identityServiceConfig.transientBucket,
         region: identityServiceConfig.region,
         key: expect.stringMatching(
-          new RegExp(`^identityId\/email\/${senderEmailMaskId}\/.+`),
+          new RegExp(`^identityId\/email\/${senderEmailAliasId}\/.+`),
         ),
         body: arrayBufferToString(encodedOriginalMessage),
       })
     })
 
-    it('calls appsync with senderEmailMaskId', async () => {
-      const senderEmailMaskId = v4()
+    it('calls appsync with senderEmailAliasId', async () => {
+      const senderEmailAliasId = v4()
       await instanceUnderTest.sendMessage({
         message,
-        senderEmailMaskId,
+        senderEmailAliasId,
         emailMessageMaxOutboundMessageSize,
       })
       verify(mockAppSync.sendMaskedEmailMessage(anything())).once()
       const [appSyncInput] = capture(mockAppSync.sendMaskedEmailMessage).first()
       expect(appSyncInput).toStrictEqual<typeof appSyncInput>({
-        emailMaskId: senderEmailMaskId,
+        emailMaskId: senderEmailAliasId,
         encryptionStatus: EmailMessageEncryptionStatus.Unencrypted,
         message: {
           key: expect.stringMatching(
-            new RegExp(`identityId/email/${senderEmailMaskId}/.+`),
+            new RegExp(`identityId/email/${senderEmailAliasId}/.+`),
           ),
           bucket: identityServiceConfig.transientBucket,
           region: identityServiceConfig.region,
@@ -532,11 +532,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
       ).rejects.toThrow(MessageSizeLimitExceededError)
     })
 
-    it('uploads the encrypted message to s3 with senderEmailMaskId', async () => {
-      const senderEmailMaskId = v4()
+    it('uploads the encrypted message to s3 with senderEmailAliasId', async () => {
+      const senderEmailAliasId = v4()
       await instanceUnderTest.sendEncryptedMessage({
         message: message,
-        senderEmailMaskId,
+        senderEmailAliasId,
         emailAddressesPublicInfo,
         emailMessageMaxOutboundMessageSize,
       })
@@ -547,17 +547,17 @@ describe('DefaultEmailMessageService Test Suite', () => {
         bucket: identityServiceConfig.transientBucket,
         region: identityServiceConfig.region,
         key: expect.stringMatching(
-          new RegExp(`^identityId\/email\/${senderEmailMaskId}\/.+`),
+          new RegExp(`^identityId\/email\/${senderEmailAliasId}\/.+`),
         ),
         body: arrayBufferToString(encodedEncryptedMessage),
       })
     })
 
-    it('calls appSync to send the encrypted message with senderEmailMaskId', async () => {
-      const senderEmailMaskId = v4()
+    it('calls appSync to send the encrypted message with senderEmailAliasId', async () => {
+      const senderEmailAliasId = v4()
       await instanceUnderTest.sendEncryptedMessage({
         message: message,
-        senderEmailMaskId,
+        senderEmailAliasId,
         emailAddressesPublicInfo,
         emailMessageMaxOutboundMessageSize,
       })
@@ -565,11 +565,11 @@ describe('DefaultEmailMessageService Test Suite', () => {
       verify(mockAppSync.sendMaskedEmailMessage(anything())).once()
       const [appSyncInput] = capture(mockAppSync.sendMaskedEmailMessage).first()
       expect(appSyncInput).toStrictEqual<typeof appSyncInput>({
-        emailMaskId: senderEmailMaskId,
+        emailMaskId: senderEmailAliasId,
         encryptionStatus: EmailMessageEncryptionStatus.Encrypted,
         message: {
           key: expect.stringMatching(
-            new RegExp(`identityId/email/${senderEmailMaskId}/.+`),
+            new RegExp(`identityId/email/${senderEmailAliasId}/.+`),
           ),
           bucket: identityServiceConfig.transientBucket,
           region: identityServiceConfig.region,
@@ -1799,8 +1799,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
     })
 
-    it('properly handles email mask id', async () => {
-      const emailMaskId = v4()
+    it('properly handles email alias id', async () => {
+      const emailAliasId = v4()
       when(mockS3Client.upload(anything())).thenResolve({
         key: '',
         lastModified: new Date(),
@@ -1810,13 +1810,15 @@ describe('DefaultEmailMessageService Test Suite', () => {
       const result = await instanceUnderTest.saveDraft({
         rfc822Data,
         senderEmailAddressId,
-        emailMaskId,
+        emailAliasId,
       })
       verify(mockS3Client.upload(anything())).once()
       const [uploadArgs] = capture(mockS3Client.upload).first()
       expect(uploadArgs.body).toStrictEqual('')
       expect(uploadArgs.key).toContain(senderEmailAddressId)
-      expect(uploadArgs.key).toContain(`draft/mask/${emailMaskId}/${result.id}`)
+      expect(uploadArgs.key).toContain(
+        `draft/mask/${emailAliasId}/${result.id}`,
+      )
       expect(uploadArgs.bucket).toStrictEqual(identityServiceConfig.bucket)
       expect(uploadArgs.region).toStrictEqual(identityServiceConfig.region)
       expect(uploadArgs.metadata).toStrictEqual({
@@ -1879,8 +1881,8 @@ describe('DefaultEmailMessageService Test Suite', () => {
       )
     })
 
-    it('successfully gets draft with email mask id', async () => {
-      const emailMaskId = v4()
+    it('successfully gets draft with email alias id', async () => {
+      const emailAliasId = v4()
       when(mockS3Client.download(anything())).thenResolve(
         DraftEmailMessageDataFactory.s3ClientDownloadOutput,
       )
@@ -1891,7 +1893,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       await expect(
         instanceUnderTest.getDraft({
           ...DraftEmailMessageDataFactory.getDraftInput,
-          emailMaskId,
+          emailAliasId,
         }),
       ).resolves.toEqual({
         id: DraftEmailMessageDataFactory.getDraftInput.id,
@@ -1900,7 +1902,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         updatedAt:
           DraftEmailMessageDataFactory.s3ClientDownloadOutput.lastModified,
         rfc822Data: BufferUtil.fromString(unsealedDraft),
-        emailMaskId,
+        emailAliasId,
       })
 
       verify(mockS3Client.download(anything())).once()
@@ -1915,7 +1917,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
         DraftEmailMessageDataFactory.getDraftInput.emailAddressId,
       )
       expect(downloadArgs.key).toContain(
-        `draft/mask/${emailMaskId}/${DraftEmailMessageDataFactory.getDraftInput.id}`,
+        `draft/mask/${emailAliasId}/${DraftEmailMessageDataFactory.getDraftInput.id}`,
       )
     })
 
@@ -2133,21 +2135,21 @@ describe('DefaultEmailMessageService Test Suite', () => {
       expect(listArgs.prefix).toContain('draft/')
     })
 
-    it('properly handles drafts with mask id in key', async () => {
+    it('properly handles drafts with alias id in key', async () => {
       const emailAddressId = 'emailAddressId'
-      const emailMaskId = 'emailMaskId'
+      const emailAliasId = 'emailAliasId'
       const drafts: S3ClientListOutput = {
         results: [
           {
-            key: `draft/mask/${emailMaskId}/draft1`,
+            key: `draft/mask/${emailAliasId}/draft1`,
             lastModified: new Date(1),
           },
           {
-            key: `draft/mask/${emailMaskId}/draft2`,
+            key: `draft/mask/${emailAliasId}/draft2`,
             lastModified: new Date(2),
           },
           {
-            key: `draft/mask/${emailMaskId}/draft3`,
+            key: `draft/mask/${emailAliasId}/draft3`,
             lastModified: new Date(3),
           },
         ],
@@ -2163,7 +2165,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
             id: s3.key,
             emailAddressId,
             updatedAt: s3.lastModified,
-            emailMaskId,
+            emailAliasId,
           })) ?? [],
         nextToken: undefined,
         emailAddressId,
@@ -2366,15 +2368,15 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
     })
 
-    it('properly deletes draft with a mask id', async () => {
+    it('properly deletes draft with a alias id', async () => {
       const draftIdToDelete = 'draftIdToDelete'
-      const emailMaskId = 'emailMaskId'
+      const emailAliasId = 'emailAliasId'
       when(mockS3Client.bulkDelete(anything())).thenResolve([])
       await expect(
         instanceUnderTest.deleteDrafts({
           ids: [draftIdToDelete],
           emailAddressId: 'emailAddressId',
-          emailMaskId,
+          emailAliasId,
         }),
       ).resolves.toStrictEqual([])
 
@@ -2385,7 +2387,7 @@ describe('DefaultEmailMessageService Test Suite', () => {
       expect(s3DeleteArgs.keys).toHaveLength(1)
       expect(s3DeleteArgs.keys[0]).toContain('emailAddressId')
       expect(s3DeleteArgs.keys[0]).toContain(
-        `draft/mask/${emailMaskId}/${draftIdToDelete}`,
+        `draft/mask/${emailAliasId}/${draftIdToDelete}`,
       )
     })
 
@@ -2622,56 +2624,56 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
     })
 
-    it('passes emailMaskId to appSync when provided', async () => {
+    it('passes emailAliasId to appSync when provided', async () => {
       when(mockAppSync.scheduleSendDraftMessage(anything())).thenResolve(
-        GraphQLDataFactory.scheduledDraftMessageWithEmailMaskId,
+        GraphQLDataFactory.scheduledDraftMessageWithEmailAliasId,
       )
 
       const { id, emailAddressId } = EntityDataFactory.scheduledDraftMessage
-      const emailMaskId =
-        EntityDataFactory.scheduledDraftMessageWithEmailMaskId.emailMaskId
+      const emailAliasId =
+        EntityDataFactory.scheduledDraftMessageWithEmailAliasId.emailAliasId
       const result = await instanceUnderTest.scheduleSendDraftMessage({
         id,
         emailAddressId,
-        emailMaskId,
+        emailAliasId,
         sendAt,
       })
 
       expect(result).toStrictEqual(
-        EntityDataFactory.scheduledDraftMessageWithEmailMaskId,
+        EntityDataFactory.scheduledDraftMessageWithEmailAliasId,
       )
       verify(mockAppSync.scheduleSendDraftMessage(anything())).once()
       const [scheduleArgs] = capture(
         mockAppSync.scheduleSendDraftMessage,
       ).first()
       expect(scheduleArgs).toStrictEqual<typeof scheduleArgs>({
-        draftMessageKey: `identityId/email/${emailAddressId}/draft/mask/${emailMaskId}/${id}`,
+        draftMessageKey: `identityId/email/${emailAddressId}/draft/mask/${emailAliasId}/${id}`,
         emailAddressId,
-        emailMaskId,
+        emailMaskId: emailAliasId,
         sendAtEpochMs: sendAt.getTime(),
         symmetricKey: Base64.encode(mockSymmetricKey),
       })
     })
 
-    it('constructs correct S3 key with emailMaskId for getHeadObjectData', async () => {
+    it('constructs correct S3 key with emailAliasId for getHeadObjectData', async () => {
       when(mockAppSync.scheduleSendDraftMessage(anything())).thenResolve(
-        GraphQLDataFactory.scheduledDraftMessageWithEmailMaskId,
+        GraphQLDataFactory.scheduledDraftMessageWithEmailAliasId,
       )
 
       const { id, emailAddressId } = EntityDataFactory.scheduledDraftMessage
-      const emailMaskId =
-        EntityDataFactory.scheduledDraftMessageWithEmailMaskId.emailMaskId
+      const emailAliasId =
+        EntityDataFactory.scheduledDraftMessageWithEmailAliasId.emailAliasId
       await instanceUnderTest.scheduleSendDraftMessage({
         id,
         emailAddressId,
-        emailMaskId,
+        emailAliasId,
         sendAt,
       })
 
       verify(mockS3Client.getHeadObjectData(anything())).once()
       const [s3Args] = capture(mockS3Client.getHeadObjectData).first()
       expect(s3Args.key).toBe(
-        `identityId/email/${emailAddressId}/draft/mask/${emailMaskId}/${id}`,
+        `identityId/email/${emailAddressId}/draft/mask/${emailAliasId}/${id}`,
       )
     })
   })
@@ -2710,14 +2712,14 @@ describe('DefaultEmailMessageService Test Suite', () => {
       })
     })
 
-    it('passes emailMaskId to appSync when provided', async () => {
+    it('passes emailAliasId to appSync when provided', async () => {
       const { id, emailAddressId } = EntityDataFactory.scheduledDraftMessage
-      const emailMaskId =
-        EntityDataFactory.scheduledDraftMessageWithEmailMaskId.emailMaskId
+      const emailAliasId =
+        EntityDataFactory.scheduledDraftMessageWithEmailAliasId.emailAliasId
       await instanceUnderTest.cancelScheduledDraftMessage({
         id,
         emailAddressId,
-        emailMaskId,
+        emailAliasId,
       })
 
       verify(mockAppSync.cancelScheduledDraftMessage(anything())).once()
@@ -2725,9 +2727,9 @@ describe('DefaultEmailMessageService Test Suite', () => {
         mockAppSync.cancelScheduledDraftMessage,
       ).first()
       expect(cancelArgs).toStrictEqual<typeof cancelArgs>({
-        draftMessageKey: `identityId/email/${emailAddressId}/draft/mask/${emailMaskId}/${id}`,
+        draftMessageKey: `identityId/email/${emailAddressId}/draft/mask/${emailAliasId}/${id}`,
         emailAddressId,
-        emailMaskId,
+        emailMaskId: emailAliasId,
       })
     })
   })

@@ -5,13 +5,14 @@
  */
 
 import { EmailConfigurationData } from '../../../../gen/graphqlTypes'
+import { ConfigurationData as EmailConfigurationDataApi } from '../../../../public'
 import { EmailConfigurationDataEntity } from '../../../domain/entities/configuration/emailConfigurationDataEntity'
 
 export class ConfigurationDataAPITransformer {
   transformEntity(
     entity: EmailConfigurationDataEntity,
-  ): EmailConfigurationData {
-    const transformed: EmailConfigurationData = {
+  ): EmailConfigurationDataApi {
+    const transformed: EmailConfigurationDataApi = {
       deleteEmailMessagesLimit: entity.deleteEmailMessagesLimit,
       updateEmailMessagesLimit: entity.updateEmailMessagesLimit,
       emailMessageMaxInboundMessageSize:
@@ -23,8 +24,8 @@ export class ConfigurationDataAPITransformer {
         entity.encryptedEmailMessageRecipientsLimit,
       sendEncryptedEmailEnabled: entity.sendEncryptedEmailEnabled,
       prohibitedFileExtensions: entity.prohibitedFileExtensions,
-      emailMasksEnabled: entity.emailMasksEnabled,
-      externalEmailMasksEnabled: entity.externalEmailMasksEnabled,
+      emailAliasesEnabled: entity.emailAliasesEnabled,
+      externalEmailAliasesEnabled: entity.externalEmailAliasesEnabled,
       allowOwnerEmailAddressReuse: entity.allowOwnerEmailAddressReuse,
     }
 
@@ -43,8 +44,8 @@ export class ConfigurationDataAPITransformer {
         data.encryptedEmailMessageRecipientsLimit,
       sendEncryptedEmailEnabled: data.sendEncryptedEmailEnabled,
       prohibitedFileExtensions: data.prohibitedFileExtensions,
-      emailMasksEnabled: data.emailMasksEnabled,
-      externalEmailMasksEnabled: data.externalEmailMasksEnabled,
+      emailAliasesEnabled: data.emailMasksEnabled,
+      externalEmailAliasesEnabled: data.externalEmailMasksEnabled,
       allowOwnerEmailAddressReuse: data.allowOwnerEmailAddressReuse,
     }
   }

@@ -10,37 +10,37 @@ import { ScheduledDraftMessageState } from '../typings'
 /**
  * Input for `SudoEmailClient.createDraftEmailMessage`.
  *
- * The email address in the `From` field of the RFC6854 data must match either the `maskAddress` of the Email Mask associated with the
- * `emailMaskId` property, if provided, otherwise the `emailAddress` of the Email Address associated with the `senderEmailAddressId` property.
+ * The email address in the `From` field of the RFC6854 data must match either the `aliasAddress` of the Email Alias associated with the
+ * `emailAliasId` property, if provided, otherwise the `emailAddress` of the Email Address associated with the `senderEmailAddressId` property.
  *
  * @interface CreateDraftEmailMessageInput
  * @property {ArrayBuffer} rfc822Data Email message data formatted under the RFC 6854.
  * @property {string} senderEmailAddressId The identifier of the email address used to send the email.
- * @property {string} emailMaskId Optional identifier of the email mask associated with the draft email message.
+ * @property {string} emailAliasId Optional identifier of the email alias associated with the draft email message.
  */
 export interface CreateDraftEmailMessageInput {
   rfc822Data: ArrayBuffer
   senderEmailAddressId: string
-  emailMaskId?: string
+  emailAliasId?: string
 }
 
 /**
  * Input for `SudoEmailClient.updateDraftEmailMessage`.
  *
- * The email address in the `From` field of the RFC6854 data must match either the `maskAddress` of the Email Mask associated with the
- * `emailMaskId` property, if provided, otherwise the `emailAddress` of the Email Address associated with the `senderEmailAddressId` property.
+ * The email address in the `From` field of the RFC6854 data must match either the `aliasAddress` of the Email Alias associated with the
+ * `emailAliasId` property, if provided, otherwise the `emailAddress` of the Email Address associated with the `senderEmailAddressId` property.
  *
  * @interface UpdateDraftEmailMessageInput
  * @property {string} id The identifier of the draft email message to update.
  * @property {ArrayBuffer} rfc822Data Email message data formatted under the RFC 6854. This will completely replace the existing data.
  * @property {string} senderEmailAddressId The identifier of the email address used to send the email.
- * @property {string} emailMaskId Optional identifier of the email mask associated with the draft email message.
+ * @property {string} emailAliasId Optional identifier of the email alias associated with the draft email message.
  */
 export interface UpdateDraftEmailMessageInput {
   id: string
   rfc822Data: ArrayBuffer
   senderEmailAddressId: string
-  emailMaskId?: string
+  emailAliasId?: string
 }
 
 /**
@@ -49,14 +49,14 @@ export interface UpdateDraftEmailMessageInput {
  * @interface DeleteDraftEmailMessagesInput
  * @property {string[]} ids A list of one or more identifiers of the draft email messages to be deleted.
  * @property {string} emailAddressId The identifier of the email address associated with the draft email messages.
- * @property {string} emailMaskId The identifier of the email mask associated with the draft email messages, if any. In order to
- * delete a draft email message that is associated with an email mask, the `emailMaskId` must be provided and match the email mask
- * associated with the draft email message. If the draft email message is not associated with an email mask, this property should be omitted.
+ * @property {string} emailAliasId The identifier of the email alias associated with the draft email messages, if any. In order to
+ * delete a draft email message that is associated with an email alias, the `emailAliasId` must be provided and match the email alias
+ * associated with the draft email message. If the draft email message is not associated with an email alias, this property should be omitted.
  */
 export interface DeleteDraftEmailMessagesInput {
   ids: string[]
   emailAddressId: string
-  emailMaskId?: string
+  emailAliasId?: string
 }
 
 /**
@@ -65,12 +65,12 @@ export interface DeleteDraftEmailMessagesInput {
  * @interface GetDraftEmailMessageInput
  * @property {string} id The identifier of the draft email message to be retrieved.
  * @property {string} emailAddressId The identifier of the email address associated with the draft email message.
- * @property {string} emailMaskId The identifier of the email mask associated with the draft email message, if any.
+ * @property {string} emailAliasId The identifier of the email alias associated with the draft email message, if any.
  */
 export interface GetDraftEmailMessageInput {
   id: string
   emailAddressId: string
-  emailMaskId?: string
+  emailAliasId?: string
 }
 
 /**
@@ -103,13 +103,13 @@ export interface ListDraftEmailMessagesForEmailAddressIdInput extends Pagination
  * @interface ScheduleSendDraftMessageInput
  * @property {string} id The identifier of the draft message to schedule send.
  * @property {string} emailAddressId The identifier of the email address to send the message from.
- * @property {string} emailMaskId The identifier of the email mask to send the message from.
+ * @property {string} emailAliasId The identifier of the email alias to send the message from.
  * @property {Date} sendAt The timestamp of when to send the message. Must be in the future.
  */
 export interface ScheduleSendDraftMessageInput {
   id: string
   emailAddressId: string
-  emailMaskId?: string
+  emailAliasId?: string
   sendAt: Date
 }
 
@@ -119,12 +119,12 @@ export interface ScheduleSendDraftMessageInput {
  * @interface CancelScheduledDraftMessageInput
  * @property {string} id The identifier of the draft message to cancel
  * @property {string} emailAddressId The identifier of the email address that owns the message.
- * @property {string} emailMaskId The identifier of the email mask associated with the message.
+ * @property {string} emailAliasId The identifier of the email alias associated with the message.
  */
 export interface CancelScheduledDraftMessageInput {
   id: string
   emailAddressId: string
-  emailMaskId?: string
+  emailAliasId?: string
 }
 
 /**

@@ -128,19 +128,19 @@ export class RecordNotFoundError extends EmailError {
   }
 }
 
-export class EmailMaskNotFoundError extends EmailError {
+export class EmailAliasNotFoundError extends EmailError {
   constructor(msg?: string) {
     super(msg)
   }
 }
 
-export class EmailMaskAlreadyExistsError extends EmailError {
+export class EmailAliasAlreadyExistsError extends EmailError {
   constructor(msg?: string) {
     super(msg)
   }
 }
 
-export class EmailMaskLockedError extends EmailError {
+export class EmailAliasLockedError extends EmailError {
   constructor(msg?: string) {
     super(msg)
   }

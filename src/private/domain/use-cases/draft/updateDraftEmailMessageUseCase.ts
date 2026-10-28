@@ -23,20 +23,20 @@ import { EmailCryptoService } from '../../entities/secure/emailCryptoService'
  * @property {string} id The identifier of the draft email message to update.
  * @property {ArrayBuffer} rfc822Data RFC 822 formatted data of the draft email message. This will completely replace the existing data.
  * @property {string} senderEmailAddressId Identifier of the sender email address that is composing the draft email message.
- * @property {string} emailMaskId Optional identifier of the email mask associated with the draft email message.
+ * @property {string} emailAliasId Optional identifier of the email alias associated with the draft email message.
  */
 interface UpdateDraftEmailMessageUseCaseInput {
   id: string
   rfc822Data: ArrayBuffer
   senderEmailAddressId: string
-  emailMaskId?: string
+  emailAliasId?: string
 }
 
 interface UpdateDraftEmailMessageUseCaseOutput {
   id: string
   emailAddressId: string
   updatedAt: Date
-  emailMaskId?: string
+  emailAliasId?: string
 }
 
 /**
@@ -59,7 +59,7 @@ export class UpdateDraftEmailMessageUseCase {
     id,
     rfc822Data,
     senderEmailAddressId,
-    emailMaskId,
+    emailAliasId,
   }: UpdateDraftEmailMessageUseCaseInput): Promise<UpdateDraftEmailMessageUseCaseOutput> {
     this.log.debug(this.constructor.name, {
       id,
@@ -75,7 +75,7 @@ export class UpdateDraftEmailMessageUseCase {
     const draft = await this.emailMessageService.getDraft({
       id,
       emailAddressId: senderEmailAddressId,
-      emailMaskId,
+      emailAliasId,
     })
     if (!draft) {
       throw new MessageNotFoundError()
@@ -96,7 +96,7 @@ export class UpdateDraftEmailMessageUseCase {
       rfc822Data: processedRfc822Data,
       senderEmailAddressId,
       id,
-      emailMaskId,
+      emailAliasId,
     })
 
     return metadata

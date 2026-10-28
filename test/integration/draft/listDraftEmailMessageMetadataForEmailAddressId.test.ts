@@ -17,12 +17,12 @@ import {
 import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 import { delay } from '../../util/delay'
 import {
-  emailMasksEnabled,
+  emailAliasesEnabled,
   setupEmailClient,
   teardown,
 } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
-import { provisionEmailMask } from '../util/provisionEmailMask'
+import { provisionEmailAlias } from '../util/provisionEmailAlias'
 
 describe('SudoEmailClient listDraftEmailMessageMetadataForEmailAddressId Test Suite', () => {
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
@@ -32,7 +32,7 @@ describe('SudoEmailClient listDraftEmailMessageMetadataForEmailAddressId Test Su
   let userClient: SudoUserClient
   let sudo: Sudo
   let sudoOwnershipProofToken: string
-  let runMaskTests: boolean = false
+  let runAliasTests: boolean = false
 
   let emailAddress: EmailAddress
   let draftData: DraftEmailMessage[] = []
@@ -45,7 +45,7 @@ describe('SudoEmailClient listDraftEmailMessageMetadataForEmailAddressId Test Su
     userClient = result.userClient
     sudo = result.sudo
     sudoOwnershipProofToken = result.ownershipProofToken
-    runMaskTests = await emailMasksEnabled(instanceUnderTest)
+    runAliasTests = await emailAliasesEnabled(instanceUnderTest)
 
     emailAddress = await provisionEmailAddress(
       sudoOwnershipProofToken,
@@ -422,9 +422,9 @@ describe('SudoEmailClient listDraftEmailMessageMetadataForEmailAddressId Test Su
     })
   })
 
-  it('should include email mask id in draft metadata', async ({ skip }) => {
-    skip(runMaskTests === false, 'Email mask tests are disabled')
-    const emailMask = await provisionEmailMask(
+  it('should include email alias id in draft metadata', async ({ skip }) => {
+    skip(runAliasTests === false, 'Email alias tests are disabled')
+    const emailAlias = await provisionEmailAlias(
       sudoOwnershipProofToken,
       instanceUnderTest,
       { realAddress: emailAddress.emailAddress },
@@ -432,7 +432,7 @@ describe('SudoEmailClient listDraftEmailMessageMetadataForEmailAddressId Test Su
 
     const draftDataArrays = _.range(3).map(() =>
       Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
-        from: [{ emailAddress: emailMask.maskAddress }],
+        from: [{ emailAddress: emailAlias.aliasAddress }],
         to: [],
         cc: [],
         bcc: [],
@@ -446,7 +446,7 @@ describe('SudoEmailClient listDraftEmailMessageMetadataForEmailAddressId Test Su
       const metadata = await instanceUnderTest.createDraftEmailMessage({
         senderEmailAddressId: emailAddress.id,
         rfc822Data: d,
-        emailMaskId: emailMask.id,
+        emailAliasId: emailAlias.id,
       })
       draftData.push({ ...metadata, rfc822Data: d })
       // delay to avoid hitting request limit
@@ -465,7 +465,7 @@ describe('SudoEmailClient listDraftEmailMessageMetadataForEmailAddressId Test Su
         emailAddressId: m.emailAddressId,
         updatedAt: m.updatedAt,
         rfc822Data: expect.anything(),
-        emailMaskId: emailMask.id,
+        emailAliasId: emailAlias.id,
       })
     })
   })

@@ -11,7 +11,7 @@ export class EmailDomainAPITransformer {
   transformEntity(entity: EmailDomainEntity): EmailDomain {
     return {
       domain: entity.domain,
-      isMaskDomain: entity.isMaskDomain ?? false,
+      isAliasDomain: entity.isAliasDomain ?? false,
       metadata: this.parseMetadata(entity.metadata),
     }
   }

@@ -123,9 +123,10 @@ export interface SendEmailMessageInput {
 }
 
 /**
- * Input object containing information required to send a masked email message.
+ * Input object containing information required to send an email message via an
+ * email alias.
  *
- * @property {string} senderEmailMaskId Identifier of the email mask being used to
+ * @property {string} senderEmailAliasId Identifier of the email alias being used to
  *  send the email. The identifier must match the identifier of the address of the `from` field
  *  in the RFC 6854 data.
  * @property {InternetMessageFormatHeader} emailMessageHeader The email message headers.
@@ -137,8 +138,8 @@ export interface SendEmailMessageInput {
  * @property {string} replyingMessageId Optional identifier of the message being replied to.
  * @property {string} forwardingMessageId Optional identifier of the message being forwarded.
  */
-export interface SendMaskedEmailMessageInput {
-  senderEmailMaskId: string
+export interface SendEmailMessageViaAliasInput {
+  senderEmailAliasId: string
   emailMessageHeader: InternetMessageFormatHeader
   body: string
   attachments: EmailAttachment[]
@@ -246,7 +247,7 @@ export type EmailMessageDirectionFilter =
 
 export enum MailboxType {
   Address = 'ADDRESS',
-  Mask = 'MASK',
+  Alias = 'ALIAS',
 }
 
 export interface MailboxIdsFilter {

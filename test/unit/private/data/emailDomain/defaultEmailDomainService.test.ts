@@ -52,7 +52,7 @@ describe('DefaultEmailDomainService Test Suite', () => {
         domains: ['mask1.anonyome.com', 'mask2.anonyome.com'],
       })
       await expect(
-        instanceUnderTest.getEmailMaskDomains(),
+        instanceUnderTest.getEmailAliasDomains(),
       ).resolves.toStrictEqual([
         { domain: 'mask1.anonyome.com' },
         { domain: 'mask2.anonyome.com' },
@@ -70,12 +70,12 @@ describe('DefaultEmailDomainService Test Suite', () => {
         [
           {
             domain: 'unittest.org',
-            isMaskDomain: false,
+            isAliasDomain: false,
             metadata: JSON.stringify({ provider: 'internal' }),
           },
           {
             domain: 'mask.example.com',
-            isMaskDomain: true,
+            isAliasDomain: true,
             metadata: JSON.stringify({ provider: 'external', priority: 1 }),
           },
         ],

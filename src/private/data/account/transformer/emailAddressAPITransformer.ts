@@ -16,7 +16,7 @@ export class EmailAddressAPITransformer {
       owner: entity.owner,
       owners: entity.owners.map(({ id, issuer }) => ({ id, issuer })),
       identityId: entity.identityId,
-      emailAddress: entity.emailAddress.emailAddress,
+      emailAddress: entity.emailAddress,
       size: entity.size,
       numberOfEmailMessages: entity.numberOfEmailMessages,
       version: entity.version,
@@ -27,8 +27,8 @@ export class EmailAddressAPITransformer {
         folderTransformer.transformEntity(folder),
       ),
     }
-    if (entity.emailAddress.alias) {
-      transformed.alias = entity.emailAddress.alias
+    if (entity.displayName) {
+      transformed.displayName = entity.displayName
     }
     return transformed
   }

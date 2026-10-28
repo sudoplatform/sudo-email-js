@@ -50,13 +50,13 @@ export interface LookupEmailAddressesPublicInfoInput {
  * @property {string} emailAddress The email address to provision, in the form `${localPart}@${domain}`.
  * @property {string} ownershipProofToken The signed ownership proof of the Sudo to be associated with the provisioned email address.
  *  The ownership proof must contain an audience of "sudoplatform".
- * @property {string} alias An alias for the email address.
+ * @property {string} displayName A display name for the email address.
  * @property {boolean} allowSymmetricKeyGeneration (optional) If false and no symmetric key is found, a KeyNotFoundError will be thrown. Defaults to true.
  */
 export interface ProvisionEmailAddressInput {
   emailAddress: string
   ownershipProofToken: string
-  alias?: string
+  displayName?: string
   allowSymmetricKeyGeneration?: boolean
 }
 
@@ -66,12 +66,12 @@ export interface ProvisionEmailAddressInput {
  * @interface UpdateEmailAddressMetadataInput
  * @property {string} id The id of the email address to update.
  * @property values The new value(s) to set for each listed email address.
- * Set the alias to null or the empty string to clear it.
+ * Set the displayName to null or the empty string to clear it.
  */
 export interface UpdateEmailAddressMetadataInput {
   id: string
   values: {
-    alias?: string | null
+    displayName?: string | null
   }
 }
 

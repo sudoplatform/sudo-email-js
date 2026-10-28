@@ -203,7 +203,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     rfc822Data,
     senderEmailAddressId,
     id,
-    emailMaskId,
+    emailAliasId,
   }: SaveDraftInput): Promise<DraftEmailMessageMetadataEntity> {
     const keyId = await this.deviceKeyWorker.getCurrentSymmetricKeyId()
     if (!keyId) {
@@ -212,7 +212,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     let keyPrefix =
       await this.constructS3KeyForEmailAddressId(senderEmailAddressId)
     keyPrefix = `${keyPrefix}/draft`
-    keyPrefix = this.addEmailMaskIdToS3KeyPrefix(keyPrefix, emailMaskId)
+    keyPrefix = this.addEmailMaskIdToS3KeyPrefix(keyPrefix, emailAliasId)
     const draftId = id ?? v4()
     const key = `${keyPrefix}/${draftId}`
     const sealed = await this.deviceKeyWorker.sealString({
@@ -240,18 +240,18 @@ export class DefaultEmailMessageService implements EmailMessageService {
       id: draftId,
       emailAddressId: senderEmailAddressId,
       updatedAt: draft.lastModified,
-      emailMaskId,
+      emailAliasId,
     }
   }
 
   async deleteDrafts({
     ids,
     emailAddressId,
-    emailMaskId,
+    emailAliasId,
   }: DeleteDraftsInput): Promise<{ id: string; reason: string }[]> {
     let keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
     keyPrefix = `${keyPrefix}/draft`
-    keyPrefix = this.addEmailMaskIdToS3KeyPrefix(keyPrefix, emailMaskId)
+    keyPrefix = this.addEmailMaskIdToS3KeyPrefix(keyPrefix, emailAliasId)
     const keys = ids.map((id) => `${keyPrefix}/${id}`)
     try {
       const failedIds = await this.s3Client.bulkDelete({
@@ -277,11 +277,11 @@ export class DefaultEmailMessageService implements EmailMessageService {
   async getDraft({
     id,
     emailAddressId,
-    emailMaskId,
+    emailAliasId,
   }: GetDraftInput): Promise<DraftEmailMessageEntity | undefined> {
     let keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
     keyPrefix = `${keyPrefix}/draft`
-    keyPrefix = this.addEmailMaskIdToS3KeyPrefix(keyPrefix, emailMaskId)
+    keyPrefix = this.addEmailMaskIdToS3KeyPrefix(keyPrefix, emailAliasId)
     const key = `${keyPrefix}/${id}`
     let sealedString: string
     let keyId: string | undefined
@@ -336,7 +336,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
         emailAddressId,
         updatedAt,
         rfc822Data,
-        emailMaskId,
+        emailAliasId,
       }
     }
 
@@ -345,7 +345,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       emailAddressId,
       updatedAt,
       rfc822Data: BufferUtil.fromString(unsealedData),
-      emailMaskId,
+      emailAliasId,
     }
   }
 
@@ -375,7 +375,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
         id: result.key.replace(prefix, ''),
         emailAddressId,
         updatedAt: result.lastModified,
-        emailMaskId: maskId,
+        emailAliasId: maskId,
       })
     })
     return {
@@ -388,18 +388,18 @@ export class DefaultEmailMessageService implements EmailMessageService {
   async scheduleSendDraftMessage({
     id,
     emailAddressId,
-    emailMaskId,
+    emailAliasId,
     sendAt,
   }: ScheduleSendDraftMessageInput): Promise<ScheduledDraftMessageEntity> {
     this.log.debug(this.scheduleSendDraftMessage.name, {
       id,
       emailAddressId,
-      emailMaskId,
+      emailAliasId,
       sendAt,
     })
     let keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
     keyPrefix = `${keyPrefix}/draft`
-    keyPrefix = this.addEmailMaskIdToS3KeyPrefix(keyPrefix, emailMaskId)
+    keyPrefix = this.addEmailMaskIdToS3KeyPrefix(keyPrefix, emailAliasId)
     const key = `${keyPrefix}/${id}`
     let keyId: string | undefined
     let algorithm: string | undefined
@@ -453,7 +453,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     const result = await this.appSync.scheduleSendDraftMessage({
       draftMessageKey: key,
       emailAddressId,
-      emailMaskId,
+      emailMaskId: emailAliasId,
       sendAtEpochMs: sendAt.getTime(),
       symmetricKey: Base64.encode(symmetricKey),
     })
@@ -463,22 +463,22 @@ export class DefaultEmailMessageService implements EmailMessageService {
   async cancelScheduledDraftMessage({
     id,
     emailAddressId,
-    emailMaskId,
+    emailAliasId,
   }: CancelScheduledDraftMessageInput): Promise<string> {
     this.log.debug(this.cancelScheduledDraftMessage.name, {
       id,
       emailAddressId,
-      emailMaskId,
+      emailAliasId,
     })
     let keyPrefix = await this.constructS3KeyForEmailAddressId(emailAddressId)
     keyPrefix = `${keyPrefix}/draft`
-    keyPrefix = this.addEmailMaskIdToS3KeyPrefix(keyPrefix, emailMaskId)
+    keyPrefix = this.addEmailMaskIdToS3KeyPrefix(keyPrefix, emailAliasId)
     const key = `${keyPrefix}/${id}`
 
     const result = await this.appSync.cancelScheduledDraftMessage({
       draftMessageKey: key,
       emailAddressId,
-      emailMaskId,
+      emailMaskId: emailAliasId,
     })
     return result.substring(result.lastIndexOf('/') + 1)
   }
@@ -517,7 +517,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
   async sendMessage({
     message,
     senderEmailAddressId,
-    senderEmailMaskId,
+    senderEmailAliasId,
     emailMessageMaxOutboundMessageSize,
   }: SendMessageInput): Promise<SendEmailMessageOutput> {
     this.log.debug(this.sendMessage.name, {
@@ -525,11 +525,11 @@ export class DefaultEmailMessageService implements EmailMessageService {
       senderEmailAddressId,
       emailMessageMaxOutboundMessageSize,
     })
-    const senderId = senderEmailAddressId ?? senderEmailMaskId
+    const senderId = senderEmailAddressId ?? senderEmailAliasId
 
     if (!senderId) {
       throw new InvalidArgumentError(
-        'Either senderEmailAddressId or senderEmailMaskId must be provided',
+        'Either senderEmailAddressId or senderEmailAliasId must be provided',
       )
     }
 
@@ -569,7 +569,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
     message,
     emailAddressesPublicInfo,
     senderEmailAddressId,
-    senderEmailMaskId,
+    senderEmailAliasId,
     emailMessageMaxOutboundMessageSize,
   }: SendEncryptedMessageInput): Promise<SendEmailMessageOutput> {
     this.log.debug(this.sendEncryptedMessage.name, {
@@ -577,11 +577,11 @@ export class DefaultEmailMessageService implements EmailMessageService {
       emailAddressesPublicInfo,
       senderEmailAddressId,
     })
-    const senderId = senderEmailAddressId ?? senderEmailMaskId
+    const senderId = senderEmailAddressId ?? senderEmailAliasId
 
     if (!senderId) {
       throw new InvalidArgumentError(
-        'Either senderEmailAddressId or senderEmailMaskId must be provided',
+        'Either senderEmailAddressId or senderEmailAliasId must be provided',
       )
     }
     const emailMessageUtil = new EmailMessageUtil({
@@ -962,15 +962,15 @@ export class DefaultEmailMessageService implements EmailMessageService {
 
   private addEmailMaskIdToS3KeyPrefix(
     keyPrefix: string,
-    emailMaskId?: string,
+    emailAliasId?: string,
   ): string {
-    return emailMaskId ? `${keyPrefix}/mask/${emailMaskId}` : keyPrefix
+    return emailAliasId ? `${keyPrefix}/mask/${emailAliasId}` : keyPrefix
   }
 
   private extractEmailMaskIdFromDraftMessageS3Key(
     key: string,
   ): string | undefined {
-    const regex = /\/mask\/([^/]+)\// // matches '/mask/{emailMaskId}/'
+    const regex = /\/mask\/([^/]+)\// // matches '/mask/{emailAliasId}/'
     const match = key.match(regex)
     if (match && match[1]) {
       return match[1]
@@ -1011,7 +1011,7 @@ export class DefaultEmailMessageService implements EmailMessageService {
       size: sealedEmailMessage.size,
       encryptionStatus: sealedEmailMessage.encryptionStatus,
       date: undefined,
-      emailMaskId: sealedEmailMessage.emailMaskId,
+      emailAliasId: sealedEmailMessage.emailAliasId,
     }
 
     const status = await this.deviceKeyWorker.keyExists(

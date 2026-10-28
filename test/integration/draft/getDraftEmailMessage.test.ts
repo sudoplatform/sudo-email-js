@@ -15,13 +15,13 @@ import {
   SudoEmailClient,
 } from '../../../src'
 import {
-  emailMasksEnabled,
+  emailAliasesEnabled,
   setupEmailClient,
   teardown,
 } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
-import { provisionEmailMask } from '../util/provisionEmailMask'
+import { provisionEmailAlias } from '../util/provisionEmailAlias'
 
 describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
@@ -31,7 +31,7 @@ describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
   let userClient: SudoUserClient
   let sudo: Sudo
   let sudoOwnershipProofToken: string
-  let runMaskTests: boolean = false
+  let runAliasTests: boolean = false
 
   let emailAddress: EmailAddress
   let draftContents: ArrayBuffer
@@ -44,7 +44,7 @@ describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
     userClient = result.userClient
     sudo = result.sudo
     sudoOwnershipProofToken = result.ownershipProofToken
-    runMaskTests = await emailMasksEnabled(instanceUnderTest)
+    runAliasTests = await emailAliasesEnabled(instanceUnderTest)
 
     emailAddress = await provisionEmailAddress(
       sudoOwnershipProofToken,
@@ -144,9 +144,11 @@ describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
     ).resolves.toBeUndefined()
   })
 
-  it('successfully returns a draft with an email mask id', async ({ skip }) => {
-    skip(runMaskTests === false, 'Email mask tests are disabled')
-    const emailMask = await provisionEmailMask(
+  it('successfully returns a draft with an email alias id', async ({
+    skip,
+  }) => {
+    skip(runAliasTests === false, 'Email alias tests are disabled')
+    const emailAlias = await provisionEmailAlias(
       sudoOwnershipProofToken,
       instanceUnderTest,
       {
@@ -155,7 +157,7 @@ describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
     )
     const draftEmailMessageBuffer =
       Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
-        from: [{ emailAddress: emailMask.maskAddress }],
+        from: [{ emailAddress: emailAlias.aliasAddress }],
         to: [],
         cc: [],
         bcc: [],
@@ -166,13 +168,13 @@ describe('SudoEmailClient getDraftEmailMessage Test Suite', () => {
     const draftMetadata = await instanceUnderTest.createDraftEmailMessage({
       rfc822Data: draftEmailMessageBuffer,
       senderEmailAddressId: emailAddress.id,
-      emailMaskId: emailMask.id,
+      emailAliasId: emailAlias.id,
     })
 
     const draft = await instanceUnderTest.getDraftEmailMessage({
       id: draftMetadata.id,
       emailAddressId: emailAddress.id,
-      emailMaskId: emailMask.id,
+      emailAliasId: emailAlias.id,
     })
 
     expect(draft).toEqual({

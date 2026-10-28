@@ -18,13 +18,13 @@ import {
 } from '../../../src'
 import { delay } from '../../util/delay'
 import {
-  emailMasksEnabled,
+  emailAliasesEnabled,
   setupEmailClient,
   teardown,
 } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
-import { provisionEmailMask } from '../util/provisionEmailMask'
+import { provisionEmailAlias } from '../util/provisionEmailAlias'
 
 describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
@@ -34,7 +34,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
   let userClient: SudoUserClient
   let sudo: Sudo
   let sudoOwnershipProofToken: string
-  let runMaskTests: boolean = false
+  let runAliasTests: boolean = false
 
   let emailAddress: EmailAddress
   let draftMetadata: DraftEmailMessageMetadata
@@ -48,7 +48,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
     userClient = result.userClient
     sudo = result.sudo
     sudoOwnershipProofToken = result.ownershipProofToken
-    runMaskTests = await emailMasksEnabled(instanceUnderTest)
+    runAliasTests = await emailAliasesEnabled(instanceUnderTest)
 
     emailAddress = await provisionEmailAddress(
       sudoOwnershipProofToken,
@@ -207,10 +207,10 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
     })
   })
 
-  describe('Email Mask Tests', () => {
-    it('deletes a draft successfully with email mask', async ({ skip }) => {
-      skip(runMaskTests === false, 'Email mask tests are disabled')
-      const emailMask = await provisionEmailMask(
+  describe('Email Alias Tests', () => {
+    it('deletes a draft successfully with email alias', async ({ skip }) => {
+      skip(runAliasTests === false, 'Email alias tests are disabled')
+      const emailAlias = await provisionEmailAlias(
         sudoOwnershipProofToken,
         instanceUnderTest,
         {
@@ -219,7 +219,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
       )
       const draftEmailMessageBuffer =
         Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
-          from: [{ emailAddress: emailMask.maskAddress }],
+          from: [{ emailAddress: emailAlias.aliasAddress }],
           to: [],
           cc: [],
           bcc: [],
@@ -230,7 +230,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
       const draftMetadata = await instanceUnderTest.createDraftEmailMessage({
         rfc822Data: draftEmailMessageBuffer,
         senderEmailAddressId: emailAddress.id,
-        emailMaskId: emailMask.id,
+        emailAliasId: emailAlias.id,
       })
 
       const ids = [draftMetadata.id]
@@ -238,7 +238,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
         instanceUnderTest.deleteDraftEmailMessages({
           emailAddressId: emailAddress.id,
           ids,
-          emailMaskId: emailMask.id,
+          emailAliasId: emailAlias.id,
         }),
       ).resolves.toStrictEqual({
         status: BatchOperationResultStatus.Success,
@@ -247,11 +247,11 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
       })
     })
 
-    it('deletes multiple drafts in one operation successfully with email mask', async ({
+    it('deletes multiple drafts in one operation successfully with email alias', async ({
       skip,
     }) => {
-      skip(runMaskTests === false, 'Email mask tests are disabled')
-      const emailMask = await provisionEmailMask(
+      skip(runAliasTests === false, 'Email alias tests are disabled')
+      const emailAlias = await provisionEmailAlias(
         sudoOwnershipProofToken,
         instanceUnderTest,
         {
@@ -260,7 +260,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
       )
       const draftBuffers = _.range(9).map(() =>
         Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
-          from: [{ emailAddress: emailMask.maskAddress }],
+          from: [{ emailAddress: emailAlias.aliasAddress }],
           to: [],
           cc: [],
           bcc: [],
@@ -275,7 +275,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
             await instanceUnderTest.createDraftEmailMessage({
               senderEmailAddressId: emailAddress.id,
               rfc822Data: ds,
-              emailMaskId: emailMask.id,
+              emailAliasId: emailAlias.id,
             }),
         ),
       )
@@ -283,7 +283,7 @@ describe('SudoEmailClient deleteDraftEmailMessages Test Suite', () => {
       const deleteResult = await instanceUnderTest.deleteDraftEmailMessages({
         emailAddressId: emailAddress.id,
         ids,
-        emailMaskId: emailMask.id,
+        emailAliasId: emailAlias.id,
       })
 
       expect(deleteResult).toStrictEqual({

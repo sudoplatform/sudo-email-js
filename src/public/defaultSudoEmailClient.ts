@@ -44,16 +44,16 @@ import { EmailDomainEntityTransformer } from '../private/data/emailDomain/transf
 import { EmailDomainAPITransformer } from '../private/data/emailDomain/transformer/emailDomainAPITransformer'
 import { DefaultEmailFolderService } from '../private/data/folder/defaultEmailFolderService'
 import { EmailFolderAPITransformer } from '../private/data/folder/transformer/emailFolderAPITransformer'
-import { DefaultEmailMaskService } from '../private/data/mask/defaultEmailMaskService'
-import { EmailMaskFilterTransformer } from '../private/data/mask/transformer/emailMaskFilterTransformer'
-import { EmailMaskTransformer } from '../private/data/mask/transformer/emailMaskTransformer'
+import { DefaultEmailAliasService } from '../private/data/alias/defaultEmailAliasService'
+import { EmailAliasFilterTransformer } from '../private/data/alias/transformer/emailAliasFilterTransformer'
+import { EmailAliasTransformer } from '../private/data/alias/transformer/emailAliasTransformer'
 import { DefaultEmailMessageService } from '../private/data/message/defaultEmailMessageService'
 import { EmailMessageAPITransformer } from '../private/data/message/transformer/emailMessageAPITransformer'
 import { ListEmailMessagesAPITransformer } from '../private/data/message/transformer/listEmailMessagesAPITransformer'
 import { UpdateEmailMessagesResultTransformer } from '../private/data/message/transformer/updateEmailMessagesResultTransformer'
 import { DefaultEmailCryptoService } from '../private/data/secure/defaultEmailCryptoService'
 import { EmailDomainEntity } from '../private/domain/entities/emailDomain/emailDomainEntity'
-import { EmailMaskService } from '../private/domain/entities/mask/emailMaskService'
+import { EmailAliasService } from '../private/domain/entities/alias/emailAliasService'
 import { CheckEmailAddressAvailabilityUseCase } from '../private/domain/use-cases/account/checkEmailAddressAvailabilityUseCase'
 import { DeprovisionEmailAccountUseCase } from '../private/domain/use-cases/account/deprovisionEmailAccountUseCase'
 import { GetEmailAccountUseCase } from '../private/domain/use-cases/account/getEmailAccountUseCase'
@@ -64,35 +64,30 @@ import { ProvisionEmailAccountUseCase } from '../private/domain/use-cases/accoun
 import { UpdateEmailAccountMetadataUseCase } from '../private/domain/use-cases/account/updateEmailAccountMetadataUseCase'
 import { BlockEmailAddressesUseCase } from '../private/domain/use-cases/blocklist/blockEmailAddresses'
 import { GetEmailAddressBlocklistUseCase } from '../private/domain/use-cases/blocklist/getEmailAddressBlocklist'
-import { UnblockEmailAddressesUseCase } from '../private/domain/use-cases/blocklist/unblockEmailAddresses'
 import { UnblockEmailAddressesByHashedValueUseCase } from '../private/domain/use-cases/blocklist/unblockEmailAddressesByHashedValue'
 import { GetConfigurationDataUseCase } from '../private/domain/use-cases/configuration/getConfigurationDataUseCase'
 import { CancelScheduledDraftMessageUseCase } from '../private/domain/use-cases/draft/cancelScheduledDraftMessageUseCase'
 import { DeleteDraftEmailMessagesUseCase } from '../private/domain/use-cases/draft/deleteDraftEmailMessagesUseCase'
 import { GetDraftEmailMessageUseCase } from '../private/domain/use-cases/draft/getDraftEmailMessageUseCase'
 import { ListDraftEmailMessageMetadataForEmailAddressIdUseCase } from '../private/domain/use-cases/draft/listDraftEmailMessageMetadataForEmailAddressIdUseCase'
-import { ListDraftEmailMessageMetadataUseCase } from '../private/domain/use-cases/draft/listDraftEmailMessageMetadataUseCase'
 import { ListDraftEmailMessagesForEmailAddressIdUseCase } from '../private/domain/use-cases/draft/listDraftEmailMessagesForEmailAddressIdUseCase'
-import { ListDraftEmailMessagesUseCase } from '../private/domain/use-cases/draft/listDraftEmailMessagesUseCase'
 import { ListScheduledDraftMessagesForEmailAddressIdUseCase } from '../private/domain/use-cases/draft/listScheduledDraftMessagesForEmailAddressIdUseCase'
 import { SaveDraftEmailMessageUseCase } from '../private/domain/use-cases/draft/saveDraftEmailMessageUseCase'
 import { ScheduleSendDraftMessageUseCase } from '../private/domain/use-cases/draft/scheduleSendDraftMessageUseCase'
 import { UpdateDraftEmailMessageUseCase } from '../private/domain/use-cases/draft/updateDraftEmailMessageUseCase'
 import { GetConfiguredEmailDomainsUseCase } from '../private/domain/use-cases/emailDomain/getConfiguredEmailDomainsUseCase'
-import { GetEmailMaskDomainsUseCase } from '../private/domain/use-cases/emailDomain/getEmailMaskDomainsUseCase'
-import { GetSupportedEmailDomainsUseCase } from '../private/domain/use-cases/emailDomain/getSupportedEmailDomainsUseCase'
 import { ListEmailDomainsUseCase } from '../private/domain/use-cases/emailDomain/listEmailDomainsUseCase'
 import { CreateCustomEmailFolderUseCase } from '../private/domain/use-cases/folder/createCustomEmailFolderUseCase'
 import { DeleteCustomEmailFolderUseCase } from '../private/domain/use-cases/folder/deleteCustomEmailFolderUseCase'
 import { DeleteMessagesByFolderIdUseCase } from '../private/domain/use-cases/folder/deleteMessagesByFolderIdUseCase'
 import { ListEmailFoldersForEmailAddressIdUseCase } from '../private/domain/use-cases/folder/listEmailFoldersForEmailAddressIdUseCase'
 import { UpdateCustomEmailFolderUseCase } from '../private/domain/use-cases/folder/updateCustomEmailFolderUseCase'
-import { DeprovisionEmailMaskUseCase } from '../private/domain/use-cases/mask/deprovisionEmailMaskUseCase'
-import { DisableEmailMaskUseCase } from '../private/domain/use-cases/mask/disableEmailMaskUseCase'
-import { EnableEmailMaskUseCase } from '../private/domain/use-cases/mask/enableEmailMaskUseCase'
-import { ListEmailMasksForOwnerUseCase } from '../private/domain/use-cases/mask/listEmailMasksForOwnerUseCase'
-import { ProvisionEmailMaskUseCase } from '../private/domain/use-cases/mask/provisionEmailMaskUseCase'
-import { UpdateEmailMaskUseCase } from '../private/domain/use-cases/mask/updateEmailMaskUseCase'
+import { DeprovisionEmailAliasUseCase } from '../private/domain/use-cases/alias/deprovisionEmailAliasUseCase'
+import { DisableEmailAliasUseCase } from '../private/domain/use-cases/alias/disableEmailAliasUseCase'
+import { EnableEmailAliasUseCase } from '../private/domain/use-cases/alias/enableEmailAliasUseCase'
+import { ListEmailAliasesForOwnerUseCase } from '../private/domain/use-cases/alias/listEmailAliasesForOwnerUseCase'
+import { ProvisionEmailAliasUseCase } from '../private/domain/use-cases/alias/provisionEmailAliasUseCase'
+import { UpdateEmailAliasUseCase } from '../private/domain/use-cases/alias/updateEmailAliasUseCase'
 import { DeleteEmailMessagesUseCase } from '../private/domain/use-cases/message/deleteEmailMessagesUseCase'
 import { GetEmailMessageUseCase } from '../private/domain/use-cases/message/getEmailMessageUseCase'
 import { GetEmailMessageWithBodyUseCase } from '../private/domain/use-cases/message/getEmailMessageWithBodyUseCase'
@@ -103,12 +98,11 @@ import { SendEmailMessageUseCase } from '../private/domain/use-cases/message/sen
 import { SubscribeToEmailMessagesUseCase } from '../private/domain/use-cases/message/subscribeToEmailMessagesUseCase'
 import { UnsubscribeFromEmailMessagesUseCase } from '../private/domain/use-cases/message/unsubscribeFromEmailMessagesUseCase'
 import { UpdateEmailMessagesUseCase } from '../private/domain/use-cases/message/updateEmailMessagesUseCase'
-import { VerifyExternalEmailAddressUseCase } from '../private/domain/use-cases/mask/verifyExternalEmailAddressUseCase'
+import { VerifyExternalEmailAddressUseCase } from '../private/domain/use-cases/alias/verifyExternalEmailAddressUseCase'
 import { InvalidArgumentError } from './errors'
 import {
   BlockEmailAddressesInput,
   UnblockEmailAddressesByHashedValueInput,
-  UnblockEmailAddressesInput,
 } from './inputs/blockedAddresses'
 import { FlushMessageBodyCacheInput } from './inputs/flushMessageBodyCache'
 import {
@@ -139,13 +133,13 @@ import {
   UpdateCustomEmailFolderInput,
 } from './inputs/emailFolder'
 import {
-  DeprovisionEmailMaskInput,
-  DisableEmailMaskInput,
-  EnableEmailMaskInput,
-  ListEmailMasksForOwnerInput,
-  ProvisionEmailMaskInput,
-  UpdateEmailMaskInput,
-} from './inputs/emailMask'
+  DeprovisionEmailAliasInput,
+  DisableEmailAliasInput,
+  EnableEmailAliasInput,
+  ListEmailAliasesForOwnerInput,
+  ProvisionEmailAliasInput,
+  UpdateEmailAliasInput,
+} from './inputs/emailAlias'
 import {
   GetEmailMessageInput,
   GetEmailMessageWithBodyInput,
@@ -153,7 +147,7 @@ import {
   ListEmailMessagesForEmailFolderIdInput,
   ListEmailMessagesInput,
   SendEmailMessageInput,
-  SendMaskedEmailMessageInput,
+  SendEmailMessageViaAliasInput,
   UpdateEmailMessagesInput,
 } from './inputs/emailMessage'
 import { SudoEmailClient, SudoEmailClientOptions } from './sudoEmailClient'
@@ -176,7 +170,7 @@ import { EmailAddress } from './typings/emailAddress'
 import { EmailAddressPublicInfo } from './typings/emailAddressPublicInfo'
 import { EmailFolder } from './typings/emailFolder'
 import { EmailDomain } from './typings/emailDomain'
-import { EmailMask } from './typings/emailMask'
+import { EmailAlias } from './typings/emailAlias'
 import {
   EmailMessage,
   EmailMessageSubscriber,
@@ -206,7 +200,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   private readonly emailFolderService: DefaultEmailFolderService
   private readonly emailMessageService: DefaultEmailMessageService
   private readonly emailAddressBlocklistService: EmailAddressBlocklistService
-  private readonly emailMaskService: EmailMaskService
+  private readonly emailAliasService: EmailAliasService
   private readonly emailCryptoService: EmailCryptoService
   private readonly sudoCryptoProvider: SudoCryptoProvider
   private readonly keyManager: SudoKeyManager
@@ -277,7 +271,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       this.apiClient,
       deviceKeyWorker,
     )
-    this.emailMaskService = new DefaultEmailMaskService(
+    this.emailAliasService = new DefaultEmailAliasService(
       this.apiClient,
       deviceKeyWorker,
       {
@@ -306,7 +300,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async provisionEmailAddress({
     emailAddress,
     ownershipProofToken,
-    alias,
+    displayName,
     allowSymmetricKeyGeneration = true,
   }: ProvisionEmailAddressInput): Promise<EmailAddress> {
     await this.ensureSignedIn()
@@ -315,7 +309,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       const entityTransformer = new EmailAddressEntityTransformer()
       const emailAddressEntity = entityTransformer.transform(
         emailAddress,
-        alias,
+        displayName,
       )
       const result = await useCase.execute({
         emailAddressEntity,
@@ -349,7 +343,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       new UpdateEmailAccountMetadataUseCase(this.emailAccountService)
     return await updateEmailAddressMetadataUseCase.execute({
       id,
-      values,
+      values: { alias: values.displayName },
     })
   }
 
@@ -380,15 +374,15 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     })
   }
 
-  public async sendMaskedEmailMessage({
-    senderEmailMaskId,
+  public async sendEmailMessageViaAlias({
+    senderEmailAliasId,
     emailMessageHeader,
     body,
     attachments,
     inlineAttachments,
     replyingMessageId,
     forwardingMessageId,
-  }: SendMaskedEmailMessageInput): Promise<SendEmailMessageResult> {
+  }: SendEmailMessageViaAliasInput): Promise<SendEmailMessageResult> {
     await this.ensureSignedIn()
     const sendEmailMessageUseCase = new SendEmailMessageUseCase(
       this.emailMessageService,
@@ -397,7 +391,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       this.configurationDataService,
     )
     return await sendEmailMessageUseCase.execute({
-      senderEmailMaskId,
+      senderEmailAliasId,
       emailMessageHeader,
       body,
       attachments,
@@ -502,27 +496,11 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     }
   }
 
-  /** @deprecated Use listEmailDomains. */
-  public async getSupportedEmailDomains(): Promise<string[]> {
-    await this.ensureSignedIn()
-    const useCase = new GetSupportedEmailDomainsUseCase(this.emailDomainService)
-    const result = await useCase.execute()
-    return result.map((domain) => domain.domain)
-  }
-
   public async getConfiguredEmailDomains(): Promise<string[]> {
     await this.ensureSignedIn()
     const useCase = new GetConfiguredEmailDomainsUseCase(
       this.emailDomainService,
     )
-    const result = await useCase.execute()
-    return result.map((domain) => domain.domain)
-  }
-
-  /** @deprecated Use listEmailDomains and filter by isMaskDomain. */
-  public async getEmailMaskDomains(): Promise<string[]> {
-    await this.ensureSignedIn()
-    const useCase = new GetEmailMaskDomainsUseCase(this.emailDomainService)
     const result = await useCase.execute()
     return result.map((domain) => domain.domain)
   }
@@ -757,36 +735,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     }
   }
 
-  public async unblockEmailAddresses(
-    input: UnblockEmailAddressesInput,
-  ): Promise<BatchOperationResult<string>> {
-    await this.ensureSignedIn()
-    this.log.debug(this.unblockEmailAddresses.name, { input })
-
-    const useCase = new UnblockEmailAddressesUseCase(
-      this.emailAddressBlocklistService,
-      this.userClient,
-    )
-    const result = await useCase.execute({
-      unblockedAddresses: input.addresses,
-    })
-
-    switch (result.status) {
-      case UpdateBlockedAddressesStatus.Success:
-        return { status: BatchOperationResultStatus.Success }
-      case UpdateBlockedAddressesStatus.Failed:
-        return { status: BatchOperationResultStatus.Failure }
-      case UpdateBlockedAddressesStatus.Partial:
-        return {
-          status: BatchOperationResultStatus.Partial,
-          failureValues: result.failedAddresses ?? [],
-          successValues: result.successAddresses ?? [],
-        }
-      default:
-        throw new ServiceError(`Invalid Update Status ${result.status}`)
-    }
-  }
-
   public async unblockEmailAddressesByHashedValue(
     input: UnblockEmailAddressesByHashedValueInput,
   ): Promise<BatchOperationResult<string>> {
@@ -828,13 +776,13 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async createDraftEmailMessage({
     rfc822Data,
     senderEmailAddressId,
-    emailMaskId,
+    emailAliasId,
   }: CreateDraftEmailMessageInput): Promise<DraftEmailMessageMetadata> {
     await this.ensureSignedIn()
     this.log.debug(this.createDraftEmailMessage.name, {
       rfc822Data,
       senderEmailAddressId,
-      emailMaskId,
+      emailAliasId,
     })
     const useCase = new SaveDraftEmailMessageUseCase(
       this.emailAccountService,
@@ -846,7 +794,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     return await useCase.execute({
       rfc822Data,
       senderEmailAddressId,
-      emailMaskId,
+      emailAliasId,
     })
   }
 
@@ -854,14 +802,14 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     id,
     rfc822Data,
     senderEmailAddressId,
-    emailMaskId,
+    emailAliasId,
   }: UpdateDraftEmailMessageInput): Promise<DraftEmailMessageMetadata> {
     await this.ensureSignedIn()
     this.log.debug(this.updateDraftEmailMessage.name, {
       id,
       rfc822Data,
       senderEmailAddressId,
-      emailMaskId,
+      emailAliasId,
     })
     const useCase = new UpdateDraftEmailMessageUseCase(
       this.emailAccountService,
@@ -874,14 +822,14 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       id,
       rfc822Data,
       senderEmailAddressId,
-      emailMaskId,
+      emailAliasId,
     })
   }
 
   public async deleteDraftEmailMessages({
     ids,
     emailAddressId,
-    emailMaskId,
+    emailAliasId,
   }: DeleteDraftEmailMessagesInput): Promise<
     BatchOperationResult<
       DeleteEmailMessageSuccessResult,
@@ -898,7 +846,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const deleteResult = await useCase.execute({
       ids: idSet,
       emailAddressId,
-      emailMaskId,
+      emailAliasId,
     })
     const failureValues = deleteResult.failureMessages
     const successValues: DeleteEmailMessageSuccessResult[] =
@@ -928,29 +876,20 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async getDraftEmailMessage({
     id,
     emailAddressId,
-    emailMaskId,
+    emailAliasId,
   }: GetDraftEmailMessageInput): Promise<DraftEmailMessage | undefined> {
     await this.ensureSignedIn()
     this.log.debug(this.deleteDraftEmailMessages.name, {
       id,
       emailAddressId,
-      emailMaskId,
+      emailAliasId,
     })
     const useCase = new GetDraftEmailMessageUseCase(this.emailMessageService)
-    return await useCase.execute({ id, emailAddressId, emailMaskId })
-  }
-
-  public async listDraftEmailMessages(): Promise<DraftEmailMessage[]> {
-    await this.ensureSignedIn()
-    this.log.debug(this.listDraftEmailMessages.name)
-
-    const useCase = new ListDraftEmailMessagesUseCase(
-      this.emailAccountService,
-      this.emailMessageService,
-    )
-    const { draftMessages } = await useCase.execute()
-
-    return draftMessages
+    return await useCase.execute({
+      id,
+      emailAddressId,
+      emailAliasId,
+    })
   }
 
   public async listDraftEmailMessagesForEmailAddressId({
@@ -982,21 +921,6 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       items: draftMessages,
       nextToken: resultNextToken,
     }
-  }
-
-  public async listDraftEmailMessageMetadata(): Promise<
-    DraftEmailMessageMetadata[]
-  > {
-    await this.ensureSignedIn()
-    this.log.debug(this.listDraftEmailMessageMetadata.name)
-
-    const useCase = new ListDraftEmailMessageMetadataUseCase(
-      this.emailAccountService,
-      this.emailMessageService,
-    )
-    const { metadata } = await useCase.execute()
-
-    return metadata
   }
 
   public async listDraftEmailMessageMetadataForEmailAddressId({
@@ -1032,14 +956,14 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async scheduleSendDraftMessage({
     id,
     emailAddressId,
-    emailMaskId,
+    emailAliasId,
     sendAt,
   }: ScheduleSendDraftMessageInput): Promise<ScheduledDraftMessage> {
     await this.ensureSignedIn()
     this.log.debug(this.scheduleSendDraftMessage.name, {
       id,
       emailAddressId,
-      emailMaskId,
+      emailAliasId,
       sendAt,
     })
 
@@ -1050,7 +974,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     const result = await useCase.execute({
       id,
       emailAddressId,
-      emailMaskId,
+      emailAliasId,
       sendAt,
     })
     return result
@@ -1059,20 +983,24 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   public async cancelScheduledDraftMessage({
     id,
     emailAddressId,
-    emailMaskId,
+    emailAliasId,
   }: CancelScheduledDraftMessageInput): Promise<string> {
     await this.ensureSignedIn()
     this.log.debug(this.cancelScheduledDraftMessage.name, {
       id,
       emailAddressId,
-      emailMaskId,
+      emailAliasId,
     })
 
     const useCase = new CancelScheduledDraftMessageUseCase(
       this.emailAccountService,
       this.emailMessageService,
     )
-    const result = await useCase.execute({ id, emailAddressId, emailMaskId })
+    const result = await useCase.execute({
+      id,
+      emailAddressId,
+      emailAliasId,
+    })
     return result
   }
 
@@ -1241,117 +1169,117 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     return result
   }
 
-  public async provisionEmailMask({
-    maskAddress,
+  public async provisionEmailAlias({
+    aliasAddress,
     realAddress,
     ownershipProofToken,
     expiresAt,
     metadata,
-  }: ProvisionEmailMaskInput): Promise<EmailMask> {
+  }: ProvisionEmailAliasInput): Promise<EmailAlias> {
     await this.ensureSignedIn()
-    this.log.debug(this.provisionEmailMask.name, {
-      maskAddress,
+    this.log.debug(this.provisionEmailAlias.name, {
+      aliasAddress,
       realAddress,
       ownershipProofToken,
       expiresAt,
       metadata,
     })
 
-    const useCase = new ProvisionEmailMaskUseCase(this.emailMaskService)
+    const useCase = new ProvisionEmailAliasUseCase(this.emailAliasService)
     const result = await useCase.execute({
-      maskAddress,
+      aliasAddress,
       realAddress,
       ownershipProofToken,
       expiresAt,
       metadata,
     })
 
-    return EmailMaskTransformer.entityToApi(result)
+    return EmailAliasTransformer.entityToApi(result)
   }
 
-  public async deprovisionEmailMask(
-    input: DeprovisionEmailMaskInput,
-  ): Promise<EmailMask> {
+  public async deprovisionEmailAlias(
+    input: DeprovisionEmailAliasInput,
+  ): Promise<EmailAlias> {
     await this.ensureSignedIn()
-    this.log.debug(this.deprovisionEmailMask.name, { input })
+    this.log.debug(this.deprovisionEmailAlias.name, { input })
 
-    const useCase = new DeprovisionEmailMaskUseCase(this.emailMaskService)
+    const useCase = new DeprovisionEmailAliasUseCase(this.emailAliasService)
     const result = await useCase.execute({
-      emailMaskId: input.emailMaskId,
+      emailAliasId: input.emailAliasId,
     })
 
-    return EmailMaskTransformer.entityToApi(result)
+    return EmailAliasTransformer.entityToApi(result)
   }
 
-  public async updateEmailMask(
-    input: UpdateEmailMaskInput,
-  ): Promise<EmailMask> {
+  public async updateEmailAlias(
+    input: UpdateEmailAliasInput,
+  ): Promise<EmailAlias> {
     await this.ensureSignedIn()
-    this.log.debug(this.updateEmailMask.name, { input })
+    this.log.debug(this.updateEmailAlias.name, { input })
 
-    const useCase = new UpdateEmailMaskUseCase(this.emailMaskService)
+    const useCase = new UpdateEmailAliasUseCase(this.emailAliasService)
     const result = await useCase.execute({
-      emailMaskId: input.emailMaskId,
+      emailAliasId: input.emailAliasId,
       metadata: input.metadata,
       expiresAt: input.expiresAt,
       realAddress: input.realAddress,
     })
 
-    return EmailMaskTransformer.entityToApi(result)
+    return EmailAliasTransformer.entityToApi(result)
   }
 
-  public async enableEmailMask(
-    input: EnableEmailMaskInput,
-  ): Promise<EmailMask> {
+  public async enableEmailAlias(
+    input: EnableEmailAliasInput,
+  ): Promise<EmailAlias> {
     await this.ensureSignedIn()
-    this.log.debug(this.enableEmailMask.name, { input })
+    this.log.debug(this.enableEmailAlias.name, { input })
 
-    const useCase = new EnableEmailMaskUseCase(this.emailMaskService)
+    const useCase = new EnableEmailAliasUseCase(this.emailAliasService)
     const result = await useCase.execute({
-      emailMaskId: input.emailMaskId,
+      emailAliasId: input.emailAliasId,
     })
 
-    return EmailMaskTransformer.entityToApi(result)
+    return EmailAliasTransformer.entityToApi(result)
   }
 
-  public async disableEmailMask(
-    input: DisableEmailMaskInput,
-  ): Promise<EmailMask> {
+  public async disableEmailAlias(
+    input: DisableEmailAliasInput,
+  ): Promise<EmailAlias> {
     await this.ensureSignedIn()
-    this.log.debug(this.disableEmailMask.name, { input })
+    this.log.debug(this.disableEmailAlias.name, { input })
 
-    const useCase = new DisableEmailMaskUseCase(this.emailMaskService)
+    const useCase = new DisableEmailAliasUseCase(this.emailAliasService)
     const result = await useCase.execute({
-      emailMaskId: input.emailMaskId,
+      emailAliasId: input.emailAliasId,
     })
 
-    return EmailMaskTransformer.entityToApi(result)
+    return EmailAliasTransformer.entityToApi(result)
   }
 
-  public async listEmailMasksForOwner(
-    input?: ListEmailMasksForOwnerInput,
-  ): Promise<ListOutput<EmailMask>> {
+  public async listEmailAliasesForOwner(
+    input?: ListEmailAliasesForOwnerInput,
+  ): Promise<ListOutput<EmailAlias>> {
     await this.ensureSignedIn()
-    this.log.debug(this.listEmailMasksForOwner.name, { input })
+    this.log.debug(this.listEmailAliasesForOwner.name, { input })
 
-    const useCase = new ListEmailMasksForOwnerUseCase(this.emailMaskService)
+    const useCase = new ListEmailAliasesForOwnerUseCase(this.emailAliasService)
 
     const result = await useCase.execute({
       filter: input?.filter
-        ? EmailMaskFilterTransformer.apiToEntity(input.filter)
+        ? EmailAliasFilterTransformer.apiToEntity(input.filter)
         : undefined,
       limit: input?.limit,
       nextToken: input?.nextToken,
     })
 
-    const emailMasks = await Promise.all(
-      result.emailMasks.map(async (entity) =>
-        EmailMaskTransformer.entityToApi(entity),
+    const emailAliases = await Promise.all(
+      result.emailAliases.map(async (entity) =>
+        EmailAliasTransformer.entityToApi(entity),
       ),
     )
 
     return {
-      items: emailMasks,
+      items: emailAliases,
       nextToken: result.nextToken,
     }
   }
@@ -1361,8 +1289,14 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   ): Promise<VerifyExternalEmailAddressResult | undefined> {
     await this.ensureSignedIn()
     this.log.debug(this.verifyExternalEmailAddress.name, { input })
-    const useCase = new VerifyExternalEmailAddressUseCase(this.emailMaskService)
-    return useCase.execute(input)
+    const useCase = new VerifyExternalEmailAddressUseCase(
+      this.emailAliasService,
+    )
+    return useCase.execute({
+      emailAddress: input.emailAddress,
+      emailAliasId: input.emailAliasId ?? '',
+      verificationCode: input.verificationCode,
+    })
   }
 
   public async subscribeToEmailMessages(

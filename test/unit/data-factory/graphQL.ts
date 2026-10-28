@@ -277,10 +277,10 @@ export class GraphQLDataFactory {
     updatedAtEpochMs: new Date(1.0).getTime(),
     __typename: 'ScheduledDraftMessage',
   }
-  static readonly scheduledDraftMessageWithEmailMaskId: ScheduledDraftMessage =
+  static readonly scheduledDraftMessageWithEmailAliasId: ScheduledDraftMessage =
     {
       ...GraphQLDataFactory.scheduledDraftMessage,
-      emailMaskId: 'dummyEmailMaskId',
+      emailMaskId: 'dummyEmailAliasId',
     }
 
   static readonly scheduledDraftMessageConnection: ScheduledDraftMessageConnection =
@@ -294,7 +294,7 @@ export class GraphQLDataFactory {
     owners: [GraphQLDataFactory.owner],
     keyRingId: 'testKeyRingId',
     identityId: 'testIdentityId',
-    maskAddress: 'test-mask@anonyome.com',
+    maskAddress: 'test-alias@anonyome.com',
     realAddress: 'test-real@anonyome.com',
     realAddressType: EmailMaskRealAddressType.Internal,
     status: EmailMaskStatus.Enabled,

@@ -12,7 +12,7 @@ import {
   EmailMessageStateFilterInput,
   IdFilterInput,
   MailboxIdsFilterInput,
-  MailboxType,
+  MailboxType as MailboxTypeGraphQL,
   StringFilterInput,
 } from '../../../../gen/graphqlTypes'
 import {
@@ -20,6 +20,7 @@ import {
   EmailMessageStateFilter,
   ListEmailMessagesFilter,
   MailboxIdsFilter,
+  MailboxType as MailboxTypeApi,
 } from '../../../../public/inputs/emailMessage'
 import { BooleanFilter, StringFilter } from '../../../../public/inputs/common'
 
@@ -178,8 +179,12 @@ export class ListEmailMessagesFilterTransformer {
   private static mailboxIdsFilterToGraphQL(
     filter: MailboxIdsFilter,
   ): MailboxIdsFilterInput {
+    const type =
+      filter.type === MailboxTypeApi.Address
+        ? MailboxTypeGraphQL.Address
+        : MailboxTypeGraphQL.Mask
     return {
-      type: filter.type as unknown as MailboxType,
+      type,
       id: {
         eq: filter.id.equal,
         ne: filter.id.notEqual,

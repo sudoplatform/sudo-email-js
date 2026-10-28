@@ -92,12 +92,12 @@ describe('SudoEmailClient.createDraftEmailMessage Test Suite', () => {
     })
   })
 
-  it('properly passes email mask id if provided', async () => {
-    const emailMaskId = v4()
+  it('properly passes email alias id if provided', async () => {
+    const emailAliasId = v4()
     await instanceUnderTest.createDraftEmailMessage({
       rfc822Data: stringToArrayBuffer(''),
       senderEmailAddressId: '',
-      emailMaskId,
+      emailAliasId,
     })
     verify(mockSaveDraftEmailMessageUseCase.execute(anything())).once()
     const [actualArgs] = capture(
@@ -106,7 +106,7 @@ describe('SudoEmailClient.createDraftEmailMessage Test Suite', () => {
     expect(actualArgs).toEqual<typeof actualArgs>({
       rfc822Data: stringToArrayBuffer(''),
       senderEmailAddressId: '',
-      emailMaskId,
+      emailAliasId,
     })
   })
 })

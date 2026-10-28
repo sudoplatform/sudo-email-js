@@ -31,7 +31,7 @@ import { PublicKeyFormat } from '@sudoplatform/sudo-common'
 describe('SendEmailMessageUseCase', () => {
   const emailMessageMaxOutboundMessageSize = 9999999
   let senderEmailAddressId: string
-  let senderEmailMaskId: string
+  let senderEmailAliasId: string
   let timestamp: Date
   const emailMessageHeader = {
     from: { emailAddress: 'from@example.com' },
@@ -50,7 +50,7 @@ describe('SendEmailMessageUseCase', () => {
 
   beforeEach(() => {
     senderEmailAddressId = v4()
-    senderEmailMaskId = v4()
+    senderEmailAliasId = v4()
     timestamp = new Date()
     reset(mockMessageService)
     reset(mockAccountService)
@@ -60,13 +60,13 @@ describe('SendEmailMessageUseCase', () => {
     when(mockEmailDomainService.getConfiguredEmailDomains()).thenResolve([
       EntityDataFactory.emailDomain,
     ])
-    when(mockEmailDomainService.getEmailMaskDomains()).thenResolve([
-      EntityDataFactory.maskDomain,
+    when(mockEmailDomainService.getEmailAliasDomains()).thenResolve([
+      EntityDataFactory.aliasDomain,
     ])
     when(mockEmailConfigurationDataService.getConfigurationData()).thenResolve({
       sendEncryptedEmailEnabled: true,
       emailMessageMaxOutboundMessageSize,
-      emailMasksEnabled: true,
+      emailAliasesEnabled: true,
     } as unknown as EmailConfigurationDataEntity)
     instanceUnderTest = new SendEmailMessageUseCase(
       instance(mockMessageService),
@@ -187,9 +187,9 @@ describe('SendEmailMessageUseCase', () => {
       verify(mockMessageService.sendMessage(anything())).once()
     })
 
-    it('calls the message service sendMessage method with senderEmailMaskId', async () => {
+    it('calls the message service sendMessage method with senderEmailAliasId', async () => {
       await instanceUnderTest.execute({
-        senderEmailMaskId,
+        senderEmailAliasId,
         emailMessageHeader,
         body,
         attachments,
@@ -211,12 +211,12 @@ describe('SendEmailMessageUseCase', () => {
           attachments,
           inlineAttachments,
         },
-        senderEmailMaskId,
+        senderEmailAliasId,
         emailMessageMaxOutboundMessageSize,
       })
     })
 
-    it('returns result of service for external recipients with mask', async () => {
+    it('returns result of service for external recipients with alias', async () => {
       const idResult = v4()
       when(mockMessageService.sendMessage(anything())).thenResolve({
         id: idResult,
@@ -224,7 +224,7 @@ describe('SendEmailMessageUseCase', () => {
       })
       await expect(
         instanceUnderTest.execute({
-          senderEmailMaskId,
+          senderEmailAliasId,
           emailMessageHeader,
           body,
           attachments,
@@ -392,13 +392,13 @@ describe('SendEmailMessageUseCase', () => {
       verify(mockAccountService.lookupPublicInfo(anything())).once()
     })
 
-    it('calls the message service sendEncryptedMessage method with senderEmailMaskId', async () => {
+    it('calls the message service sendEncryptedMessage method with senderEmailAliasId', async () => {
       const emailMessageHeader = {
         from: { emailAddress: fromAddress },
         to: [{ emailAddress: EntityDataFactory.emailAddress.emailAddress }],
       } as unknown as InternetMessageFormatHeader
       await instanceUnderTest.execute({
-        senderEmailMaskId,
+        senderEmailAliasId,
         emailMessageHeader,
         body,
         attachments,
@@ -423,7 +423,7 @@ describe('SendEmailMessageUseCase', () => {
           attachments,
           inlineAttachments,
         },
-        senderEmailMaskId,
+        senderEmailAliasId,
         emailAddressesPublicInfo: [
           {
             emailAddress: EntityDataFactory.emailAddress.emailAddress,
@@ -450,7 +450,7 @@ describe('SendEmailMessageUseCase', () => {
       })
     })
 
-    it('returns result of service for internal recipients with mask', async () => {
+    it('returns result of service for internal recipients with alias', async () => {
       const idResult = v4()
       const emailMessageHeader = {
         from: { emailAddress: fromAddress },
@@ -462,7 +462,7 @@ describe('SendEmailMessageUseCase', () => {
       })
       await expect(
         instanceUnderTest.execute({
-          senderEmailMaskId,
+          senderEmailAliasId,
           emailMessageHeader,
           body,
           attachments,

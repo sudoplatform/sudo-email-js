@@ -18,7 +18,7 @@ import { Sudo, SudoProfilesClient } from '@sudoplatform/sudo-profiles'
 import { SudoUserClient } from '@sudoplatform/sudo-user'
 import { setupEmailClient, teardown } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
-import { provisionEmailMask } from '../util/provisionEmailMask'
+import { provisionEmailAlias } from '../util/provisionEmailAlias'
 import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 import { DateTime } from 'luxon'
 import { v4 } from 'uuid'
@@ -138,16 +138,16 @@ describe('ScheduleSendDraftMessage Integration Test Suite', () => {
     expect(result.state).toEqual(ScheduledDraftMessageState.SCHEDULED)
   })
 
-  describe('ScheduleSendDraftMessage from email masks', () => {
+  describe('ScheduleSendDraftMessage from email aliases', () => {
     let runTests = true
     beforeEach(async ({ skip }) => {
       const config = await instanceUnderTest.getConfigurationData()
-      runTests = config.emailMasksEnabled
-      skip(!runTests, 'Email masks are not enabled; skipping tests')
+      runTests = config.emailAliasesEnabled
+      skip(!runTests, 'Email aliases are not enabled; skipping tests')
     })
-    it('Schedule a draft message from a mask id', async () => {
-      // Provision an email mask associated with the provisioned address
-      const emailMask = await provisionEmailMask(
+    it('Schedule a draft message from a alias id', async () => {
+      // Provision an email alias associated with the provisioned address
+      const emailAlias = await provisionEmailAlias(
         sudoOwnershipProofToken,
         instanceUnderTest,
         {
@@ -155,48 +155,47 @@ describe('ScheduleSendDraftMessage Integration Test Suite', () => {
         },
       )
 
-      // Create a new draft from the mask address
-      const maskDraftBuffer =
+      // Create a new draft from the alias address
+      const aliasDraftBuffer =
         Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
-          from: [{ emailAddress: emailMask.maskAddress }],
+          from: [{ emailAddress: emailAlias.aliasAddress }],
           to: [{ emailAddress: emailAddress.emailAddress }],
           cc: [],
           bcc: [],
           replyTo: [],
-          body: 'Hello from mask',
+          body: 'Hello from alias',
           attachments: [],
-          subject: 'mask draft subject',
+          subject: 'alias draft subject',
         })
-      const maskDraftMetadata = await instanceUnderTest.createDraftEmailMessage(
-        {
-          rfc822Data: maskDraftBuffer,
+      const aliasDraftMetadata =
+        await instanceUnderTest.createDraftEmailMessage({
+          rfc822Data: aliasDraftBuffer,
           senderEmailAddressId: emailAddress.id,
-          emailMaskId: emailMask.id,
-        },
-      )
+          emailAliasId: emailAlias.id,
+        })
 
-      // Schedule the draft using the mask id
+      // Schedule the draft using the alias id
       const result = await instanceUnderTest.scheduleSendDraftMessage({
-        id: maskDraftMetadata.id,
+        id: aliasDraftMetadata.id,
         emailAddressId: emailAddress.id,
-        emailMaskId: emailMask.id,
+        emailAliasId: emailAlias.id,
         sendAt,
       })
 
       // Verify that the response is consistent
-      expect(result.id).toEqual(maskDraftMetadata.id)
+      expect(result.id).toEqual(aliasDraftMetadata.id)
       expect(result.emailAddressId).toEqual(emailAddress.id)
-      expect(result.emailMaskId).toEqual(emailMask.id)
+      expect(result.emailAliasId).toEqual(emailAlias.id)
       expect(result.sendAt).toEqual(sendAt)
       expect(result.state).toEqual(ScheduledDraftMessageState.SCHEDULED)
 
-      // Clean up the mask draft
+      // Clean up the alias draft
       await instanceUnderTest.deleteDraftEmailMessages({
-        ids: [maskDraftMetadata.id],
+        ids: [aliasDraftMetadata.id],
         emailAddressId: emailAddress.id,
       })
-      await instanceUnderTest.deprovisionEmailMask({
-        emailMaskId: emailMask.id,
+      await instanceUnderTest.deprovisionEmailAlias({
+        emailAliasId: emailAlias.id,
       })
     })
   })

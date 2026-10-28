@@ -49,7 +49,7 @@ describe('SudoEmailClient UpdateEmailAddressMetadata Test Suite', () => {
         instanceUnderTest.updateEmailAddressMetadata({
           id: emailAddress.id,
           values: {
-            alias: 'updated alias',
+            displayName: 'updated alias',
           },
         }),
       ).resolves.toStrictEqual(emailAddress.id)
@@ -58,7 +58,7 @@ describe('SudoEmailClient UpdateEmailAddressMetadata Test Suite', () => {
         id: emailAddress.id,
       })
 
-      expect(updatedEmailAddress?.alias).toStrictEqual('updated alias')
+      expect(updatedEmailAddress?.displayName).toStrictEqual('updated alias')
     })
 
     it('clears alias successfully', async () => {
@@ -66,7 +66,7 @@ describe('SudoEmailClient UpdateEmailAddressMetadata Test Suite', () => {
         instanceUnderTest.updateEmailAddressMetadata({
           id: emailAddress.id,
           values: {
-            alias: '',
+            displayName: '',
           },
         }),
       ).resolves.toStrictEqual(emailAddress.id)
@@ -75,7 +75,7 @@ describe('SudoEmailClient UpdateEmailAddressMetadata Test Suite', () => {
         id: emailAddress.id,
       })
 
-      expect(updatedEmailAddress?.alias).toBeUndefined()
+      expect(updatedEmailAddress?.displayName).toBeUndefined()
     })
   })
 })

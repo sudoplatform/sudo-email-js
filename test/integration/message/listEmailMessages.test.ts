@@ -19,7 +19,7 @@ import {
   Direction,
   EmailAddress,
   EmailFolder,
-  EmailMask,
+  EmailAlias,
   EncryptionStatus,
   InvalidArgumentError,
   ListEmailMessagesFilter,
@@ -36,7 +36,7 @@ import {
   generateSafeLocalPart,
   provisionEmailAddress,
 } from '../util/provisionEmailAddress'
-import { provisionEmailMask } from '../util/provisionEmailMask'
+import { provisionEmailAlias } from '../util/provisionEmailAlias'
 import { readAllPages } from '../util/paginator'
 
 describe('SudoEmailClient ListEmailMessages Test Suite', () => {
@@ -1609,8 +1609,8 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
 
   describe('listEmailMessagesForEmailFolderId with filter', () => {
     let config: ConfigurationData
-    let emailMask: EmailMask | undefined
-    let maskedMessageSent = false
+    let emailAlias: EmailAlias | undefined
+    let aliasMessageSent = false
 
     beforeAll(async () => {
       const result = await setupEmailClient(log)
@@ -1632,9 +1632,9 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         { localPart: generateSafeLocalPart('filter-test-receiver') },
       )
 
-      // Provision a mask if masks are enabled so we can exercise the mailboxIds MASK filter
-      if (config.emailMasksEnabled) {
-        emailMask = await provisionEmailMask(
+      // Provision a alias if aliases are enabled so we can exercise the mailboxIds ALIAS filter
+      if (config.emailAliasesEnabled) {
+        emailAlias = await provisionEmailAlias(
           sudoOwnershipProofToken,
           instanceUnderTest,
           { realAddress: receiverAddress.emailAddress },
@@ -1670,26 +1670,26 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
         })
       }
 
-      // If masks are enabled, send a message from senderAddress TO the mask address.
-      // The mask's realAddress is receiverAddress, so the message will be delivered
-      // to receiverAddress's inbox with emailMaskId set — this is the message we use
-      // to exercise the Mask mailboxIds filter.
-      if (config.emailMasksEnabled && emailMask) {
+      // If aliases are enabled, send a message from senderAddress TO the alias address.
+      // The alias's realAddress is receiverAddress, so the message will be delivered
+      // to receiverAddress's inbox with emailAliasId set — this is the message we use
+      // to exercise the Alias mailboxIds filter.
+      if (config.emailAliasesEnabled && emailAlias) {
         await instanceUnderTest.sendEmailMessage({
           senderEmailAddressId: senderAddress.id,
           emailMessageHeader: {
             from: { emailAddress: senderAddress.emailAddress },
-            to: [{ emailAddress: emailMask.maskAddress }],
+            to: [{ emailAddress: emailAlias.aliasAddress }],
             cc: [],
             bcc: [],
             replyTo: [],
-            subject: 'Masked Filter Test',
+            subject: 'Aliased Filter Test',
           },
-          body: 'Sent to mask address',
+          body: 'Sent to alias address',
           attachments: [],
           inlineAttachments: [],
         })
-        maskedMessageSent = true
+        aliasMessageSent = true
       }
 
       const folder = await getFolderByName({
@@ -1702,7 +1702,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       }
       inboxFolder = folder
 
-      const expectedCount = totalMessagesSent + (maskedMessageSent ? 1 : 0)
+      const expectedCount = totalMessagesSent + (aliasMessageSent ? 1 : 0)
       await waitForExpect(async () => {
         const messagesList =
           await instanceUnderTest.listEmailMessagesForEmailFolderId({
@@ -1728,7 +1728,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('filters by direction Inbound', async () => {
       expectSetupComplete()
 
-      const expectedCount = totalMessagesSent + (maskedMessageSent ? 1 : 0)
+      const expectedCount = totalMessagesSent + (aliasMessageSent ? 1 : 0)
 
       await waitForExpect(
         async () => {
@@ -1779,7 +1779,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
     it('filters by seen:false returns all unseen messages', async () => {
       expectSetupComplete()
 
-      const expectedCount = totalMessagesSent + (maskedMessageSent ? 1 : 0)
+      const expectedCount = totalMessagesSent + (aliasMessageSent ? 1 : 0)
 
       await waitForExpect(
         async () => {
@@ -1880,7 +1880,7 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
       )
     })
 
-    it('filters by mailboxIds with Address type excludes masked messages', async () => {
+    it('filters by mailboxIds with Address type excludes aliased messages', async () => {
       expectSetupComplete()
 
       await waitForExpect(
@@ -1901,30 +1901,30 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
           if (messages.status !== ListOperationResultStatus.Success) {
             assert.fail(`Unexpected status: ${messages.status}`)
           }
-          // Only direct (non-masked) messages should be returned. When masks are
+          // Only direct (non-aliased) messages should be returned. When aliases are
           // enabled the inbox contains totalMessagesSent + 1 items, so this also
-          // verifies that the masked message is actively excluded by the filter.
+          // verifies that the aliased message is actively excluded by the filter.
           expect(messages.items).toHaveLength(totalMessagesSent)
-          expect(messages.items.every((m) => m.emailMaskId === undefined)).toBe(
-            true,
-          )
+          expect(
+            messages.items.every((m) => m.emailAliasId === undefined),
+          ).toBe(true)
         },
         10000,
         1000,
       )
     })
 
-    it('filters by mailboxIds with Mask type', async () => {
+    it('filters by mailboxIds with Alias type', async () => {
       expectSetupComplete()
 
-      if (config.emailMasksEnabled && emailMask) {
-        // A message was sent TO the mask address in beforeAll; it should be delivered
-        // to receiverAddress's inbox with emailMaskId set. Verify the filter returns only it.
+      if (config.emailAliasesEnabled && emailAlias) {
+        // A message was sent TO the alias address in beforeAll; it should be delivered
+        // to receiverAddress's inbox with emailAliasId set. Verify the filter returns only it.
         await waitForExpect(
           async () => {
             const filter: ListEmailMessagesFilter = {
               mailboxIds: [
-                { type: MailboxType.Mask, id: { equal: emailMask!.id } },
+                { type: MailboxType.Alias, id: { equal: emailAlias!.id } },
               ],
             }
             const messages =
@@ -1936,15 +1936,15 @@ describe('SudoEmailClient ListEmailMessages Test Suite', () => {
               assert.fail(`Unexpected status: ${messages.status}`)
             }
             expect(messages.items).toHaveLength(1)
-            expect(messages.items[0].emailMaskId).toEqual(emailMask!.id)
+            expect(messages.items[0].emailAliasId).toEqual(emailAlias!.id)
           },
           15000,
           1000,
         )
       } else {
-        // Masks not enabled — filter with a random mask id should return empty
+        // Aliases not enabled — filter with a random alias id should return empty
         const filter: ListEmailMessagesFilter = {
-          mailboxIds: [{ type: MailboxType.Mask, id: { equal: v4() } }],
+          mailboxIds: [{ type: MailboxType.Alias, id: { equal: v4() } }],
         }
         const messages =
           await instanceUnderTest.listEmailMessagesForEmailFolderId({

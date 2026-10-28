@@ -26,10 +26,10 @@ import { PublicKeyFormat } from '@sudoplatform/sudo-common'
 import { ScheduledDraftMessageEntity } from '../../../src/private/domain/entities/message/scheduledDraftMessageEntity'
 import { EmailAttachmentEntity } from '../../../src/private/domain/entities/message/emailAttachmentEntity'
 import {
-  EmailMaskEntity,
-  EmailMaskEntityRealAddressType,
-  EmailMaskEntityStatus,
-} from '../../../src/private/domain/entities/mask/emailMaskEntity'
+  EmailAliasEntity,
+  EmailAliasEntityRealAddressType,
+  EmailAliasEntityStatus,
+} from '../../../src/private/domain/entities/alias/emailAliasEntity'
 
 export class EntityDataFactory {
   private static readonly commonProps = {
@@ -54,16 +54,16 @@ export class EntityDataFactory {
     encryptedEmailMessageRecipientsLimit: 10,
     sendEncryptedEmailEnabled: true,
     prohibitedFileExtensions: ['.js', '.exe', '.lib'],
-    emailMasksEnabled: true,
-    externalEmailMasksEnabled: false,
+    emailAliasesEnabled: true,
+    externalEmailAliasesEnabled: false,
     allowOwnerEmailAddressReuse: true,
   }
 
   static readonly emailAddress: EmailAddressEntity = {
     emailAddress: 'testie@unittest.org',
   }
-  static readonly emailMaskAddress: EmailAddressEntity = {
-    emailAddress: 'testie@unitmask.org',
+  static readonly emailAliasAddress: EmailAddressEntity = {
+    emailAddress: 'testie@unitalias.org',
   }
 
   static readonly emailAddressesPublicInfo: EmailAddressPublicInfoEntity[] = [
@@ -115,7 +115,7 @@ export class EntityDataFactory {
     owners: [EntityDataFactory.owner],
     identityId: 'testIdentityId',
     keyRingId: 'testKeyRingId',
-    emailAddress: EntityDataFactory.emailAddress,
+    emailAddress: EntityDataFactory.emailAddress.emailAddress,
     size: 0,
     numberOfEmailMessages: 0,
     lastReceivedAt: new Date(3.0),
@@ -128,7 +128,8 @@ export class EntityDataFactory {
     owners: [EntityDataFactory.owner],
     identityId: 'testIdentityId',
     keyRingId: 'testKeyRingId',
-    emailAddress: EntityDataFactory.emailAddressWithAlias,
+    emailAddress: EntityDataFactory.emailAddress.emailAddress,
+    displayName: 'Some Alias',
     size: 0,
     numberOfEmailMessages: 0,
     lastReceivedAt: new Date(3.0),
@@ -141,11 +142,11 @@ export class EntityDataFactory {
   }
   static readonly emailDomainWithMetadata: EmailDomainEntity = {
     domain: 'unittest.org',
-    isMaskDomain: false,
+    isAliasDomain: false,
     metadata: JSON.stringify({ provider: 'internal' }),
   }
-  static readonly maskDomain: EmailDomainEntity = {
-    domain: 'unitmask.org',
+  static readonly aliasDomain: EmailDomainEntity = {
+    domain: 'unitalias.org',
   }
 
   static readonly emailMessage: EmailMessageEntity = {
@@ -174,7 +175,7 @@ export class EntityDataFactory {
     size: 12345,
     encryptionStatus: EncryptionStatus.UNENCRYPTED,
     date: new Date(2.0),
-    emailMaskId: undefined,
+    emailAliasId: undefined,
   }
 
   static readonly sealedEmailMessage: SealedEmailMessageEntity = {
@@ -195,7 +196,7 @@ export class EntityDataFactory {
     sortDate: new Date(1.0),
     size: 12345,
     encryptionStatus: EncryptionStatus.UNENCRYPTED,
-    emailMaskId: undefined,
+    emailAliasId: undefined,
   }
 
   static readonly emailAttachment: EmailAttachmentEntity = {
@@ -229,20 +230,20 @@ export class EntityDataFactory {
     updatedAt: new Date(1.0),
   }
 
-  static readonly scheduledDraftMessageWithEmailMaskId: ScheduledDraftMessageEntity =
+  static readonly scheduledDraftMessageWithEmailAliasId: ScheduledDraftMessageEntity =
     {
       ...EntityDataFactory.scheduledDraftMessage,
-      emailMaskId: 'dummyEmailMaskId',
+      emailAliasId: 'dummyEmailAliasId',
     }
 
-  static readonly emailMask: EmailMaskEntity = {
+  static readonly emailAlias: EmailAliasEntity = {
     ...EntityDataFactory.commonProps,
     owners: [EntityDataFactory.owner],
     identityId: 'testIdentityId',
-    maskAddress: 'test-mask@anonyome.com',
+    aliasAddress: 'test-alias@anonyome.com',
     realAddress: 'test-real@anonyome.com',
-    realAddressType: EmailMaskEntityRealAddressType.INTERNAL,
-    status: EmailMaskEntityStatus.ENABLED,
+    realAddressType: EmailAliasEntityRealAddressType.INTERNAL,
+    status: EmailAliasEntityStatus.ENABLED,
     inboundReceived: 0,
     inboundDelivered: 0,
     outboundReceived: 0,

@@ -17,14 +17,14 @@ import {
   SudoEmailClient,
 } from '../../../src'
 import {
-  emailMasksEnabled,
+  emailAliasesEnabled,
   setupEmailClient,
   teardown,
 } from '../util/emailClientLifecycle'
 import { provisionEmailAddress } from '../util/provisionEmailAddress'
 import { Rfc822MessageDataProcessor } from '../../../src/private/util/rfc822MessageDataProcessor'
 import { arrayBufferToString } from '../../../src/private/util/buffer'
-import { provisionEmailMask } from '../util/provisionEmailMask'
+import { provisionEmailAlias } from '../util/provisionEmailAlias'
 
 describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
   const log = new DefaultLogger('SudoEmailClientIntegrationTests')
@@ -34,7 +34,7 @@ describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
   let userClient: SudoUserClient
   let sudo: Sudo
   let sudoOwnershipProofToken: string
-  let runMaskTests: boolean = false
+  let runAliasTests: boolean = false
 
   let emailAddress: EmailAddress
   let draftMetadata: DraftEmailMessageMetadata[] = []
@@ -46,7 +46,7 @@ describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
     userClient = result.userClient
     sudo = result.sudo
     sudoOwnershipProofToken = result.ownershipProofToken
-    runMaskTests = await emailMasksEnabled(instanceUnderTest)
+    runAliasTests = await emailAliasesEnabled(instanceUnderTest)
 
     emailAddress = await provisionEmailAddress(
       sudoOwnershipProofToken,
@@ -347,10 +347,10 @@ describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
     })
   })
 
-  describe('Email Mask Tests', () => {
-    it('creates a draft successfully with an email mask', async ({ skip }) => {
-      skip(runMaskTests === false, 'Email mask tests are disabled')
-      const emailMask = await provisionEmailMask(
+  describe('Email Alias Tests', () => {
+    it('creates a draft successfully with an email alias', async ({ skip }) => {
+      skip(runAliasTests === false, 'Email alias tests are disabled')
+      const emailAlias = await provisionEmailAlias(
         sudoOwnershipProofToken,
         instanceUnderTest,
         {
@@ -361,7 +361,7 @@ describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
       const body = 'Hello, World'
       const draftBuffer =
         Rfc822MessageDataProcessor.encodeToInternetMessageBuffer({
-          from: [{ emailAddress: emailMask.maskAddress }],
+          from: [{ emailAddress: emailAlias.aliasAddress }],
           to: [],
           cc: [],
           bcc: [],
@@ -373,7 +373,7 @@ describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
       const metadata = await instanceUnderTest.createDraftEmailMessage({
         rfc822Data: draftBuffer,
         senderEmailAddressId: emailAddress.id,
-        emailMaskId: emailMask.id,
+        emailAliasId: emailAlias.id,
       })
       draftMetadata.push(metadata)
 
@@ -383,12 +383,12 @@ describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
         })
       expect(draftList.items).toHaveLength(1)
       expect(draftList.items[0].id).toEqual(metadata.id)
-      expect(draftList.items[0].emailMaskId).toEqual(metadata.emailMaskId)
+      expect(draftList.items[0].emailAliasId).toEqual(metadata.emailAliasId)
 
       const draftRes = await instanceUnderTest.getDraftEmailMessage({
         id: metadata.id,
         emailAddressId: emailAddress.id,
-        emailMaskId: emailMask.id,
+        emailAliasId: emailAlias.id,
       })
 
       expect(draftRes).toEqual<DraftEmailMessage>({
@@ -398,7 +398,7 @@ describe('SudoEmailClient createDraftEmailMessage Test Suite', () => {
 
       const draftResDataStr = arrayBufferToString(draftRes!.rfc822Data)
       expect(draftResDataStr).toContain(body)
-      expect(draftResDataStr).toContain(emailMask.maskAddress)
+      expect(draftResDataStr).toContain(emailAlias.aliasAddress)
       expect(draftResDataStr).not.toContain(emailAddress.emailAddress)
     })
   })

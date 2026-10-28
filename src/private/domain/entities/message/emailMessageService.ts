@@ -29,13 +29,13 @@ import { EmailMessageWithBodyEntity } from './emailMessageWithBodyEntity'
  * @property {ArrayBuffer} rfc822Data Draft email message in RFC 822 data form to save.
  * @property {string} senderEmailAddressId Identifier of the sender email address that is composing the draft email message.
  * @property {string} id Optional identifier of an existing draft email message to update.
- * @property {string} emailMaskId Optional identifier of the email mask associated with the draft email message.
+ * @property {string} emailAliasId Optional identifier of the email alias associated with the draft email message.
  */
 export interface SaveDraftInput {
   rfc822Data: ArrayBuffer
   senderEmailAddressId: string
   id?: string
-  emailMaskId?: string
+  emailAliasId?: string
 }
 
 /**
@@ -44,12 +44,12 @@ export interface SaveDraftInput {
  * @interface GetDraftInput
  * @property {string} id Identifier of the draft email message to retrieve.
  * @property {string} emailAddressId Identifier of the email address associated with the draft email message.
- * @property {string} [emailMaskId] Identifier of the email mask associated with the draft email message, if any.
+ * @property {string} [emailAliasId] Identifier of the email alias associated with the draft email message, if any.
  */
 export interface GetDraftInput {
   id: string
   emailAddressId: string
-  emailMaskId?: string
+  emailAliasId?: string
 }
 
 /**
@@ -70,12 +70,12 @@ export interface ListDraftsMetadataForEmailAddressIdInput {
  * @interface DeleteDraftsInput
  * @property {string[]} ids Identifiers of the draft email messages to be deleted.
  * @property {string} emailAddressId Identifier of the email address associated with the draft email messages.
- * @property {string} emailMaskId Optional identifier of the email mask associated with the draft email messages.
+ * @property {string} emailAliasId Optional identifier of the email alias associated with the draft email messages.
  */
 export interface DeleteDraftsInput {
   ids: string[]
   emailAddressId: string
-  emailMaskId?: string
+  emailAliasId?: string
 }
 
 /**
@@ -84,13 +84,13 @@ export interface DeleteDraftsInput {
  * @interface ScheduleSendDraftMessageInput
  * @property {string} id The identifier of the draft message to schedule send
  * @property {string} emailAddressId The identifier of the email address to send the draft message from.
- * @property {string} emailMaskId The identifier of the email mask to send the draft message from.
+ * @property {string} emailAliasId The identifier of the email alias to send the draft message from.
  * @property {Date} sendAt Timestamp of when to send the message.
  */
 export interface ScheduleSendDraftMessageInput {
   id: string
   emailAddressId: string
-  emailMaskId?: string
+  emailAliasId?: string
   sendAt: Date
 }
 
@@ -100,12 +100,12 @@ export interface ScheduleSendDraftMessageInput {
  * @interface CancelScheduledDraftMessageInput
  * @property {string} id The identifier of the draft message to cancel
  * @property {string} emailAddressId The identifier of the email address that owns the message.
- * @property {string} emailMaskId The identifier of the email mask associated with the message.
+ * @property {string} emailAliasId The identifier of the email alias associated with the message.
  */
 export interface CancelScheduledDraftMessageInput {
   id: string
   emailAddressId: string
-  emailMaskId?: string
+  emailAliasId?: string
 }
 
 interface EqualStateFilter {
@@ -169,15 +169,15 @@ export interface ListScheduledDraftMessagesForEmailAddressIdInput {
  *
  * @interface SendMessageInput
  * @property {EmailMessageDetails} message The email message header and contents to be sent.
- * @property {string} senderEmailAddressId Identifier of the sender email address that is composing the email message. Required if not using an email mask.
- * @property {string} senderEmailMaskId Identifier of the sender email mask that is composing the email message. Required if not using an email address.
+ * @property {string} senderEmailAddressId Identifier of the sender email address that is composing the email message. Required if not using an email alias.
+ * @property {string} senderEmailAliasId Identifier of the sender email alias that is composing the email message. Required if not using an email address.
  * @property {number} emailMessageMaxOutboundMessageSize The maximum size of an outbound email message.
  */
 export interface SendMessageInput {
   message: EmailMessageDetails
   emailMessageMaxOutboundMessageSize: number
   senderEmailAddressId?: string
-  senderEmailMaskId?: string
+  senderEmailAliasId?: string
 }
 
 /**
@@ -185,8 +185,8 @@ export interface SendMessageInput {
  *
  * @interface SendEncryptedMessageInput
  * @property {EmailMessageDetails} message The email message header and contents to be sent.
- * @property {string} senderEmailAddressId Identifier of the sender email address that is composing the email message. Required if not using an email mask.
- * @property {string} senderEmailMaskId Identifier of the sender email mask that is composing the email message. Required if not using an email address.
+ * @property {string} senderEmailAddressId Identifier of the sender email address that is composing the email message. Required if not using an email alias.
+ * @property {string} senderEmailAliasId Identifier of the sender email alias that is composing the email message. Required if not using an email address.
  * @property {EmailAddressPublicInfoEntity[]} emailAddressesPublicInfo The public key information for each recipient and the sender of the email message.
  * @property {number} emailMessageMaxOutboundMessageSize The maximum size of an outbound email message.
  */

@@ -12,11 +12,11 @@
 <h1>Interface CreateDraftEmailMessageInput</h1></div>
 <section class="tsd-panel tsd-comment">
 <div class="tsd-comment tsd-typography"><p>Input for <code>SudoEmailClient.createDraftEmailMessage</code>.</p>
-<p>The email address in the <code>From</code> field of the RFC6854 data must match either the <code>maskAddress</code> of the Email Mask associated with the
-<code>emailMaskId</code> property, if provided, otherwise the <code>emailAddress</code> of the Email Address associated with the <code>senderEmailAddressId</code> property.</p>
+<p>The email address in the <code>From</code> field of the RFC6854 data must match either the <code>aliasAddress</code> of the Email Alias associated with the
+<code>emailAliasId</code> property, if provided, otherwise the <code>emailAddress</code> of the Email Address associated with the <code>senderEmailAddressId</code> property.</p>
 <p>CreateDraftEmailMessageInput</p>
 </div></section>
-<div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">CreateDraftEmailMessageInput</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#emailmaskid">emailMaskId</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#rfc822data">rfc822Data</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">ArrayBuffer</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#senderemailaddressid">senderEmailAddressId</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div><aside class="tsd-sources">
+<div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">CreateDraftEmailMessageInput</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#emailaliasid">emailAliasId</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#rfc822data">rfc822Data</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">ArrayBuffer</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#senderemailaddressid">senderEmailAddressId</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div><aside class="tsd-sources">
 <ul>
 <li>Defined in src/public/inputs/draftEmailMessage.ts:21</li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
@@ -26,7 +26,7 @@
 <div class="tsd-accordion-details">
 <section class="tsd-index-section">
 <h3 class="tsd-index-heading tsd-anchor-link" id="properties">Properties<a href="#properties" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-index-list"><a href="#emailmaskid" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>email<wbr/>Mask<wbr/>Id?</span></a>
+<div class="tsd-index-list"><a href="#emailaliasid" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>email<wbr/>Alias<wbr/>Id?</span></a>
 <a href="#rfc822data" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>rfc822<wbr/>Data</span></a>
 <a href="#senderemailaddressid" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>sender<wbr/>Email<wbr/>Address<wbr/>Id</span></a>
 </div></section></div></details></section></section>
@@ -34,9 +34,9 @@
 <h2 class="tsd-anchor-link" id="properties-1">Properties<a href="#properties-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2></summary>
 <section>
 <section class="tsd-panel tsd-member">
-<h3 class="tsd-anchor-link" id="emailmaskid"><code class="tsd-tag">Optional</code><span>email<wbr/>Mask<wbr/>Id</span><a href="#emailmaskid" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">emailMaskId</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span></div>
-<div class="tsd-comment tsd-typography"><p>Optional identifier of the email mask associated with the draft email message.</p>
+<h3 class="tsd-anchor-link" id="emailaliasid"><code class="tsd-tag">Optional</code><span>email<wbr/>Alias<wbr/>Id</span><a href="#emailaliasid" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<div class="tsd-signature"><span class="tsd-kind-property">emailAliasId</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span></div>
+<div class="tsd-comment tsd-typography"><p>Optional identifier of the email alias associated with the draft email message.</p>
 </div><aside class="tsd-sources">
 <ul>
 <li>Defined in src/public/inputs/draftEmailMessage.ts:24</li></ul></aside></section>
@@ -70,7 +70,7 @@
 <h3>On This Page</h3></summary>
 <div class="tsd-accordion-details">
 <details open class="tsd-accordion tsd-page-navigation-section"><summary class="tsd-accordion-summary" data-key="section-Properties"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>Properties</summary>
-<div><a href="#emailmaskid"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>email<wbr/>Mask<wbr/>Id</span></a><a href="#rfc822data"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>rfc822<wbr/>Data</span></a><a href="#senderemailaddressid"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>sender<wbr/>Email<wbr/>Address<wbr/>Id</span></a></div></details></div></details></div>
+<div><a href="#emailaliasid"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>email<wbr/>Alias<wbr/>Id</span></a><a href="#rfc822data"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>rfc822<wbr/>Data</span></a><a href="#senderemailaddressid"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>sender<wbr/>Email<wbr/>Address<wbr/>Id</span></a></div></details></div></details></div>
 <div class="site-menu">
 <nav class="tsd-navigation"><a href="../modules.html">@sudoplatform/sudo-email</a>
 <ul class="tsd-small-nested-navigation" id="tsd-nav-container">

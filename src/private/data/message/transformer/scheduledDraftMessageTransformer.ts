@@ -17,7 +17,7 @@ export class ScheduledDraftMessageTransformer {
         graphQL.draftMessageKey.lastIndexOf('/') + 1,
       ),
       emailAddressId: graphQL.emailAddressId,
-      ...(graphQL.emailMaskId ? { emailMaskId: graphQL.emailMaskId } : {}),
+      ...(graphQL.emailMaskId ? { emailAliasId: graphQL.emailMaskId } : {}),
       owner: graphQL.owner,
       owners: graphQL.owners,
       sendAt: new Date(graphQL.sendAtEpochMs),

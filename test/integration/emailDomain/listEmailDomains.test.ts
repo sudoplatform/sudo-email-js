@@ -19,7 +19,7 @@ describe('SudoEmailClient listEmailDomains Test Suite', () => {
   let entitlementsClient: SudoEntitlementsClient
   let profilesClient: SudoProfilesClient
   let sudo: Sudo
-  let emailMasksEnabled = false
+  let emailAliasesEnabled = false
 
   beforeEach(async () => {
     const result = await setupEmailClient(log)
@@ -29,43 +29,46 @@ describe('SudoEmailClient listEmailDomains Test Suite', () => {
     profilesClient = result.profilesClient
     sudo = result.sudo
     const config = await instanceUnderTest.getConfigurationData()
-    emailMasksEnabled = config.emailMasksEnabled
+    emailAliasesEnabled = config.emailAliasesEnabled
   })
 
   it('returns expected output', async () => {
-    const supportedEmailDomains =
-      await instanceUnderTest.getSupportedEmailDomains()
-    let maskDomains: string[] = []
-    if (emailMasksEnabled) {
-      maskDomains = await instanceUnderTest.getEmailMaskDomains()
-    }
-
     const listedDomains = await instanceUnderTest.listEmailDomains()
-    const matchedDomaains: EmailDomain[] = []
 
     expect(listedDomains).toBeDefined()
     expect(listedDomains.length).toBeGreaterThan(0)
 
+    const supportedEmailDomains = listedDomains.filter(
+      (listedDomain) => !listedDomain.isAliasDomain,
+    )
+    const aliasDomains = emailAliasesEnabled
+      ? listedDomains.filter((listedDomain) => listedDomain.isAliasDomain)
+      : []
+
+    expect(supportedEmailDomains.length).toBeGreaterThan(0)
+
+    const matchedDomaains: EmailDomain[] = []
+
     supportedEmailDomains.forEach((supportedDomain) => {
       const foundDomain = listedDomains.find(
-        (listedDomain) => listedDomain.domain === supportedDomain,
+        (listedDomain) => listedDomain.domain === supportedDomain.domain,
       )
       expect(foundDomain).toBeDefined()
-      expect(foundDomain?.isMaskDomain).toBe(false)
+      expect(foundDomain?.isAliasDomain).toBe(false)
       matchedDomaains.push(foundDomain!)
     })
 
-    maskDomains.forEach((maskDomain) => {
+    aliasDomains.forEach((aliasDomain) => {
       const foundDomain = listedDomains.find(
-        (listedDomain) => listedDomain.domain === maskDomain,
+        (listedDomain) => listedDomain.domain === aliasDomain.domain,
       )
       expect(foundDomain).toBeDefined()
-      expect(foundDomain?.isMaskDomain).toBe(true)
+      expect(foundDomain?.isAliasDomain).toBe(true)
       matchedDomaains.push(foundDomain!)
     })
 
     expect(matchedDomaains.length).toEqual(
-      supportedEmailDomains.length + maskDomains.length,
+      supportedEmailDomains.length + aliasDomains.length,
     )
   })
 })

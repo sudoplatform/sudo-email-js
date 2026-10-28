@@ -121,9 +121,13 @@ describe('SudoEmailClient Get Email Address Blocklist Integration Test Suite', (
     let preUnblockResult = await instanceUnderTest.getEmailAddressBlocklist()
     expect(preUnblockResult).toHaveLength(addresses.length)
     const addressToUnblock = addresses[1]
+    const hashedValueToUnblock = preUnblockResult.find(
+      (result) => result.address === addressToUnblock,
+    )?.hashedBlockedValue
+    expect(hashedValueToUnblock).toBeDefined()
     expect(
-      await instanceUnderTest.unblockEmailAddresses({
-        addresses: [addressToUnblock],
+      await instanceUnderTest.unblockEmailAddressesByHashedValue({
+        hashedValues: [hashedValueToUnblock!],
       }),
     ).toEqual({ status: BatchOperationResultStatus.Success })
     const postUnblockResult = await instanceUnderTest.getEmailAddressBlocklist()

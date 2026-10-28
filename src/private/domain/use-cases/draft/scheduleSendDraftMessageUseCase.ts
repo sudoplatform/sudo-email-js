@@ -19,20 +19,20 @@ import { EmailMessageService } from '../../entities/message/emailMessageService'
  * @interface ScheduleSendDraftMessageUseCaseInput
  * @property {string} id The identifier of the draft message to schedule send
  * @property {string} emailAddressId The identifier of the email address to send the draft message from.
- * @property {string} emailMaskId The identifier of the email mask to send the draft message from.
+ * @property {string} emailAliasId The identifier of the email alias to send the draft message from.
  * @property {Date} sendAt Timestamp of when to send the message.
  */
 interface ScheduleSendDraftMessageUseCaseInput {
   id: string
   emailAddressId: string
-  emailMaskId?: string
+  emailAliasId?: string
   sendAt: Date
 }
 
 interface ScheduleSendDraftMessageOutput {
   id: string
   emailAddressId: string
-  emailMaskId?: string
+  emailAliasId?: string
   sendAt: Date
   state: ScheduledDraftMessageState
   createdAt: Date
@@ -57,13 +57,13 @@ export class ScheduleSendDraftMessageUseCase {
   async execute({
     id,
     emailAddressId,
-    emailMaskId,
+    emailAliasId,
     sendAt,
   }: ScheduleSendDraftMessageUseCaseInput): Promise<ScheduleSendDraftMessageOutput> {
     this.log.debug(this.execute.name, {
       id,
       emailAddressId,
-      emailMaskId,
+      emailAliasId,
       sendAt,
     })
     const account = await this.emailAccountService.get({
@@ -80,7 +80,7 @@ export class ScheduleSendDraftMessageUseCase {
     return await this.emailMessageService.scheduleSendDraftMessage({
       id,
       emailAddressId,
-      emailMaskId,
+      emailAliasId,
       sendAt,
     })
   }

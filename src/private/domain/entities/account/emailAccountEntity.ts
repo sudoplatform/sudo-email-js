@@ -6,7 +6,6 @@
 
 import { OwnerEntity } from '../common/ownerEntity'
 import { EmailFolderEntity } from '../folder/emailFolderEntity'
-import { EmailAddressEntity } from './emailAddressEntity'
 
 export type EmailAccountEntityStatus =
   { type: 'Completed' } | { type: 'Failed'; cause: Error }
@@ -21,6 +20,7 @@ export type EmailAccountEntityStatus =
  * @property {string} identityId Unique identifier of the identity associated with the email account.
  * @property {string} keyRingId Unique identifier of the key ring associated with the email account.
  * @property {string} emailAddress Email address in format 'local-part@domain' of the email account.
+ * @property {string} displayName A display name for the email account.
  * @property {number} size The total size of all email messages assigned to the email account.
  * @property { number } numberOfEmailMessages The total number of email messages assigned to the email account.
  * @property {number} version Version of this entity, increments on update.
@@ -35,7 +35,8 @@ export interface EmailAccountEntity {
   owners: OwnerEntity[]
   identityId: string
   keyRingId: string
-  emailAddress: EmailAddressEntity
+  emailAddress: string
+  displayName?: string
   size: number
   numberOfEmailMessages: number
   version: number

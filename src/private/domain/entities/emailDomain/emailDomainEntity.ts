@@ -12,6 +12,6 @@
  */
 export interface EmailDomainEntity {
   domain: string
-  isMaskDomain?: boolean
+  isAliasDomain?: boolean
   metadata?: string
 }

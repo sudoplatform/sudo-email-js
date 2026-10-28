@@ -75,7 +75,7 @@ export class S3TestAccount {
         const parsed = await simpleParser(body)
 
         // Match sender against the RFC822 From header (which may be rewritten
-        // by the mask pipeline) or the S3 metadata sender field
+        // by the alias pipeline) or the S3 metadata sender field
         const fromAddresses =
           parsed.from?.value.map((a) => a.address?.toLowerCase()) ?? []
         const metaSender = response.metadata?.sender?.toLowerCase()

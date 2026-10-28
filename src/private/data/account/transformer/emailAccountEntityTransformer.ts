@@ -14,7 +14,6 @@ import { EmailAddress, SealedAttribute } from '../../../../gen/graphqlTypes'
 import { EmailAccountEntity } from '../../../domain/entities/account/emailAccountEntity'
 import { DeviceKeyWorker, KeyType } from '../../common/deviceKeyWorker'
 import { EmailFolderEntityTransformer } from '../../folder/transformer/emailFolderEntityTransformer'
-import { EmailAddressEntityTransformer } from './emailAddressEntityTransformer'
 
 export class EmailAccountEntityTransformer {
   constructor(
@@ -23,7 +22,6 @@ export class EmailAccountEntityTransformer {
   ) {}
 
   async transformGraphQL(data: EmailAddress): Promise<EmailAccountEntity> {
-    const emailAddressTransformer = new EmailAddressEntityTransformer()
     const emailFolderTransformer = new EmailFolderEntityTransformer(
       this.deviceKeyWorker,
     )
@@ -33,7 +31,7 @@ export class EmailAccountEntityTransformer {
       owners: data.owners.map(({ id, issuer }) => ({ id, issuer })),
       identityId: data.identityId,
       keyRingId: data.keyRingId,
-      emailAddress: emailAddressTransformer.transform(data.emailAddress),
+      emailAddress: data.emailAddress,
       size: data.size,
       numberOfEmailMessages: data.numberOfEmailMessages,
       version: data.version,
@@ -64,7 +62,7 @@ export class EmailAccountEntityTransformer {
     if (data.alias) {
       try {
         const alias = await this.unsealAlias(data.alias)
-        entity.emailAddress.alias = alias
+        entity.displayName = alias
       } catch (e) {
         this.log.error('error ', { e })
         entity.status = { type: 'Failed', cause: e as Error }

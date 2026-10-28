@@ -17,8 +17,8 @@
  *  email message.
  * @property {boolean} sendEncryptedEmailEnabled Flag indicating whether End-to-end encrypted send operations are enabled.
  * @property {string[]} prohibitedFileExtensions List of file extensions that are prohibited from being attached to an email message.
- * @property {boolean} emailMasksEnabled Flag indicating whether email masks are enabled.
- * @property {boolean} externalEmailMasksEnabled Flag indicating whether external email masks are enabled.
+ * @property {boolean} emailAliasesEnabled Flag indicating whether email aliases are enabled.
+ * @property {boolean} externalEmailAliasesEnabled Flag indicating whether external email aliases are enabled.
  * @property {boolean} allowOwnerEmailAddressReuse Flag indicating whether the owner's deprovisioned email address can be reused.
  */
 export interface EmailConfigurationDataEntity {
@@ -30,7 +30,7 @@ export interface EmailConfigurationDataEntity {
   encryptedEmailMessageRecipientsLimit: number
   sendEncryptedEmailEnabled: boolean
   prohibitedFileExtensions: string[]
-  emailMasksEnabled: boolean
-  externalEmailMasksEnabled: boolean
+  emailAliasesEnabled: boolean
+  externalEmailAliasesEnabled: boolean
   allowOwnerEmailAddressReuse: boolean
 }

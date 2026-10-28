@@ -27,11 +27,11 @@ export interface EmailDomainService {
   getConfiguredEmailDomains(): Promise<EmailDomainEntity[]>
 
   /**
-   * Get a list of all of the email domains on which email masks may be provisioned.
+   * Get a list of all of the email domains on which email aliases may be provisioned.
    *
-   * @returns {EmailDomainEntity[]} The list of email mask domains.
+   * @returns {EmailDomainEntity[]} The list of email alias domains.
    */
-  getEmailMaskDomains(): Promise<EmailDomainEntity[]>
+  getEmailAliasDomains(): Promise<EmailDomainEntity[]>
 
   /**
    * List all email domains with additional metadata.

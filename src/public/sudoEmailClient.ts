@@ -16,7 +16,6 @@ import {
 import {
   BlockEmailAddressesInput,
   UnblockEmailAddressesByHashedValueInput,
-  UnblockEmailAddressesInput,
 } from './inputs/blockedAddresses'
 import {
   CancelScheduledDraftMessageInput,
@@ -52,7 +51,7 @@ import {
   ListEmailMessagesForEmailFolderIdInput,
   ListEmailMessagesInput,
   SendEmailMessageInput,
-  SendMaskedEmailMessageInput,
+  SendEmailMessageViaAliasInput,
   UpdateEmailMessagesInput,
 } from './inputs/emailMessage'
 import { ScheduledDraftMessage, UpdatedEmailMessageSuccess } from './typings'
@@ -80,15 +79,15 @@ import {
   ListEmailMessagesResult,
 } from './typings/listOperationResult'
 import {
-  DeprovisionEmailMaskInput,
-  DisableEmailMaskInput,
-  EnableEmailMaskInput,
-  ListEmailMasksForOwnerInput,
-  ProvisionEmailMaskInput,
-  UpdateEmailMaskInput,
-} from './inputs/emailMask'
+  DeprovisionEmailAliasInput,
+  DisableEmailAliasInput,
+  EnableEmailAliasInput,
+  ListEmailAliasesForOwnerInput,
+  ProvisionEmailAliasInput,
+  UpdateEmailAliasInput,
+} from './inputs/emailAlias'
 import { FlushMessageBodyCacheInput } from './inputs/flushMessageBodyCache'
-import { EmailMask } from './typings/emailMask'
+import { EmailAlias } from './typings/emailAlias'
 import {
   VerifyExternalEmailAddressInput,
   VerifyExternalEmailAddressResult,
@@ -146,17 +145,6 @@ export interface SudoEmailClient {
   ): Promise<string>
 
   /**
-   * Get a list of all of the email domains on which emails may be provisioned.
-   *
-   * @returns {string[]} A list of supported domains.
-   *
-   * @throws NotRegisteredError
-   * @throws ServiceError
-   */
-  /** @deprecated Use {@link SudoEmailClient.listEmailDomains}. */
-  getSupportedEmailDomains(): Promise<string[]>
-
-  /**
    * Get a list of all of the email domains for which end-to-end encryption is supported.
    *
    * @returns {string[]} A list of all configured domains.
@@ -165,17 +153,6 @@ export interface SudoEmailClient {
    * @throws ServiceError
    */
   getConfiguredEmailDomains(): Promise<string[]>
-
-  /**
-   * Get a list of all of the email domains on which email masks may be provisioned.
-   *
-   * @returns {string[]} A list of email mask domains.
-   *
-   * @throws NotRegisteredError
-   * @throws ServiceError
-   */
-  /** @deprecated Use {@link SudoEmailClient.listEmailDomains} and filter by `isMaskDomain`. */
-  getEmailMaskDomains(): Promise<string[]>
 
   /**
    * List all email domains.
@@ -303,16 +280,6 @@ export interface SudoEmailClient {
   /**
    * Unblock email address(es) for the given owner
    *
-   * @param {UnblockEmailAddressesInput} input Parameters to unblock email addresses
-   * @returns {Promise<BatchOperationResult<string>>} The results of the operation
-   */
-  unblockEmailAddresses(
-    input: UnblockEmailAddressesInput,
-  ): Promise<BatchOperationResult<string>>
-
-  /**
-   * Unblock email address(es) for the given owner
-   *
    * @param {UnblockEmailAddressesByHashedValueInput} input Parameters to unblock email addresses
    * @returns {Promise<BatchOperationResult<string>>} The results of the operation
    */
@@ -388,15 +355,6 @@ export interface SudoEmailClient {
   ): Promise<DraftEmailMessage | undefined>
 
   /**
-   * @deprecated The method should not be used. Instead use listDraftEmailMessagesForEmailAddressId.
-   * Lists the metadata and content of all draft email messages for the user.
-   *
-   * @returns {DraftEmailMessage[]} An array of draft email messages or an empty array if no
-   *  matching draft email messages can be found.
-   */
-  listDraftEmailMessages(): Promise<DraftEmailMessage[]>
-
-  /**
    * Lists the metadata and content of all draft messages for the specified email address identifier.
    * Supports pagination with limit and nextToken parameters.
    *
@@ -407,15 +365,6 @@ export interface SudoEmailClient {
   listDraftEmailMessagesForEmailAddressId(
     input: ListDraftEmailMessagesForEmailAddressIdInput,
   ): Promise<ListOutput<DraftEmailMessage>>
-
-  /**
-   * @deprecated The method should not be used. Instead use listDraftEmailMessageMetadataForEmailAddressId.
-   * Lists the metadata of all draft email messages for the user.
-   *
-   * @returns {DraftEmailMessageMetadata[]} An array of draft email message metadata or an empty array if no
-   *  matching draft email messages can be found.
-   */
-  listDraftEmailMessageMetadata(): Promise<DraftEmailMessageMetadata[]>
 
   /**
    * Lists the metadata of all draft email messages for the specified email address identifier.
@@ -483,13 +432,13 @@ export interface SudoEmailClient {
   ): Promise<SendEmailMessageResult>
 
   /**
-   * Send a masked email message using RFC 6854 (supersedes RFC 822)(https://tools.ietf.org/html/rfc6854) data.
+   * Send an email message via an email alias using RFC 6854 (supersedes RFC 822)(https://tools.ietf.org/html/rfc6854) data.
    *
-   * Email messages sent to in-network recipients (i.e. email addresses/masks that exist within the Sudo Platform)
+   * Email messages sent to in-network recipients (i.e. email addresses/aliases that exist within the Sudo Platform)
    * will be sent end-to-end encrypted.
    *
-   * @param {SendMaskedEmailMessageInput} input Parameters used to send a masked email message.
-   * @returns {string} The identifier of the masked email message that is being sent.
+   * @param {SendEmailMessageViaAliasInput} input Parameters used to send an email message via an email alias.
+   * @returns {string} The identifier of the email message that is being sent.
    *
    * @throws {@link UnauthorizedAddressError}
    * @throws {@link InvalidEmailContentsError}
@@ -498,8 +447,8 @@ export interface SudoEmailClient {
    * @throws LimitExceededError
    * @throws InsufficientEntitlementsError
    */
-  sendMaskedEmailMessage(
-    input: SendMaskedEmailMessageInput,
+  sendEmailMessageViaAlias(
+    input: SendEmailMessageViaAliasInput,
   ): Promise<SendEmailMessageResult>
 
   /**
@@ -634,54 +583,54 @@ export interface SudoEmailClient {
   ): Promise<ListEmailMessagesResult>
 
   /**
-   * Provisions a new email mask with the specified configuration.
+   * Provisions a new email alias with the specified configuration.
    *
-   * @param {ProvisionEmailMaskInput} input The input parameters for provisioning the email mask
-   * @returns {EmailMask} A promise that resolves to the newly created email mask
+   * @param {ProvisionEmailAliasInput} input The input parameters for provisioning the email alias
+   * @returns {EmailAlias} A promise that resolves to the newly created email alias
    */
-  provisionEmailMask(input: ProvisionEmailMaskInput): Promise<EmailMask>
+  provisionEmailAlias(input: ProvisionEmailAliasInput): Promise<EmailAlias>
 
   /**
-   * Deprovisions an existing email mask, permanently removing it from the system.
+   * Deprovisions an existing email alias, permanently removing it from the system.
    *
-   * @param {DeprovisionEmailMaskInput} input The input parameters for deprovisioning the email mask
-   * @returns {EmailMask} A promise that resolves to the deprovisioned email mask
+   * @param {DeprovisionEmailAliasInput} input The input parameters for deprovisioning the email alias
+   * @returns {EmailAlias} A promise that resolves to the deprovisioned email alias
    */
-  deprovisionEmailMask(input: DeprovisionEmailMaskInput): Promise<EmailMask>
+  deprovisionEmailAlias(input: DeprovisionEmailAliasInput): Promise<EmailAlias>
 
   /**
-   * Updates the metadata or expiration date of an existing email mask.
+   * Updates the metadata or expiration date of an existing email alias.
    *
-   * @param {UpdateEmailMaskInput} input The input parameters for updating the email mask
-   * @returns {EmailMask} A promise that resolves to the updated email mask
+   * @param {UpdateEmailAliasInput} input The input parameters for updating the email alias
+   * @returns {EmailAlias} A promise that resolves to the updated email alias
    */
-  updateEmailMask(input: UpdateEmailMaskInput): Promise<EmailMask>
+  updateEmailAlias(input: UpdateEmailAliasInput): Promise<EmailAlias>
 
   /**
-   * Enables a previously disabled email mask, allowing it to forward emails again.
+   * Enables a previously disabled email alias, allowing it to forward emails again.
    *
-   * @param {EnableEmailMaskInput} input The input parameters for enabling the email mask
-   * @returns {EmailMask} A promise that resolves to the enabled email mask
+   * @param {EnableEmailAliasInput} input The input parameters for enabling the email alias
+   * @returns {EmailAlias} A promise that resolves to the enabled email alias
    */
-  enableEmailMask(input: EnableEmailMaskInput): Promise<EmailMask>
+  enableEmailAlias(input: EnableEmailAliasInput): Promise<EmailAlias>
 
   /**
-   * Disables an active email mask, preventing it from forwarding emails.
+   * Disables an active email alias, preventing it from forwarding emails.
    *
-   * @param {DisableEmailMaskInput} input The input parameters for disabling the email mask
-   * @returns {EmailMask} A promise that resolves to the disabled email mask
+   * @param {DisableEmailAliasInput} input The input parameters for disabling the email alias
+   * @returns {EmailAlias} A promise that resolves to the disabled email alias
    */
-  disableEmailMask(input: DisableEmailMaskInput): Promise<EmailMask>
+  disableEmailAlias(input: DisableEmailAliasInput): Promise<EmailAlias>
 
   /**
-   * Lists email masks owned by the current user, with optional filtering and pagination.
+   * Lists email aliases owned by the current user, with optional filtering and pagination.
    *
-   * @param {ListEmailMasksForOwnerInput} input The input parameters for filtering and pagination
-   * @returns {ListOutput<EmailMask>} A promise that resolves to a list of email masks and pagination info
+   * @param {ListEmailAliasesForOwnerInput} input The input parameters for filtering and pagination
+   * @returns {ListOutput<EmailAlias>} A promise that resolves to a list of email aliases and pagination info
    */
-  listEmailMasksForOwner(
-    input?: ListEmailMasksForOwnerInput,
-  ): Promise<ListOutput<EmailMask>>
+  listEmailAliasesForOwner(
+    input?: ListEmailAliasesForOwnerInput,
+  ): Promise<ListOutput<EmailAlias>>
 
   /**
    * Sends an email verification code or verifies an external email address given a verification code.

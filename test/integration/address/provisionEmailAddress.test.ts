@@ -85,8 +85,8 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
     expect(emailAddress.owner).toStrictEqual(sub)
     expect(emailAddress.owners[0].id).toStrictEqual(sudo.id)
     expect(emailAddress.owners[0].issuer).toStrictEqual(sudoIssuer)
-    expect(emailAddress.alias).toBeDefined()
-    expect(emailAddress.alias).toStrictEqual(emailAddressAlias)
+    expect(emailAddress.displayName).toBeDefined()
+    expect(emailAddress.displayName).toStrictEqual(emailAddressAlias)
     expect(emailAddress.numberOfEmailMessages).toStrictEqual(0)
     if (emailAddress.folders.length === 4) {
       // Spam folder is not enabled in this instance
@@ -125,8 +125,8 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
     expect(emailAddress.owner).toStrictEqual(sub)
     expect(emailAddress.owners[0].id).toStrictEqual(sudo.id)
     expect(emailAddress.owners[0].issuer).toStrictEqual(sudoIssuer)
-    expect(emailAddress.alias).toBeDefined()
-    expect(emailAddress.alias).toStrictEqual(emailAddressAlias)
+    expect(emailAddress.displayName).toBeDefined()
+    expect(emailAddress.displayName).toStrictEqual(emailAddressAlias)
     expect(emailAddress.numberOfEmailMessages).toStrictEqual(0)
     if (emailAddress.folders.length === 4) {
       // Spam folder is not enabled in this instance
@@ -287,8 +287,8 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
         expect(emailAddress.owner).toStrictEqual(sub)
         expect(emailAddress.owners[0].id).toStrictEqual(sudo.id)
         expect(emailAddress.owners[0].issuer).toStrictEqual(sudoIssuer)
-        expect(emailAddress.alias).toBeDefined()
-        expect(emailAddress.alias).toStrictEqual(aliases[i])
+        expect(emailAddress.displayName).toBeDefined()
+        expect(emailAddress.displayName).toStrictEqual(aliases[i])
         expect(emailAddress.folders).toHaveLength(4)
         expect(emailAddress.folders.map((f) => f.folderName)).toEqual(
           expect.arrayContaining(['INBOX', 'SENT', 'OUTBOX', 'TRASH']),
