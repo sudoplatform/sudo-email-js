@@ -30,7 +30,6 @@ export interface EmailAliasProps {
   owners: Owner[]
   identityId: string
   aliasAddress: string
-  realAddress: string
   realAddressType: EmailAliasRealAddressType
   status: EmailAliasStatus
   inboundReceived: number
@@ -48,6 +47,34 @@ export interface EmailAliasProps {
 export interface SealedEmailAliasProps {
   metadata?: Record<string, any>
 }
+
+/**
+ * The Sudo Platform SDK representation of an email alias list result.
+ * 
+ * This result is the same as {@link EmailAlias} except it does not include the realAddress
+ * which is not available via list endpoints
+ *
+ * @interface EmailAliasListItem
+ * @property {string} id Unique identifier of the email alias.
+ * @property {string} owner Identifier of the user owns the email alias resource.
+ * @property {Owner[]} owners List of identifiers of user/accounts associated with this email alias.
+ * @property {string} identityId The identityId of the user that owns the email alias resource.
+ * @property {string} aliasAddress The alias email address that will be publicly visible.
+ * @property {EmailAliasRealAddressType} realAddressType The type of the real email address.
+ * @property {EmailAliasStatus} status The status of the email alias.
+ * @property {number} inboundReceived Number of inbound messages received by the email alias.
+ * @property {number} inboundDelivered Number of inbound messages delivered to the real email address.
+ * @property {number} outboundReceived Number of outbound messages attempted to be sent from the real email address through the email alias.
+ * @property {number} outboundDelivered Number of outbound messages successfully sent from the real email address through the email alias.
+ * @property {number} spamCount Number of inbound messages that were flagged as spam.
+ * @property {number} virusCount Number of inbound messages that were flagged as viruses.
+ * @property {JSON} metadata Optional metadata associated with the email alias.
+ * @property {Date} expiresAt Optional TTL signifying when the email alias will be automatically deactivated.
+ * @property {Date} createdAt Date and time when the email alias was created.
+ * @property {Date} updatedAt Date and time when the email alias was last updated.
+ * @property {number} version Version of the email alias resource.
+ */
+export interface EmailAliasListItem extends EmailAliasProps, SealedEmailAliasProps {}
 
 /**
  * The Sudo Platform SDK representation of an email alias.
@@ -73,4 +100,6 @@ export interface SealedEmailAliasProps {
  * @property {Date} updatedAt Date and time when the email alias was last updated.
  * @property {number} version Version of the email alias resource.
  */
-export interface EmailAlias extends EmailAliasProps, SealedEmailAliasProps {}
+export interface EmailAlias extends EmailAliasProps, SealedEmailAliasProps {
+  realAddress: string
+}

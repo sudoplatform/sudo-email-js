@@ -27,3 +27,30 @@ fragment EmailMask on EmailMask {
   createdAtEpochMs
   updatedAtEpochMs
 }
+
+fragment EmailMaskListInfo on EmailMaskListInfo {
+  id
+  owner
+  owners {
+    id
+    issuer
+  }
+  keyRingId
+  identityId
+  maskAddress
+  realAddressType
+  status
+  inboundReceived
+  inboundDelivered
+  outboundReceived
+  outboundDelivered
+  spamCount
+  virusCount
+  metadata {
+    ...SealedAttribute
+  }
+  expiresAtEpochSec
+  version
+  createdAtEpochMs
+  updatedAtEpochMs
+}

@@ -41,3 +41,24 @@ export interface EmailAliasEntity {
   updatedAt: Date
   version: number
 }
+
+export interface EmailAliasListItemEntity {
+  id: string
+  owner: string
+  owners: OwnerEntity[]
+  identityId: string
+  aliasAddress: string
+  realAddressType: EmailAliasEntityRealAddressType
+  status: EmailAliasEntityStatus
+  inboundReceived: number
+  inboundDelivered: number
+  outboundReceived: number
+  outboundDelivered: number
+  spamCount: number
+  virusCount: number
+  metadata?: EmailAliasMetadata
+  expiresAt?: Date
+  createdAt: Date
+  updatedAt: Date
+  version: number
+}

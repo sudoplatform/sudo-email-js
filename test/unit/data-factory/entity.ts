@@ -18,6 +18,7 @@ import { EmailFolderEntity } from '../../../src/private/domain/entities/folder/e
 import { EmailMessageEntity } from '../../../src/private/domain/entities/message/emailMessageEntity'
 import { SealedEmailMessageEntity } from '../../../src/private/domain/entities/message/sealedEmailMessageEntity'
 import {
+  EmailAliasListItem,
   EncryptionStatus,
   ScheduledDraftMessageState,
 } from '../../../src/public'
@@ -29,6 +30,7 @@ import {
   EmailAliasEntity,
   EmailAliasEntityRealAddressType,
   EmailAliasEntityStatus,
+  EmailAliasListItemEntity,
 } from '../../../src/private/domain/entities/alias/emailAliasEntity'
 
 export class EntityDataFactory {
@@ -242,6 +244,25 @@ export class EntityDataFactory {
     identityId: 'testIdentityId',
     aliasAddress: 'test-alias@anonyome.com',
     realAddress: 'test-real@anonyome.com',
+    realAddressType: EmailAliasEntityRealAddressType.INTERNAL,
+    status: EmailAliasEntityStatus.ENABLED,
+    inboundReceived: 0,
+    inboundDelivered: 0,
+    outboundReceived: 0,
+    outboundDelivered: 0,
+    spamCount: 0,
+    virusCount: 0,
+    expiresAt: new Date(1.0),
+    metadata: {
+      test: 'test data',
+    },
+  }
+
+  static readonly emailAliasListItem: EmailAliasListItemEntity = {
+    ...EntityDataFactory.commonProps,
+    owners: [EntityDataFactory.owner],
+    identityId: 'testIdentityId',
+    aliasAddress: 'test-alias@anonyome.com',
     realAddressType: EmailAliasEntityRealAddressType.INTERNAL,
     status: EmailAliasEntityStatus.ENABLED,
     inboundReceived: 0,

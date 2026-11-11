@@ -15,7 +15,10 @@ import {
   DisableEmailAliasInput,
   EmailAliasService,
   EnableEmailAliasInput,
+  GetEmailAliasByIdInput,
   ListEmailAliasesForOwnerInput,
+  ListEmailAliasesForOwnerOutput,
+  ListEmailAliasesInput,
   ListEmailAliasesOutput,
   ProvisionEmailAliasInput,
   UpdateEmailAliasInput,
@@ -25,10 +28,14 @@ import {
   ProvisionEmailMaskInput as ProvisionEmailAliasRequest,
   UpdateEmailMaskInput as UpdateEmailAliasRequest,
   ListEmailMasksForOwnerInput as ListEmailAliasesForOwnerRequest,
+  ListEmailMasksInput as ListEmailAliasesRequest,
   SealedAttribute,
   KeyFormat as GraphQLKeyFormat,
 } from '../../../gen/graphqlTypes'
-import { EmailAliasEntity } from '../../domain/entities/alias/emailAliasEntity'
+import {
+  EmailAliasEntity,
+  EmailAliasListItemEntity,
+} from '../../domain/entities/alias/emailAliasEntity'
 import { ApiClient } from '../common/apiClient'
 import {
   DeviceKeyWorker,
@@ -40,6 +47,7 @@ import { secondsSinceEpoch } from '../../util/date'
 import { EmailAliasFilterTransformer } from './transformer/emailAliasFilterTransformer'
 import { EmailAccountServiceConfig } from '../account/defaultEmailAccountService'
 import { VerifyExternalEmailAddressResult } from '../../../public/typings/verifyExternalEmailAddress'
+import { EmailAliasNotFoundError } from '../../../public'
 
 export class DefaultEmailAliasService implements EmailAliasService {
   private readonly log: Logger
@@ -184,7 +192,7 @@ export class DefaultEmailAliasService implements EmailAliasService {
 
   async listEmailAliasesForOwner(
     input?: ListEmailAliasesForOwnerInput,
-  ): Promise<ListEmailAliasesOutput> {
+  ): Promise<ListEmailAliasesForOwnerOutput> {
     this.log.debug(this.listEmailAliasesForOwner.name, { input })
     const listInput: ListEmailAliasesForOwnerRequest = {
       limit: input?.limit ?? 10,
@@ -212,6 +220,56 @@ export class DefaultEmailAliasService implements EmailAliasService {
       emailAliases,
       nextToken: result.nextToken ?? undefined,
     }
+  }
+
+  async listEmailAliases(
+    input?: ListEmailAliasesInput,
+  ): Promise<ListEmailAliasesOutput> {
+    this.log.debug(this.listEmailAliases.name, { input })
+    const listInput: ListEmailAliasesRequest = {
+      limit: input?.limit ?? 10,
+    }
+
+    if (input?.sudoId) {
+      listInput.sudoId = input.sudoId
+    }
+
+    if (input?.nextToken) {
+      listInput.nextToken = input.nextToken
+    }
+
+    if (input?.filter) {
+      listInput.filter = EmailAliasFilterTransformer.toGraphQL(input.filter)
+    }
+
+    const result = await this.appSync.listEmailMasks(listInput)
+    let emailAliases: EmailAliasListItemEntity[] = []
+    if (result.items) {
+      emailAliases = await Promise.all(
+        result.items.map(async (alias) => {
+          return await this.transformer.graphQLListToEntityList(alias)
+        }),
+      )
+    }
+
+    return {
+      emailAliases,
+      nextToken: result.nextToken ?? undefined,
+    }
+  }
+
+  async getEmailAliasById(
+    input: GetEmailAliasByIdInput,
+  ): Promise<EmailAliasEntity> {
+    this.log.debug(this.getEmailAliasById.name, { input })
+
+    const result = await this.appSync.getEmailAliasById(input.id)
+
+    if (!result) {
+      throw new EmailAliasNotFoundError()
+    }
+
+    return this.transformer.graphQLToEntity(result)
   }
 
   async verifyExternalEmailAddress(

@@ -82,12 +82,14 @@ import {
   DeprovisionEmailAliasInput,
   DisableEmailAliasInput,
   EnableEmailAliasInput,
+  GetEmailAliasByIdInput,
   ListEmailAliasesForOwnerInput,
+  ListEmailAliasesInput,
   ProvisionEmailAliasInput,
   UpdateEmailAliasInput,
 } from './inputs/emailAlias'
 import { FlushMessageBodyCacheInput } from './inputs/flushMessageBodyCache'
-import { EmailAlias } from './typings/emailAlias'
+import { EmailAlias, EmailAliasListItem } from './typings/emailAlias'
 import {
   VerifyExternalEmailAddressInput,
   VerifyExternalEmailAddressResult,
@@ -625,12 +627,32 @@ export interface SudoEmailClient {
   /**
    * Lists email aliases owned by the current user, with optional filtering and pagination.
    *
+   * @deprecated Use {@link listEmailAliases} instead
    * @param {ListEmailAliasesForOwnerInput} input The input parameters for filtering and pagination
    * @returns {ListOutput<EmailAlias>} A promise that resolves to a list of email aliases and pagination info
    */
   listEmailAliasesForOwner(
     input?: ListEmailAliasesForOwnerInput,
   ): Promise<ListOutput<EmailAlias>>
+
+  /**
+   * Lists email aliases owned by the current user, with optional filtering and pagination.
+   *
+   * @param {ListEmailAliasesInput} input The input parameters for filtering and pagination
+   * @returns {ListOutput<EmailAliasListItem>} A promise that resolves to a list of email aliases and pagination info
+   */
+  listEmailAliases(
+    input?: ListEmailAliasesInput,
+  ): Promise<ListOutput<EmailAliasListItem>>
+
+  /**
+   * Retrieve a specific {@link EmailAlias} by it's unique id
+   *
+   * @param {GetEmailAliasByIdInput} input The input parameters for retrieving an EmailAlias
+   * @returns {EmailAlias} A promise that resolves to the retrieved EmailAlias
+   * @throws {EmailAliasNotFoundError} If EmailAlias is not found
+   */
+  getEmailAliasById(input: GetEmailAliasByIdInput): Promise<EmailAlias>
 
   /**
    * Sends an email verification code or verifies an external email address given a verification code.

@@ -13,13 +13,17 @@ import {
 import { DeviceKeyWorker, KeyType } from '../../common/deviceKeyWorker'
 import {
   EmailMask as EmailMaskGraphQL,
+  EmailMaskListInfo as EmailMaskListGraphQL,
   SealedAttribute,
 } from '../../../../gen/graphqlTypes'
-import { EmailAliasEntity } from '../../../domain/entities/alias/emailAliasEntity'
+import {
+  EmailAliasEntity,
+  EmailAliasListItemEntity,
+} from '../../../domain/entities/alias/emailAliasEntity'
 import { EmailAliasRealAddressTypeTransformer } from './emailAliasRealAddressTypeTransformer'
 import { EmailAliasStatusTransformer } from './emailAliasStatusTransformer'
 import { dateFromEpochSeconds } from '../../../util/date'
-import { EmailAlias } from '../../../../public'
+import { EmailAlias, EmailAliasListItem } from '../../../../public'
 
 export class EmailAliasTransformer {
   constructor(
@@ -65,6 +69,45 @@ export class EmailAliasTransformer {
     return entity
   }
 
+  async graphQLListToEntityList(
+    data: EmailMaskListGraphQL,
+  ): Promise<EmailAliasListItemEntity> {
+    const entity: EmailAliasListItemEntity = {
+      id: data.id,
+      owner: data.owner,
+      owners: data.owners,
+      identityId: data.identityId,
+      aliasAddress: data.maskAddress,
+      realAddressType: EmailAliasRealAddressTypeTransformer.graphQLToEntity(
+        data.realAddressType,
+      ),
+      status: EmailAliasStatusTransformer.graphQLToEntity(data.status),
+      inboundReceived: data.inboundReceived,
+      inboundDelivered: data.inboundDelivered,
+      outboundReceived: data.outboundReceived,
+      outboundDelivered: data.outboundDelivered,
+      spamCount: data.spamCount,
+      virusCount: data.virusCount,
+      version: data.version,
+      expiresAt: data.expiresAtEpochSec
+        ? dateFromEpochSeconds(data.expiresAtEpochSec)
+        : undefined,
+      createdAt: new Date(data.createdAtEpochMs),
+      updatedAt: new Date(data.updatedAtEpochMs),
+    }
+
+    if (data.metadata) {
+      try {
+        const metadata = await this.unsealMetadata(data.metadata)
+        entity.metadata = metadata
+      } catch (e) {
+        this.log.error('error ', { e })
+        entity.metadata = e as Error
+      }
+    }
+    return entity
+  }
+
   static async entityToApi(entity: EmailAliasEntity): Promise<EmailAlias> {
     return {
       id: entity.id,
@@ -73,6 +116,33 @@ export class EmailAliasTransformer {
       identityId: entity.identityId,
       aliasAddress: entity.aliasAddress,
       realAddress: entity.realAddress,
+      realAddressType: EmailAliasRealAddressTypeTransformer.entityToApi(
+        entity.realAddressType,
+      ),
+      status: EmailAliasStatusTransformer.entityToApi(entity.status),
+      inboundReceived: entity.inboundReceived,
+      inboundDelivered: entity.inboundDelivered,
+      outboundReceived: entity.outboundReceived,
+      outboundDelivered: entity.outboundDelivered,
+      spamCount: entity.spamCount,
+      virusCount: entity.virusCount,
+      version: entity.version,
+      expiresAt: entity.expiresAt,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+      metadata: entity.metadata,
+    }
+  }
+
+  static async entityListToApiList(
+    entity: EmailAliasListItemEntity,
+  ): Promise<EmailAliasListItem> {
+    return {
+      id: entity.id,
+      owner: entity.owner,
+      owners: entity.owners,
+      identityId: entity.identityId,
+      aliasAddress: entity.aliasAddress,
       realAddressType: EmailAliasRealAddressTypeTransformer.entityToApi(
         entity.realAddressType,
       ),

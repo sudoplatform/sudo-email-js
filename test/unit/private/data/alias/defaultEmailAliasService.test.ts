@@ -26,11 +26,13 @@ import {
   EnableEmailAliasInput,
   DisableEmailAliasInput,
   ListEmailAliasesForOwnerInput,
+  ListEmailAliasesInput,
 } from '../../../../../src/private/domain/entities/alias/emailAliasService'
 import {
   ProvisionEmailMaskInput as ProvisionEmailMaskRequest,
   UpdateEmailMaskInput as UpdateEmailMaskRequest,
   ListEmailMasksForOwnerInput as ListEmailMasksForOwnerRequest,
+  ListEmailMasksInput as ListEmailMasksRequest,
   EmailMaskStatus,
   EmailMaskRealAddressType,
 } from '../../../../../src/gen/graphqlTypes'
@@ -41,8 +43,10 @@ import {
 import {
   KeyNotFoundError,
   EncryptionAlgorithm,
+  ServiceError,
 } from '@sudoplatform/sudo-common'
 import { secondsSinceEpoch } from '../../../../../src/private/util/date'
+import { EmailAliasNotFoundError } from '../../../../../src'
 
 describe('DefaultEmailAliasService Test Suite', () => {
   const generatedPKDeviceKey = EntityDataFactory.deviceKey
@@ -668,6 +672,253 @@ describe('DefaultEmailAliasService Test Suite', () => {
         emailAliases: [],
         nextToken: undefined,
       })
+    })
+  })
+
+  describe('listEmailAliases', () => {
+    beforeEach(() => {
+      when(mockAppSync.listEmailMasks(anything())).thenResolve(
+        GraphQLDataFactory.emailMaskListInfoConnection,
+      )
+      when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
+        true,
+      )
+      when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
+        JSON.stringify({ test: 'test data' }),
+      )
+    })
+
+    it('calls appSync correctly with no input', async () => {
+      await instanceUnderTest.listEmailAliases()
+
+      verify(mockAppSync.listEmailMasks(anything())).once()
+      const [inputArgs] = capture(mockAppSync.listEmailMasks).first()
+      expect(inputArgs).toStrictEqual<ListEmailMasksRequest>({
+        limit: 10,
+      })
+    })
+
+    it('calls appSync correctly with sudoId input', async () => {
+      const sudoId = 'mockSudoId'
+      const input: ListEmailAliasesInput = {
+        sudoId,
+      }
+
+      await instanceUnderTest.listEmailAliases(input)
+
+      verify(mockAppSync.listEmailMasks(anything())).once()
+      const [inputArgs] = capture(mockAppSync.listEmailMasks).first()
+      expect(inputArgs).toStrictEqual<ListEmailMasksRequest>({
+        sudoId,
+        limit: 10,
+      })
+    })
+
+    it('calls appSync correctly with limit', async () => {
+      const input: ListEmailAliasesInput = {
+        limit: 20,
+      }
+
+      await instanceUnderTest.listEmailAliases(input)
+
+      verify(mockAppSync.listEmailMasks(anything())).once()
+      const [inputArgs] = capture(mockAppSync.listEmailMasks).first()
+      expect(inputArgs).toStrictEqual<ListEmailMasksRequest>({
+        limit: 20,
+      })
+    })
+
+    it('calls appSync correctly with nextToken', async () => {
+      const input: ListEmailAliasesInput = {
+        nextToken: 'testToken',
+      }
+
+      await instanceUnderTest.listEmailAliases(input)
+
+      verify(mockAppSync.listEmailMasks(anything())).once()
+      const [inputArgs] = capture(mockAppSync.listEmailMasks).first()
+      expect(inputArgs).toStrictEqual<ListEmailMasksRequest>({
+        limit: 10,
+        nextToken: 'testToken',
+      })
+    })
+
+    it('calls appSync correctly with status filter', async () => {
+      const input: ListEmailAliasesInput = {
+        filter: {
+          status: {
+            equal: EmailAliasEntityStatus.ENABLED,
+          },
+        },
+      }
+
+      await instanceUnderTest.listEmailAliases(input)
+
+      verify(mockAppSync.listEmailMasks(anything())).once()
+      const [inputArgs] = capture(mockAppSync.listEmailMasks).first()
+      expect(inputArgs.filter).toBeDefined()
+      expect(inputArgs.filter?.status?.eq).toBe(EmailMaskStatus.Enabled)
+    })
+
+    it('calls appSync correctly with realAddressType filter', async () => {
+      const input: ListEmailAliasesInput = {
+        filter: {
+          realAddressType: {
+            equal: EmailAliasEntityRealAddressType.INTERNAL,
+          },
+        },
+      }
+
+      await instanceUnderTest.listEmailAliases(input)
+
+      verify(mockAppSync.listEmailMasks(anything())).once()
+      const [inputArgs] = capture(mockAppSync.listEmailMasks).first()
+      expect(inputArgs.filter).toBeDefined()
+      expect(inputArgs.filter?.realAddressType?.eq).toBe(
+        EmailMaskRealAddressType.Internal,
+      )
+    })
+
+    it('calls appSync correctly with sudoId, limit, nextToken and both filters', async () => {
+      const input: ListEmailAliasesInput = {
+        sudoId: 'mockSudoId',
+        limit: 20,
+        nextToken: 'testToken',
+        filter: {
+          status: {
+            notOneOf: [
+              EmailAliasEntityStatus.DISABLED,
+              EmailAliasEntityStatus.LOCKED,
+            ],
+          },
+          realAddressType: {
+            oneOf: [EmailAliasEntityRealAddressType.INTERNAL],
+          },
+        },
+      }
+
+      await instanceUnderTest.listEmailAliases(input)
+
+      verify(mockAppSync.listEmailMasks(anything())).once()
+      const [inputArgs] = capture(mockAppSync.listEmailMasks).first()
+      expect(inputArgs).toStrictEqual<ListEmailMasksRequest>({
+        sudoId: 'mockSudoId',
+        limit: 20,
+        nextToken: 'testToken',
+        filter: {
+          status: {
+            notIn: [EmailMaskStatus.Disabled, EmailMaskStatus.Locked],
+          },
+          realAddressType: {
+            in: [EmailMaskRealAddressType.Internal],
+          },
+        },
+      })
+    })
+
+    it('returns correct output with items', async () => {
+      const result = await instanceUnderTest.listEmailAliases()
+
+      expect(result).toStrictEqual({
+        emailAliases: [EntityDataFactory.emailAliasListItem],
+        nextToken: undefined,
+      })
+    })
+
+    it('returns correct output with nextToken', async () => {
+      when(mockAppSync.listEmailMasks(anything())).thenResolve({
+        items: [GraphQLDataFactory.emailMaskListInfo],
+        nextToken: 'testNextToken',
+      })
+
+      const result = await instanceUnderTest.listEmailAliases()
+
+      expect(result).toStrictEqual({
+        emailAliases: [EntityDataFactory.emailAliasListItem],
+        nextToken: 'testNextToken',
+      })
+    })
+
+    it('returns empty array when no items', async () => {
+      when(mockAppSync.listEmailMasks(anything())).thenResolve({
+        items: [],
+        nextToken: undefined,
+      })
+
+      const result = await instanceUnderTest.listEmailAliases()
+
+      expect(result).toStrictEqual({
+        emailAliases: [],
+        nextToken: undefined,
+      })
+    })
+
+    it('returns empty array when items is undefined', async () => {
+      when(mockAppSync.listEmailMasks(anything())).thenResolve({
+        nextToken: undefined,
+      } as any)
+
+      const result = await instanceUnderTest.listEmailAliases()
+
+      expect(result).toStrictEqual({
+        emailAliases: [],
+        nextToken: undefined,
+      })
+    })
+  })
+
+  describe('getEmailAliasById', () => {
+    beforeEach(() => {
+      when(mockAppSync.getEmailAliasById(anything())).thenResolve(
+        GraphQLDataFactory.emailMask,
+      )
+      when(mockDeviceKeyWorker.keyExists(anything(), anything())).thenResolve(
+        true,
+      )
+      when(mockDeviceKeyWorker.unsealString(anything())).thenResolve(
+        JSON.stringify({ test: 'test data' }),
+      )
+    })
+
+    it('returns expected result on success', async () => {
+      await expect(
+        instanceUnderTest.getEmailAliasById({
+          id: EntityDataFactory.emailAlias.id,
+        }),
+      ).resolves.toStrictEqual(EntityDataFactory.emailAlias)
+
+      verify(mockAppSync.getEmailAliasById(anything())).once()
+      const [inputArgs] = capture(mockAppSync.getEmailAliasById).first()
+      expect(inputArgs).toBe(EntityDataFactory.emailAlias.id)
+    })
+
+    it('throws EmailAliasNotFoundError if no result returned', async () => {
+      when(mockAppSync.getEmailAliasById(anything())).thenResolve(undefined)
+
+      await expect(
+        instanceUnderTest.getEmailAliasById({
+          id: EntityDataFactory.emailAlias.id,
+        }),
+      ).rejects.toThrow(EmailAliasNotFoundError)
+
+      verify(mockAppSync.getEmailAliasById(anything())).once()
+      const [inputArgs] = capture(mockAppSync.getEmailAliasById).first()
+      expect(inputArgs).toBe(EntityDataFactory.emailAlias.id)
+    })
+
+    it('throws if appsync throws error', async () => {
+      const error = new ServiceError('Unknown error')
+      when(mockAppSync.getEmailAliasById(anything())).thenReject(error)
+
+      await expect(
+        instanceUnderTest.getEmailAliasById({
+          id: EntityDataFactory.emailAlias.id,
+        }),
+      ).rejects.toThrow(error)
+
+      verify(mockAppSync.getEmailAliasById(anything())).once()
+      const [inputArgs] = capture(mockAppSync.getEmailAliasById).first()
+      expect(inputArgs).toBe(EntityDataFactory.emailAlias.id)
     })
   })
 })

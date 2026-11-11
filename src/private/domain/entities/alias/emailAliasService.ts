@@ -8,6 +8,7 @@ import {
   EmailAliasEntity,
   EmailAliasEntityRealAddressType,
   EmailAliasEntityStatus,
+  EmailAliasListItemEntity,
 } from './emailAliasEntity'
 
 /**
@@ -198,15 +199,52 @@ export interface ListEmailAliasesForOwnerInput {
   limit?: number
   nextToken?: string
 }
+
+/**
+ * Input for `EmailAliasService.listEmailAliases` method.
+ *
+ * @interface ListEmailAliasesInput
+ * @property {string} sudoId Optional identifier of a Sudo to filter aliases by
+ * @property {EmailAliasFilterInput} filter Used to filter results based on properties of the EmailAlias
+ */
+export interface ListEmailAliasesInput {
+  sudoId?: string
+  filter?: EmailAliasFilterInput
+  limit?: number
+  nextToken?: string
+}
+
+/**
+ * Input for `EmailAliasService.getEmailAliasById` method.
+ *
+ * @interface GetEmailAliasByIdInput
+ * @property {string} id The unique id of the sudo to retrieve
+ */
+export interface GetEmailAliasByIdInput {
+  id: string
+}
+
 /**
  * Output for `EmailAliasService.listEmailAliasesForOwner` method.
  *
- * @interface ListEmailAliasesOutput
+ * @interface ListEmailAliasesForOwnerOutput
  * @property {EmailAliasEntity[]} emailAliases The list of email aliases.
  * @property {string} [nextToken] A token to retrieve the next page of results, or undefined if there are no more results.
  */
-export interface ListEmailAliasesOutput {
+export interface ListEmailAliasesForOwnerOutput {
   emailAliases: EmailAliasEntity[]
+  nextToken?: string
+}
+
+/**
+ * Output for `EmailAliasService.listEmailAliases` method.
+ *
+ * @interface ListEmailAliasesOutput
+ * @property {EmailAliasListItemEntity[]} emailAliases The list of email aliases.
+ * @property {string} [nextToken] A token to retrieve the next page of results, or undefined if there are no more results.
+ */
+export interface ListEmailAliasesOutput {
+  emailAliases: EmailAliasListItemEntity[]
   nextToken?: string
 }
 
@@ -275,12 +313,31 @@ export interface EmailAliasService {
   /**
    * Lists email aliases owned by the current user, with optional filtering and pagination.
    *
+   * @deprecated Use listEmailAliases instead
    * @param {ListEmailAliasesForOwnerInput} [input] Optional input parameters for filtering and pagination
-   * @returns {Promise<ListEmailAliasesOutput>} A promise that resolves to a list of email aliases and pagination info
+   * @returns {Promise<ListEmailAliasesForOwnerOutput>} A promise that resolves to a list of email aliases and pagination info
    */
   listEmailAliasesForOwner(
     input?: ListEmailAliasesForOwnerInput,
+  ): Promise<ListEmailAliasesForOwnerOutput>
+
+  /**
+   * Lists email aliases owned by the current user, with optional filtering and pagination.
+   *
+   * @param {ListEmailAliasesInput} [input] Optional input parameters for filtering and pagination
+   * @returns {Promise<ListEmailAliasesOutput>} A promise that resolves to a list of email aliases and pagination info
+   */
+  listEmailAliases(
+    input?: ListEmailAliasesInput,
   ): Promise<ListEmailAliasesOutput>
+
+  /**
+   * Retrieves a specific EmailAlias matching the input parameters
+   *
+   * @param {GetEmailAliasByIdInput} input Input parameters to retrive an EmailAlias
+   * @throws {EmailAliasNotFoundError} if Alias is not found
+   */
+  getEmailAliasById(input: GetEmailAliasByIdInput): Promise<EmailAliasEntity>
 
   /**
    * Sends an email verification code or verifies an external email address given a verification code.

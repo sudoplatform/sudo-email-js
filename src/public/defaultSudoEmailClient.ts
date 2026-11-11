@@ -136,7 +136,9 @@ import {
   DeprovisionEmailAliasInput,
   DisableEmailAliasInput,
   EnableEmailAliasInput,
+  GetEmailAliasByIdInput,
   ListEmailAliasesForOwnerInput,
+  ListEmailAliasesInput,
   ProvisionEmailAliasInput,
   UpdateEmailAliasInput,
 } from './inputs/emailAlias'
@@ -170,7 +172,7 @@ import { EmailAddress } from './typings/emailAddress'
 import { EmailAddressPublicInfo } from './typings/emailAddressPublicInfo'
 import { EmailFolder } from './typings/emailFolder'
 import { EmailDomain } from './typings/emailDomain'
-import { EmailAlias } from './typings/emailAlias'
+import { EmailAlias, EmailAliasListItem } from './typings/emailAlias'
 import {
   EmailMessage,
   EmailMessageSubscriber,
@@ -190,6 +192,8 @@ import {
 import { LazyEmailMessageBodyCache } from '../private/data/message/cache/lazyEmailMessageBodyCache'
 import { EmailMessageBodyCache } from '../private/domain/entities/message/emailMessageBodyCache'
 import { UpdateBlockedAddressesStatus } from '../private/domain/entities/blocklist/updateBlockedAddressesStatus'
+import { ListEmailAliasesUseCase } from '../private/domain/use-cases/alias/listEmailAliasesUseCase'
+import { GetEmailAliasByIdUseCase } from '../private/domain/use-cases/alias/getEmailAliasByIdUseCase'
 
 export class DefaultSudoEmailClient implements SudoEmailClient {
   private readonly apiClient: ApiClient
@@ -1282,6 +1286,48 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       items: emailAliases,
       nextToken: result.nextToken,
     }
+  }
+
+  public async listEmailAliases(
+    input?: ListEmailAliasesInput,
+  ): Promise<ListOutput<EmailAliasListItem>> {
+    await this.ensureSignedIn()
+    this.log.debug(this.listEmailAliases.name, { input })
+
+    const useCase = new ListEmailAliasesUseCase(this.emailAliasService)
+
+    const result = await useCase.execute({
+      sudoId: input?.sudoId,
+      filter: input?.filter
+        ? EmailAliasFilterTransformer.apiToEntity(input.filter)
+        : undefined,
+      limit: input?.limit,
+      nextToken: input?.nextToken,
+    })
+
+    const emailAliases = await Promise.all(
+      result.emailAliases.map(async (entity) =>
+        EmailAliasTransformer.entityListToApiList(entity),
+      ),
+    )
+
+    return {
+      items: emailAliases,
+      nextToken: result.nextToken,
+    }
+  }
+
+  public async getEmailAliasById(
+    input: GetEmailAliasByIdInput,
+  ): Promise<EmailAlias> {
+    await this.ensureSignedIn()
+    this.log.debug(this.getEmailAliasById.name, { input })
+
+    const useCase = new GetEmailAliasByIdUseCase(this.emailAliasService)
+
+    const result = await useCase.execute(input)
+
+    return EmailAliasTransformer.entityToApi(result)
   }
 
   public async verifyExternalEmailAddress(

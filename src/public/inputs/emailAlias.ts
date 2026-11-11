@@ -182,3 +182,25 @@ export interface EmailAliasFilterInput {
 export interface ListEmailAliasesForOwnerInput extends Pagination {
   filter?: EmailAliasFilterInput
 }
+
+/**
+ * Input for `SudoEmailClient.listEmailAliases` method.
+ *
+ * @interface ListEmailAliasesInput
+ * @property {string} sudoId Optional identifier of a Sudo used to filter aliases by
+ * @property {EmailAliasFilterInput} filter Used to filter results based on properties of the EmailAlias
+ */
+export interface ListEmailAliasesInput extends Pagination {
+  sudoId?: string
+  filter?: EmailAliasFilterInput
+}
+
+/**
+ * Input for `SudoEmailClient.getEmailAliasById` method.
+ *
+ * @interface GetEmailAliasByIdInput
+ * @property {string} id The id of the EmailAlias to retrive
+ */
+export interface GetEmailAliasByIdInput {
+  id: string
+}

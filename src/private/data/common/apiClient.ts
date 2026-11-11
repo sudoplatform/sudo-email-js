@@ -174,6 +174,12 @@ import {
   VerifyExternalEmailAddressMutation,
   VerifyExternalEmailAddressResult,
   EmailMessageFilterInput,
+  ListEmailMasksInput,
+  EmailMaskListConnection,
+  ListEmailMasksQuery,
+  ListEmailMasksDocument,
+  GetEmailMaskByIdQuery,
+  GetEmailMaskByIdDocument,
 } from '../../../gen/graphqlTypes'
 import { ErrorTransformer } from './transformer/errorTransformer'
 import { GraphQLClient } from '@sudoplatform/sudo-user'
@@ -670,6 +676,26 @@ export class ApiClient {
       calleeName: this.listEmailMasksForOwner.name,
     })
     return data.listEmailMasksForOwner
+  }
+
+  public async listEmailMasks(
+    input: ListEmailMasksInput,
+  ): Promise<EmailMaskListConnection> {
+    const data = await this.performQuery<ListEmailMasksQuery>({
+      query: ListEmailMasksDocument,
+      variables: { input },
+      calleeName: this.listEmailMasks.name,
+    })
+    return data.listEmailMasks
+  }
+
+  public async getEmailAliasById(id: string): Promise<EmailMask | undefined> {
+    const data = await this.performQuery<GetEmailMaskByIdQuery>({
+      query: GetEmailMaskByIdDocument,
+      variables: { id },
+      calleeName: this.getEmailAliasById.name,
+    })
+    return data.getEmailMaskById ?? undefined
   }
 
   public onEmailMessageDeleted(

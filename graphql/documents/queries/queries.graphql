@@ -121,6 +121,21 @@ query ListEmailMasksForOwner($input: ListEmailMasksForOwnerInput!) {
   }
 }
 
+query ListEmailMasks($input: ListEmailMasksInput!) {
+  listEmailMasks(input: $input) {
+    items {
+      ...EmailMaskListInfo
+    }
+    nextToken
+  }
+}
+
+query GetEmailMaskById($id: String!) {
+  getEmailMaskById(id: $id) {
+    ...EmailMask
+  }
+}
+
 ##########
 # Keys
 ##########

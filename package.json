@@ -154,8 +154,8 @@
   "packageManager": "yarn@4.12.0+sha512.f45ab632439a67f8bc759bf32ead036a1f413287b9042726b7cc4818b7b49e14e9423ba49b18f9e06ea4941c1ad062385b1d8760a8d5091a1a31e5f6219afca8",
   "auditSuppressions": {
     "1120607": {
-      "until": 1793330874,
-      "untilISO": "2026-10-30T03:27:54Z",
+      "until": 1796944836,
+      "untilISO": "2026-12-10T23:20:36Z",
       "reason": "js-cookie 2.2.1 pinned by amazon-cognito-auth-js (unmaintained) — fix requires major version 3.x which is incompatible"
     }
   }

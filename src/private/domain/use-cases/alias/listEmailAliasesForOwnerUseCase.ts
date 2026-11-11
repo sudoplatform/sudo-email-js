@@ -8,7 +8,7 @@ import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
 import {
   EmailAliasService,
   EmailAliasFilterInput,
-  ListEmailAliasesOutput,
+  ListEmailAliasesForOwnerOutput,
 } from '../../entities/alias/emailAliasService'
 
 /**
@@ -37,7 +37,7 @@ export class ListEmailAliasesForOwnerUseCase {
 
   async execute(
     input?: ListEmailAliasesForOwnerUseCaseInput,
-  ): Promise<ListEmailAliasesOutput> {
+  ): Promise<ListEmailAliasesForOwnerOutput> {
     this.log.debug(this.constructor.name, {
       input,
     })

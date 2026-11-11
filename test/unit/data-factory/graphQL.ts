@@ -18,6 +18,8 @@ import {
   EmailFolderConnection,
   EmailMask,
   EmailMaskConnection,
+  EmailMaskListConnection,
+  EmailMaskListInfo,
   EmailMaskRealAddressType,
   EmailMaskStatus,
   EmailMessageConnection,
@@ -313,8 +315,36 @@ export class GraphQLDataFactory {
     },
   }
 
+  static readonly emailMaskListInfo: EmailMaskListInfo = {
+    ...GraphQLDataFactory.commonProps,
+    owners: [GraphQLDataFactory.owner],
+    keyRingId: 'testKeyRingId',
+    identityId: 'testIdentityId',
+    maskAddress: 'test-alias@anonyome.com',
+    realAddressType: EmailMaskRealAddressType.Internal,
+    status: EmailMaskStatus.Enabled,
+    inboundReceived: 0,
+    inboundDelivered: 0,
+    outboundReceived: 0,
+    outboundDelivered: 0,
+    spamCount: 0,
+    virusCount: 0,
+    expiresAtEpochSec: 0.001,
+    metadata: {
+      algorithm: 'AES/CBC/PKCS7Padding',
+      keyId: 'keyId',
+      plainTextType: 'json-string',
+      base64EncodedSealedData: 'dummySealedData',
+    },
+  }
+
   static readonly emailMaskConnection: EmailMaskConnection = {
     items: [GraphQLDataFactory.emailMask],
+    nextToken: undefined,
+  }
+
+  static readonly emailMaskListInfoConnection: EmailMaskListConnection = {
+    items: [GraphQLDataFactory.emailMaskListInfo],
     nextToken: undefined,
   }
 }

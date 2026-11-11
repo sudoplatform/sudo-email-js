@@ -16,6 +16,7 @@ import {
 } from '../../../src/public/typings/emailMessage'
 import {
   EmailAlias,
+  EmailAliasListItem,
   EmailAliasRealAddressType,
   EmailAliasStatus,
   EncryptionStatus,
@@ -122,6 +123,25 @@ export class APIDataFactory {
     identityId: 'testIdentityId',
     aliasAddress: 'test-alias@anonyome.com',
     realAddress: 'test-real@anonyome.com',
+    realAddressType: EmailAliasRealAddressType.INTERNAL,
+    status: EmailAliasStatus.ENABLED,
+    inboundReceived: 0,
+    inboundDelivered: 0,
+    outboundReceived: 0,
+    outboundDelivered: 0,
+    spamCount: 0,
+    virusCount: 0,
+    expiresAt: new Date(1.0),
+    metadata: {
+      test: 'test data',
+    },
+  }
+
+  static readonly emailAliasListItem: EmailAliasListItem = {
+    ...APIDataFactory.commonProps,
+    owners: [APIDataFactory.owner],
+    identityId: 'testIdentityId',
+    aliasAddress: 'test-alias@anonyome.com',
     realAddressType: EmailAliasRealAddressType.INTERNAL,
     status: EmailAliasStatus.ENABLED,
     inboundReceived: 0,
