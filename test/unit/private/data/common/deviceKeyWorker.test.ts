@@ -105,29 +105,139 @@ describe('DeviceKeyWorker Test Suite', () => {
     })
   })
 
-  describe('getSingletonKeyPair', () => {
-    it('throws InternalError if public key returns undefined after generation', async () => {
-      when(mockKeyManager.getPublicKey(anything())).thenResolve(undefined)
-      await expect(
-        instanceUnderTest.getSingletonKeyPair(),
-      ).rejects.toStrictEqual(
-        new InternalError('Could not generate public key pair'),
+  describe('singleton key pair', () => {
+    const singletonKeyId = v4()
+
+    beforeEach(() => {
+      when(mockKeyManager.getPassword(anything())).thenResolve(
+        stringToArrayBuffer(singletonKeyId),
       )
-      verify(mockKeyManager.getPublicKey(anything())).once()
+      when(mockKeyManager.doesPrivateKeyExist(anything())).thenResolve(true)
     })
 
-    it('retrieves existing keyPair successfully', async () => {
-      when(mockKeyManager.getPassword(anything())).thenResolve(
-        stringToArrayBuffer(v4()),
-      )
-      const deviceKey = await instanceUnderTest.getSingletonKeyPair()
-      expect(deviceKey).toMatchObject<DeviceKey>({
-        id: expect.stringMatching(EntityDataFactory.uuidV4Regex),
+    describe('getSingletonKeyPair', () => {
+      it('retrieves the existing key pair', async () => {
+        const deviceKey = await instanceUnderTest.getSingletonKeyPair()
+        expect(deviceKey).toMatchObject<DeviceKey>({
+          id: singletonKeyId,
+          algorithm: 'RSAEncryptionOAEPAESCBC',
+          data: 'YmI=',
+          format: DeviceKeyWorkerKeyFormat.RsaPublicKey,
+        })
+      })
+
+      it('returns undefined and creates nothing if no singleton is recorded', async () => {
+        when(mockKeyManager.getPassword(anything())).thenResolve(undefined)
+        await expect(
+          instanceUnderTest.getSingletonKeyPair(),
+        ).resolves.toBeUndefined()
+        verify(mockKeyManager.generateKeyPair(anything())).never()
+        verify(mockKeyManager.addPassword(anything(), anything())).never()
+      })
+
+      it('returns undefined and creates nothing if the private key is missing', async () => {
+        when(mockKeyManager.doesPrivateKeyExist(anything())).thenResolve(false)
+        await expect(
+          instanceUnderTest.getSingletonKeyPair(),
+        ).resolves.toBeUndefined()
+        verify(mockKeyManager.generateKeyPair(anything())).never()
+      })
+    })
+
+    describe('createSingletonKeyPairIfAbsent', () => {
+      it('returns the existing key pair without creating', async () => {
+        const result = await instanceUnderTest.createSingletonKeyPairIfAbsent()
+        expect(result.created).toBe(false)
+        expect(result.key.id).toBe(singletonKeyId)
+        verify(mockKeyManager.generateKeyPair(anything())).never()
+      })
+
+      it('creates and records a key pair if none is recorded', async () => {
+        when(mockKeyManager.getPassword(anything())).thenResolve(undefined)
+        const result = await instanceUnderTest.createSingletonKeyPairIfAbsent()
+        expect(result.created).toBe(true)
+        expect(result.key.id).toMatch(EntityDataFactory.uuidV4Regex)
+        verify(mockKeyManager.generateKeyPair(result.key.id)).once()
+        const [recorded, name] = capture(mockKeyManager.addPassword).first()
+        expect(new TextDecoder().decode(recorded)).toBe(result.key.id)
+        expect(name).toBe('singleton-key-id')
+      })
+
+      it('replaces a recorded singleton whose private key is missing', async () => {
+        when(mockKeyManager.doesPrivateKeyExist(anything())).thenResolve(false)
+        const result = await instanceUnderTest.createSingletonKeyPairIfAbsent()
+        expect(result.created).toBe(true)
+        expect(result.key.id).not.toBe(singletonKeyId)
+        verify(mockKeyManager.deletePassword('singleton-key-id')).once()
+      })
+
+      it('removes the generated key pair if recording it fails', async () => {
+        when(mockKeyManager.getPassword(anything())).thenResolve(undefined)
+        when(mockKeyManager.addPassword(anything(), anything())).thenReject(
+          new Error('add failed'),
+        )
+        await expect(
+          instanceUnderTest.createSingletonKeyPairIfAbsent(),
+        ).rejects.toThrow('add failed')
+        verify(mockKeyManager.deleteKeyPair(anything())).once()
+      })
+
+      it('serialises concurrent calls', async () => {
+        let recorded: ArrayBuffer | undefined
+        when(mockKeyManager.getPassword(anything())).thenCall(
+          async () => recorded,
+        )
+        when(mockKeyManager.addPassword(anything(), anything())).thenCall(
+          async (password: ArrayBuffer) => {
+            recorded = password
+          },
+        )
+        const results = await Promise.all([
+          instanceUnderTest.createSingletonKeyPairIfAbsent(),
+          instanceUnderTest.createSingletonKeyPairIfAbsent(),
+        ])
+        expect(results.map((r) => r.created).sort()).toStrictEqual([
+          false,
+          true,
+        ])
+        expect(results[0].key.id).toBe(results[1].key.id)
+        verify(mockKeyManager.generateKeyPair(anything())).once()
+      })
+    })
+
+    describe('getSingletonKeyId', () => {
+      it('returns the recorded id', async () => {
+        await expect(instanceUnderTest.getSingletonKeyId()).resolves.toBe(
+          singletonKeyId,
+        )
+      })
+
+      it('returns undefined if none is recorded', async () => {
+        when(mockKeyManager.getPassword(anything())).thenResolve(undefined)
+        await expect(
+          instanceUnderTest.getSingletonKeyId(),
+        ).resolves.toBeUndefined()
+      })
+    })
+  })
+
+  describe('getPublicKeyWithId', () => {
+    it('returns the formatted public key', async () => {
+      await expect(
+        instanceUnderTest.getPublicKeyWithId('someKey'),
+      ).resolves.toMatchObject<DeviceKey>({
+        id: 'someKey',
         algorithm: 'RSAEncryptionOAEPAESCBC',
         data: 'YmI=',
         format: DeviceKeyWorkerKeyFormat.RsaPublicKey,
       })
-      verify(mockKeyManager.getPublicKey(anything())).once()
+    })
+
+    it('returns undefined if there is no public key', async () => {
+      when(mockKeyManager.getPublicKey(anything())).thenResolve(undefined)
+      await expect(
+        instanceUnderTest.getPublicKeyWithId('someKey'),
+      ).resolves.toBeUndefined()
     })
   })
 

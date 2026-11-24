@@ -36,13 +36,17 @@ describe('DeprovisionEmailAccountUseCase Test Suite', () => {
 
   describe('execute', () => {
     it('deprovisionEmailAccount use case with valid input succeeds', async () => {
-      when(mockEmailAccountService.delete(anything())).thenResolve(
-        EntityDataFactory.emailAccount,
-      )
+      when(mockEmailAccountService.delete(anything())).thenResolve({
+        emailAccount: EntityDataFactory.emailAccount,
+        keyIdsNotRemoved: [],
+      })
       const result = await instanceUnderTest.execute(
         EntityDataFactory.emailAccount.id,
       )
-      expect(result).toStrictEqual(EntityDataFactory.emailAccount)
+      expect(result).toStrictEqual({
+        emailAccount: EntityDataFactory.emailAccount,
+        keyIdsNotRemoved: [],
+      })
       const [inputArgs] = capture(mockEmailAccountService.delete).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         emailAddressId: EntityDataFactory.emailAccount.id,
@@ -51,9 +55,10 @@ describe('DeprovisionEmailAccountUseCase Test Suite', () => {
     })
 
     it('calls cache.flush with emailAddressId after successful deprovision', async () => {
-      when(mockEmailAccountService.delete(anything())).thenResolve(
-        EntityDataFactory.emailAccount,
-      )
+      when(mockEmailAccountService.delete(anything())).thenResolve({
+        emailAccount: EntityDataFactory.emailAccount,
+        keyIdsNotRemoved: [],
+      })
       await instanceUnderTest.execute(EntityDataFactory.emailAccount.id)
 
       verify(mockCache.flush(anything())).once()

@@ -5,8 +5,10 @@
  */
 
 import { DefaultLogger, Logger } from '@sudoplatform/sudo-common'
-import { EmailAccountEntity } from '../../entities/account/emailAccountEntity'
-import { EmailAccountService } from '../../entities/account/emailAccountService'
+import {
+  DeleteEmailAccountResult,
+  EmailAccountService,
+} from '../../entities/account/emailAccountService'
 import { EmailMessageBodyCache } from '../../entities/message/emailMessageBodyCache'
 
 /**
@@ -22,7 +24,7 @@ export class DeprovisionEmailAccountUseCase {
     this.log = new DefaultLogger(this.constructor.name)
   }
 
-  async execute(id: string): Promise<EmailAccountEntity> {
+  async execute(id: string): Promise<DeleteEmailAccountResult> {
     this.log.debug(this.constructor.name, {
       id,
     })

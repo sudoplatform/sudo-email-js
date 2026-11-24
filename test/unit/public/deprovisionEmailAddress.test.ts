@@ -15,7 +15,7 @@ import {
 } from 'ts-mockito'
 import { MockedClass } from 'vitest'
 import { v4 } from 'uuid'
-import { SudoEmailClient } from '../../../src'
+import { KeyPairRemovalFailedError, SudoEmailClient } from '../../../src'
 import { DeprovisionEmailAccountUseCase } from '../../../src/private/domain/use-cases/account/deprovisionEmailAccountUseCase'
 import { APIDataFactory } from '../data-factory/api'
 import { EntityDataFactory } from '../data-factory/entity'
@@ -48,9 +48,10 @@ describe('SudoEmailClient.deprovisionEmailAccount Test Suite', () => {
 
     instanceUnderTest = sudoEmailClientTestsBase.getInstanceUnderTest()
 
-    when(mockDeprovisionEmailAccountUseCase.execute(anything())).thenResolve(
-      EntityDataFactory.emailAccount,
-    )
+    when(mockDeprovisionEmailAccountUseCase.execute(anything())).thenResolve({
+      emailAccount: EntityDataFactory.emailAccount,
+      keyIdsNotRemoved: [],
+    })
   })
   it('generates use case', async () => {
     await instanceUnderTest.deprovisionEmailAddress('')
@@ -69,5 +70,18 @@ describe('SudoEmailClient.deprovisionEmailAccount Test Suite', () => {
     await expect(
       instanceUnderTest.deprovisionEmailAddress(''),
     ).resolves.toEqual(APIDataFactory.emailAddress)
+  })
+
+  it('throws KeyPairRemovalFailedError carrying the deprovisioned address if key pairs could not be removed', async () => {
+    when(mockDeprovisionEmailAccountUseCase.execute(anything())).thenResolve({
+      emailAccount: EntityDataFactory.emailAccount,
+      keyIdsNotRemoved: ['keyA'],
+    })
+    const error = await instanceUnderTest
+      .deprovisionEmailAddress('')
+      .catch((e) => e)
+    expect(error).toBeInstanceOf(KeyPairRemovalFailedError)
+    expect(error.emailAddress).toEqual(APIDataFactory.emailAddress)
+    expect(error.keyIds).toStrictEqual(['keyA'])
   })
 })

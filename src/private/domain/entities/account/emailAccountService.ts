@@ -16,11 +16,13 @@ import { EmailAddressPublicInfoEntity } from './emailAddressPublicInfoEntity'
  * @property {EmailAddressEntity} emailAddressEntity The email address to provision.
  * @property {string} ownershipProofToken A signed ownership proof for the specified owners.
  * @property {boolean} allowSymmetricKeyGeneration (optional) If false and no symmetric key is found, a KeyNotFoundError will be thrown. Defaults to true.
+ * @property {string} keyId (optional) Identifier of the key pair in the key store to provision with. Only allowed when the client allows caller managed keys.
  */
 export interface CreateEmailAccountInput {
   emailAddressEntity: EmailAddressEntity
   ownershipProofToken: string
   allowSymmetricKeyGeneration?: boolean
+  keyId?: string
 }
 
 /**
@@ -33,6 +35,18 @@ export interface DeleteEmailAccountInput {
   emailAddressId: string
 }
 
+/**
+ * Output of `EmailAccountService.delete` method.
+ *
+ * @interface DeleteEmailAccountResult
+ * @property {EmailAccountEntity} emailAccount The email account that was deleted.
+ * @property {string[]} keyIdsNotRemoved Identifiers of key pairs that were due to be removed from the key store but could not be.
+ *  Empty if every removal succeeded, or none was due.
+ */
+export interface DeleteEmailAccountResult {
+  emailAccount: EmailAccountEntity
+  keyIdsNotRemoved: string[]
+}
 /**
  * Input for `EmailAccountService.updateEmailAddressMetadata` method.
  *
@@ -136,10 +150,15 @@ export interface EmailAccountService {
   /**
    * Delete an email account.
    *
+   * Once the service has deprovisioned the email account, if the client doesn't allow caller managed keys,
+   * the account's key pairs are removed from the key store, except a key pair that another email address
+   * or email alias still uses. Nothing is removed while the client allows caller managed keys or enforces
+   * a singleton key pair, and the singleton is never removed.
+   *
    * @param {DeleteEmailAccountInput} input Parameters used to delete an email account.
-   * @returns {EmailAccountEntity} The email account that was deleted.
+   * @returns {DeleteEmailAccountResult} The email account that was deleted, and any key pairs that could not be removed.
    */
-  delete(input: DeleteEmailAccountInput): Promise<EmailAccountEntity>
+  delete(input: DeleteEmailAccountInput): Promise<DeleteEmailAccountResult>
 
   /**
    * Update email account metadata.

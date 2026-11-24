@@ -92,12 +92,16 @@ import {
   GetKeyRingForEmailQueryVariables,
   GetPublicKeyForEmailDocument,
   GetPublicKeyForEmailQuery,
+  GetPublicKeysForEmailDocument,
+  GetPublicKeysForEmailQuery,
+  GetPublicKeysForEmailQueryVariables,
   ListEmailAddressesDocument,
   ListEmailAddressesForSudoIdDocument,
   ListEmailAddressesForSudoIdQuery,
   ListEmailAddressesForSudoIdQueryVariables,
   ListEmailAddressesQuery,
   ListEmailAddressesQueryVariables,
+  KeyFormat,
   ListEmailDomainsDocument,
   ListEmailDomainsQuery,
   ListEmailFoldersForEmailAddressIdDocument,
@@ -782,6 +786,32 @@ export class ApiClient {
       calleeName: this.getPublicKey.name,
     })
     return data.getPublicKeyForEmail ?? undefined
+  }
+
+  /**
+   * Lists the public keys registered for all of the user's email addresses
+   * and email aliases, a page at a time.
+   *
+   * @param limit Maximum number of items to return in the page.
+   * @param nextToken Token from a previous page.
+   * @param keyFormats Key formats to return. An empty array returns every
+   *   format; omitting it returns only `RSA_PUBLIC_KEY` keys.
+   */
+  public async getPublicKeys(
+    limit?: number,
+    nextToken?: string,
+    keyFormats?: KeyFormat[],
+  ): Promise<PaginatedPublicKey> {
+    const data = await this.performQuery<GetPublicKeysForEmailQuery>({
+      query: GetPublicKeysForEmailDocument,
+      variables: {
+        limit,
+        nextToken,
+        keyFormats,
+      } as GetPublicKeysForEmailQueryVariables,
+      calleeName: this.getPublicKeys.name,
+    })
+    return data.getPublicKeysForEmail
   }
 
   private async performQuery<Q>({

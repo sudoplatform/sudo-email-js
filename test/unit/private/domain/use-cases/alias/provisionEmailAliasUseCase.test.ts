@@ -52,6 +52,7 @@ describe('ProvisionEmailAliasUseCase Test Suite', () => {
         ...input,
         metadata: undefined,
         expiresAt: undefined,
+        keyId: undefined,
       })
     })
 
@@ -74,6 +75,7 @@ describe('ProvisionEmailAliasUseCase Test Suite', () => {
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         ...input,
         expiresAt: undefined,
+        keyId: undefined,
       })
     })
 
@@ -96,6 +98,7 @@ describe('ProvisionEmailAliasUseCase Test Suite', () => {
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
         ...input,
         metadata: undefined,
+        keyId: undefined,
       })
     })
 
@@ -117,7 +120,10 @@ describe('ProvisionEmailAliasUseCase Test Suite', () => {
       const [inputArgs] = capture(
         mockEmailAliasService.provisionEmailAlias,
       ).first()
-      expect(inputArgs).toStrictEqual<typeof inputArgs>(input)
+      expect(inputArgs).toStrictEqual<typeof inputArgs>({
+        ...input,
+        keyId: undefined,
+      })
     })
 
     it('throws InvalidArgumentError if expiresAt is in the past', async () => {

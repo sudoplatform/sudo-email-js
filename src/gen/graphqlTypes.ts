@@ -786,16 +786,19 @@ export type QueryGetEmailMessageArgs = {
 }
 
 export type QueryGetKeyRingForEmailArgs = {
+  keyFormats?: InputMaybe<Array<KeyFormat>>
   keyRingId: Scalars['String']['input']
   limit?: InputMaybe<Scalars['Int']['input']>
   nextToken?: InputMaybe<Scalars['String']['input']>
 }
 
 export type QueryGetPublicKeyForEmailArgs = {
+  keyFormats?: InputMaybe<Array<KeyFormat>>
   keyId: Scalars['String']['input']
 }
 
 export type QueryGetPublicKeysForEmailArgs = {
+  keyFormats?: InputMaybe<Array<KeyFormat>>
   limit?: InputMaybe<Scalars['Int']['input']>
   nextToken?: InputMaybe<Scalars['String']['input']>
 }
@@ -2616,6 +2619,7 @@ export type GetPublicKeyForEmailQuery = {
 export type GetPublicKeysForEmailQueryVariables = Exact<{
   limit?: InputMaybe<Scalars['Int']['input']>
   nextToken?: InputMaybe<Scalars['String']['input']>
+  keyFormats?: InputMaybe<Array<KeyFormat> | KeyFormat>
 }>
 
 export type GetPublicKeysForEmailQuery = {
@@ -8532,6 +8536,23 @@ export const GetPublicKeysForEmailDocument = {
           },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'keyFormats' },
+          },
+          type: {
+            kind: 'ListType',
+            type: {
+              kind: 'NonNullType',
+              type: {
+                kind: 'NamedType',
+                name: { kind: 'Name', value: 'KeyFormat' },
+              },
+            },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -8554,6 +8575,14 @@ export const GetPublicKeysForEmailDocument = {
                 value: {
                   kind: 'Variable',
                   name: { kind: 'Name', value: 'nextToken' },
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'keyFormats' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'keyFormats' },
                 },
               },
             ],

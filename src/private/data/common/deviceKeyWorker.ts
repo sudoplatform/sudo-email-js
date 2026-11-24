@@ -17,6 +17,7 @@ import {
   Buffer as BufferUtil,
   Base64,
 } from '@sudoplatform/sudo-common'
+import { Mutex } from 'async-mutex'
 import { v4 } from 'uuid'
 import { InternalError } from '../../../public/errors'
 import { PublicKeyFormatTransformer } from './transformer/publicKeyFormatTransformer'
@@ -115,6 +116,18 @@ export interface EncryptWithPublicKeyInput {
   format: PublicKeyFormat
 }
 
+/**
+ * Result of `DeviceKeyWorker.createSingletonKeyPairIfAbsent`.
+ *
+ * @property {DeviceKey} key The singleton key pair's public key.
+ * @property {boolean} created `true` if the call created the singleton key
+ *  pair, `false` if it already existed.
+ */
+export interface SingletonKeyPairResult {
+  key: DeviceKey
+  created: boolean
+}
+
 export const SYMMETRIC_KEY_ID = 'email-symmetric-key'
 const RSA_KEY_SIZE = 256
 const SINGLETON_PUBLIC_KEY_ID = 'singleton-key-id'
@@ -124,7 +137,43 @@ export interface DeviceKeyWorker {
 
   generateKeyPair(): Promise<DeviceKey>
 
-  getSingletonKeyPair(): Promise<DeviceKey>
+  /**
+   * Gets the singleton key pair's public key. Never creates one.
+   *
+   * @returns The singleton's public key, or `undefined` if no singleton is
+   *  recorded or its private key isn't in the key store.
+   */
+  getSingletonKeyPair(): Promise<DeviceKey | undefined>
+
+  /**
+   * Gets the singleton key pair, creating it if there isn't one.
+   *
+   * If the recorded singleton's private key is missing from the key store, a
+   * replacement singleton is created and the replacement is reported as an
+   * error in the log.
+   */
+  createSingletonKeyPairIfAbsent(): Promise<SingletonKeyPairResult>
+
+  /**
+   * The id of the singleton key pair, or `undefined` if none has been
+   * created. The key pair itself may not be in the key store.
+   */
+  getSingletonKeyId(): Promise<string | undefined>
+
+  /**
+   * Gets the public key of a key pair in the key store.
+   *
+   * @param keyId Identifier of the key pair.
+   * @returns The public key, or `undefined` if the key store has none.
+   */
+  getPublicKeyWithId(keyId: string): Promise<DeviceKey | undefined>
+
+  /**
+   * Stores the singleton key pair's public key again after an import, if it
+   * is missing. Exported archives leave public keys out, so an import restores
+   * only the singleton's private key. The public key is derived from it.
+   */
+  restoreSingletonPublicKey(): Promise<void>
 
   generateRandomSymmetricKey(): Promise<ArrayBuffer>
 
@@ -166,6 +215,13 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
   readonly Defaults = {
     Algorithm: 'RSAEncryptionOAEPAESCBC',
   }
+
+  /**
+   * Serialises every read-modify-write of the singleton key id's record, so
+   * concurrent calls can't each create a "singleton" key pair.
+   */
+  private readonly singletonMutex = new Mutex()
+
   constructor(private readonly keyManager: SudoKeyManager) {
     this.log = new DefaultLogger(this.constructor.name)
   }
@@ -209,30 +265,177 @@ export class DefaultDeviceKeyWorker implements DeviceKeyWorker {
     return deviceKey
   }
 
-  /**
-   * Returns the current singleton Public Key from Key Manager.
-   * A new key will be generated and returned if none exists.
-   */
-  async getSingletonKeyPair(): Promise<DeviceKey> {
-    let keyIdBits = await this.keyManager.getPassword(SINGLETON_PUBLIC_KEY_ID)
-    let keyId = new TextDecoder().decode(keyIdBits)
+  async getSingletonKeyPair(): Promise<DeviceKey | undefined> {
+    return await this.singletonMutex.runExclusive(async () => {
+      const existing = await this.existingSingletonKeyPair()
+      return existing
+        ? await this.formatDeviceKey(existing.keyId, existing.publicKey)
+        : undefined
+    })
+  }
 
-    // If key id doesn't exist, generate new key and store
-    if (!keyId.length) {
-      keyId = v4()
-      keyIdBits = BufferUtil.fromString(keyId)
-      await this.keyManager.addPassword(keyIdBits, SINGLETON_PUBLIC_KEY_ID)
-      await this.keyManager.generateKeyPair(keyId)
+  async createSingletonKeyPairIfAbsent(): Promise<SingletonKeyPairResult> {
+    return await this.singletonMutex.runExclusive(async () => {
+      const existing = await this.existingSingletonKeyPair()
+      if (existing) {
+        return {
+          key: await this.formatDeviceKey(existing.keyId, existing.publicKey),
+          created: false,
+        }
+      }
+
+      // No singleton yet, or its private key is missing: start a new one.
+      const missingKeyId = await this.getSingletonKeyId()
+      const replacement = await this.generateSingletonKeyPair()
+      if (missingKeyId) {
+        this.log.error(
+          'Singleton key pair has no private key in the key store; replaced it. ' +
+            'Messages sealed to the missing key pair can not be read here until ' +
+            'a key archive containing it is imported.',
+          { missingKeyId, replacementKeyId: replacement.keyId },
+        )
+      } else {
+        this.log.info('Created singleton key pair', {
+          keyId: replacement.keyId,
+        })
+      }
+      return {
+        key: await this.formatDeviceKey(
+          replacement.keyId,
+          replacement.publicKey,
+        ),
+        created: true,
+      }
+    })
+  }
+
+  async getSingletonKeyId(): Promise<string | undefined> {
+    const keyIdBits = await this.keyManager.getPassword(SINGLETON_PUBLIC_KEY_ID)
+    if (!keyIdBits) {
+      return undefined
     }
+    const keyId = new TextDecoder().decode(keyIdBits)
+    return keyId.length ? keyId : undefined
+  }
 
-    // Get public key with singleton key id
+  async getPublicKeyWithId(keyId: string): Promise<DeviceKey | undefined> {
     const publicKey = await this.keyManager.getPublicKey(keyId)
-    if (publicKey === undefined) {
-      throw new InternalError('Could not generate public key pair')
-    }
+    return publicKey ? await this.formatDeviceKey(keyId, publicKey) : undefined
+  }
 
-    const deviceKey = await this.formatDeviceKey(keyId, publicKey)
-    return deviceKey
+  async restoreSingletonPublicKey(): Promise<void> {
+    await this.singletonMutex.runExclusive(async () => {
+      await this.restoreSingletonPublicKeyLocked()
+    })
+  }
+
+  /**
+   * The singleton key pair, or `undefined` if none is recorded or its private
+   * key isn't in the key store. Call while holding the singleton mutex.
+   *
+   * A private key without a public key (for example after an import by a
+   * previous version of this SDK) is repaired by deriving the public key.
+   */
+  private async existingSingletonKeyPair(): Promise<
+    { keyId: string; publicKey: PublicKey } | undefined
+  > {
+    const keyId = await this.getSingletonKeyId()
+    if (!keyId || !(await this.keyManager.doesPrivateKeyExist(keyId))) {
+      return undefined
+    }
+    let publicKey = await this.keyManager.getPublicKey(keyId)
+    if (!publicKey) {
+      await this.restoreSingletonPublicKeyLocked()
+      publicKey = await this.keyManager.getPublicKey(keyId)
+    }
+    if (!publicKey) {
+      // Replacing the key pair would abandon the private key that messages are
+      // sealed to, so fail instead.
+      throw new InternalError(
+        `Singleton key pair ${keyId} has a private key but no public key`,
+      )
+    }
+    return { keyId, publicKey }
+  }
+
+  /**
+   * Generates a key pair and records it as the singleton. Call while holding
+   * the singleton mutex.
+   *
+   * The key pair is generated before its id is recorded, so a failed
+   * generation never leaves the record naming a key pair that doesn't exist.
+   */
+  private async generateSingletonKeyPair(): Promise<{
+    keyId: string
+    publicKey: PublicKey
+  }> {
+    const keyId = v4()
+    await this.keyManager.generateKeyPair(keyId)
+    try {
+      const publicKey = await this.keyManager.getPublicKey(keyId)
+      if (publicKey === undefined) {
+        throw new InternalError('Could not generate public key pair')
+      }
+      await this.keyManager.deletePassword(SINGLETON_PUBLIC_KEY_ID)
+      await this.keyManager.addPassword(
+        BufferUtil.fromString(keyId),
+        SINGLETON_PUBLIC_KEY_ID,
+      )
+      return { keyId, publicKey }
+    } catch (err) {
+      try {
+        await this.keyManager.deleteKeyPair(keyId)
+      } catch (cleanupErr) {
+        this.log.warn('Failed to remove singleton key pair after error', {
+          cleanupErr,
+        })
+      }
+      throw err
+    }
+  }
+
+  private async restoreSingletonPublicKeyLocked(): Promise<void> {
+    const keyId = await this.getSingletonKeyId()
+    if (!keyId || (await this.keyManager.getPublicKey(keyId))) {
+      return
+    }
+    const privateKey = await this.keyManager.getPrivateKey(keyId)
+    if (!privateKey) {
+      return
+    }
+    await this.keyManager.addPublicKey(
+      await DefaultDeviceKeyWorker.derivePublicKey(privateKey),
+      keyId,
+    )
+    this.log.info('Restored the public key of the singleton key pair', {
+      keyId,
+    })
+  }
+
+  /**
+   * Derives the SPKI public key for a PKCS#8 RSA private key, the formats the
+   * key manager stores them in.
+   */
+  private static async derivePublicKey(
+    privateKeyData: ArrayBuffer,
+  ): Promise<ArrayBuffer> {
+    const algorithm = { name: 'RSA-OAEP', hash: 'SHA-1' }
+    const privateKey = await crypto.subtle.importKey(
+      'pkcs8',
+      privateKeyData,
+      algorithm,
+      true,
+      ['decrypt'],
+    )
+    const { n, e } = await crypto.subtle.exportKey('jwk', privateKey)
+    const publicKey = await crypto.subtle.importKey(
+      'jwk',
+      { kty: 'RSA', n, e, alg: 'RSA-OAEP', ext: true },
+      algorithm,
+      true,
+      ['encrypt'],
+    )
+    return await crypto.subtle.exportKey('spki', publicKey)
   }
 
   /**

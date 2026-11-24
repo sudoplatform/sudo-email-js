@@ -49,6 +49,10 @@ describe('DefaultEmailAccountService Test Suite', () => {
     instanceUnderTest = new DefaultEmailAccountService(
       instance(mockAppSync),
       instance(mockDeviceKeyWorker),
+      {
+        allowCallerManagedKeys: true,
+        enforceSingletonPublicKey: false,
+      },
     )
   })
 
@@ -132,7 +136,10 @@ describe('DefaultEmailAccountService Test Suite', () => {
       const iat = new DefaultEmailAccountService(
         instance(mockAppSync),
         instance(mockDeviceKeyWorker),
-        { enforceSingletonPublicKey: true },
+        {
+          allowCallerManagedKeys: true,
+          enforceSingletonPublicKey: true,
+        },
       )
       const createEmailAccountInput: CreateEmailAccountInput = {
         emailAddressEntity: EntityDataFactory.emailAddress,
@@ -165,7 +172,10 @@ describe('DefaultEmailAccountService Test Suite', () => {
       const iat = new DefaultEmailAccountService(
         instance(mockAppSync),
         instance(mockDeviceKeyWorker),
-        { enforceSingletonPublicKey: true },
+        {
+          allowCallerManagedKeys: true,
+          enforceSingletonPublicKey: true,
+        },
       )
       const createEmailAccountInput: CreateEmailAccountInput = {
         emailAddressEntity: EntityDataFactory.emailAddress,
@@ -194,7 +204,10 @@ describe('DefaultEmailAccountService Test Suite', () => {
       const iat = new DefaultEmailAccountService(
         instance(mockAppSync),
         instance(mockDeviceKeyWorker),
-        { enforceSingletonPublicKey: true },
+        {
+          allowCallerManagedKeys: true,
+          enforceSingletonPublicKey: true,
+        },
       )
       const createEmailAccountInput: CreateEmailAccountInput = {
         emailAddressEntity: EntityDataFactory.emailAddress,
@@ -274,8 +287,8 @@ describe('DefaultEmailAccountService Test Suite', () => {
       }
       const deprovisionedEmailAccount = await instanceUnderTest.delete(input)
       expect(deprovisionedEmailAccount).toStrictEqual({
-        ...EntityDataFactory.emailAccount,
-        folders: [],
+        emailAccount: { ...EntityDataFactory.emailAccount, folders: [] },
+        keyIdsNotRemoved: [],
       })
       const [inputArgs] = capture(mockAppSync.deprovisionEmailAddress).first()
       expect(inputArgs).toStrictEqual<typeof inputArgs>({
@@ -293,7 +306,10 @@ describe('DefaultEmailAccountService Test Suite', () => {
       const iat = new DefaultEmailAccountService(
         instance(mockAppSync),
         instance(mockDeviceKeyWorker),
-        { enforceSingletonPublicKey: true },
+        {
+          allowCallerManagedKeys: true,
+          enforceSingletonPublicKey: true,
+        },
       )
 
       const input: DeleteEmailAccountInput = {
@@ -301,8 +317,8 @@ describe('DefaultEmailAccountService Test Suite', () => {
       }
       const deprovisionedEmailAccount = await iat.delete(input)
       expect(deprovisionedEmailAccount).toStrictEqual({
-        ...EntityDataFactory.emailAccount,
-        folders: [],
+        emailAccount: { ...EntityDataFactory.emailAccount, folders: [] },
+        keyIdsNotRemoved: [],
       })
 
       const [inputArgs] = capture(mockAppSync.deprovisionEmailAddress).first()
@@ -312,6 +328,140 @@ describe('DefaultEmailAccountService Test Suite', () => {
 
       verify(mockAppSync.deprovisionEmailAddress(anything())).once()
       verify(mockDeviceKeyWorker.removeKey(anything(), anything())).never()
+    })
+
+    it('does not remove key pairs when caller managed keys are allowed (the default)', async () => {
+      when(mockAppSync.deprovisionEmailAddress(anything())).thenResolve({
+        ...GraphQLDataFactory.emailAddressWithoutFolders,
+        keyIds: ['keyA'],
+      })
+      const result = await instanceUnderTest.delete({
+        emailAddressId: EntityDataFactory.emailAccount.id,
+      })
+      expect(result.keyIdsNotRemoved).toStrictEqual([])
+      verify(
+        mockAppSync.getPublicKeys(anything(), anything(), anything()),
+      ).never()
+      verify(mockDeviceKeyWorker.removeKey(anything(), anything())).never()
+    })
+
+    describe('when caller managed keys are not allowed', () => {
+      const keyRingId = 'deprovisionedKeyRing'
+      let service: DefaultEmailAccountService
+
+      const registration = (keyId: string, ring: string) => ({
+        ...GraphQLDataFactory.publicKey,
+        keyId,
+        keyRingId: ring,
+      })
+
+      beforeEach(() => {
+        service = new DefaultEmailAccountService(
+          instance(mockAppSync),
+          instance(mockDeviceKeyWorker),
+          { allowCallerManagedKeys: false, enforceSingletonPublicKey: false },
+        )
+        when(mockDeviceKeyWorker.getSingletonKeyId()).thenResolve(undefined)
+        when(mockAppSync.deprovisionEmailAddress(anything())).thenResolve({
+          ...GraphQLDataFactory.emailAddressWithoutFolders,
+          keyRingId,
+          keyIds: ['keyA', 'keyB'],
+        })
+      })
+
+      const deleteAccount = async () =>
+        await service.delete({
+          emailAddressId: EntityDataFactory.emailAccount.id,
+        })
+
+      it('removes key pairs that nothing else uses, ignoring its own key ring', async () => {
+        when(
+          mockAppSync.getPublicKeys(anything(), anything(), anything()),
+        ).thenResolve({
+          items: [
+            registration('keyA', keyRingId),
+            registration('keyB', keyRingId),
+          ],
+        })
+        const result = await deleteAccount()
+        expect(result.keyIdsNotRemoved).toStrictEqual([])
+        verify(mockDeviceKeyWorker.removeKey('keyA', KeyType.KeyPair)).once()
+        verify(mockDeviceKeyWorker.removeKey('keyB', KeyType.KeyPair)).once()
+        const [, , keyFormats] = capture(mockAppSync.getPublicKeys).first()
+        expect(keyFormats).toStrictEqual([])
+      })
+
+      it('keeps a key pair that another address or alias still uses', async () => {
+        when(
+          mockAppSync.getPublicKeys(anything(), anything(), anything()),
+        ).thenResolve({
+          items: [registration('keyA', 'otherKeyRing')],
+        })
+        await deleteAccount()
+        verify(mockDeviceKeyWorker.removeKey('keyA', KeyType.KeyPair)).never()
+        verify(mockDeviceKeyWorker.removeKey('keyB', KeyType.KeyPair)).once()
+      })
+
+      it('reads every page of registrations', async () => {
+        when(
+          mockAppSync.getPublicKeys(anything(), undefined, anything()),
+        ).thenResolve({
+          items: [],
+          nextToken: 'page2',
+        })
+        when(
+          mockAppSync.getPublicKeys(anything(), 'page2', anything()),
+        ).thenResolve({
+          items: [registration('keyA', 'otherKeyRing')],
+        })
+        await deleteAccount()
+        verify(mockDeviceKeyWorker.removeKey('keyA', KeyType.KeyPair)).never()
+        verify(mockDeviceKeyWorker.removeKey('keyB', KeyType.KeyPair)).once()
+      })
+
+      it('never removes the singleton key pair', async () => {
+        when(mockDeviceKeyWorker.getSingletonKeyId()).thenResolve('keyA')
+        when(
+          mockAppSync.getPublicKeys(anything(), anything(), anything()),
+        ).thenResolve({
+          items: [],
+        })
+        await deleteAccount()
+        verify(mockDeviceKeyWorker.removeKey('keyA', KeyType.KeyPair)).never()
+        verify(mockDeviceKeyWorker.removeKey('keyB', KeyType.KeyPair)).once()
+      })
+
+      it('removes nothing if the registrations cannot be listed', async () => {
+        when(
+          mockAppSync.getPublicKeys(anything(), anything(), anything()),
+        ).thenReject(new Error('lookup failed'))
+        const result = await deleteAccount()
+        expect(result.keyIdsNotRemoved).toStrictEqual([])
+        verify(mockDeviceKeyWorker.removeKey(anything(), anything())).never()
+      })
+
+      it('removes nothing if the singleton key id cannot be read', async () => {
+        when(mockDeviceKeyWorker.getSingletonKeyId()).thenReject(
+          new Error('read failed'),
+        )
+        const result = await deleteAccount()
+        expect(result.keyIdsNotRemoved).toStrictEqual([])
+        verify(mockDeviceKeyWorker.removeKey(anything(), anything())).never()
+      })
+
+      it('reports key pairs that could not be removed', async () => {
+        when(
+          mockAppSync.getPublicKeys(anything(), anything(), anything()),
+        ).thenResolve({
+          items: [],
+        })
+        when(mockDeviceKeyWorker.removeKey('keyA', KeyType.KeyPair)).thenReject(
+          new Error('remove failed'),
+        )
+        const result = await deleteAccount()
+        expect(result.keyIdsNotRemoved).toStrictEqual(['keyA'])
+        verify(mockDeviceKeyWorker.removeKey('keyB', KeyType.KeyPair)).once()
+      })
     })
   })
 

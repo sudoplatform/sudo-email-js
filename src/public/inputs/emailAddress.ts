@@ -52,12 +52,16 @@ export interface LookupEmailAddressesPublicInfoInput {
  *  The ownership proof must contain an audience of "sudoplatform".
  * @property {string} displayName A display name for the email address.
  * @property {boolean} allowSymmetricKeyGeneration (optional) If false and no symmetric key is found, a KeyNotFoundError will be thrown. Defaults to true.
+ * @property {string} keyId (optional) Identifier of a key pair in the key store to provision the email address with,
+ *  instead of a generated key pair or the singleton key pair. Requires `SudoEmailClientConfig.allowCallerManagedKeys`
+ *  (the default); otherwise `InvalidArgumentError` is thrown. `KeyNotFoundError` is thrown if the key pair isn't in the key store.
  */
 export interface ProvisionEmailAddressInput {
   emailAddress: string
   ownershipProofToken: string
   displayName?: string
   allowSymmetricKeyGeneration?: boolean
+  keyId?: string
 }
 
 /**

@@ -42,6 +42,7 @@ import {
   DeviceKeyWorkerKeyFormat,
   KeyType,
 } from '../common/deviceKeyWorker'
+import { ProvisioningKeyProvider } from '../common/provisioningKeyProvider'
 import { EmailAliasTransformer } from './transformer/emailAliasTransformer'
 import { secondsSinceEpoch } from '../../util/date'
 import { EmailAliasFilterTransformer } from './transformer/emailAliasFilterTransformer'
@@ -52,12 +53,14 @@ import { EmailAliasNotFoundError } from '../../../public'
 export class DefaultEmailAliasService implements EmailAliasService {
   private readonly log: Logger
   private readonly transformer: EmailAliasTransformer
+  private readonly keyProvider: ProvisioningKeyProvider
 
   constructor(
     private readonly appSync: ApiClient,
     private readonly deviceKeyWorker: DeviceKeyWorker,
-    private readonly config?: EmailAccountServiceConfig,
+    config?: EmailAccountServiceConfig,
   ) {
+    this.keyProvider = new ProvisioningKeyProvider(deviceKeyWorker, config)
     this.log = new DefaultLogger(this.constructor.name)
     this.transformer = new EmailAliasTransformer(this.deviceKeyWorker, this.log)
   }
@@ -68,6 +71,7 @@ export class DefaultEmailAliasService implements EmailAliasService {
     ownershipProofToken,
     metadata,
     expiresAt,
+    keyId,
   }: ProvisionEmailAliasInput): Promise<EmailAliasEntity> {
     this.log.debug(this.provisionEmailAlias.name, {
       aliasAddress,
@@ -75,48 +79,50 @@ export class DefaultEmailAliasService implements EmailAliasService {
       ownershipProofToken,
       metadata,
     })
-    // Retrieve Public Key to create email account with.
-    const key = this.config?.enforceSingletonPublicKey
-      ? await this.deviceKeyWorker.getSingletonKeyPair()
-      : await this.deviceKeyWorker.generateKeyPair()
+    // Retrieve Public Key to provision the email alias with.
+    const provisioningKey = await this.keyProvider.key(keyId)
+    const key = provisioningKey.key
     const transformer = new EmailAliasTransformer(
       this.deviceKeyWorker,
       this.log,
     )
 
-    let keyFormat: GraphQLKeyFormat
-    switch (key.format) {
-      case DeviceKeyWorkerKeyFormat.RsaPublicKey:
-        keyFormat = GraphQLKeyFormat.RsaPublicKey
-        break
-      case DeviceKeyWorkerKeyFormat.Spki:
-        keyFormat = GraphQLKeyFormat.Spki
-        break
-    }
+    const result = await this.keyProvider.withRejectionCleanup(
+      provisioningKey,
+      async () => {
+        let keyFormat: GraphQLKeyFormat
+        switch (key.format) {
+          case DeviceKeyWorkerKeyFormat.RsaPublicKey:
+            keyFormat = GraphQLKeyFormat.RsaPublicKey
+            break
+          case DeviceKeyWorkerKeyFormat.Spki:
+            keyFormat = GraphQLKeyFormat.Spki
+            break
+        }
 
-    const provisionEmailAliasInput: ProvisionEmailAliasRequest = {
-      maskAddress: aliasAddress,
-      realAddress: realAddress,
-      ownershipProofTokens: [ownershipProofToken],
-      key: {
-        keyId: key.id,
-        algorithm: key.algorithm,
-        keyFormat,
-        publicKey: key.data,
+        const provisionEmailAliasInput: ProvisionEmailAliasRequest = {
+          maskAddress: aliasAddress,
+          realAddress: realAddress,
+          ownershipProofTokens: [ownershipProofToken],
+          key: {
+            keyId: key.id,
+            algorithm: key.algorithm,
+            keyFormat,
+            publicKey: key.data,
+          },
+        }
+
+        if (metadata) {
+          provisionEmailAliasInput.metadata = await this.sealMetadata(metadata)
+        }
+
+        if (expiresAt) {
+          provisionEmailAliasInput.expiresAtEpochSec =
+            secondsSinceEpoch(expiresAt)
+        }
+        return provisionEmailAliasInput
       },
-    }
-
-    if (metadata) {
-      const sealedMetadata = await this.sealMetadata(metadata)
-      provisionEmailAliasInput.metadata = sealedMetadata
-    }
-
-    if (expiresAt) {
-      provisionEmailAliasInput.expiresAtEpochSec = secondsSinceEpoch(expiresAt)
-    }
-
-    const result = await this.appSync.provisionEmailMask(
-      provisionEmailAliasInput,
+      async (input) => await this.appSync.provisionEmailMask(input),
     )
 
     return await transformer.graphQLToEntity(result)

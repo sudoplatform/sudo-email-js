@@ -13,6 +13,7 @@ import {
   SudoPlatformSignInCallback,
   SudoUserClient,
 } from '@sudoplatform/sudo-user'
+import { CreateSingletonKeysIfAbsentResult } from './typings/createSingletonKeysIfAbsentResult'
 import {
   BlockEmailAddressesInput,
   UnblockEmailAddressesByHashedValueInput,
@@ -125,11 +126,19 @@ export interface SudoEmailClient {
   /**
    * Deprovision an email address.
    *
+   * If `SudoEmailClientConfig.allowCallerManagedKeys` is `false`, once the email address is deprovisioned its key
+   * pair is removed from the key store, unless another of the user's email addresses or email aliases still uses it.
+   * Nothing is removed if the client allows caller managed keys (the default) or enforces a singleton key pair, or
+   * if the service can't say whether the key pair is still used. Key pairs of email aliases aren't removed, because
+   * the service doesn't report which key pair an alias was provisioned with.
+   *
    * @param {string} id The identifier of the email address to deprovision.
    * @returns {EmailAddress} The deprovisioned email address.
    *
    * @throws {@link AddressNotFoundError}
    * @throws NotRegisteredError
+   * @throws {@link KeyPairRemovalFailedError} if the email address was deprovisioned, but its key pair couldn't be
+   *  removed from the key store. The error carries the deprovisioned email address, so callers can treat it as success.
    */
   deprovisionEmailAddress(id: string): Promise<EmailAddress>
 
@@ -701,11 +710,43 @@ export interface SudoEmailClient {
   exportKeys(): Promise<ArrayBuffer>
 
   /**
-   * Imports cryptographic keys from a key archive.
+   * Imports cryptographic keys from a key archive produced by `exportKeys`.
+   *
+   * The archive replaces the keys in the key store. It's read and checked first, so an archive that is invalid or
+   * that this client can't import leaves the existing keys in place. An archive with no keys imports nothing and
+   * leaves the existing keys in place.
+   *
+   * The archive's keys must be in this client's key namespace.
+   *
+   * If saving the keys fails, the existing keys have already been removed, so restore them from the app's own
+   * copy, such as an archive exported before the import.
    *
    * @param archiveData Key archive data to import the keys from.
+   *
+   * @throws {@link InvalidArgumentError} if `archiveData` is empty.
+   * @throws {@link InvalidKeyArchiveError} if the archive is invalid. The existing keys are unchanged.
+   * @throws {@link KeyArchiveNotImportableError} if the archive contains keys this client can't import, for
+   *  example keys exported under a different key namespace. The existing keys are unchanged.
    */
   importKeys(archiveData: ArrayBuffer): Promise<void>
+
+  /**
+   * Creates the singleton key pair that every email address and email alias is registered with, if the key store
+   * doesn't have it.
+   *
+   * Requires `SudoEmailClientConfig.enforceSingletonPublicKey`. Call it once the user is signed in, before
+   * provisioning: provisioning never creates the key, and fails with `SingletonKeyPairNotFoundError` without it.
+   *
+   * The result says whether the key had to be created. If it was, the key store has changed, so back the keys up
+   * again with `exportKeys`. If the user already has email addresses or aliases, a new key also means this
+   * client's key store doesn't have the one they're registered with (for example another browser, or one whose keys
+   * were removed), so import the user's key backup with `importKeys`.
+   *
+   * @returns {CreateSingletonKeysIfAbsentResult} Whether the singleton key pair was created, and its identifier.
+   *
+   * @throws {@link InvalidConfigError} if the client doesn't enforce a singleton key pair.
+   */
+  createSingletonKeysIfAbsent(): Promise<CreateSingletonKeysIfAbsentResult>
 
   /**
    * Sets an optional callback to handle sign-in when operations are attempted
@@ -741,20 +782,73 @@ export interface SudoEmailClient {
   setCacheSizeLimit(bytes: number): Promise<void>
 
   /**
-   * Removes any cached data maintained by this client.
+   * Removes all keys associated with this client and any cached data maintained by this client.
+   *
+   * The keys removed include the singleton key pair, so call `createSingletonKeysIfAbsent` again before
+   * provisioning if the client enforces one.
    */
   reset(): Promise<void>
 }
 
+/**
+ * Options for how a `DefaultSudoEmailClient` manages the key pairs that email addresses and email aliases are
+ * provisioned with.
+ *
+ * | `enforceSingletonPublicKey` | `allowCallerManagedKeys` | Key used when provisioning | Removed on deprovision |
+ * | --- | --- | --- | --- |
+ * | `false` | `true` (default) | Supplied `keyId`, otherwise a new key pair | Nothing |
+ * | `false` | `false` | Always a new key pair (`keyId` rejected) | The address's key pairs, unless still in use |
+ * | `true` | `true` | Supplied `keyId`, otherwise the singleton | Nothing |
+ * | `true` | `false` | Always the singleton (`keyId` rejected) | Nothing |
+ *
+ * Only `false`/`false` ties a key pair's lifecycle to provisioning and deprovisioning.
+ *
+ * Single key mode registers the same public key for every address and alias, so the email service must allow
+ * address public key reuse. Otherwise the second registration fails.
+ */
 export type SudoEmailClientConfig = {
+  /**
+   * Whether every email address and email alias is provisioned with one shared key pair instead of a key pair of
+   * its own.
+   *
+   * When `true`, the app creates the singleton with `createSingletonKeysIfAbsent` before provisioning. The client
+   * never creates it itself: provisioning without it throws `SingletonKeyPairNotFoundError`. Deprovisioning never
+   * removes any key pair; only `reset` removes the singleton.
+   *
+   * Defaults to `false`.
+   */
   enforceSingletonPublicKey?: boolean
+  /**
+   * Whether the app may supply the key pair an email address or email alias is provisioned with, through the
+   * `keyId` of `ProvisionEmailAddressInput` or `ProvisionEmailAliasInput`.
+   *
+   * When `true`, the app manages the key pairs it supplies, so the client never removes a key pair when an email
+   * address is deprovisioned. Key pairs the client generated itself are still removed when the service rejects the
+   * provisioning they were generated for.
+   *
+   * When `false`, the client manages every key pair itself: provisioning with a `keyId` throws
+   * `InvalidArgumentError`, and deprovisioning an email address removes its key pairs from the key store, except a
+   * key pair another email address or email alias still uses, and the singleton key pair. Nothing is removed while
+   * `enforceSingletonPublicKey` is `true`.
+   *
+   * Defaults to `true`.
+   */
+  allowCallerManagedKeys?: boolean
 }
 
 export type SudoEmailClientOptions = {
   /** Sudo User client to use. No default */
   sudoUserClient: SudoUserClient
 
-  /** SudoCryptoProvider to use. Default is to create a WebSudoCryptoProvider */
+  /**
+   * SudoCryptoProvider to use. Default is to create a WebSudoCryptoProvider
+   * with the key namespace `DEFAULT_KEY_NAMESPACE` (`'sudo-email'`).
+   *
+   * Versions of this SDK before the introduction of that default stored keys under the namespace
+   * `'SudoEmailClient'`. An app with keys under it can keep using them by supplying a `WebSudoCryptoProvider`
+   * created with that namespace, or migrate them by exporting from a client using the old provider and
+   * importing into one using the default.
+   */
   sudoCryptoProvider?: SudoCryptoProvider
 
   /** SudoKeyManager to use. Default is to create a DefaultSudoKeyManager */

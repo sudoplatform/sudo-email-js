@@ -247,6 +247,8 @@ describe('SudoEmailClient ProvisionEmailAddress Test Suite', () => {
       profilesClient = result.profilesClient
       sudo = result.sudo
       ownershipProofToken = result.ownershipProofToken
+      // The client never creates the singleton key pair itself.
+      await instanceUnderTest.createSingletonKeysIfAbsent()
     })
 
     afterEach(async () => {

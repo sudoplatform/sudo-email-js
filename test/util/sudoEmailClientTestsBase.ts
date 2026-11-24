@@ -5,7 +5,11 @@
  */
 import { SudoUserClient, internal as userSdk } from '@sudoplatform/sudo-user'
 import { vi, type MockedClass, type Mocked } from 'vitest'
-import { DefaultSudoEmailClient, SudoEmailClient } from '../../src'
+import {
+  DefaultSudoEmailClient,
+  SudoEmailClient,
+  SudoEmailClientConfig,
+} from '../../src'
 import { PrivateSudoEmailClientOptions } from '../../src/private/data/common/privateSudoEmailClientOptions'
 import {
   DefaultConfigurationManager,
@@ -111,9 +115,16 @@ export class SudoEmailClientTestBase {
     )
   }
 
-  public getInstanceUnderTest(): SudoEmailClient {
+  public getMockSudoKeyManager(): SudoKeyManager {
+    return this.mockSudoKeyManager
+  }
+
+  public getInstanceUnderTest(
+    sudoEmailClientConfig?: SudoEmailClientConfig,
+  ): SudoEmailClient {
     this.resetMocks()
     const options: PrivateSudoEmailClientOptions = {
+      sudoEmailClientConfig,
       sudoUserClient: instance(this.mockSudoUserClient),
       sudoCryptoProvider: instance(this.mockSudoCryptoProvider),
       sudoKeyManager: instance(this.mockSudoKeyManager),

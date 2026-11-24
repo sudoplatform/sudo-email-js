@@ -20,6 +20,9 @@ import { Pagination } from './common'
  *  The ownership proof must contain an audience of "sudoplatform".
  * @property {JSON} metadata Optional metadata to associate with the email alias.
  * @property {Date} expiresAt Optional expiration date for the email alias. If not provided, the alias will not expire.
+ * @property {string} keyId Optional identifier of a key pair in the key store to provision the email alias with,
+ *  instead of a generated key pair or the singleton key pair. Requires `SudoEmailClientConfig.allowCallerManagedKeys`
+ *  (the default); otherwise `InvalidArgumentError` is thrown. `KeyNotFoundError` is thrown if the key pair isn't in the key store.
  */
 export interface ProvisionEmailAliasInput {
   aliasAddress: string
@@ -27,6 +30,7 @@ export interface ProvisionEmailAliasInput {
   ownershipProofToken: string
   metadata?: Record<string, any>
   expiresAt?: Date
+  keyId?: string
 }
 
 /**

@@ -99,7 +99,13 @@ import { SubscribeToEmailMessagesUseCase } from '../private/domain/use-cases/mes
 import { UnsubscribeFromEmailMessagesUseCase } from '../private/domain/use-cases/message/unsubscribeFromEmailMessagesUseCase'
 import { UpdateEmailMessagesUseCase } from '../private/domain/use-cases/message/updateEmailMessagesUseCase'
 import { VerifyExternalEmailAddressUseCase } from '../private/domain/use-cases/alias/verifyExternalEmailAddressUseCase'
-import { InvalidArgumentError } from './errors'
+import {
+  InvalidArgumentError,
+  InvalidConfigError,
+  InvalidKeyArchiveError,
+  KeyArchiveNotImportableError,
+  KeyPairRemovalFailedError,
+} from './errors'
 import {
   BlockEmailAddressesInput,
   UnblockEmailAddressesByHashedValueInput,
@@ -153,6 +159,7 @@ import {
   UpdateEmailMessagesInput,
 } from './inputs/emailMessage'
 import { SudoEmailClient, SudoEmailClientOptions } from './sudoEmailClient'
+import { CreateSingletonKeysIfAbsentResult } from './typings/createSingletonKeysIfAbsentResult'
 import { ScheduledDraftMessage, UpdatedEmailMessageSuccess } from './typings'
 import {
   BatchOperationResult,
@@ -195,6 +202,28 @@ import { UpdateBlockedAddressesStatus } from '../private/domain/entities/blockli
 import { ListEmailAliasesUseCase } from '../private/domain/use-cases/alias/listEmailAliasesUseCase'
 import { GetEmailAliasByIdUseCase } from '../private/domain/use-cases/alias/getEmailAliasByIdUseCase'
 
+/**
+ * Key namespace of the `WebSudoCryptoProvider` the client creates when no
+ * `sudoCryptoProvider` or `sudoKeyManager` is supplied. Every platform's email
+ * SDK uses this namespace, which key archives need in order to import across
+ * platforms.
+ *
+ * Keys stored by earlier versions of this SDK are under the namespace
+ * `'SudoEmailClient'`, so they aren't found under this one. To keep using
+ * them, supply a `WebSudoCryptoProvider` created with that namespace as the
+ * `sudoCryptoProvider`, or migrate the keys with `exportKeys` on the old
+ * client and `importKeys` on the new one.
+ */
+export const DEFAULT_KEY_NAMESPACE = 'sudo-email'
+
+/** A key of an unarchived key archive, as `DefaultSudoKeyArchive` holds it. */
+type ArchiveKey = {
+  NameSpace?: string
+  Name?: string
+  Type: string
+  Decoded?: ArrayBuffer
+}
+
 export class DefaultSudoEmailClient implements SudoEmailClient {
   private readonly apiClient: ApiClient
   private readonly userClient: SudoUserClient
@@ -214,6 +243,8 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
   private readonly emailMessageBodyCache: EmailMessageBodyCache
   private readonly log: Logger
   private readonly mutex: Mutex
+  private readonly deviceKeyWorker: DefaultDeviceKeyWorker
+  private readonly enforceSingletonPublicKey: boolean
 
   public constructor(opts: SudoEmailClientOptions) {
     this.log = new DefaultLogger(this.constructor.name)
@@ -225,7 +256,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     this.sudoCryptoProvider =
       opts.sudoCryptoProvider ??
       new WebSudoCryptoProvider(
-        'SudoEmailClient',
+        DEFAULT_KEY_NAMESPACE,
         'com.sudoplatform.appservicename',
       )
 
@@ -242,6 +273,16 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       opts.sudoKeyManager ?? new DefaultSudoKeyManager(this.sudoCryptoProvider)
     // Generate services
     const deviceKeyWorker = new DefaultDeviceKeyWorker(this.keyManager)
+    this.deviceKeyWorker = deviceKeyWorker
+    this.enforceSingletonPublicKey =
+      opts.sudoEmailClientConfig?.enforceSingletonPublicKey ?? false
+    const keyManagementConfig = {
+      enforceSingletonPublicKey: this.enforceSingletonPublicKey,
+      allowCallerManagedKeys:
+        opts.sudoEmailClientConfig?.allowCallerManagedKeys === false
+          ? opts.sudoEmailClientConfig.allowCallerManagedKeys
+          : true,
+    }
     const s3Client = new S3Client(this.userClient, this.identityServiceConfig)
     this.configurationDataService = new DefaultConfigurationDataService(
       this.apiClient,
@@ -249,10 +290,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     this.emailAccountService = new DefaultEmailAccountService(
       this.apiClient,
       deviceKeyWorker,
-      {
-        enforceSingletonPublicKey:
-          opts.sudoEmailClientConfig?.enforceSingletonPublicKey,
-      },
+      keyManagementConfig,
     )
     this.emailDomainService = new DefaultEmailDomainService(this.apiClient)
     this.emailFolderService = new DefaultEmailFolderService(
@@ -278,10 +316,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     this.emailAliasService = new DefaultEmailAliasService(
       this.apiClient,
       deviceKeyWorker,
-      {
-        enforceSingletonPublicKey:
-          opts.sudoEmailClientConfig?.enforceSingletonPublicKey,
-      },
+      keyManagementConfig,
     )
     this.signInGuard = new SignInGuard(this.userClient)
   }
@@ -306,6 +341,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     ownershipProofToken,
     displayName,
     allowSymmetricKeyGeneration = true,
+    keyId,
   }: ProvisionEmailAddressInput): Promise<EmailAddress> {
     await this.ensureSignedIn()
     return await this.mutex.runExclusive(async () => {
@@ -319,6 +355,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
         emailAddressEntity,
         ownershipProofToken: ownershipProofToken,
         allowSymmetricKeyGeneration,
+        keyId,
       })
       const apiTransformer = new EmailAddressAPITransformer()
       return apiTransformer.transformEntity(result)
@@ -332,9 +369,13 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
         this.emailAccountService,
         this.emailMessageBodyCache,
       )
-      const result = await useCase.execute(id)
+      const { emailAccount, keyIdsNotRemoved } = await useCase.execute(id)
       const transformer = new EmailAddressAPITransformer()
-      return transformer.transformEntity(result)
+      const emailAddress = transformer.transformEntity(emailAccount)
+      if (keyIdsNotRemoved.length > 0) {
+        throw new KeyPairRemovalFailedError(emailAddress, keyIdsNotRemoved)
+      }
+      return emailAddress
     })
   }
 
@@ -1179,6 +1220,7 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     ownershipProofToken,
     expiresAt,
     metadata,
+    keyId,
   }: ProvisionEmailAliasInput): Promise<EmailAlias> {
     await this.ensureSignedIn()
     this.log.debug(this.provisionEmailAlias.name, {
@@ -1187,18 +1229,25 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
       ownershipProofToken,
       expiresAt,
       metadata,
+      keyId,
     })
 
-    const useCase = new ProvisionEmailAliasUseCase(this.emailAliasService)
-    const result = await useCase.execute({
-      aliasAddress,
-      realAddress,
-      ownershipProofToken,
-      expiresAt,
-      metadata,
-    })
+    // Serialised with email address provisioning and deprovisioning, so a
+    // deprovision can't remove a key pair that a provisioning running alongside
+    // it is registering.
+    return await this.mutex.runExclusive(async () => {
+      const useCase = new ProvisionEmailAliasUseCase(this.emailAliasService)
+      const result = await useCase.execute({
+        aliasAddress,
+        realAddress,
+        ownershipProofToken,
+        expiresAt,
+        metadata,
+        keyId,
+      })
 
-    return EmailAliasTransformer.entityToApi(result)
+      return EmailAliasTransformer.entityToApi(result)
+    })
   }
 
   public async deprovisionEmailAlias(
@@ -1375,11 +1424,89 @@ export class DefaultSudoEmailClient implements SudoEmailClient {
     if (archiveData.byteLength === 0) {
       throw new InvalidArgumentError()
     }
-    const unarchiver = new DefaultSudoKeyArchive(this.keyManager, {
-      archiveData,
-    })
-    await unarchiver.unarchive(undefined)
+    // Read and check the archive before removing anything, so an archive that
+    // can't be imported leaves this client's keys in place.
+    let unarchiver: DefaultSudoKeyArchive
+    try {
+      unarchiver = new DefaultSudoKeyArchive(this.keyManager, { archiveData })
+      await unarchiver.unarchive(undefined)
+    } catch (err) {
+      this.log.error('Reading the key archive failed', { err })
+      throw new InvalidKeyArchiveError()
+    }
+
+    const keys = this.archiveKeys(unarchiver)
+    if (keys.length === 0) {
+      // For example, exported by a user with no provisioned email addresses.
+      // There's nothing to restore.
+      this.log.info('The key archive contains no keys, so nothing was imported')
+      return
+    }
+    this.checkEveryKeyIsImportable(keys)
+
+    await this.keyManager.removeAllKeys()
     await unarchiver.saveKeys()
+    // Exported archives leave public keys out, so restore the singleton's.
+    await this.deviceKeyWorker.restoreSingletonPublicKey()
+  }
+
+  public async createSingletonKeysIfAbsent(): Promise<CreateSingletonKeysIfAbsentResult> {
+    await this.ensureSignedIn()
+    if (!this.enforceSingletonPublicKey) {
+      throw new InvalidConfigError(
+        'The client does not enforce a singleton key pair, so each email address and email alias gets its own key when it is provisioned',
+      )
+    }
+    const { key, created } =
+      await this.deviceKeyWorker.createSingletonKeyPairIfAbsent()
+    return { keyPair: { created, keyId: key.id } }
+  }
+
+  /**
+   * The keys of an unarchived key archive. `DefaultSudoKeyArchive` doesn't
+   * expose them, so read its (decoded and validated) key map.
+   */
+  private archiveKeys(archive: DefaultSudoKeyArchive): ArchiveKey[] {
+    const keys = (archive as unknown as { keys?: Map<string, ArchiveKey> }).keys
+    if (!(keys instanceof Map)) {
+      throw new InvalidKeyArchiveError()
+    }
+    return [...keys.values()]
+  }
+
+  /**
+   * Throws `KeyArchiveNotImportableError` if the key archive would skip any of
+   * `keys`.
+   *
+   * `DefaultSudoKeyArchive.saveKeys` skips, without an error, any key that
+   * isn't in this client's key namespace, and fails part way through on a key
+   * of a type it doesn't know. Either would happen after the existing keys
+   * were removed, so such an archive is refused before that.
+   */
+  private checkEveryKeyIsImportable(keys: ArchiveKey[]): void {
+    const namespace = this.keyManager.namespace
+    const knownTypes = new Set<string>(Object.values(KeyArchiveKeyType))
+    const unimportable = keys.filter(
+      (key) =>
+        key.NameSpace !== namespace ||
+        !key.Name ||
+        !knownTypes.has(key.Type) ||
+        !key.Decoded,
+    )
+    if (unimportable.length === 0) {
+      return
+    }
+    const namespaces = [
+      ...new Set(
+        unimportable.map((key) =>
+          key.NameSpace ? `"${key.NameSpace}"` : 'none',
+        ),
+      ),
+    ].sort()
+    throw new KeyArchiveNotImportableError(
+      `${unimportable.length} of ${keys.length} keys can't be imported into key namespace "${namespace}". ` +
+        `Their namespaces: ${namespaces.join(', ')}.`,
+    )
   }
 
   public async reset(): Promise<void> {

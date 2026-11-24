@@ -148,7 +148,7 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
   })
 
   // Temporarily disabled until completion of PEMC-1039
-  describe.skip('Singleton Public Key tests', () => {
+  describe('Singleton Public Key tests', () => {
     let instanceUnderTest: SudoEmailClient
     let profilesClient: SudoProfilesClient
     let userClient: SudoUserClient
@@ -167,6 +167,8 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
       userClient = result.userClient
       sudo = result.sudo
       ownershipProofToken = result.ownershipProofToken
+      // The client never creates the singleton key pair itself.
+      await instanceUnderTest.createSingletonKeysIfAbsent()
     })
 
     afterEach(async () => {
@@ -185,7 +187,15 @@ describe('SudoEmailClient DeprovisionEmailAddress Test Suite', () => {
       ])
 
       const keys = await cryptoProvider.exportKeys()
-      expect(keys.length).toEqual(6)
+      /**
+       * Should contain:
+       * 1. Singleton key pair id
+       * 2. Singleton public key with above id
+       * 3. Singleton private key with above id
+       * 4. Email symmetric key id
+       * 5. Symmetric key with above id
+       */
+      expect(keys.length).toEqual(5)
 
       // Email addresses should be deprovisioned without issue
       await Promise.all([

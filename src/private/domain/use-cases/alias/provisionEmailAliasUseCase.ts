@@ -19,6 +19,7 @@ import { InvalidArgumentError } from '../../../../public'
  *  The ownership proof must contain an audience of "sudoplatform".
  * @property {JSON} metadata Optional metadata to associate with the email alias.
  * @property {Date} expiresAt Optional expiration date for the email alias. If not provided, the alias will not expire.
+ * @property {string} keyId Optional identifier of the key pair in the key store to provision with.
  */
 interface ProvisionEmailAliasUseCaseInput {
   aliasAddress: string
@@ -26,6 +27,7 @@ interface ProvisionEmailAliasUseCaseInput {
   ownershipProofToken: string
   metadata?: Record<string, any>
   expiresAt?: Date
+  keyId?: string
 }
 
 /**
@@ -44,6 +46,7 @@ export class ProvisionEmailAliasUseCase {
     ownershipProofToken,
     metadata,
     expiresAt,
+    keyId,
   }: ProvisionEmailAliasUseCaseInput): Promise<EmailAliasEntity> {
     this.log.debug(this.constructor.name, {
       aliasAddress,
@@ -67,6 +70,7 @@ export class ProvisionEmailAliasUseCase {
       ownershipProofToken,
       metadata,
       expiresAt,
+      keyId,
     })
   }
 }

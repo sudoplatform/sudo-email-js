@@ -169,7 +169,7 @@ describe('SudoEmailClient Test Suite', () => {
       expect(ViMockApiClient).toHaveBeenCalledTimes(1)
       expect(ViMockWebSudoCryptoProvider).toHaveBeenCalledTimes(1)
       expect(ViMockWebSudoCryptoProvider).toHaveBeenCalledWith(
-        'SudoEmailClient',
+        'sudo-email',
         'com.sudoplatform.appservicename',
       )
       expect(ViMockUserConfig.getIdentityServiceConfig).toHaveBeenCalledTimes(1)

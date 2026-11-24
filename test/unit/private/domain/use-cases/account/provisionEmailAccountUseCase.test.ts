@@ -48,6 +48,7 @@ describe('ProvisionEmailAccountUseCase Test Suite', () => {
         emailAddressEntity: EntityDataFactory.emailAccount.emailAddress,
         ownershipProofToken: EntityDataFactory.owner.id,
         allowSymmetricKeyGeneration: true,
+        keyId: undefined,
       })
       expect(result).toStrictEqual(EntityDataFactory.emailAccount)
       verify(mockEmailAccountService.create(anything())).once()
@@ -68,6 +69,7 @@ describe('ProvisionEmailAccountUseCase Test Suite', () => {
         emailAddressEntity: EntityDataFactory.emailAccount.emailAddress,
         ownershipProofToken: EntityDataFactory.owner.id,
         allowSymmetricKeyGeneration: false,
+        keyId: undefined,
       })
       verify(mockEmailAccountService.create(anything())).once()
     })

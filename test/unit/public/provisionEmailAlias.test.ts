@@ -73,6 +73,7 @@ describe('SudoEmailClient.provisionEmailAlias Test Suite', () => {
       ...input,
       metadata: undefined,
       expiresAt: undefined,
+      keyId: undefined,
     })
   })
 
@@ -101,6 +102,7 @@ describe('SudoEmailClient.provisionEmailAlias Test Suite', () => {
     expect(args).toStrictEqual<typeof args>({
       ...input,
       expiresAt: undefined,
+      keyId: undefined,
     })
   })
 
@@ -119,6 +121,7 @@ describe('SudoEmailClient.provisionEmailAlias Test Suite', () => {
     expect(args).toStrictEqual<typeof args>({
       ...input,
       metadata: undefined,
+      keyId: undefined,
     })
   })
 
@@ -135,6 +138,6 @@ describe('SudoEmailClient.provisionEmailAlias Test Suite', () => {
 
     verify(mockProvisionEmailAliasUseCase.execute(anything())).once()
     const [args] = capture(mockProvisionEmailAliasUseCase.execute).first()
-    expect(args).toStrictEqual<typeof args>(input)
+    expect(args).toStrictEqual<typeof args>({ ...input, keyId: undefined })
   })
 })
